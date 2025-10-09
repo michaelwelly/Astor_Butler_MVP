@@ -1,0 +1,51 @@
+databaseChangeLog:
+  - changeSet:
+      id: 2025-06-19-01-users
+      author: astor-butler
+      changes:
+        - createTable:
+            tableName: users
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  autoIncrement: true        # для Postgres создаст identity/sequence
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: telegram_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: first_name
+                  type: TEXT
+              - column:
+                  name: last_name
+                  type: TEXT
+              - column:
+                  name: username
+                  type: TEXT
+              - column:
+                  name: phone
+                  type: TEXT
+              - column:
+                  name: role
+                  type: VARCHAR(20)
+                  defaultValue: GUEST
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created_at
+                  type: TIMESTAMP
+                  defaultValueComputed: CURRENT_TIMESTAMP
+              - column:
+                  name: updated_at
+                  type: TIMESTAMP
+                  defaultValueComputed: CURRENT_TIMESTAMP
+
+        - addUniqueConstraint:
+            tableName: users
+            columnNames: telegram_id
+            constraintName: uq_users_telegram_id
