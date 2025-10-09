@@ -1,0 +1,29 @@
+### Java / Maven ###
+/target/
+/*.iml
+.mvn/
+!.mvn/wrapper/maven-wrapper.jar
+
+### IntelliJ IDEA ###
+.idea/
+*.iws
+*.ipr
+*.class
+out/
+
+### Logs ###
+*.log
+
+### Env / Security ###
+.env
+.env.*
+*.key
+*.pem
+
+### OS files ###
+.DS_Store
+Thumbs.db
+
+### Tests / Coverage ###
+/test-output/
+/jacoco.exec
