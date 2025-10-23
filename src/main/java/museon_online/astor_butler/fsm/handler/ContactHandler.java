@@ -18,8 +18,8 @@ public class ContactHandler implements FSMHandler {
     private final FSMStorage storage;
 
     @Override
-    public boolean canHandle(CommandContext ctx) {
-        return ctx.getContact() != null;
+    public BotState getState() {
+        return BotState.CONTACT;
     }
 
     @Override
@@ -33,11 +33,12 @@ public class ContactHandler implements FSMHandler {
 
         user.setFirstName(c.getFirstName());
         user.setLastName(c.getLastName());
+        user.setUsername(ctx.getMessage().getFrom().getUserName());
         user.setPhone(c.getPhoneNumber());
         userRepo.save(user);
 
         // фиксируем новое состояние (Redis / In-Mem)
-        storage.setState(tgId.toString(), BotState.REGISTERED.name());
+        storage.setState(tgId, BotState.CONTACT);
 
         sender.sendText(tgId,
                 "Благодарю, данные внесены. Чем могу быть полезен прямо сейчас?");

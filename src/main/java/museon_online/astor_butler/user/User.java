@@ -3,24 +3,53 @@ package museon_online.astor_butler.user;
 import jakarta.persistence.*;
 import lombok.*;
 
-@Entity @Table(name = "users")
-@Getter @Setter @NoArgsConstructor
-@AllArgsConstructor @Builder
+import java.time.LocalDateTime;
+
+@Entity
+@Table(name = "users")
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class User {
 
-    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long   id;
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
-    @Column(nullable = false, unique = true)
-    private Long   telegramId;
+    @Column(name = "telegram_id", nullable = false, unique = true)
+    private Long telegramId;
 
+    @Column(name = "first_name")
     private String firstName;
+
+    @Column(name = "last_name")
     private String lastName;
+
+    @Column(name = "username")
     private String username;
+
+    @Column(name = "phone")
     private String phone;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    @Builder.Default
+    @Column(name = "role", nullable = false)
     private UserRole role = UserRole.GUEST;
+
+    @Column(name = "created_at", updatable = false)
+    private LocalDateTime createdAt;
+
+    @Column(name = "updated_at")
+    private LocalDateTime updatedAt;
+
+    @PrePersist
+    protected void onCreate() {
+        this.createdAt = LocalDateTime.now();
+        this.updatedAt = this.createdAt;
+    }
+
+    @PreUpdate
+    protected void onUpdate() {
+        this.updatedAt = LocalDateTime.now();
+    }
 }
