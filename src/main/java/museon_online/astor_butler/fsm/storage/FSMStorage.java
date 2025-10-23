@@ -1,10 +1,13 @@
 package museon_online.astor_butler.fsm.storage;
 
+import museon_online.astor_butler.fsm.core.BotState;
+
 public interface FSMStorage {
 
-    void setState(String userId, String state);
+    void setState(Long chatId, BotState state);
 
-    String getState(String userId);
+    void clear(Long chatId);
 
-    void clear(String userId);
+    BotState getState(Long chatId);
+
 }
