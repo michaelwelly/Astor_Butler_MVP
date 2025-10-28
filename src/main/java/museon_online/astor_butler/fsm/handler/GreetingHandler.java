@@ -1,6 +1,7 @@
 package museon_online.astor_butler.fsm.handler;
 
 import lombok.RequiredArgsConstructor;
+import museon_online.astor_butler.deepseek.GigaChatClient;
 import museon_online.astor_butler.fsm.core.BotState;
 import museon_online.astor_butler.fsm.core.CommandContext;
 import museon_online.astor_butler.fsm.storage.FSMStorage;
@@ -21,6 +22,7 @@ public class GreetingHandler implements FSMHandler {
 
     private final TelegramSender sender;
     private final FSMStorage     storage;
+    private final GigaChatClient gigaChatClient;
 
     @Override
     public BotState getState() {
@@ -31,8 +33,25 @@ public class GreetingHandler implements FSMHandler {
     @Override
     public void handle(CommandContext ctx) {
         Long chatId = ctx.getChatId();
-        String text = "👋 Привет! Отправь свой контакт, чтобы продолжить.";
+        String userName = ctx.getFirstName();
 
+        String prompt = String.format(
+                "Придумай короткое, тёплое и дружелюбное приветствие пользователю по имени %s, " +
+                        "в стиле AI-дворецкого Astor Butler. Заверши текст призывом отправить контакт, " +
+                        "чтобы начать работу. Примеры: 'Привет, %s! Рад встрече. Отправь контакт, чтобы я знал, кто ты.' " +
+                        "или 'Здравствуйте, %s! Astor Butler к вашим услугам — поделитесь контактом для начала знакомства.'",
+                userName, userName, userName
+        );
+
+        String aiGreeting;
+        try {
+            aiGreeting = gigaChatClient.generateText(prompt);
+        } catch (Exception e) {
+            // fallback если GigaChat не ответил
+            aiGreeting = "👋 Привет, " + userName + "! Отправь свой контакт, чтобы продолжить.";
+        }
+
+        // 📱 создаём клавиатуру
         KeyboardButton shareContact = KeyboardButton.builder()
                 .text("📱 Поделиться контактом")
                 .requestContact(true)
@@ -45,8 +64,10 @@ public class GreetingHandler implements FSMHandler {
                 .oneTimeKeyboard(true)
                 .build();
 
-        sender.sendText(chatId, text);
+        // 📤 отправляем AI-приветствие
+        sender.sendText(chatId, aiGreeting, kb);
 
+        // 🗂️ переводим FSM в состояние CONTACT
         storage.setState(chatId, BotState.CONTACT);
     }
 }

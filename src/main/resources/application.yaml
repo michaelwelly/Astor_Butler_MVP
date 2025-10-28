@@ -35,5 +35,5 @@ telegram:
     client-id: ${TELEGRAM_CLIENT_ID}
     redirect-uri: ${TELEGRAM_REDIRECT_URI}
 
-deepseek:
-  api-key: ${DEEPSEEK_API_KEY}
+gigachat:
+  auth-key: ${GIGACHAT_AUTH_KEY}

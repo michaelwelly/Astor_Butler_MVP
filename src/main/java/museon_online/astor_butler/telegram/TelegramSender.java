@@ -18,7 +18,9 @@ public class TelegramSender {
 
     private final AbsSender bot;
 
-
+    /**
+     * Отправка простого текстового сообщения без клавиатуры.
+     */
     public void sendText(Long chatId, String text) {
         execute(SendMessage.builder()
                 .chatId(chatId.toString())
@@ -26,6 +28,20 @@ public class TelegramSender {
                 .build());
     }
 
+    /**
+     * Отправка текстового сообщения с клавиатурой.
+     */
+    public void sendText(Long chatId, String text, ReplyKeyboard keyboard) {
+        execute(SendMessage.builder()
+                .chatId(chatId.toString())
+                .text(text)
+                .replyMarkup(keyboard)
+                .build());
+    }
+
+    /**
+     * Отправка HTML-сообщения с клавиатурой.
+     */
     public void sendHtml(Long chatId, String html, ReplyKeyboard kb) {
         execute(SendMessage.builder()
                 .chatId(chatId.toString())
@@ -35,11 +51,14 @@ public class TelegramSender {
                 .build());
     }
 
+    /**
+     * Безопасное выполнение API-вызова Telegram.
+     */
     private void execute(BotApiMethod<?> method) {
         try {
             bot.execute(method);
         } catch (Exception e) {
-            log.error("Telegram API call failed: {}", method.getMethod(), e);   // 🆕
+            log.error("Telegram API call failed: {}", method.getMethod(), e);
         }
     }
 }
