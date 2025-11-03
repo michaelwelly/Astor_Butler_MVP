@@ -127,7 +127,3 @@ Apache License 2.0.
 
 email: michael.poedinenko.mxr@gmail.com
 telegram: @michael_welly
-
----
-
-Хочешь, чтобы я добавил внизу этого `README.md` мини-раздел с визуальными бейджами (Java 21 · Spring Boot · PostgreSQL · Redis · Docker · Kafka ready)?
