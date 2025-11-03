@@ -37,3 +37,8 @@ telegram:
 
 gigachat:
   auth-key: ${GIGACHAT_AUTH_KEY}
+
+yandex:
+  ai:
+    endpoint: https://llm.api.cloud.yandex.net/foundationModels/v1/completion
+    api-key: ${YANDEX_API_KEY}

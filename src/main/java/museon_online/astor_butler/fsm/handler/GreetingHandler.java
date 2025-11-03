@@ -1,7 +1,7 @@
 package museon_online.astor_butler.fsm.handler;
 
 import lombok.RequiredArgsConstructor;
-import museon_online.astor_butler.deepseek.GigaChatClient;
+import museon_online.astor_butler.alisa.AlisaClient;
 import museon_online.astor_butler.fsm.core.BotState;
 import museon_online.astor_butler.fsm.core.CommandContext;
 import museon_online.astor_butler.fsm.storage.FSMStorage;
@@ -22,7 +22,7 @@ public class GreetingHandler implements FSMHandler {
 
     private final TelegramSender sender;
     private final FSMStorage     storage;
-    private final GigaChatClient gigaChatClient;
+    private final AlisaClient alisaClient;
 
     @Override
     public BotState getState() {
@@ -45,9 +45,8 @@ public class GreetingHandler implements FSMHandler {
 
         String aiGreeting;
         try {
-            aiGreeting = gigaChatClient.generateText(prompt);
+            aiGreeting = alisaClient.ask(prompt);
         } catch (Exception e) {
-            // fallback если GigaChat не ответил
             aiGreeting = "👋 Привет, " + userName + "! Отправь свой контакт, чтобы продолжить.";
         }
 
