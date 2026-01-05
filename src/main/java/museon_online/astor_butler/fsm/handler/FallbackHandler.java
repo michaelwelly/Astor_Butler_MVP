@@ -27,23 +27,27 @@ public class FallbackHandler implements FSMHandler {
 
     @Override
     public void handle(CommandContext ctx) {
-        String userMessage = ctx.getMessageText();
         Long chatId = ctx.getChatId();
+        String userMessage = ctx.getMessageText();
 
-        log.info("🌀 FallbackHandler activated for chatId={}, text={}", chatId, userMessage);
+        log.info("🟢 [FSM] FALLBACK → start (chatId={}, text={})", chatId, userMessage);
 
         try {
             String prompt = String.format(
                     "Пользователь написал: \"%s\".\n" +
-                            "Ответь от лица дворецкого Astor Butler — кратко, тепло, без лишних деталей, вежливо направь к кнопкам меню.",
+                            "Ответь от лица дворецкого Astor Butler — кратко, тепло и дружелюбно, предложи открыть меню.",
                     userMessage
             );
 
+            log.debug("🧠 [AI] PROMPT: {}", prompt);
             String reply = alisaClient.ask(prompt);
+            log.info("🎙️ [AI] RESPONSE: {}", reply);
+
             telegramSender.sendText(chatId, reply);
+            log.info("📤 [TG] Message sent to user (chatId={})", chatId);
 
         } catch (Exception e) {
-            log.error("❌ Ошибка при обращении к Алисе: {}", e.getMessage(), e);
+            log.error("❌ [FSM] FALLBACK → AI error: {}", e.getMessage(), e);
             telegramSender.sendText(chatId,
                     "Извините, сейчас я немного занят. Попробуйте написать позже 🙏");
         }

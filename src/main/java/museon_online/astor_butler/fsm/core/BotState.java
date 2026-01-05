@@ -1,8 +1,9 @@
 package museon_online.astor_butler.fsm.core;
 
 public enum BotState {
-    GREETING,
-    CONTACT,
-    MENU,
-    AI_FALLBACK
+    UNKNOWN,    // 👈 дефолтное, когда Redis пуст или пользователь неизвестен
+    GREETING,   // приветствие
+    CONTACT,    // получение контакта
+    MENU,       // основное меню
+    AI_FALLBACK // резервная обработка (AI)
 }

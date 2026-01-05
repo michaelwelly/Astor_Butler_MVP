@@ -7,6 +7,7 @@ import museon_online.astor_butler.fsm.core.CommandContext;
 import museon_online.astor_butler.fsm.storage.FSMStorage;
 import museon_online.astor_butler.telegram.TelegramSender;
 import museon_online.astor_butler.user.*;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.objects.Contact;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardMarkup;
@@ -15,14 +16,15 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.Keyboard
 
 import java.util.List;
 
+@Slf4j
 @Component
 @RequiredArgsConstructor
-@Slf4j
 public class ContactHandler implements FSMHandler {
 
-    private final UserRepository  userRepo;
-    private final TelegramSender  sender;
+    private final UserRepository userRepo;
+    private final TelegramSender sender;
     private final FSMStorage storage;
+    private final ObjectProvider<MenuHandler> menuHandlerProvider; // 👈 безопасная лениво-инжектированная зависимость
 
     @Override
     public BotState getState() {
@@ -31,50 +33,60 @@ public class ContactHandler implements FSMHandler {
 
     @Override
     public void handle(CommandContext ctx) {
-        Contact c = ctx.getContact();
+        Long chatId = ctx.getChatId();
+        Contact contact = ctx.getContact();
 
-        // 🧩 если контакт не передан — пользователь написал текст или стикер
-        if (c == null) {
-            log.warn("⚠️ Пользователь {} не поделился контактом, повторный запрос", ctx.getChatId());
+        log.info("🟢 [FSM] CONTACT → start (chatId={})", chatId);
+
+        // 🧩 1. Проверяем, действительно ли это контакт
+        if (contact == null || contact.getPhoneNumber() == null) {
+            log.warn("⚠️ [FSM] CONTACT → no valid contact received (chatId={})", chatId);
 
             KeyboardButton shareContact = KeyboardButton.builder()
                     .text("📱 Поделиться контактом")
                     .requestContact(true)
                     .build();
 
-            KeyboardRow row = new KeyboardRow(List.of(shareContact));
             ReplyKeyboardMarkup kb = ReplyKeyboardMarkup.builder()
-                    .keyboard(List.of(row))
+                    .keyboard(List.of(new KeyboardRow(List.of(shareContact))))
                     .resizeKeyboard(true)
                     .oneTimeKeyboard(true)
                     .build();
 
-            sender.sendText(ctx.getChatId(),
-                    "Пожалуйста, нажмите кнопку ниже, чтобы поделиться контактом. Это нужно один раз для начала работы 🙏",
+            sender.sendText(chatId,
+                    "Пожалуйста, нажмите кнопку ниже, чтобы поделиться контактом 🙏",
                     kb);
-
-            // 🚫 не сохраняем, не меняем FSM — остаёмся в состоянии CONTACT
-            storage.setState(ctx.getChatId(), BotState.CONTACT);
+            storage.setState(chatId, BotState.CONTACT);
             return;
         }
 
-        Long tgId = c.getUserId();
-        log.info("📞 Получен контакт от {} ({} {})", tgId, c.getFirstName(), c.getLastName());
+        // ✅ 2. Сохраняем данные пользователя
+        log.info("📞 [FSM] CONTACT → received contact: {} {} ({})",
+                contact.getFirstName(), contact.getLastName(), contact.getPhoneNumber());
 
-        User user = userRepo.findByTelegramId(tgId)
+        User user = userRepo.findByTelegramId(contact.getUserId())
                 .orElse(User.builder()
-                        .telegramId(tgId)
+                        .telegramId(contact.getUserId())
                         .role(UserRole.GUEST)
                         .build());
 
-        user.setFirstName(c.getFirstName());
-        user.setLastName(c.getLastName());
+        user.setFirstName(contact.getFirstName());
+        user.setLastName(contact.getLastName());
         user.setUsername(ctx.getMessage().getFrom().getUserName());
-        user.setPhone(c.getPhoneNumber());
+        user.setPhone(contact.getPhoneNumber());
         userRepo.save(user);
 
-        storage.setState(tgId, BotState.MENU); // 👈 или следующее состояние после регистрации
+        // 🚀 3. Переводим в состояние MENU
+        storage.setState(chatId, BotState.MENU);
+        log.info("✅ [FSM] CONTACT → next state: MENU (chatId={})", chatId);
 
-        sender.sendText(tgId, "Благодарю, данные внесены. Чем могу быть полезен прямо сейчас?");
+        // 🎯 4. Автоматически вызываем MenuHandler для отображения кнопок
+        try {
+            log.info("🧭 [FSM] Triggering MenuHandler for chatId={}", chatId);
+            menuHandlerProvider.getObject().handle(ctx);
+        } catch (Exception e) {
+            log.error("💥 [FSM] Failed to call MenuHandler after contact: {}", e.getMessage(), e);
+            sender.sendText(chatId, "Контакт сохранён, но не удалось открыть меню. Попробуйте команду /menu.");
+        }
     }
 }

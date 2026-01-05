@@ -1,43 +1,42 @@
 package museon_online.astor_butler.fsm.core;
 
-import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import museon_online.astor_butler.fsm.handler.FSMHandler;
 import museon_online.astor_butler.fsm.storage.FSMStorage;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
+@Slf4j
 @Component
-@RequiredArgsConstructor
 public class FSMRouter {
 
-    private final List<FSMHandler> handlers;
-    private final FSMStorage fsmStorage;
+    private final Map<BotState, FSMHandler> handlers = new ConcurrentHashMap<>();
+    private final FSMStorage storage;
+
+    @Autowired
+    public FSMRouter(FSMStorage storage, List<FSMHandler> handlerList) {
+        this.storage = storage;
+        handlerList.forEach(h -> handlers.put(h.getState(), h));
+        log.info("🧩 [FSM] Registered {} handlers: {}", handlers.size(), handlers.keySet());
+    }
 
     public void route(CommandContext ctx) {
         Long chatId = ctx.getChatId();
+        BotState current = storage.getState(chatId);
+        if (current == null) current = BotState.UNKNOWN;
 
-        // 1️⃣ Получаем текущее состояние из Redis
-        BotState currentState = fsmStorage.getState(chatId);
-
-        // 2️⃣ Если состояния нет — начинаем с GREETING
-        if (currentState == null) {
-            currentState = BotState.GREETING;
-            fsmStorage.setState(chatId, currentState);
+        FSMHandler handler = handlers.get(current);
+        if (handler == null) {
+            log.warn("⚠️ [FSM] No handler for {}, switching to MENU", current);
+            storage.setState(chatId, BotState.MENU);
+            handler = handlers.get(BotState.MENU);
         }
 
-        final BotState stateToHandle = currentState;
-
-        // 3️⃣ Находим хэндлер по состоянию
-        FSMHandler handler = handlers.stream()
-                .filter(h -> h.getState().equals(stateToHandle))
-                .findFirst()
-                .orElseGet(() -> handlers.stream()
-                        .filter(h -> h.getState().equals(BotState.AI_FALLBACK))
-                        .findFirst()
-                        .orElseThrow(() -> new IllegalStateException("No fallback handler found")));
-
-        // 4️⃣ Вызываем обработку
+        log.info("▶️ [FSM] Executing {} for chatId={}", handler.getClass().getSimpleName(), chatId);
         handler.handle(ctx);
     }
 }
