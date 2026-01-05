@@ -35,8 +35,8 @@ telegram:
     client-id: ${TELEGRAM_CLIENT_ID}
     redirect-uri: ${TELEGRAM_REDIRECT_URI}
 
-gigachat:
-  auth-key: ${GIGACHAT_AUTH_KEY}
+#gigachat:
+#  auth-key: ${GIGACHAT_AUTH_KEY}
 
 yandex:
   ai:

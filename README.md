@@ -44,60 +44,10 @@
 ### 1️⃣ Зависимости
 JDK 21, Docker, Docker Compose, PostgreSQL, Redis.
 
-### 2️⃣ Пример `.env`
-```env
-TELEGRAM_BOT_TOKEN=XXX
-TELEGRAM_BOT_NAME=astor_butler_bot
-
-POSTGRES_URL=jdbc:postgresql://localhost:5434/aether
-POSTGRES_DB=aether
-POSTGRES_USER=oracle
-POSTGRES_PASSWORD=astor_unlock
-
-REDIS_HOST=localhost
-REDIS_PORT=6379
-
-3️⃣ Docker Compose
-
-services:
-  postgres:
-    image: postgres:16
-    container_name: astor_database_test
-    ports: ["5434:5432"]
-    environment:
-      - POSTGRES_DB=${POSTGRES_DB}
-      - POSTGRES_USER=${POSTGRES_USER}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
-    volumes:
-      - pgdata:/var/lib/postgresql/data
-
-  redis:
-    image: redis:7
-    container_name: astor_redis
-    ports: ["6379:6379"]
-
-volumes:
-  pgdata:
-
-4️⃣ Запуск
-
-./mvnw spring-boot:run
-# или
-./gradlew bootRun
-
 🧠 Архитектура
 	•	Модель: FSM + эмпатическая логика переходов (право на паузу / отказ / возврат — норма).
 	•	Транспорт: Telegram (с перспективой WeChat / Meta).
 	•	Данные: read-only PMS-интеграция, zero-push UX — контент по запросу гостя.
-
-🔭 Roadmap (ближайшие шаги)
-	•	GuestGraph & репутационный паспорт доверия.
-	•	WeChat / Meta-слои и локальные SDK.
-	•	Arena-bridge для стадионных фестивалей.
-	•	Менеджерский Dashboard с паттернами перегруза.
-	•	Этический протокол для эмоциональной телеметрии.
-	•	Direct-Channel Hub 2.0 — снижение OTA-налога.
-	•	Event-Engine с «катарсис-ивентом» под ключ.
 
 📈 Экономика
 
