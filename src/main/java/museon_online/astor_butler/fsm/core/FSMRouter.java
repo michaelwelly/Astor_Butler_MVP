@@ -1,6 +1,7 @@
 package museon_online.astor_butler.fsm.core;
 
 import lombok.extern.slf4j.Slf4j;
+import museon_online.astor_butler.fsm.core.event.InboundEvent;
 import museon_online.astor_butler.fsm.handler.FSMHandler;
 import museon_online.astor_butler.fsm.storage.FSMStorage;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,6 +24,21 @@ public class FSMRouter {
         handlerList.forEach(h -> handlers.put(h.getState(), h));
         log.info("🧩 [FSM] Registered {} handlers: {}", handlers.size(), handlers.keySet());
     }
+
+    public FSMResult handle(InboundEvent event) {
+        if (event == null) {
+            return FSMResult.empty();
+        }
+
+        CommandContext ctx = CommandContext.from(event);
+        if (ctx == null) {
+            return FSMResult.empty();
+        }
+
+        route(ctx);
+        return FSMResult.empty();
+    }
+
 
     public void route(CommandContext ctx) {
         Long chatId = ctx.getChatId();

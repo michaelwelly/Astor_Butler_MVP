@@ -2,6 +2,7 @@ package museon_online.astor_butler.fsm.core;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import museon_online.astor_butler.fsm.core.event.InboundEvent;
 import org.telegram.telegrambots.meta.api.objects.Contact;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.Update;
@@ -31,6 +32,21 @@ public class CommandContext {
                 message,
                 update,
                 telegramUser
+        );
+    }
+
+    public static CommandContext from(InboundEvent event) {
+        if (event == null) {
+            return null;
+        }
+
+        return new CommandContext(
+                event.getChatId(),
+                event.getPayload(),
+                null,   // contact
+                null,   // message
+                null,   // update
+                null    // telegramUser
         );
     }
 
