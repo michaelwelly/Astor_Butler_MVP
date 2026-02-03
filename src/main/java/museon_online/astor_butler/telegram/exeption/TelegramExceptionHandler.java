@@ -1,4 +1,4 @@
-package museon_online.astor_butler.telegram;
+package museon_online.astor_butler.telegram.exeption;
 
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;

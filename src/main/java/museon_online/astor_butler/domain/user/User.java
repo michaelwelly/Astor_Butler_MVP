@@ -1,4 +1,4 @@
-package museon_online.astor_butler.user;
+package museon_online.astor_butler.domain.user;
 
 import jakarta.persistence.*;
 import lombok.*;

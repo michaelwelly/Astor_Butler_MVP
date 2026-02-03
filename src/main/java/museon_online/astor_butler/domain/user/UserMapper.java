@@ -1,4 +1,4 @@
-package museon_online.astor_butler.user;
+package museon_online.astor_butler.domain.user;
 
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
@@ -16,7 +16,7 @@ public interface UserMapper {
     @Mapping(target = "role", expression = "java(UserRole.GUEST)")
     @Mapping(target = "createdAt", expression = "java(LocalDateTime.now())")
     @Mapping(target = "updatedAt", expression = "java(LocalDateTime.now())")
-    museon_online.astor_butler.user.User fromTelegramUser(
+    museon_online.astor_butler.domain.user.User fromTelegramUser(
             org.telegram.telegrambots.meta.api.objects.User telegramUser
     );
 }

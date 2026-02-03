@@ -2,7 +2,7 @@ package museon_online.astor_butler.config;
 
 import lombok.Getter;
 import lombok.Setter;
-import museon_online.astor_butler.telegram.TelegramBot;
+import museon_online.astor_butler.telegram.utils.TelegramBot;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

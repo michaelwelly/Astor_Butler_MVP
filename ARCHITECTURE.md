@@ -1,116 +1,131 @@
-┌───────────────────────────────────────────────────────────────┐
-│                          Clients                              │
-│                                                               │
-│   Guest / Staff / Manager                                     │
-│   Telegram UI                                                  │
-│   (чат, кнопки, zero-push)                                    │
-└───────────────────────────────┬───────────────────────────────┘
+┌──────────────────────────────────────────────────────────────────────┐
+│                               USERS                                  │
+│                                                                      │
+│   Guest / Staff / Manager                                            │
+│   (любой клиент через Telegram UI)                                   │
+└───────────────────────────────┬──────────────────────────────────────┘
 │
-│ updates / messages
+│ messages / callbacks / contacts
 ▼
-┌───────────────────────────────────────────────────────────────┐
-│                    Telegram Bot API                            │
-│                  (Transport only, no logic)                   │
-└───────────────────────────────┬───────────────────────────────┘
-│
-▼
-┌───────────────────────────────────────────────────────────────┐
-│                Load Balancer / Ingress                         │
-│         (Yandex Cloud LB / k8s ingress / NLB)                  │
-│         stateless routing, HTTPS termination                   │
-└───────────────────────────────┬───────────────────────────────┘
+┌──────────────────────────────────────────────────────────────────────┐
+│                          TELEGRAM PLATFORM                            │
+│                                                                        │
+│   Telegram Bot API                                                     │
+│   - retries                                                           │
+│   - delayed updates                                                   │
+│   - duplicate delivery                                                │
+│                                                                        │
+│   (внешняя среда, неконтролируемая)                                   │
+└───────────────────────────────┬──────────────────────────────────────┘
 │
 ▼
-┌─────────────────────────────────────────────────────────────────────────┐
-│                    Astor Butler MVP                                      │
-│           Modular Monolith · Java 21 · Spring Boot                        │
-│           (multiple pods, single codebase)                                │
-│                                                                           │
-│  ┌─────────────────────────────────────────────────────────────────────┐ │
-│  │                    Infrastructure / Platform                          │ │
-│  │                                                                         │ │
-│  │  - Spring Boot config                                                   │ │
-│  │  - Feature flags                                                        │ │
-│  │  - Logging                                                              │ │
-│  │  - Observability hooks                                                  │ │
-│  │                                                                         │ │
-│  │  ┌──────────────┐        ┌────────────────┐                           │ │
-│  │  │ Telegram     │        │  AI Adapter    │                           │ │
-│  │  │ Adapter      │        │  (LLM / Alisa) │                           │ │
-│  │  │ (IO only)    │        │                │                           │ │
-│  │  └──────┬───────┘        └───────┬────────┘                           │ │
-│  │         │ events                  │ intents / parsing                 │ │
-│  │         └──────────────┬──────────┘                                   │ │
-│  │                        ▼                                              │ │
-│  │                ┌──────────────────────────────┐                       │ │
-│  │                │           FSM CORE            │                       │ │
-│  │                │   (Orchestration Layer)       │                       │ │
-│  │                │                                │                       │ │
-│  │                │ - scenario router              │                       │ │
-│  │                │ - state transitions            │                       │ │
-│  │                │ - guards / validation          │                       │ │
-│  │                │ - timeout / fallback logic     │                       │ │
-│  │                │                                │                       │ │
-│  │                │ FSM = single source of truth   │                       │ │
-│  │                └───────┬─────────┬─────────┬───┘                       │ │
-│  │                        │         │         │                           │ │
-│  │                        │         │         │                           │ │
-│  │                        ▼         ▼         ▼                           │ │
-│  │  ┌────────────────┐  ┌────────────────┐  ┌────────────────────────┐ │ │
-│  │  │ User Domain     │  │ Booking Domain  │  │ Tips Domain             │ │ │
-│  │  │ (Memory Engine) │  │ (Slot Keeper)  │  │ (Smart Tip)             │ │ │
-│  │  │                │  │                │  │                          │ │ │
-│  │  │ - identity     │  │ - date          │  │ - intent                │ │ │
-│  │  │ - phone        │  │ - slot          │  │ - amount                │ │ │
-│  │  │ - preferences  │  │ - guests        │  │ - status                │ │ │
-│  │  │                │  │                │  │                          │ │ │
-│  │  │ no Telegram    │  │ no Telegram    │  │ finance-isolated         │ │ │
-│  │  │ no FSM logic   │  │ no FSM logic   │  │ future service candidate │ │ │
-│  │  └────────────────┘  └────────────────┘  └────────────────────────┘ │ │
-│  │                        │                                               │ │
-│  │                        ▼                                               │ │
-│  │               ┌──────────────────────────┐                            │ │
-│  │               │ Info Domain               │                            │ │
-│  │               │ (Quiet Guide)             │                            │ │
-│  │               │                            │                            │ │
-│  │               │ - events                  │                            │ │
-│  │               │ - posters                 │                            │ │
-│  │               │ - descriptions            │                            │ │
-│  │               │                            │                            │ │
-│  │               │ no AI / no FSM logic      │                            │ │
-│  │               └──────────────────────────┘                            │ │
-│  │                                                                         │ │
-│  │  ┌────────────────┐        ┌────────────────┐                          │ │
-│  │  │ PostgreSQL      │        │ Redis           │                          │ │
-│  │  │                │        │                │                          │ │
-│  │  │ - users         │        │ - FSM cache    │                          │ │
-│  │  │ - FSM state     │        │ - slots        │                          │ │
-│  │  │ - audit log     │        │ - temp ctx     │                          │ │
-│  │  └────────────────┘        └────────────────┘                          │ │
-│  │                                                                         │ │
-│  │  ┌─────────────────────────────────────────────────────────────────┐  │ │
-│  │  │ Kafka (optional / MVP flag)                                      │  │ │
-│  │  │                                                                 │  │ │
-│  │  │ - domain events (UserCreated, BookingRequested, TipIntented)   │  │ │
-│  │  │ - async observers / future integrations                         │  │ │
-│  │  │ - NOT required for core MVP demo                                │  │ │
-│  │  └─────────────────────────────────────────────────────────────────┘  │ │
-│  └─────────────────────────────────────────────────────────────────────┘ │
-│                                                                           │
-│  Observability                                                            │
-│  - Logs                                                                   │
-│  - Metrics (Prometheus)                                                   │
-│  - Dashboards (Grafana)                                                   │
-│                                                                           │
-└───────────────────────────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────────────┐
+│                      TELEGRAM ADAPTER (IO)                            │
+│                                                                        │
+│   - принимает update                                                   │
+│   - маппит в InboundEvent                                              │
+│   - НЕ содержит бизнес-логики                                         │
+│   - НЕ принимает решений                                              │
+│                                                                        │
+└───────────────────────────────┬──────────────────────────────────────┘
 │
 ▼
-┌───────────────────────────────────────────────────────────────┐
-│                       Yandex Cloud                              │
-│                                                               │
-│  - Load Balancer                                               │
-│  - Compute / k8s pods                                          │
-│  - Managed PostgreSQL                                         │
-│  - Managed Redis                                              │
-│  - (Kafka optional)                                           │
-└───────────────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────────────┐
+│            EVENT NORMALIZATION & IDEMPOTENCY LAYER                    │
+│                                                                        │
+│   Idempotency Guard                                                    │
+│   - проверка duplicate eventId                                        │
+│   - Redis (processed events)                                          │
+│                                                                        │
+│   Context Restore                                                      │
+│   - Redis (FSM context, hot path)                                     │
+│   - PostgreSQL (fallback)                                             │
+│                                                                        │
+└───────────────────────────────┬──────────────────────────────────────┘
+│
+▼
+┌──────────────────────────────────────────────────────────────────────┐
+│                         FSM CORE (ORCHESTRATION)                     │
+│                                                                        │
+│   FSM Router                                                           │
+│   - текущее состояние пользователя                                   │
+│   - роль (guest / staff / manager)                                   │
+│   - тип события                                                       │
+│                                                                        │
+│   FSM Transition Engine                                                │
+│   - допустимые переходы                                               │
+│   - fallback / safe state                                             │
+│   - offline / late messages                                           │
+│                                                                        │
+│   FSM = single source of truth                                        │
+│                                                                        │
+└───────────────┬───────────────┬───────────────┬─────────────────────┘
+│               │               │
+│               │               │
+│               │               │
+▼               ▼               ▼
+┌──────────────────────┐ ┌──────────────────────┐ ┌───────────────────┐
+│   AI / ALISA ADAPTER │ │     USER DOMAIN       │ │   BOOKING DOMAIN   │
+│   (optional plugin)  │ │  (Memory Engine)     │ │   (Slot Keeper)    │
+│                      │ │                      │ │                   │
+│ - intent parsing     │ │ - identity           │ │ - date             │
+│ - entity extraction │ │ - phone               │ │ - slot             │
+│ - text → meaning     │ │ - preferences        │ │ - guests           │
+│                      │ │                      │ │                   │
+│ - cache (Redis)      │ │ - repository         │ │ - repository       │
+│ - timeout            │ │ - no FSM logic       │ │ - no FSM logic     │
+│ - fallback to rules  │ │ - no Telegram        │ │ - no Telegram      │
+└──────────────┬───────┘ └──────────────┬───────┘ └─────────┬─────────┘
+│                          │                   │
+│                          │                   │
+▼                          ▼                   ▼
+┌──────────────────────┐  ┌──────────────────────┐  ┌───────────────────┐
+│     INFO DOMAIN       │  │     TIPS DOMAIN       │  │  FUTURE DOMAINS   │
+│   (Quiet Guide)      │  │    (Smart Tip)        │  │                   │
+│                      │  │                      │  │ - Safe Play       │
+│ - events              │  │ - tip intent         │  │ - Hidden Heart    │
+│ - posters             │  │ - amount             │  │ - Preference Map │
+│ - descriptions        │  │ - status             │  │                   │
+│                      │  │                      │  │                   │
+│ no FSM logic          │  │ finance-isolated     │  │ FSM-controlled    │
+│ no AI                 │  │ future service cut  │  │                   │
+└──────────────┬───────┘  └──────────────┬───────┘  └───────────────────┘
+│                          │
+│                          │
+▼                          ▼
+┌──────────────────────────────────────────────────────────────────────┐
+│                     CONTEXT UPDATE & SIDE EFFECTS                    │
+│                                                                        │
+│   - обновление FSM Context                                            │
+│   - сохранение доменных сущностей                                    │
+│   - commit как точка успеха                                          │
+│                                                                        │
+└───────────────┬───────────────────────────────┬─────────────────────┘
+│                               │
+│                               │
+▼                               ▼
+┌──────────────────────────────┐      ┌──────────────────────────────┐
+│        KAFKA EVENT BUS        │      │      RESPONSE BUILDER         │
+│   (async / optional MVP)     │      │                                │
+│                              │      │ - message templates           │
+│ - audit events               │      │ - localization                │
+│ - metrics                    │      │ - Redis cache                 │
+│ - observers                  │      │                                │
+│                              │      └──────────────┬───────────────┘
+└───────────────┬──────────────┘                     │
+│                                     │
+▼                                     ▼
+┌──────────────────────────────┐      ┌──────────────────────────────┐
+│        AUDIT / METRICS        │      │     TELEGRAM ADAPTER (OUT)    │
+│        WORKERS                │      │                                │
+│                              │      │ - serialize response          │
+│ - consume Kafka               │      │ - retry send                 │
+│ - enrich metrics              │      │ - no FSM logic               │
+│ - write to Audit DB           │      │                                │
+│                              │      └──────────────┬───────────────┘
+└──────────────────────────────┘                     │
+▼
+┌──────────────────────────┐
+│      TELEGRAM API         │
+│   (send message)         │
+└──────────────────────────┘

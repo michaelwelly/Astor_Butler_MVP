@@ -1,7 +1,8 @@
-package museon_online.astor_butler.telegram;
+package museon_online.astor_butler.telegram.utils;
 
 import lombok.RequiredArgsConstructor;
 import museon_online.astor_butler.config.TelegramBotConfig;
+import museon_online.astor_butler.telegram.adapter.TelegramRouter;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.objects.Update;

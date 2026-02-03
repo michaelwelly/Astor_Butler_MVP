@@ -1,4 +1,4 @@
-package museon_online.astor_butler.telegram;
+package museon_online.astor_butler.telegram.utils;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

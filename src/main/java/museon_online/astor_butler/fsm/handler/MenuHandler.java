@@ -6,7 +6,7 @@ import museon_online.astor_butler.alisa.AlisaClient;
 import museon_online.astor_butler.fsm.core.BotState;
 import museon_online.astor_butler.fsm.core.CommandContext;
 import museon_online.astor_butler.fsm.storage.FSMStorage;
-import museon_online.astor_butler.telegram.TelegramSender;
+import museon_online.astor_butler.telegram.utils.TelegramSender;
 import museon_online.astor_butler.telegram.command.MainMenuCommand;
 import museon_online.astor_butler.telegram.utils.BotResponse;
 import org.springframework.stereotype.Component;
