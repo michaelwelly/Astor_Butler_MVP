@@ -22,7 +22,7 @@ import java.util.List;
     @Slf4j
     public class GreetingHandler implements FSMHandler {
 
-        private static final String POLICY_URL = "http://localhost:8080/policy.html";
+        private static final String POLICY_URL = "https://michaelwelly.github.io/Astor_Butler_MVP/docs/policy.html";
 
         private final TelegramSender sender;
         private final FSMStorage storage;
