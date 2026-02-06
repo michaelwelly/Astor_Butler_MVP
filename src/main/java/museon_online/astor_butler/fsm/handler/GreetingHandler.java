@@ -2,7 +2,6 @@ package museon_online.astor_butler.fsm.handler;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import museon_online.astor_butler.alisa.AlisaClient;
 import museon_online.astor_butler.fsm.core.BotState;
 import museon_online.astor_butler.fsm.core.CommandContext;
 import museon_online.astor_butler.fsm.storage.FSMStorage;
@@ -18,10 +17,10 @@ import java.util.List;
 /**
  * Обрабатывает /start — визитка Astor Butler.
  */
-@Component
-@RequiredArgsConstructor
-@Slf4j
-public class GreetingHandler implements FSMHandler {
+    @Component
+    @RequiredArgsConstructor
+    @Slf4j
+    public class GreetingHandler implements FSMHandler {
 
         private static final String POLICY_URL = "http://localhost:8080/policy.html";
 
