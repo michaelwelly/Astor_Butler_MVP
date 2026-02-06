@@ -6,6 +6,7 @@ import museon_online.astor_butler.alisa.AlisaClient;
 import museon_online.astor_butler.fsm.core.BotState;
 import museon_online.astor_butler.fsm.core.CommandContext;
 import museon_online.astor_butler.fsm.storage.FSMStorage;
+import museon_online.astor_butler.llm.OllamaClient;
 import museon_online.astor_butler.telegram.utils.TelegramSender;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardMarkup;
@@ -22,51 +23,97 @@ import java.util.List;
 @Slf4j
 public class GreetingHandler implements FSMHandler {
 
-    private final TelegramSender sender;
-    private final FSMStorage     storage;
-    private final AlisaClient alisaClient;
+        private static final String POLICY_URL = "http://localhost:8080/policy.html";
 
-    @Override
-    public BotState getState() {
-        return BotState.GREETING;
-    }
+        private final TelegramSender sender;
+        private final FSMStorage storage;
+        private final OllamaClient ollamaClient;
 
-    @Override
-    public void handle(CommandContext ctx) {
-        Long chatId = ctx.getChatId();
-        String userName = ctx.getFirstName();
+        @Override
+        public BotState getState() {
+            return BotState.GREETING;
+        }
 
-        log.info("🟢 [FSM] GREETING → start (chatId={})", chatId);
+        @Override
+        public void handle(CommandContext ctx) {
+            Long chatId = ctx.getChatId();
+            String userName = ctx.getFirstName();
 
-        String prompt = String.format(
-                "Придумай короткое, тёплое и дружелюбное приветствие пользователю по имени %s, " +
-                        "в стиле AI-дворецкого Astor Butler. Заверши текст призывом отправить контакт.", userName);
+            storage.setState(chatId, BotState.GREETING);
 
-        try {
-            log.debug("🧠 [AI] PROMPT: {}", prompt);
-            String aiGreeting = alisaClient.ask(prompt);
-            log.info("🎙️ [AI] RESPONSE: {}", aiGreeting);
+            log.info("🟢 [FSM] State set to GREETING (chatId={})", chatId);
 
-            KeyboardButton shareContact = KeyboardButton.builder()
-                    .text("📱 Поделиться контактом")
-                    .requestContact(true)
-                    .build();
+            String prompt = String.format(
+                    "Ты вежливый цифровой дворецкий. " +
+                    "Одним предложением поприветствуй пользователя по имени %s.",
+                    userName
+            );
 
-            ReplyKeyboardMarkup kb = ReplyKeyboardMarkup.builder()
-                    .keyboard(List.of(new KeyboardRow(List.of(shareContact))))
-                    .resizeKeyboard(true)
-                    .oneTimeKeyboard(true)
-                    .build();
+            try {
+                log.info("🧠 [LLM] Sending prompt (chatId={})", chatId);
+                log.debug("🧠 [LLM] Prompt text: {}", prompt);
 
-            sender.sendText(chatId, aiGreeting, kb);
-            log.info("📤 [TG] Message sent to user (chatId={})", chatId);
+                long startedAt = System.nanoTime();
 
-            storage.setState(chatId, BotState.CONTACT);
-            log.info("✅ [FSM] GREETING → next state: CONTACT");
+                String llmResponse = ollamaClient.ask(prompt);
 
-        } catch (Exception e) {
-            log.error("❌ [FSM] GREETING → AI error: {}", e.getMessage(), e);
-            sender.sendText(chatId, "👋 Привет! Отправь свой контакт, чтобы продолжить.");
+                long durationMs = (System.nanoTime() - startedAt) / 1_000_000;
+
+                log.info(
+                        "🧠 [LLM] Response received (chatId={}, duration={} ms)",
+                        chatId,
+                        durationMs
+                );
+
+                log.debug(
+                        "🧠 [LLM] Response text: {}",
+                        llmResponse.length() > 300
+                                ? llmResponse.substring(0, 300) + "…"
+                                : llmResponse
+                );
+
+                String finalText =
+                        llmResponse + "\n\n" +
+                        "Чтобы продолжить, отправьте, пожалуйста, свой контакт.\n\n" +
+                        "Продолжая, вы соглашаетесь с " +
+                        "<a href=\"" + POLICY_URL + "\">политикой обработки персональных данных</a>.";
+
+                KeyboardButton shareContact = KeyboardButton.builder()
+                        .text("📱 Поделиться контактом")
+                        .requestContact(true)
+                        .build();
+
+                ReplyKeyboardMarkup keyboard = ReplyKeyboardMarkup.builder()
+                        .keyboard(List.of(new KeyboardRow(List.of(shareContact))))
+                        .resizeKeyboard(true)
+                        .oneTimeKeyboard(true)
+                        .build();
+
+                sender.sendHtml(chatId, finalText, keyboard);
+
+                log.info("✅ [FSM] GREETING message sent, waiting for contact");
+
+            } catch (Exception e) {
+                log.error("❌ [FSM] GREETING → LLM error", e);
+
+                String fallbackText =
+                        "\n\n" +
+                        "Чтобы продолжить, отправьте, пожалуйста, свой контакт.\n\n" +
+                        "Продолжая, вы соглашаетесь с " +
+                        "<a href=\"" + POLICY_URL + "\">политикой обработки персональных данных</a>.";
+
+                KeyboardButton shareContact = KeyboardButton.builder()
+                        .text("📱 Поделиться контактом")
+                        .requestContact(true)
+                        .build();
+
+                ReplyKeyboardMarkup keyboard = ReplyKeyboardMarkup.builder()
+                        .keyboard(List.of(new KeyboardRow(List.of(shareContact))))
+                        .resizeKeyboard(true)
+                        .oneTimeKeyboard(true)
+                        .build();
+
+                sender.sendText(chatId, fallbackText, keyboard);
+            }
         }
     }
-}

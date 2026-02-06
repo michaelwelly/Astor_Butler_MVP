@@ -2,13 +2,13 @@ package museon_online.astor_butler.alisa;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import museon_online.astor_butler.alisa.dto.AlisaRequest;
-import museon_online.astor_butler.alisa.dto.AlisaResponse;
+import museon_online.astor_butler.alisa.dto.AgentResponse;
 import museon_online.astor_butler.alisa.exception.AlisaClientException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -17,39 +17,71 @@ public class AlisaClient {
 
     private final RestTemplate restTemplate;
 
-    @Value("${yandex.ai.endpoint}")
-    private String endpoint;
+    @Value("${yandex.ai.agent-endpoint}")
+    private String agentEndpoint;
 
-    @Value("${yandex.ai.api-key}")
-    private String apiKey;
+    @Value("${yandex.ai.iam-token}")
+    private String iamToken;
 
-    public String ask(String prompt) {
+    @Value("${yandex.ai.folder-id}")
+    private String folderId;
+
+    public AgentResponse ask(String userText) {
         try {
-            // 1) Собираем тело запроса под Яндекс LLM
-            var body = new AlisaRequest(prompt);
-            // 2) Заголовки: тип и авторизация
-            var headers = new HttpHeaders();
+            HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
-            headers.set("Authorization", "Api-Key " + apiKey);
-            // 3) Собираем HTTP-запрос
-            var entity = new HttpEntity<>(body, headers);
-            log.debug("Sending prompt to Yandex AI: {}", prompt);
-            // 4) Шлём POST на endpoint и маппим ответ в AlisaResponse
-            ResponseEntity<AlisaResponse> response = restTemplate.exchange(
-                    endpoint, HttpMethod.POST, entity, AlisaResponse.class);
-            // 5) Проверяем, что тело не пустое
-            if (response.getBody() == null || response.getBody().result() == null) {
-                throw new AlisaClientException("Empty response from Yandex AI");
+            headers.setBearerAuth(iamToken);
+
+            Map<String, Object> body = Map.of(
+                    "input", Map.of(
+                            "messages", java.util.List.of(
+                                    Map.of(
+                                            "role", "user",
+                                            "text", userText
+                                    )
+                            )
+                    )
+            );
+
+            log.info("🤖 [AI] Request body = {}", body);
+            log.info("🤖 [AI] Endpoint = {}", agentEndpoint);
+
+            HttpEntity<Map<String, Object>> entity =
+                    new HttpEntity<>(body, headers);
+
+            ResponseEntity<Map> response = restTemplate.exchange(
+                    agentEndpoint,
+                    HttpMethod.POST,
+                    entity,
+                    Map.class
+            );
+
+            log.info("🤖 [AI] Raw response = {}", response.getBody());
+
+            if (response.getBody() == null) {
+                throw new AlisaClientException("Empty response from agent");
             }
-            // 6) Достаём первый вариант ответа и возвращаем текст
-            var text = response.getBody().result().alternatives().get(0).message().text();
-            log.info("Received LLM response: {}", text);
-            return text;
+
+            Object result = response.getBody().get("result");
+            if (!(result instanceof Map<?, ?> resultMap)) {
+                throw new AlisaClientException("Invalid agent response structure: no result");
+            }
+
+            Object message = resultMap.get("message");
+            if (!(message instanceof Map<?, ?> messageMap)) {
+                throw new AlisaClientException("Invalid agent response structure: no message");
+            }
+
+            Object text = messageMap.get("text");
+            if (!(text instanceof String textValue)) {
+                throw new AlisaClientException("Invalid agent response structure: no text");
+            }
+
+            return new AgentResponse(textValue, null, null);
 
         } catch (Exception e) {
-            // 7) Любая ошибка — логируем и заворачиваем в своё исключение
-            log.error("Failed to call Yandex AI", e);
-            throw new AlisaClientException("Yandex AI call failed: " + e.getMessage());
+            log.error("Failed to call Astor Butler Agent", e);
+            throw new AlisaClientException(e.getMessage());
         }
     }
 }

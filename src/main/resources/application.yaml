@@ -35,10 +35,13 @@ telegram:
     client-id: ${TELEGRAM_CLIENT_ID}
     redirect-uri: ${TELEGRAM_REDIRECT_URI}
 
-#gigachat:
-#  auth-key: ${GIGACHAT_AUTH_KEY}
+llm:
+  ollama:
+    base-url: http://localhost:11434
+    model: qwen2.5:1.5b
 
 yandex:
   ai:
-    endpoint: https://llm.api.cloud.yandex.net/foundationModels/v1/completion
-    api-key: ${YANDEX_API_KEY}
+    agent-endpoint: https://ai.api.cloud.yandex.net/v1/agents/fvt51f9cslgi648vvg35:execute
+    folder-id: b1glau5tifq7ttbeb2fa
+    iam-token: ${YANDEX_IAM_TOKEN}

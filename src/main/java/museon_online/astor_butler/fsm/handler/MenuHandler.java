@@ -41,9 +41,17 @@ public class MenuHandler implements FSMHandler {
             // 🎙️ 2. Вызов Алисы для генерации динамического приветствия
             String prompt = "Создай короткое приветствие пользователю в главном меню вежливо и в стиле AI-дворецкого Astor Butler.";
             log.info("🎙️ [AI] Sending prompt to Alisa: {}", prompt);
-            String aiResponse = alisaClient.ask(prompt);
-            sender.sendText(chatId, aiResponse);
-            log.info("💬 [AI] Response from Alisa: {}", aiResponse);
+            var ai = alisaClient.ask(prompt);
+
+            String text = ai.text();
+            sender.sendText(chatId, text);
+
+            log.info(
+                    "💬 [AI] Response from Alisa: intent={}, confidence={}, text={}",
+                    ai.intent(),
+                    ai.confidence(),
+                    text
+            );
 
         } catch (Exception e) {
             log.error("💥 [FSM] MENU rendering failed: {}", e.getMessage(), e);

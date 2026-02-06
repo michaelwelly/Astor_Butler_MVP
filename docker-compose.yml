@@ -25,6 +25,15 @@ services:
     entrypoint: >
         sh -c "exec redis-server --requirepass $$REDIS_PASSWORD"
 
+  ollama:
+    image: ollama/ollama:latest
+    container_name: ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    restart: unless-stopped
+
   # app:
   #   build:
   #     context: .
@@ -40,3 +49,4 @@ services:
 volumes:
   pgdata:
   redisdata:
+  ollama_data:

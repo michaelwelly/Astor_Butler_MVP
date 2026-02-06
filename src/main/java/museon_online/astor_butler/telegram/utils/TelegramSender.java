@@ -42,12 +42,12 @@ public class TelegramSender {
     /**
      * Отправка HTML-сообщения с клавиатурой.
      */
-    public void sendHtml(Long chatId, String html, ReplyKeyboard kb) {
+    public void sendHtml(Long chatId, String html, ReplyKeyboard keyboard) {
         execute(SendMessage.builder()
                 .chatId(chatId.toString())
                 .text(html)
                 .parseMode("HTML")
-                .replyMarkup(kb)
+                .replyMarkup(keyboard)
                 .build());
     }
 
