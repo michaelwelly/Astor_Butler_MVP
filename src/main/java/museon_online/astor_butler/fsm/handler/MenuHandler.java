@@ -2,7 +2,7 @@ package museon_online.astor_butler.fsm.handler;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import museon_online.astor_butler.alisa.AlisaClient;
+//import museon_online.astor_butler.alisa.AlisaClient;
 import museon_online.astor_butler.fsm.core.BotState;
 import museon_online.astor_butler.fsm.core.CommandContext;
 import museon_online.astor_butler.fsm.storage.FSMStorage;
@@ -18,7 +18,7 @@ public class MenuHandler implements FSMHandler {
 
     private final TelegramSender sender;
     private final FSMStorage storage;
-    private final AlisaClient alisaClient;
+//    private final AlisaClient alisaClient;
     private final MainMenuCommand mainMenuCommand;
 
     @Override
@@ -41,17 +41,17 @@ public class MenuHandler implements FSMHandler {
             // 🎙️ 2. Вызов Алисы для генерации динамического приветствия
             String prompt = "Создай короткое приветствие пользователю в главном меню вежливо и в стиле AI-дворецкого Astor Butler.";
             log.info("🎙️ [AI] Sending prompt to Alisa: {}", prompt);
-            var ai = alisaClient.ask(prompt);
-
-            String text = ai.text();
-            sender.sendText(chatId, text);
-
-            log.info(
-                    "💬 [AI] Response from Alisa: intent={}, confidence={}, text={}",
-                    ai.intent(),
-                    ai.confidence(),
-                    text
-            );
+//            var ai = alisaClient.ask(prompt);
+//
+//            String text = ai.text();
+//            sender.sendText(chatId, text);
+//
+//            log.info(
+//                    "💬 [AI] Response from Alisa: intent={}, confidence={}, text={}",
+//                    ai.intent(),
+//                    ai.confidence(),
+//                    text
+//            );
 
         } catch (Exception e) {
             log.error("💥 [FSM] MENU rendering failed: {}", e.getMessage(), e);

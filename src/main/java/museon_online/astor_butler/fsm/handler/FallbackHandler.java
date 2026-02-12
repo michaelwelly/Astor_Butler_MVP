@@ -2,8 +2,8 @@ package museon_online.astor_butler.fsm.handler;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import museon_online.astor_butler.alisa.AlisaClient;
-import museon_online.astor_butler.alisa.dto.AgentResponse;
+//import museon_online.astor_butler.alisa.AlisaClient;
+//import museon_online.astor_butler.alisa.dto.AgentResponse;
 import museon_online.astor_butler.fsm.core.BotState;
 import museon_online.astor_butler.fsm.core.CommandContext;
 import museon_online.astor_butler.telegram.utils.TelegramSender;
@@ -18,7 +18,7 @@ import org.springframework.stereotype.Component;
 @Slf4j
 public class FallbackHandler implements FSMHandler {
 
-    private final AlisaClient alisaClient;
+//    private final AlisaClient alisaClient;
     private final TelegramSender telegramSender;
 
     @Override
@@ -48,15 +48,15 @@ public class FallbackHandler implements FSMHandler {
 
             log.debug("🧠 [AI] PROMPT: {}", prompt);
 
-            AgentResponse ai = alisaClient.ask(prompt);
+//            AgentResponse ai = alisaClient.ask(prompt);
+//
+//            log.info(
+//                    "🎙️ [AI] intent={}, confidence={}",
+//                    ai.intent(),
+//                    ai.confidence()
+//            );
 
-            log.info(
-                    "🎙️ [AI] intent={}, confidence={}",
-                    ai.intent(),
-                    ai.confidence()
-            );
-
-            telegramSender.sendText(chatId, ai.text());
+//            telegramSender.sendText(chatId, ai.text());
 
             log.info("📤 [TG] Fallback response sent (chatId={})", chatId);
 
