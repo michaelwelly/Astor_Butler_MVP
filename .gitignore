@@ -1,0 +1,14 @@
+.env
+.DS_Store
+target/
+
+.idea/diff-generator.xml
+
+.codex/
+.codex_audio_chunks/
+.codex_frames/
+.codex_tmp_hr_screening.wav
+.codex_transcripts/
+.codex_whisper_chunks/
+.codex_whisper_out/
+.codex_whisper_venv/
