@@ -20,6 +20,22 @@ public class CommandContext {
 
     // 🔹 Вспомогательный конструктор для универсальной сборки контекста
     public static CommandContext from(Update update) {
+        if (update == null) {
+            return new CommandContext(null, "", null, null, null, null);
+        }
+
+        if (update.hasCallbackQuery()) {
+            Message callbackMessage = update.getCallbackQuery().getMessage();
+            return new CommandContext(
+                    callbackMessage != null ? callbackMessage.getChatId() : null,
+                    update.getCallbackQuery().getData(),
+                    null,
+                    callbackMessage,
+                    update,
+                    update.getCallbackQuery().getFrom()
+            );
+        }
+
         Message message = update.getMessage();
         String text = message != null && message.hasText() ? message.getText() : "";
         Contact contact = message != null ? message.getContact() : null;

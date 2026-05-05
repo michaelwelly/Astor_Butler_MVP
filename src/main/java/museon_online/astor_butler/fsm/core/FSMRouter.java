@@ -21,7 +21,7 @@ public class FSMRouter {
     @Autowired
     public FSMRouter(FSMStorage storage, List<FSMHandler> handlerList) {
         this.storage = storage;
-        handlerList.forEach(h -> handlers.put(h.getState(), h));
+        handlerList.forEach(h -> h.getStates().forEach(state -> handlers.put(state, h)));
         log.info("🧩 [FSM] Registered {} handlers: {}", handlers.size(), handlers.keySet());
     }
 

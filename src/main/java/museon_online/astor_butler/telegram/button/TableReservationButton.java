@@ -13,8 +13,8 @@ public class TableReservationButton implements BotButton {
     @Override
     public InlineKeyboardMarkup buildButton() {
         InlineKeyboardButton button = new InlineKeyboardButton();
-        button.setText("📅 Бронь стола");
-        button.setCallbackData("/table_booking");
+        button.setText("📅 Бронь события");
+        button.setCallbackData("/event_booking");
 
         InlineKeyboardMarkup markup = new InlineKeyboardMarkup();
         markup.setKeyboard(List.of(List.of(button)));
@@ -23,11 +23,11 @@ public class TableReservationButton implements BotButton {
 
     @Override
     public String getCommand() {
-        return "/table_booking";
+        return "/event_booking";
     }
 
     @Override
     public String getDescription() {
-        return "Забронировать стол в заведении";
+        return "Собрать заявку на мероприятие";
     }
 }

@@ -29,7 +29,10 @@ public class TelegramRouter {
         try {
 
             // Architecture entrypoint: Update → InboundEvent → FSM
-            processInboundEvent(update);
+            boolean accepted = processInboundEvent(update);
+            if (!accepted) {
+                return;
+            }
 
             // ⬇️ Старый код — без изменений
             CommandContext ctx = CommandContext.from(update);
@@ -40,19 +43,26 @@ public class TelegramRouter {
             // 👀 1. Логируем входящее сообщение
             log.info("📨 [TG] Incoming message from {}: {}", chatId, text);
 
-            // 🚀 2. Обработка команды /start
-            if ("/start".equalsIgnoreCase(text)) {
-                log.info("🚀 [CMD] /start received → FSM set to GREETING (chatId={})", chatId);
-                fsmStorage.setState(chatId, BotState.GREETING);
-            }
-
-            // 🧭 3. Проверяем текущее состояние
+            // 🧭 2. Проверяем текущее состояние
             BotState currentState = fsmStorage.getState(chatId);
             if (currentState == null) {
                 currentState = BotState.UNKNOWN;
                 fsmStorage.setState(chatId, BotState.UNKNOWN);
                 log.warn("⚠️ [FSM] No state found in Redis → set to UNKNOWN (chatId={})", chatId);
             }
+
+            // 🚀 2. Обработка команды /start
+            if ("/start".equalsIgnoreCase(text)) {
+                log.info("🚀 [CMD] /start received → FSM set to GREETING (chatId={})", chatId);
+                currentState = BotState.GREETING;
+            } else if ("/event_booking".equalsIgnoreCase(text) || "/table_booking".equalsIgnoreCase(text)) {
+                log.info("📅 [CMD] event booking received → FSM set to EVENT_BOOKING_TYPE (chatId={})", chatId);
+                currentState = BotState.EVENT_BOOKING_TYPE;
+            } else if (canStartEventBooking(currentState) && isEventBookingIntent(text)) {
+                log.info("📅 [NLP] event booking intent detected → FSM set to EVENT_BOOKING_TYPE (chatId={})", chatId);
+                currentState = BotState.EVENT_BOOKING_TYPE;
+            }
+            fsmStorage.setState(chatId, currentState);
 
             log.info("📊 [FSM] Current state for chatId={} → {}", chatId, currentState);
 
@@ -64,13 +74,13 @@ public class TelegramRouter {
             exceptionHandler.handle(update, e, sender);
         }
     }
-    private void processInboundEvent(Update update) {
+    private boolean processInboundEvent(Update update) {
         try {
             InboundEvent inboundEvent = InboundEvent.from(update);
 
             if (inboundEvent == null) {
                 log.debug("📭 [PIPELINE] Update ignored (cannot be mapped to InboundEvent)");
-                return;
+                return false;
             }
 
             boolean accepted = idempotencyGuard.accept(inboundEvent);
@@ -80,7 +90,7 @@ public class TelegramRouter {
                         inboundEvent.getEventId(),
                         inboundEvent.getChatId()
                 );
-                return;
+                return false;
             }
 
             log.info(
@@ -94,9 +104,30 @@ public class TelegramRouter {
             // этот вызов будет подключён на следующем шаге
             // FSMRouter fsmRouter = fsmRouterProvider.getObject();
             // fsmRouter.handle(inboundEvent);
+            return true;
 
         } catch (Exception e) {
             log.error("💥 [PIPELINE] Error while processing inbound event", e);
+            return true;
         }
+    }
+
+    private boolean isEventBookingIntent(String text) {
+        if (text == null) {
+            return false;
+        }
+        String normalized = text.toLowerCase();
+        return normalized.contains("бронь мероприятия")
+                || normalized.contains("забронировать мероприятие")
+                || normalized.contains("банкет")
+                || normalized.contains("фуршет")
+                || normalized.contains("корпоратив")
+                || normalized.contains("свадьб");
+    }
+
+    private boolean canStartEventBooking(BotState currentState) {
+        return currentState == BotState.UNKNOWN
+                || currentState == BotState.MENU
+                || currentState == BotState.AI_FALLBACK;
     }
 }

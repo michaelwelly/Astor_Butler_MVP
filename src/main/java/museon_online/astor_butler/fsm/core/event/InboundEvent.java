@@ -17,14 +17,37 @@ public class InboundEvent {
     }
 
     public static InboundEvent from(Update update) {
-        if (update == null || update.getMessage() == null) {
+        if (update == null) {
+            return null;
+        }
+
+        String eventId = String.valueOf(update.getUpdateId());
+
+        if (update.hasCallbackQuery()) {
+            return new InboundEvent(
+                    eventId + ":" + update.getCallbackQuery().getId(),
+                    update.getCallbackQuery().getMessage().getChatId(),
+                    EventType.CALLBACK,
+                    update.getCallbackQuery().getData()
+            );
+        }
+
+        if (!update.hasMessage()) {
             return null;
         }
 
         Long chatId = update.getMessage().getChatId();
-        String text = update.getMessage().getText();
-        String eventId = String.valueOf(update.getUpdateId());
 
+        if (update.getMessage().getContact() != null) {
+            return new InboundEvent(
+                    eventId,
+                    chatId,
+                    EventType.CONTACT,
+                    update.getMessage().getContact().getPhoneNumber()
+            );
+        }
+
+        String text = update.getMessage().getText();
         if (text == null) {
             return null;
         }
@@ -32,7 +55,7 @@ public class InboundEvent {
         return new InboundEvent(
                 eventId,
                 chatId,
-                EventType.TEXT,
+                text.startsWith("/") ? EventType.COMMAND : EventType.TEXT,
                 text
         );
     }
