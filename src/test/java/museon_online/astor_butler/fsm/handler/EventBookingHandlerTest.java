@@ -6,6 +6,7 @@ import museon_online.astor_butler.domain.booking.EventBookingService;
 import museon_online.astor_butler.fsm.core.BotState;
 import museon_online.astor_butler.fsm.core.CommandContext;
 import museon_online.astor_butler.fsm.storage.FSMStorage;
+import museon_online.astor_butler.telegram.notification.EventBookingManagerNotifier;
 import museon_online.astor_butler.telegram.utils.TelegramSender;
 import org.junit.jupiter.api.Test;
 
@@ -18,6 +19,7 @@ import static org.mockito.ArgumentMatchers.contains;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 class EventBookingHandlerTest {
 
@@ -25,9 +27,10 @@ class EventBookingHandlerTest {
 
     private final TelegramSender sender = mock(TelegramSender.class);
     private final EventBookingService bookingService = mock(EventBookingService.class);
+    private final EventBookingManagerNotifier managerNotifier = mock(EventBookingManagerNotifier.class);
     private final InMemoryFSMStorage fsmStorage = new InMemoryFSMStorage();
     private final InMemoryDraftStorage draftStorage = new InMemoryDraftStorage();
-    private final EventBookingHandler handler = new EventBookingHandler(sender, fsmStorage, draftStorage, bookingService);
+    private final EventBookingHandler handler = new EventBookingHandler(sender, fsmStorage, draftStorage, bookingService, managerNotifier);
 
     @Test
     void startsEventBookingFromCommand() {
@@ -76,11 +79,15 @@ class EventBookingHandlerTest {
     @Test
     void confirmsReadyForManager() {
         fsmStorage.setState(CHAT_ID, BotState.EVENT_BOOKING_SUMMARY);
+        museon_online.astor_butler.domain.booking.EventBooking booking =
+                museon_online.astor_butler.domain.booking.EventBooking.builder().id(7L).chatId(CHAT_ID).build();
+        when(bookingService.saveReadyForManager(eq(CHAT_ID), any(EventBookingDraft.class))).thenReturn(booking);
 
         handler.handle(ctx("да"));
 
         assertThat(fsmStorage.getState(CHAT_ID)).isEqualTo(BotState.EVENT_BOOKING_READY_FOR_MANAGER);
         verify(bookingService).saveReadyForManager(eq(CHAT_ID), any(EventBookingDraft.class));
+        verify(managerNotifier).notifyReadyForManager(booking);
         verify(sender).sendText(eq(CHAT_ID), contains("Заявка собрана"));
     }
 

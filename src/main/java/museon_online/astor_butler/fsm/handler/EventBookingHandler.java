@@ -2,12 +2,14 @@ package museon_online.astor_butler.fsm.handler;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import museon_online.astor_butler.domain.booking.EventBooking;
 import museon_online.astor_butler.domain.booking.EventBookingDraft;
 import museon_online.astor_butler.domain.booking.EventBookingDraftStorage;
 import museon_online.astor_butler.domain.booking.EventBookingService;
 import museon_online.astor_butler.fsm.core.BotState;
 import museon_online.astor_butler.fsm.core.CommandContext;
 import museon_online.astor_butler.fsm.storage.FSMStorage;
+import museon_online.astor_butler.telegram.notification.EventBookingManagerNotifier;
 import museon_online.astor_butler.telegram.utils.TelegramSender;
 import org.springframework.stereotype.Component;
 
@@ -37,6 +39,7 @@ public class EventBookingHandler implements FSMHandler {
     private final FSMStorage storage;
     private final EventBookingDraftStorage draftStorage;
     private final EventBookingService bookingService;
+    private final EventBookingManagerNotifier managerNotifier;
 
     @Override
     public BotState getState() {
@@ -189,7 +192,8 @@ public class EventBookingHandler implements FSMHandler {
     }
 
     private void sendReadyForManager(Long chatId, EventBookingDraft draft) {
-        bookingService.saveReadyForManager(chatId, draft);
+        EventBooking booking = bookingService.saveReadyForManager(chatId, draft);
+        managerNotifier.notifyReadyForManager(booking);
         draftStorage.clear(chatId);
         storage.setState(chatId, BotState.EVENT_BOOKING_READY_FOR_MANAGER);
         sender.sendText(chatId, """
@@ -199,7 +203,8 @@ public class EventBookingHandler implements FSMHandler {
     }
 
     private void escalate(Long chatId, EventBookingDraft draft) {
-        bookingService.saveManagerReview(chatId, draft);
+        EventBooking booking = bookingService.saveManagerReview(chatId, draft);
+        managerNotifier.notifyManagerReview(booking);
         draftStorage.clear(chatId);
         storage.setState(chatId, BotState.EVENT_BOOKING_ESCALATION);
         sender.sendText(chatId, "Передам заявку менеджеру. Он проверит детали и продолжит общение с вами.");

@@ -1,6 +1,8 @@
 astor:
   media:
     menu-dir: ${ASTOR_MEDIA_MENU_DIR:/opt/astor-butler/media/menu/}
+  manager:
+    telegram-chat-id: ${ASTOR_MANAGER_TELEGRAM_CHAT_ID:}
 
 spring:
   data:
