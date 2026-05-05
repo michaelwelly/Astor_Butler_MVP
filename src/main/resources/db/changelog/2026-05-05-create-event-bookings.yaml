@@ -1,0 +1,83 @@
+databaseChangeLog:
+  - changeSet:
+      id: create-event-bookings
+      author: astor-butler
+      preConditions:
+        - onFail: MARK_RAN
+        - onError: CONTINUE
+        - not:
+            tableExists:
+              tableName: event_bookings
+      changes:
+        - createTable:
+            tableName: event_bookings
+            columns:
+              - column:
+                  name: id
+                  type: BIGSERIAL
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: chat_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: status
+                  type: VARCHAR(40)
+                  defaultValue: DRAFT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: event_type
+                  type: TEXT
+              - column:
+                  name: event_date
+                  type: TEXT
+              - column:
+                  name: guest_count
+                  type: TEXT
+              - column:
+                  name: event_format
+                  type: TEXT
+              - column:
+                  name: budget
+                  type: TEXT
+              - column:
+                  name: menu_preferences
+                  type: TEXT
+              - column:
+                  name: technical_requirements
+                  type: TEXT
+              - column:
+                  name: contact_details
+                  type: TEXT
+              - column:
+                  name: client_comment
+                  type: TEXT
+              - column:
+                  name: manager_comment
+                  type: TEXT
+              - column:
+                  name: created_at
+                  type: TIMESTAMP
+                  defaultValueComputed: CURRENT_TIMESTAMP
+              - column:
+                  name: updated_at
+                  type: TIMESTAMP
+                  defaultValueComputed: CURRENT_TIMESTAMP
+
+        - createIndex:
+            tableName: event_bookings
+            indexName: idx_event_bookings_chat_id
+            columns:
+              - column:
+                  name: chat_id
+
+        - createIndex:
+            tableName: event_bookings
+            indexName: idx_event_bookings_status
+            columns:
+              - column:
+                  name: status

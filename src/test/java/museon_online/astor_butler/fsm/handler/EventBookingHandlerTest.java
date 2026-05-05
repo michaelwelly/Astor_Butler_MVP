@@ -2,6 +2,7 @@ package museon_online.astor_butler.fsm.handler;
 
 import museon_online.astor_butler.domain.booking.EventBookingDraft;
 import museon_online.astor_butler.domain.booking.EventBookingDraftStorage;
+import museon_online.astor_butler.domain.booking.EventBookingService;
 import museon_online.astor_butler.fsm.core.BotState;
 import museon_online.astor_butler.fsm.core.CommandContext;
 import museon_online.astor_butler.fsm.storage.FSMStorage;
@@ -12,6 +13,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.contains;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
@@ -22,9 +24,10 @@ class EventBookingHandlerTest {
     private static final long CHAT_ID = 42L;
 
     private final TelegramSender sender = mock(TelegramSender.class);
+    private final EventBookingService bookingService = mock(EventBookingService.class);
     private final InMemoryFSMStorage fsmStorage = new InMemoryFSMStorage();
     private final InMemoryDraftStorage draftStorage = new InMemoryDraftStorage();
-    private final EventBookingHandler handler = new EventBookingHandler(sender, fsmStorage, draftStorage);
+    private final EventBookingHandler handler = new EventBookingHandler(sender, fsmStorage, draftStorage, bookingService);
 
     @Test
     void startsEventBookingFromCommand() {
@@ -77,6 +80,7 @@ class EventBookingHandlerTest {
         handler.handle(ctx("да"));
 
         assertThat(fsmStorage.getState(CHAT_ID)).isEqualTo(BotState.EVENT_BOOKING_READY_FOR_MANAGER);
+        verify(bookingService).saveReadyForManager(eq(CHAT_ID), any(EventBookingDraft.class));
         verify(sender).sendText(eq(CHAT_ID), contains("Заявка собрана"));
     }
 
@@ -107,7 +111,6 @@ class EventBookingHandlerTest {
     private static class InMemoryDraftStorage implements EventBookingDraftStorage {
 
         private final Map<Long, EventBookingDraft> drafts = new HashMap<>();
-
         @Override
         public EventBookingDraft getOrCreate(Long chatId) {
             return drafts.computeIfAbsent(chatId, ignored -> new EventBookingDraft());
