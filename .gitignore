@@ -1,10 +1,20 @@
 .env
+.env.*
+!.env.example
 .DS_Store
 target/
+*.class
+*.jar
+*.war
+*.nar
+*.log
 
+.idea/
+*.iml
 .idea/diff-generator.xml
 
 .codex/
+.codex*/
 .codex_audio_chunks/
 .codex_frames/
 .codex_tmp_hr_screening.wav
