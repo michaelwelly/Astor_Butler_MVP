@@ -48,6 +48,7 @@ server:
 
 telegram:
   bot:
+    enabled: ${TELEGRAM_BOT_ENABLED:false}
     token: ${TELEGRAM_BOT_TOKEN:local-dev-token}
     username: ${TELEGRAM_BOT_USERNAME:astor_local_bot}
   oauth:
