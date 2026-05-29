@@ -37,25 +37,25 @@ public class MediaController {
 
     @GetMapping("/{id}")
     @Operation(summary = "Get media metadata")
-    public ResponseEntity<MediaResponse> get(@PathVariable UUID id) {
+    public ResponseEntity<MediaResponse> get(@PathVariable("id") UUID id) {
         return ResponseEntity.ok(new MediaResponse(id, "stub", "application/octet-stream", null, "READY", Instant.now()));
     }
 
     @PutMapping("/{id}")
     @Operation(summary = "Replace media metadata")
-    public ResponseEntity<MediaResponse> replace(@PathVariable UUID id, @RequestBody MediaUploadRequest request) {
+    public ResponseEntity<MediaResponse> replace(@PathVariable("id") UUID id, @RequestBody MediaUploadRequest request) {
         return ResponseEntity.ok(MediaResponse.from(id, request, "READY"));
     }
 
     @PatchMapping("/{id}")
     @Operation(summary = "Patch media metadata")
-    public ResponseEntity<MediaResponse> patch(@PathVariable UUID id, @RequestBody MediaUploadRequest request) {
+    public ResponseEntity<MediaResponse> patch(@PathVariable("id") UUID id, @RequestBody MediaUploadRequest request) {
         return ResponseEntity.ok(MediaResponse.from(id, request, "READY"));
     }
 
     @DeleteMapping("/{id}")
     @Operation(summary = "Soft-delete media")
-    public ResponseEntity<Void> delete(@PathVariable UUID id) {
+    public ResponseEntity<Void> delete(@PathVariable("id") UUID id) {
         return ResponseEntity.noContent().build();
     }
 

@@ -39,36 +39,36 @@ public class UserController {
 
     @PutMapping("/{id}")
     @Operation(summary = "Replace user profile")
-    public ResponseEntity<UserResponse> replace(@PathVariable UUID id, @RequestBody UserUpsertRequest request) {
+    public ResponseEntity<UserResponse> replace(@PathVariable("id") UUID id, @RequestBody UserUpsertRequest request) {
         return ResponseEntity.ok(new UserResponse(id, request.telegramId(), request.phone(), request.displayName(), "GUEST", Instant.now()));
     }
 
     @GetMapping("/{id}")
     @Operation(summary = "Get user card")
-    public ResponseEntity<UserResponse> get(@PathVariable UUID id) {
+    public ResponseEntity<UserResponse> get(@PathVariable("id") UUID id) {
         return ResponseEntity.ok(new UserResponse(id, null, null, "stub-user", "GUEST", Instant.now()));
     }
 
     @GetMapping
     @Operation(summary = "Search users")
     public ResponseEntity<UserSearchResponse> search(
-            @RequestParam(required = false) String query,
-            @RequestParam(required = false) String role,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size
+            @RequestParam(name = "query", required = false) String query,
+            @RequestParam(name = "role", required = false) String role,
+            @RequestParam(name = "page", defaultValue = "0") int page,
+            @RequestParam(name = "size", defaultValue = "20") int size
     ) {
         return ResponseEntity.ok(new UserSearchResponse(query, role, page, size, List.of()));
     }
 
     @PatchMapping("/{id}/role")
     @Operation(summary = "Change user role")
-    public ResponseEntity<UserResponse> changeRole(@PathVariable UUID id, @RequestBody ChangeRoleRequest request) {
+    public ResponseEntity<UserResponse> changeRole(@PathVariable("id") UUID id, @RequestBody ChangeRoleRequest request) {
         return ResponseEntity.ok(new UserResponse(id, null, null, "stub-user", request.role(), Instant.now()));
     }
 
     @DeleteMapping("/{id}")
     @Operation(summary = "Soft-delete or block user profile")
-    public ResponseEntity<Void> delete(@PathVariable UUID id) {
+    public ResponseEntity<Void> delete(@PathVariable("id") UUID id) {
         return ResponseEntity.noContent().build();
     }
 

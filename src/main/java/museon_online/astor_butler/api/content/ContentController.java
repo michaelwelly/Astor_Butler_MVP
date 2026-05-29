@@ -39,31 +39,31 @@ public class ContentController {
 
     @GetMapping("/{id}")
     @Operation(summary = "Get post")
-    public ResponseEntity<PostResponse> get(@PathVariable UUID id) {
+    public ResponseEntity<PostResponse> get(@PathVariable("id") UUID id) {
         return ResponseEntity.ok(new PostResponse(id, "stub", "", "DRAFT", List.of(), Instant.now()));
     }
 
     @PutMapping("/{id}")
     @Operation(summary = "Replace post")
-    public ResponseEntity<PostResponse> replace(@PathVariable UUID id, @RequestBody PostRequest request) {
+    public ResponseEntity<PostResponse> replace(@PathVariable("id") UUID id, @RequestBody PostRequest request) {
         return ResponseEntity.ok(PostResponse.from(id, request, "DRAFT"));
     }
 
     @PatchMapping("/{id}")
     @Operation(summary = "Patch post")
-    public ResponseEntity<PostResponse> patch(@PathVariable UUID id, @RequestBody PostRequest request) {
+    public ResponseEntity<PostResponse> patch(@PathVariable("id") UUID id, @RequestBody PostRequest request) {
         return ResponseEntity.ok(PostResponse.from(id, request, "DRAFT"));
     }
 
     @PostMapping("/{id}/publish")
     @Operation(summary = "Publish post")
-    public ResponseEntity<ApiCommandResponse> publish(@PathVariable UUID id) {
+    public ResponseEntity<ApiCommandResponse> publish(@PathVariable("id") UUID id) {
         return ResponseEntity.accepted().body(ApiCommandResponse.accepted("POST_PUBLISH_ACCEPTED"));
     }
 
     @DeleteMapping("/{id}")
     @Operation(summary = "Archive post")
-    public ResponseEntity<Void> delete(@PathVariable UUID id) {
+    public ResponseEntity<Void> delete(@PathVariable("id") UUID id) {
         return ResponseEntity.noContent().build();
     }
 

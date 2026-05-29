@@ -39,13 +39,13 @@ public class IntegrationController {
 
     @PutMapping("/{id}")
     @Operation(summary = "Replace integration config")
-    public ResponseEntity<IntegrationResponse> replace(@PathVariable UUID id, @RequestBody IntegrationRequest request) {
+    public ResponseEntity<IntegrationResponse> replace(@PathVariable("id") UUID id, @RequestBody IntegrationRequest request) {
         return ResponseEntity.ok(IntegrationResponse.from(id, request, "DISCONNECTED"));
     }
 
     @PatchMapping("/{id}")
     @Operation(summary = "Patch integration config")
-    public ResponseEntity<IntegrationResponse> patch(@PathVariable UUID id, @RequestBody IntegrationRequest request) {
+    public ResponseEntity<IntegrationResponse> patch(@PathVariable("id") UUID id, @RequestBody IntegrationRequest request) {
         return ResponseEntity.ok(IntegrationResponse.from(id, request, "DISCONNECTED"));
     }
 
@@ -63,7 +63,7 @@ public class IntegrationController {
 
     @DeleteMapping("/{id}")
     @Operation(summary = "Delete integration config")
-    public ResponseEntity<Void> delete(@PathVariable UUID id) {
+    public ResponseEntity<Void> delete(@PathVariable("id") UUID id) {
         return ResponseEntity.noContent().build();
     }
 

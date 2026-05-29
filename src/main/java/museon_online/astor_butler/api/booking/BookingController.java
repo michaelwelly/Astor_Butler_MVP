@@ -34,42 +34,42 @@ public class BookingController {
 
     @GetMapping("/{id}")
     @Operation(summary = "Get booking request")
-    public ResponseEntity<BookingResponse> get(@PathVariable UUID id) {
+    public ResponseEntity<BookingResponse> get(@PathVariable("id") UUID id) {
         return ResponseEntity.ok(BookingResponse.stub(id));
     }
 
     @PutMapping("/{id}")
     @Operation(summary = "Replace booking request")
-    public ResponseEntity<BookingResponse> replace(@PathVariable UUID id, @RequestBody BookingCreateRequest request) {
+    public ResponseEntity<BookingResponse> replace(@PathVariable("id") UUID id, @RequestBody BookingCreateRequest request) {
         return ResponseEntity.ok(BookingResponse.created(id, request));
     }
 
     @GetMapping
     @Operation(summary = "Search booking requests")
     public ResponseEntity<BookingSearchResponse> search(
-            @RequestParam(required = false) String status,
-            @RequestParam(required = false) String query,
-            @RequestParam(required = false) LocalDate from,
-            @RequestParam(required = false) LocalDate to
+            @RequestParam(name = "status", required = false) String status,
+            @RequestParam(name = "query", required = false) String query,
+            @RequestParam(name = "from", required = false) LocalDate from,
+            @RequestParam(name = "to", required = false) LocalDate to
     ) {
         return ResponseEntity.ok(new BookingSearchResponse(status, query, from, to, List.of()));
     }
 
     @PatchMapping("/{id}/status")
     @Operation(summary = "Change booking status")
-    public ResponseEntity<BookingResponse> changeStatus(@PathVariable UUID id, @RequestBody ChangeBookingStatusRequest request) {
+    public ResponseEntity<BookingResponse> changeStatus(@PathVariable("id") UUID id, @RequestBody ChangeBookingStatusRequest request) {
         return ResponseEntity.ok(BookingResponse.stub(id).withStatus(request.status()));
     }
 
     @PostMapping("/{id}/manager-notes")
     @Operation(summary = "Add manager note")
-    public ResponseEntity<ManagerNoteResponse> addManagerNote(@PathVariable UUID id, @RequestBody ManagerNoteRequest request) {
+    public ResponseEntity<ManagerNoteResponse> addManagerNote(@PathVariable("id") UUID id, @RequestBody ManagerNoteRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED).body(new ManagerNoteResponse(UUID.randomUUID(), id, request.note(), Instant.now()));
     }
 
     @DeleteMapping("/{id}")
     @Operation(summary = "Cancel or soft-delete booking request")
-    public ResponseEntity<Void> delete(@PathVariable UUID id) {
+    public ResponseEntity<Void> delete(@PathVariable("id") UUID id) {
         return ResponseEntity.noContent().build();
     }
 

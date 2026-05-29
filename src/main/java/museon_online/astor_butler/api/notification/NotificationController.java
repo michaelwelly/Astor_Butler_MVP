@@ -44,19 +44,19 @@ public class NotificationController {
 
     @PutMapping("/{id}")
     @Operation(summary = "Replace notification read model")
-    public ResponseEntity<NotificationResponse> replace(@PathVariable UUID id, @RequestBody NotificationRequest request) {
+    public ResponseEntity<NotificationResponse> replace(@PathVariable("id") UUID id, @RequestBody NotificationRequest request) {
         return ResponseEntity.ok(NotificationResponse.from(id, request, false));
     }
 
     @PatchMapping("/{id}/read")
     @Operation(summary = "Mark notification as read")
-    public ResponseEntity<NotificationResponse> read(@PathVariable UUID id) {
+    public ResponseEntity<NotificationResponse> read(@PathVariable("id") UUID id) {
         return ResponseEntity.ok(new NotificationResponse(id, null, "READ", true, Instant.now()));
     }
 
     @DeleteMapping("/{id}")
     @Operation(summary = "Delete notification")
-    public ResponseEntity<Void> delete(@PathVariable UUID id) {
+    public ResponseEntity<Void> delete(@PathVariable("id") UUID id) {
         return ResponseEntity.noContent().build();
     }
 

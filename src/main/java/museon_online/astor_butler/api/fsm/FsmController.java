@@ -35,25 +35,25 @@ public class FsmController {
 
     @GetMapping("/users/{userId}/state")
     @Operation(summary = "Get current user FSM state")
-    public ResponseEntity<FsmStateResponse> state(@PathVariable UUID userId) {
+    public ResponseEntity<FsmStateResponse> state(@PathVariable("userId") UUID userId) {
         return ResponseEntity.ok(new FsmStateResponse(userId, "SAFE_IDLE", Map.of(), Instant.now()));
     }
 
     @PostMapping("/users/{userId}/reset")
     @Operation(summary = "Reset scenario to safe state")
-    public ResponseEntity<FsmStateResponse> reset(@PathVariable UUID userId) {
+    public ResponseEntity<FsmStateResponse> reset(@PathVariable("userId") UUID userId) {
         return ResponseEntity.accepted().body(new FsmStateResponse(userId, "SAFE_IDLE", Map.of("reset", "true"), Instant.now()));
     }
 
     @PutMapping("/users/{userId}/state")
     @Operation(summary = "Replace user FSM state for internal recovery tools")
-    public ResponseEntity<FsmStateResponse> replaceState(@PathVariable UUID userId, @RequestBody FsmStateRequest request) {
+    public ResponseEntity<FsmStateResponse> replaceState(@PathVariable("userId") UUID userId, @RequestBody FsmStateRequest request) {
         return ResponseEntity.ok(new FsmStateResponse(userId, request.state(), request.context(), Instant.now()));
     }
 
     @DeleteMapping("/users/{userId}/state")
     @Operation(summary = "Delete user FSM state and return to safe idle")
-    public ResponseEntity<Void> deleteState(@PathVariable UUID userId) {
+    public ResponseEntity<Void> deleteState(@PathVariable("userId") UUID userId) {
         return ResponseEntity.noContent().build();
     }
 

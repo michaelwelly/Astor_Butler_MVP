@@ -45,25 +45,25 @@ public class ManagerController {
 
     @PutMapping("/tasks/{id}")
     @Operation(summary = "Replace manager task")
-    public ResponseEntity<ManagerTaskResponse> replaceTask(@PathVariable UUID id, @RequestBody ManagerTaskRequest request) {
+    public ResponseEntity<ManagerTaskResponse> replaceTask(@PathVariable("id") UUID id, @RequestBody ManagerTaskRequest request) {
         return ResponseEntity.ok(ManagerTaskResponse.from(id, request, "OPEN"));
     }
 
     @PatchMapping("/tasks/{id}")
     @Operation(summary = "Patch manager task")
-    public ResponseEntity<ManagerTaskResponse> patchTask(@PathVariable UUID id, @RequestBody ManagerTaskRequest request) {
+    public ResponseEntity<ManagerTaskResponse> patchTask(@PathVariable("id") UUID id, @RequestBody ManagerTaskRequest request) {
         return ResponseEntity.ok(ManagerTaskResponse.from(id, request, "OPEN"));
     }
 
     @PostMapping("/tasks/{id}/complete")
     @Operation(summary = "Complete manager task")
-    public ResponseEntity<ApiCommandResponse> completeTask(@PathVariable UUID id) {
+    public ResponseEntity<ApiCommandResponse> completeTask(@PathVariable("id") UUID id) {
         return ResponseEntity.accepted().body(ApiCommandResponse.accepted("MANAGER_TASK_COMPLETE_ACCEPTED"));
     }
 
     @DeleteMapping("/tasks/{id}")
     @Operation(summary = "Delete manager task")
-    public ResponseEntity<Void> deleteTask(@PathVariable UUID id) {
+    public ResponseEntity<Void> deleteTask(@PathVariable("id") UUID id) {
         return ResponseEntity.noContent().build();
     }
 

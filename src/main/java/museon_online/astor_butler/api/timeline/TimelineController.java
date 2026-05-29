@@ -26,13 +26,13 @@ public class TimelineController {
 
     @GetMapping("/users/{userId}")
     @Operation(summary = "Get user timeline")
-    public ResponseEntity<PageResponse<TimelineEventResponse>> userTimeline(@PathVariable UUID userId) {
+    public ResponseEntity<PageResponse<TimelineEventResponse>> userTimeline(@PathVariable("userId") UUID userId) {
         return ResponseEntity.ok(PageResponse.empty(0, 20));
     }
 
     @GetMapping("/bookings/{bookingId}")
     @Operation(summary = "Get booking timeline")
-    public ResponseEntity<PageResponse<TimelineEventResponse>> bookingTimeline(@PathVariable UUID bookingId) {
+    public ResponseEntity<PageResponse<TimelineEventResponse>> bookingTimeline(@PathVariable("bookingId") UUID bookingId) {
         return ResponseEntity.ok(PageResponse.empty(0, 20));
     }
 
@@ -44,19 +44,19 @@ public class TimelineController {
 
     @PutMapping("/events/{id}")
     @Operation(summary = "Replace timeline event read-model metadata")
-    public ResponseEntity<TimelineEventResponse> replace(@PathVariable UUID id, @RequestBody TimelineEventRequest request) {
+    public ResponseEntity<TimelineEventResponse> replace(@PathVariable("id") UUID id, @RequestBody TimelineEventRequest request) {
         return ResponseEntity.ok(TimelineEventResponse.created(id, request));
     }
 
     @PatchMapping("/events/{id}")
     @Operation(summary = "Patch timeline event metadata")
-    public ResponseEntity<TimelineEventResponse> patch(@PathVariable UUID id, @RequestBody Map<String, Object> patch) {
+    public ResponseEntity<TimelineEventResponse> patch(@PathVariable("id") UUID id, @RequestBody Map<String, Object> patch) {
         return ResponseEntity.ok(new TimelineEventResponse(id, null, "PATCHED", patch, Instant.now()));
     }
 
     @DeleteMapping("/events/{id}")
     @Operation(summary = "Soft-delete timeline event from read model")
-    public ResponseEntity<Void> delete(@PathVariable UUID id) {
+    public ResponseEntity<Void> delete(@PathVariable("id") UUID id) {
         return ResponseEntity.noContent().build();
     }
 
