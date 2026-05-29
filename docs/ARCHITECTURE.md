@@ -476,10 +476,32 @@ Local Docker Compose поднимает:
 - Redis;
 - MongoDB;
 - Kafka-compatible broker for local tests;
-- Ollama;
+- MinIO S3-compatible object storage;
 - Prometheus;
 - Grafana;
-- опционально приложение через `--profile app`.
+- опционально Ollama/local LLM через `--profile ai`.
+
+The Spring Boot application is intentionally started locally from IDE or Maven, not inside Docker Compose. This keeps Swagger/API development fast and lets the backend connect to Dockerized dependencies through `localhost`.
+
+Local dependency stack:
+
+```bash
+docker compose up -d
+```
+
+Local backend startup:
+
+```bash
+scripts/run_local_app.sh
+```
+
+After local backend startup:
+
+- Swagger UI: `http://localhost:8080/swagger-ui/index.html`;
+- OpenAPI JSON: `http://localhost:8080/v3/api-docs`;
+- metrics: `http://localhost:8080/actuator/prometheus`.
+
+Ollama is intentionally excluded from the default local infrastructure profile. Heavy local models can take tens of gigabytes and should not block PostgreSQL, Redis, MongoDB, Kafka, MinIO, Prometheus or Grafana startup.
 
 `.env.example` хранит безопасный шаблон переменных. Реальный `.env` не коммитится.
 
