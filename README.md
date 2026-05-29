@@ -165,6 +165,38 @@ Ollama/local LLM не входит в default compose-профиль и вклю
 
 ---
 
+## 🧪 Локальный запуск и проверка API
+
+Локальная схема: инфраструктура поднимается в Docker Compose, а один инстанс Spring Boot запускается прямо на машине разработчика.
+
+```bash
+cp .env.local.example .env.local
+docker compose up -d postgres redis ollama
+scripts/run_local_app.sh
+```
+
+Swagger UI:
+
+```text
+http://localhost:8080/swagger-ui/index.html
+```
+
+Быстрая проверка REST API и Swagger/OpenAPI:
+
+```bash
+scripts/run_k6_smoke.sh
+```
+
+Первый небольшой read-load сценарий:
+
+```bash
+scripts/run_k6_read_load.sh
+```
+
+Детали профиля, переменных окружения и k6-сценариев описаны в [docs/LOAD_TESTING.md](docs/LOAD_TESTING.md).
+
+---
+
 ## 📚 Научный фундамент
 
 Проект основан на исследовании методом **Grounded Theory**  

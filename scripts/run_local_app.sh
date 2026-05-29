@@ -1,14 +1,23 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-if [[ -f .env ]]; then
-  set -a
-  # shellcheck disable=SC1091
-  source .env
-  set +a
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+ENV_FILE="${1:-$ROOT_DIR/.env.local}"
+
+if [[ ! -f "$ENV_FILE" && -f "$ROOT_DIR/.env" ]]; then
+  ENV_FILE="$ROOT_DIR/.env"
 fi
 
-export SPRING_PROFILES_ACTIVE="${SPRING_PROFILES_ACTIVE:-test}"
+if [[ -f "$ENV_FILE" ]]; then
+  set -a
+  # shellcheck disable=SC1090
+  source "$ENV_FILE"
+  set +a
+else
+  echo "No .env.local file found. Using local defaults."
+fi
+
+export SPRING_PROFILES_ACTIVE="${SPRING_PROFILES_ACTIVE:-local}"
 export SERVER_PORT="${SERVER_PORT:-8080}"
 
 export POSTGRES_PORT="${POSTGRES_PORT:-5434}"
@@ -42,4 +51,5 @@ export S3_BUCKET_DOCUMENTS="${S3_BUCKET_DOCUMENTS:-astor-documents}"
 export JAVA_HOME="${ASTOR_JAVA_HOME:-/Users/michaelwelly/Library/Java/JavaVirtualMachines/jbrsdk_jcef-21.0.10/Contents/Home}"
 export PATH="${JAVA_HOME}/bin:${PATH}"
 
+cd "$ROOT_DIR"
 mvn spring-boot:run

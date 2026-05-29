@@ -1,0 +1,66 @@
+astor:
+  media:
+    menu-dir: ${ASTOR_MEDIA_MENU_DIR:./media/menu/}
+
+spring:
+  config:
+    activate:
+      on-profile: local
+
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:}
+
+  datasource:
+    url: ${POSTGRES_URL:jdbc:postgresql://localhost:5434/astor_butler_test}
+    username: ${POSTGRES_USER:astor}
+    password: ${POSTGRES_PASSWORD:astor}
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: none
+    open-in-view: false
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: false
+
+  liquibase:
+    change-log: ${SPRING_LIQUIBASE_CHANGE_LOG:classpath:/db/changelog/changelog-master.yaml}
+    enabled: true
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      probes:
+        enabled: true
+      show-details: when_authorized
+
+server:
+  port: ${SERVER_PORT:8080}
+
+telegram:
+  bot:
+    token: ${TELEGRAM_BOT_TOKEN:local-dev-token}
+    username: ${TELEGRAM_BOT_USERNAME:astor_local_bot}
+  oauth:
+    client-id: ${TELEGRAM_CLIENT_ID:local-telegram-client}
+    redirect-uri: ${TELEGRAM_REDIRECT_URI:http://localhost:8080/auth/telegram/callback}
+
+llm:
+  ollama:
+    base-url: ${LLM_OLLAMA_BASE_URL:http://localhost:11434}
+    model: ${LLM_OLLAMA_MODEL:qwen2.5:1.5b}
+
+yandex:
+  ai:
+    agent-endpoint: ${YANDEX_AGENT_ENDPOINT:https://ai.api.cloud.yandex.net/v1/agents/fvt51f9cslgi648vvg35:execute}
+    folder-id: ${YANDEX_FOLDER_ID:b1glau5tifq7ttbeb2fa}
+    iam-token: ${YANDEX_IAM_TOKEN:local-dev-token}
