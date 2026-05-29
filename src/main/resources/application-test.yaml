@@ -1,0 +1,27 @@
+spring:
+  config:
+    activate:
+      on-profile: test
+
+  datasource:
+    url: ${POSTGRES_URL:jdbc:postgresql://localhost:5434/astor_butler_test}
+    username: ${POSTGRES_USER:astor}
+    password: ${POSTGRES_PASSWORD:astor}
+
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:}
+    mongodb:
+      uri: ${MONGODB_URI:mongodb://localhost:27017/astor_butler_documents_test}
+
+logging:
+  level:
+    root: INFO
+    museon_online.astor_butler: DEBUG
+
+llm:
+  ollama:
+    base-url: ${OLLAMA_BASE_URL:http://localhost:11434}
+    model: ${OLLAMA_MODEL:qwen2.5:1.5b}

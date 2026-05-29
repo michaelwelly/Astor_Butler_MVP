@@ -28,8 +28,12 @@ public class TelegramRouter {
     public void handle(Update update, AbsSender sender) {
         try {
 
-            // Architecture entrypoint: Update → InboundEvent → FSM
-            processInboundEvent(update);
+            // Architecture entrypoint: Update → InboundEvent → idempotency gate.
+            // The legacy CommandContext route below is still the active FSM path,
+            // so a duplicate event must stop here before it reaches handlers.
+            if (!processInboundEvent(update)) {
+                return;
+            }
 
             // ⬇️ Старый код — без изменений
             CommandContext ctx = CommandContext.from(update);
@@ -64,13 +68,13 @@ public class TelegramRouter {
             exceptionHandler.handle(update, e, sender);
         }
     }
-    private void processInboundEvent(Update update) {
+    private boolean processInboundEvent(Update update) {
         try {
             InboundEvent inboundEvent = InboundEvent.from(update);
 
             if (inboundEvent == null) {
                 log.debug("📭 [PIPELINE] Update ignored (cannot be mapped to InboundEvent)");
-                return;
+                return true;
             }
 
             boolean accepted = idempotencyGuard.accept(inboundEvent);
@@ -80,7 +84,7 @@ public class TelegramRouter {
                         inboundEvent.getEventId(),
                         inboundEvent.getChatId()
                 );
-                return;
+                return false;
             }
 
             log.info(
@@ -94,9 +98,11 @@ public class TelegramRouter {
             // этот вызов будет подключён на следующем шаге
             // FSMRouter fsmRouter = fsmRouterProvider.getObject();
             // fsmRouter.handle(inboundEvent);
+            return true;
 
         } catch (Exception e) {
             log.error("💥 [PIPELINE] Error while processing inbound event", e);
+            return true;
         }
     }
 }

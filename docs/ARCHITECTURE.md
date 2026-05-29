@@ -23,7 +23,7 @@ flowchart LR
 
     Rest["REST API<br/>Swagger / OpenAPI"]
     KafkaIn["Kafka Listener<br/>Consumer / Producer"]
-    Grpc["Internal gRPC<br/>module-to-module calls"]
+    Services["Service Layer / gRPC Boundary<br/>module-to-module calls"]
 
     FSM["FSM Core / Orchestration Layer<br/>single source of truth"]
     AI["AI Adapter<br/>intent parsing / entity extraction"]
@@ -35,8 +35,10 @@ flowchart LR
     Timeline["Timeline Domain"]
     Manager["Manager Domain"]
     Notify["Notifications Domain"]
+    Capability["Capability Extensions<br/>Memory / Preference / Tips / Guide / Play / Safety"]
 
     Pg["PostgreSQL<br/>JDBC / Liquibase"]
+    Mongo["MongoDB<br/>internal documents / flexible metadata"]
     Redis["Redis<br/>FSM hot context / idempotency / cache / short queues"]
     S3["S3-compatible Object Storage<br/>video / photo / docs / menu / media"]
     Kafka["Kafka / RabbitMQ / Artemis<br/>events / audit / analytics / notifications"]
@@ -54,15 +56,23 @@ flowchart LR
     KafkaIn --> FSM
     Rest --> FSM
     FSM --> AI
-    FSM --> Grpc
+    FSM --> Services
 
-    Grpc --> User
-    Grpc --> Booking
-    Grpc --> Content
-    Grpc --> Media
-    Grpc --> Timeline
-    Grpc --> Manager
-    Grpc --> Notify
+    Services --> User
+    Services --> Booking
+    Services --> Content
+    Services --> Media
+    Services --> Timeline
+    Services --> Manager
+    Services --> Notify
+    Services --> Capability
+
+    Capability --> User
+    Capability --> Booking
+    Capability --> Content
+    Capability --> Media
+    Capability --> Timeline
+    Capability --> Notify
 
     User --> Pg
     Booking --> Pg
@@ -70,6 +80,8 @@ flowchart LR
     Timeline --> Pg
     Manager --> Pg
     Media --> S3
+    Media --> Mongo
+    Content --> Mongo
 
     FSM --> Redis
     User --> Redis
@@ -77,6 +89,8 @@ flowchart LR
     Booking --> Kafka
     Timeline --> Kafka
     Notify --> Kafka
+    Capability --> Redis
+    Capability --> Kafka
     Content --> Search
 
     Rest --> Obs
@@ -152,17 +166,17 @@ WordPress/Headless CMS не является целевой backend-архите
 - Prometheus metrics endpoint;
 - readiness/liveness probes для Kubernetes/OpenShift.
 
-### Internal Boundary
+### Service Layer / gRPC Boundary
 
-Внутреннее взаимодействие backend-модулей проектируется через gRPC:
+Внутреннее взаимодействие backend-модулей проектируется через service layer. Для межмодульных и будущих межсервисных вызовов используется gRPC boundary:
 
-- `UserInternalService`;
-- `BookingInternalService`;
-- `ContentInternalService`;
-- `MediaInternalService`;
-- `TimelineInternalService`;
-- `ManagerInternalService`;
-- `NotificationInternalService`.
+- `UserService`;
+- `BookingService`;
+- `ContentService`;
+- `MediaService`;
+- `TimelineService`;
+- `ManagerService`;
+- `NotificationService`.
 
 REST API не должен напрямую размазывать бизнес-логику по контроллерам. Контроллеры принимают запрос, валидируют контракт и передают команду в application/FSM/orchestration layer.
 
@@ -192,6 +206,7 @@ AI Adapter не является источником бизнес-правил.
 
 ## Domain Modules
 
+- `Auth` - authorization language, permissions, JWT claims mapping, access decisions. Auth is separate from User.
 - `User` - профиль, роли, идентичность, связки Telegram/web.
 - `Booking` - заявки, мероприятия, статусы, менеджерская обработка.
 - `Content` - посты, афиши, promo blocks, SEO metadata, draft/published/archived state.
@@ -201,6 +216,82 @@ AI Adapter не является источником бизнес-правил.
 - `Notifications` - Telegram/CRM/email/event notifications.
 
 Доменные модули не содержат Telegram-логики и не должны напрямую зависеть от UI.
+
+## Capability Extensions
+
+Capability modules are product-level extension points above the core domains. MVP creates package boundaries and integration contracts, but does not implement full business logic for every capability in the first iteration.
+
+| Pain axis | Capability module | MVP responsibility | Depends on |
+| --- | --- | --- | --- |
+| Identity | `Memory Engine` | recognize returning guests by phone, profile and preference history | User, Booking, Timeline |
+| Personalization | `Preference Map` | prepare "as last time" suggestions | User, Booking, Content, Timeline |
+| Gratitude | `Smart Tip` | digital tips and gratitude scenario tracking | User, Booking, Timeline, Notifications |
+| Information support | `Quiet Guide` | menus, posters and useful info without spam | Content, Media, Redis |
+| Social impact | `Hidden Heart` | anonymous donation extension point | User, Timeline, Notifications |
+| Game experience | `Safe Play` | mini-scenarios with immediate exit | FSM, Timeline, Panic Exit |
+| Time management | `Slot Keeper` | slot reminders and time-window coordination | Booking, Timeline, Notifications |
+| Safety | `Panic Exit` | immediate scenario termination and safe state recovery | FSM, Redis, Timeline |
+
+Optional external blocks for post-MVP:
+
+- `Direct Channel Hub` - direct API boundary for guest-to-PMS interaction.
+- `Arena Reboot Engine` - hotel-to-stadium scenarios.
+- `Consent Vault` - consent storage/export for GDPR, PDPA, PIPL and 152-FZ.
+- `Impact Meter` - cultural KPI and reporting boundary.
+
+Capability modules must communicate through application services/FSM and domain events. They do not bypass auth, idempotency guard or persistence constraints.
+
+## Package Map
+
+High-level diagram выше является context map. Для разработки используется package map:
+
+### API boundary packages
+
+- `api.auth` - OAuth2/OIDC, JWT, login/logout/current principal endpoints.
+- `api.user` - user profiles, roles, lookup.
+- `api.fsm` - FSM events, state read model and safe reset.
+- `api.booking` - booking requests, statuses, manager notes.
+- `api.timeline` - user, booking, manager and system timelines.
+- `api.content` - posts, afisha, promo blocks, SEO content.
+- `api.media` - upload, media metadata, file links.
+- `api.manager` - dashboard, tasks, escalation workflow.
+- `api.notification` - notification read model and test commands.
+- `api.integration` - Gmail, CRM, analytics and external integrations.
+- `api.observability` - internal health/readiness/liveness/metrics boundary.
+
+### Domain packages
+
+- `domain.auth` - permissions, role mapping and access decisions.
+- `domain.user` - user profile and user business data.
+- `domain.booking` - first production domain after user/auth skeleton.
+- `domain.content` - posts, afisha and promo content.
+- `domain.media` - S3 metadata and file-to-entity links.
+- `domain.timeline` - immutable events and user/manager history.
+- `domain.manager` - dashboard and operational workflows.
+- `domain.notification` - notification commands and delivery state.
+- `domain.document` - internal documents, MongoDB metadata and parsing state.
+
+### Service packages
+
+- `service` - application service layer. Controllers stay thin and call services.
+- `service.grpc` - future gRPC boundary implementations.
+
+### Capability packages
+
+- `capability.memory` - Memory Engine.
+- `capability.preference` - Preference Map.
+- `capability.smarttip` - Smart Tip.
+- `capability.quietguide` - Quiet Guide.
+- `capability.hiddenheart` - Hidden Heart.
+- `capability.safeplay` - Safe Play.
+- `capability.slotkeeper` - Slot Keeper.
+- `capability.panicexit` - Panic Exit.
+- `capability.directchannel` - Direct Channel Hub extension point.
+- `capability.arenareboot` - Arena Reboot Engine extension point.
+- `capability.consent` - Consent Vault extension point.
+- `capability.impact` - Impact Meter extension point.
+
+These packages are intentionally thin at MVP start. They give the team stable places for future scenario logic, contracts, metrics and domain-event handlers without polluting CRUD/API packages.
 
 ## Data Layer
 
@@ -219,6 +310,29 @@ PostgreSQL - основная СУБД для:
 - связей между сущностями.
 
 Persistence strategy: JDBC without JPA/Hibernate. Причина: явный контроль SQL, транзакций, индексов и performance-critical запросов. Миграции схемы - Liquibase.
+
+PostgreSQL design rules:
+
+- primary/master принимает write traffic;
+- read replicas/slaves используются для read-heavy аналитики и dashboard-запросов;
+- таблицы получают понятные имена в предметной области;
+- связи `one-to-many`, `many-to-one` и `many-to-many` выражаются явными foreign keys и join tables;
+- constraints защищают базу от невалидного состояния;
+- индексы создаются по селективным полям и реальным query patterns;
+- аналитические запросы не должны ломать OLTP-контур;
+- схема мигрируется через Liquibase changesets.
+
+### MongoDB
+
+MongoDB выделяется отдельно для внутренних документов и гибких document-like данных:
+
+- загруженные внутренние документы;
+- metadata документов;
+- промежуточные распознавания/парсинг файлов;
+- обезличенные примеры материалов;
+- гибкие структуры, которые не должны раздувать PostgreSQL schema.
+
+MongoDB не заменяет PostgreSQL как основную СУБД. Связь с бизнес-сущностями хранится через stable IDs и metadata references.
 
 ### Redis
 
@@ -341,6 +455,34 @@ Quality gates:
 
 Цель - максимальное покрытие business-critical кода. Формальный процент coverage утверждается после выделения слоев, где покрытие действительно отражает качество, а не декоративную метрику.
 
+## Runtime Profiles And Local Environment
+
+Spring profiles:
+
+- `test` - локальная разработка и быстрая проверка через Docker Compose;
+- `preprod` - предпродовая среда с внешними managed-сервисами и production-like настройками;
+- `prod` - production environment.
+
+Config files:
+
+- `application.yaml` - базовая конфигурация и defaults;
+- `application-test.yaml` - локальный профиль;
+- `application-preprod.yaml` - preprod profile;
+- `application-prod.yaml` - prod profile.
+
+Local Docker Compose поднимает:
+
+- PostgreSQL;
+- Redis;
+- MongoDB;
+- Kafka-compatible broker for local tests;
+- Ollama;
+- Prometheus;
+- Grafana;
+- опционально приложение через `--profile app`.
+
+`.env.example` хранит безопасный шаблон переменных. Реальный `.env` не коммитится.
+
 ## Sequence Diagram
 
 ```mermaid
@@ -354,7 +496,7 @@ sequenceDiagram
     participant Idem as Idempotency Guard
     participant FSM as FSM Core
     participant AI as AI Adapter
-    participant Grpc as Internal gRPC Services
+    participant Services as Service Layer / gRPC Boundary
     participant Booking as Booking Domain
     participant DB as PostgreSQL
     participant Redis as Redis
@@ -374,8 +516,8 @@ sequenceDiagram
     FSM->>AI: intent parsing / entity extraction
     AI-->>FSM: intent and entities
     FSM->>Redis: load current state and draft
-    FSM->>Grpc: call BookingInternalService
-    Grpc->>Booking: update booking draft/request
+    FSM->>Services: call BookingService
+    Services->>Booking: update booking draft/request
     Booking->>DB: persist booking and status
     Booking->>S3: attach media if exists
     Booking->>Bus: publish BookingReadyForManager
@@ -385,3 +527,17 @@ sequenceDiagram
     Gateway-->>Manager: dashboard update
     Tg-->>Guest: Telegram response
 ```
+
+## Current Implementation Status
+
+Текущий код в `main` частично отстает от целевой архитектуры:
+
+- Telegram `Update -> TelegramRouter -> CommandContext -> FSMRouter` уже работает как основной путь.
+- `InboundEvent` и `IdempotencyGuard` уже есть.
+- Duplicate text events теперь останавливаются в `TelegramRouter` до legacy FSM route.
+- `IdempotencyService` пока in-memory; целевое состояние - Redis-backed guard.
+- `FSMRouter.handle(InboundEvent)` существует, но полноценный `InboundEvent -> FSM -> response DTO` путь еще не является основным.
+- AI Adapter как контракт пока не реализован полноценно: есть `AIInterpreter`, `OllamaClient` и старые Alisa-классы, но нет единого production adapter для intent/entity extraction.
+- `pom.xml` пока содержит JPA/Hibernate/Actuator dependencies; целевое состояние - JDBC without JPA/Hibernate и Prometheus/observability stack.
+- Keycloak/JWT Stateless пока не подключен в коде: `SecurityConfig` временно разрешает большую часть запросов.
+- Booking domain в `main` еще не вынесен как первый production-домен; его нужно строить после User/service/data layer.
