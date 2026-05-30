@@ -86,12 +86,7 @@ def classify(path: Path) -> str:
 
 
 def object_key_for(media_type: str, relative_path: Path) -> str:
-    safe_parts = [slug(part) for part in relative_path.parts]
-    return "/".join(["raw", *safe_parts])
-
-
-def slug(value: str) -> str:
-    return value.strip().replace("\\", "/").replace(" ", "_")
+    return "/".join(["raw", *relative_path.parts])
 
 
 def tags_for(relative_path: Path, media_type: str) -> list[str]:

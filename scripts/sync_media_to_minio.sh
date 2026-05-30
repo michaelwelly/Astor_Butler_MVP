@@ -19,7 +19,8 @@ docker compose up -d minio minio-init
 docker run --rm \
   --network "${NETWORK}" \
   -v "${SOURCE_DIR}:/source:ro" \
+  --entrypoint sh \
   minio/mc:RELEASE.2025-04-16T18-13-26Z \
-  sh -c "mc alias set astor '${ENDPOINT}' '${ACCESS_KEY}' '${SECRET_KEY}' && mc mb --ignore-existing astor/'${BUCKET}' && mc mirror --overwrite /source astor/'${BUCKET}'/raw"
+  -c "mc alias set astor '${ENDPOINT}' '${ACCESS_KEY}' '${SECRET_KEY}' && mc mb --ignore-existing astor/'${BUCKET}' && mc mirror --overwrite --exclude '.DS_Store' /source astor/'${BUCKET}'/raw"
 
 echo "Synced ${SOURCE_DIR} to s3://${BUCKET}/raw"
