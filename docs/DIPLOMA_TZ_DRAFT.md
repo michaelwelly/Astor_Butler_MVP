@@ -302,7 +302,7 @@ Frontend должен отправлять:
 
 ### Назначение
 
-Отдельный публичный frontend-контур нужен для презентации production-истории Astor Butler, рекламы System Design / JavaGuru-материалов и генерации лидов. Это immersive digital experience, который должен быстро объяснять ценность проекта, показывать архитектуру, подводить зрителя к курсу и собирать заявки после ссылки под видео.
+Отдельный публичный frontend-контур C3FLEX.com нужен для презентации production-истории Astor Butler/C3AG, рекламы System Design / JavaGuru-материалов и генерации лидов. Это immersive digital experience, который должен быстро объяснять ценность проекта, показывать архитектуру, подводить зрителя к курсу и собирать заявки после ссылки под видео.
 
 Этот контур не заменяет manager web app. Он работает как публичная витрина и lead capture layer, а все лиды, события, видео и контент проходят через общий backend-контур Astor Butler.
 
@@ -315,6 +315,16 @@ Frontend должен отправлять:
 - Lenis smooth scroll.
 - Adaptive layout for desktop/tablet/mobile.
 - SEO-friendly routing and metadata.
+
+### C3FLEX.com portfolio taxonomy
+
+Верхний уровень каталога:
+
+- Event Stories;
+- Reels & Product Content;
+- Commercials.
+
+Папки из Яндекс.Диска внутри `ПОРТФОЛИО / VIDEO C3AG` используются как вложенные категории внутри этих трех веток. В локальном MVP frontend работает с тремя видео: по одному видео на каждую верхнюю категорию. Все 102 файла разрешены для публичного показа после курации, но полный перенос в S3/Object Storage выполняется только на production/cloud этапе.
 
 ### Backend для promo-контура
 
@@ -362,7 +372,7 @@ Frontend должен поддерживать:
 ### Интеграции
 
 - Telegram: lead handoff, notification to manager/admin, CTA to bot.
-- CRM: отправка лидов и статусов обработки.
+- CRM: отправка лидов и статусов обработки на следующем этапе; первая версия стартует с Telegram/email.
 - Google Analytics.
 - Яндекс Метрика.
 - Vimeo.

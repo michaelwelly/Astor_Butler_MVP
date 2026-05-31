@@ -1,12 +1,13 @@
-# C3AG Frontend Technical Brief
+# C3FLEX.com Frontend Technical Brief
 
 Status: checked against the Notion TZ on 2026-05-31.
+Decisions updated on 2026-05-31 after product clarification.
 
 Source: https://www.notion.so/C3AG-36ea7c019f19803e8fcce085b4db7f88
 
 ## Goal
 
-C3AG is an immersive production portfolio and lead-generation website. It is not a classic corporate landing page. The first frontend session should build a Netflix-like visual experience where video works are the main content, and text only supports navigation, filtering and conversion.
+C3FLEX.com is an immersive production portfolio and lead-generation website based on the C3AG materials. It is not a classic corporate landing page. The first frontend session should build a Netflix-like visual experience where video works are the main content, and text only supports navigation, filtering and conversion.
 
 The website must:
 
@@ -18,14 +19,15 @@ The website must:
 
 ## Product Positioning
 
-Public product name is currently not fully locked. The Notion page uses C3AG and also mentions `3cFLEX` / Netflix-like mechanics. For implementation we use:
+Public product name is fixed as `C3FLEX.com`.
+
+The Notion page uses C3AG and also mentions `3cFLEX` / Netflix-like mechanics. For implementation we use:
 
 - repository and project context: `Astor Butler MVP`;
-- frontend experience name: `C3AG`;
+- public site name: `C3FLEX.com`;
+- source/spec context: `C3AG`;
 - interaction pattern: Netflix-like catalog of production works;
-- optional internal codename: `3cFLEX`.
-
-This naming should be confirmed before public release.
+- internal short name: `C3FLEX`.
 
 ## Frontend Scope
 
@@ -56,11 +58,13 @@ Core sections:
 - service/packages page;
 - contact and mini-brief form.
 
-Directions from Notion:
+Top-level directions:
 
 - Event Stories;
 - Reels & Product Content;
 - Commercials.
+
+Yandex Disk folders under `ПОРТФОЛИО / VIDEO C3AG` are treated as nested production categories inside these three top-level directions. The production version can expose deeper category trees, but the local MVP starts with one video per top-level direction.
 
 Visual behavior:
 
@@ -86,17 +90,18 @@ Current local decision:
 
 - originals remain in `/Users/michaelwelly/Yandex.Disk.localized`;
 - MongoDB stores metadata for the full set of 102 media/documents;
-- local MinIO stores only 10 representative sample files for frontend/API work;
+- all 102 files are allowed for public display after curation;
+- local MinIO stores only 3 representative videos for frontend/API work, one per top-level direction;
 - full S3 migration is deferred to cloud S3/Object Storage when storage is available.
 
 Current expected local sample:
 
 - bucket: `astor-media`;
 - prefix: `raw/`;
-- sample count: 10 files;
-- sample size: about 960 MiB.
+- sample count: 3 videos;
+- sample rule: one video for Event Stories, one for Reels & Product Content, one for Commercials.
 
-For the frontend session, use the sample as the first video dataset. Do not copy the full 10+ GB media set into local MinIO.
+For the frontend session, use the 3-video sample as the first video dataset. Do not copy the full 10+ GB media set into local MinIO.
 
 ## Backend Alignment
 
@@ -133,7 +138,7 @@ Initial integrations:
 - email notification if available;
 - CRM adapter later.
 
-Open question: exact CRM is not fixed yet.
+CRM is intentionally not fixed for the first frontend session. Telegram/email are enough for the first lead flow; CRM selection moves to a later backend/integration session.
 
 ## Service Packages
 
@@ -180,24 +185,25 @@ Swagger:
 http://localhost:8080/swagger-ui/index.html
 ```
 
-## Detected Inconsistencies To Confirm
+## Resolved Decisions And Remaining Checks
 
-1. Public naming: should the site brand be `C3AG`, `3cFLEX`, or another visible name?
-2. Frontend language: Notion says JS/TS optional; project recommendation is TypeScript.
-3. Backend contract: Notion allows REST/GraphQL; project recommendation is REST/OpenAPI first.
-4. Video delivery: MVP should use mp4/webm from S3/MinIO; adaptive streaming/HLS is a production target.
-5. CMS/admin: Notion says Headless CMS/WordPress; project recommendation is custom backend/admin, no WordPress.
-6. CRM: provider is not fixed; Telegram/email notification can be the first integration.
-7. Case taxonomy: Notion has 3 directions; media folders need mapping to these directions.
-8. Public rights: confirm which 10 sample files and which of the 102 originals are allowed for public portfolio display.
-9. Sound: autoplay must start muted; sound can be enabled by user action.
+1. Public naming: `C3FLEX.com`.
+2. Public rights: all 102 files can be publicly displayed after curation.
+3. Local sample: 3 videos, one per top-level direction.
+4. Category model: Event Stories, Reels & Product Content, Commercials as top-level branches; Yandex Disk folders become nested production categories.
+5. CRM: not fixed; first version sends leads to Telegram/email.
+6. Frontend language: Notion says JS/TS optional; project recommendation remains TypeScript.
+7. Backend contract: Notion allows REST/GraphQL; project recommendation is REST/OpenAPI first.
+8. Video delivery: MVP should use mp4/webm from S3/MinIO; adaptive streaming/HLS is a production target.
+9. CMS/admin: Notion says Headless CMS/WordPress; project recommendation is custom backend/admin, no WordPress.
+10. Sound: autoplay must start muted; sound can be enabled by user action.
 
 ## Prompt For Next Frontend Codex Session
 
 Use this prompt when starting the separate frontend-building Codex account:
 
 ```text
-Мы строим C3AG frontend для проекта Astor Butler MVP.
+Мы строим C3FLEX.com frontend на основе C3AG материалов внутри проекта Astor Butler MVP.
 
 Открой репозиторий /Users/michaelwelly/IdeaProjects/Astor_Butler_MVP и прочитай:
 - docs/C3AG_FRONTEND_TZ.md
@@ -211,7 +217,10 @@ Use this prompt when starting the separate frontend-building Codex account:
 - GSAP + Framer Motion + Lenis;
 - dark premium visual style;
 - video-first catalog;
+- public name: C3FLEX.com;
 - sections: Event Stories, Reels & Product Content, Commercials;
+- локальный MVP: одно видео на каждую верхнюю секцию;
+- production taxonomy: папки Яндекс.Диска внутри ПОРТФОЛИО/VIDEO C3AG становятся вложенными категориями;
 - case detail page;
 - service packages;
 - lead mini-brief form;
@@ -222,7 +231,7 @@ Use this prompt when starting the separate frontend-building Codex account:
 - backend business logic не тащить во frontend;
 - локально backend работает через Spring profile local;
 - Docker Compose держит только инфраструктуру;
-- медиа: в Mongo metadata по 102 файлам, в MinIO только 10 sample files under bucket astor-media/raw/;
+- медиа: в Mongo metadata по 102 файлам, все можно показывать публично после курации, в MinIO для локальной разработки только 3 sample videos under bucket astor-media/raw/;
 - не копировать весь Yandex Disk в MinIO.
 
 Перед кодом проверь текущий API/Swagger:

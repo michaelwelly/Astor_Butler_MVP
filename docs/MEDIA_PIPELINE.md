@@ -13,6 +13,13 @@ Yandex Disk / local folder
   -> frontend URLs
 ```
 
+Current C3FLEX.com rule:
+
+- all 102 portfolio files can be public after curation;
+- local MinIO keeps only 3 video samples for development;
+- the 3 samples represent top-level branches: Event Stories, Reels & Product Content, Commercials;
+- nested folders from Yandex Disk remain category metadata for the production catalog.
+
 ## Local S3
 
 Docker Compose provides MinIO:
@@ -56,6 +63,13 @@ This syncs source files to:
 
 ```text
 s3://astor-media/raw
+```
+
+For local C3FLEX.com frontend work, prefer the lightweight sample workflow instead of syncing the full media set:
+
+```bash
+python3 scripts/media_sample.py /private/tmp/astor_media_manifest.jsonl --count 3 --out /private/tmp/astor_media_sample_manifest.jsonl --copy-to /private/tmp/astor_media_sample
+scripts/sync_media_to_minio.sh /private/tmp/astor_media_sample astor-media
 ```
 
 ## Metadata Import
@@ -124,10 +138,10 @@ menu:active:{locationId}
 
 ## Next Steps
 
-1. Receive local synced Yandex Disk path.
-2. Run `media_inventory.py`.
-3. Run `sync_media_to_minio.sh`.
-4. Import manifest metadata into MongoDB/PostgreSQL.
+1. Keep the full Yandex Disk source as the media origin.
+2. Keep the full 102-file inventory in MongoDB.
+3. Select one video sample per top-level branch for local MinIO.
+4. Import sample metadata into MongoDB/PostgreSQL if needed for frontend API development.
 5. Extend Media API with search, signed/public URL and lifecycle endpoints.
 
 ## Commands For Next Local Run
