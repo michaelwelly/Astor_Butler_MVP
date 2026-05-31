@@ -41,7 +41,7 @@ Development order:
 3. Integration tests for PostgreSQL, Redis, MongoDB and S3.
 4. Kafka contract tests for event payloads.
 5. K6 load tests for idempotent `GET` endpoints and safe read paths.
-6. Load-test report for preprod readiness.
+6. Load-test report for local API readiness before preprod planning.
 
 ## Media Content Pipeline
 

@@ -12,6 +12,8 @@ spring:
       host: ${REDIS_HOST:localhost}
       port: ${REDIS_PORT:6379}
       password: ${REDIS_PASSWORD:}
+    mongodb:
+      uri: ${MONGODB_URI:mongodb://localhost:27017/astor_butler_documents_test}
 
   datasource:
     url: ${POSTGRES_URL:jdbc:postgresql://localhost:5434/astor_butler_test}

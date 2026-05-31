@@ -2,11 +2,7 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-ENV_FILE="${1:-$ROOT_DIR/.env.local}"
-
-if [[ ! -f "$ENV_FILE" && -f "$ROOT_DIR/.env" ]]; then
-  ENV_FILE="$ROOT_DIR/.env"
-fi
+ENV_FILE="${1:-$ROOT_DIR/.env}"
 
 if [[ -f "$ENV_FILE" ]]; then
   set -a
@@ -14,7 +10,7 @@ if [[ -f "$ENV_FILE" ]]; then
   source "$ENV_FILE"
   set +a
 else
-  echo "No .env.local file found. Using local defaults."
+  echo "No .env file found. Using local defaults."
 fi
 
 export SPRING_PROFILES_ACTIVE="${SPRING_PROFILES_ACTIVE:-local}"

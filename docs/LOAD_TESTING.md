@@ -4,13 +4,13 @@ This project keeps the backend as a local Spring Boot process and runs the infra
 
 ## Local environment
 
-1. Copy `.env.local.example` to `.env.local`.
+1. Copy `.env.example` to `.env`.
 2. Adjust passwords or ports if needed.
 3. Check `ASTOR_JAVA_HOME` points to a Java 21 installation.
 4. Start infrastructure:
 
 ```bash
-docker compose up -d postgres redis ollama
+docker compose up -d postgres redis mongo kafka minio minio-init prometheus grafana
 ```
 
 5. Start the backend locally:

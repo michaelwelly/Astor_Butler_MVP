@@ -455,20 +455,18 @@ Quality gates:
 
 Цель - максимальное покрытие business-critical кода. Формальный процент coverage утверждается после выделения слоев, где покрытие действительно отражает качество, а не декоративную метрику.
 
-## Runtime Profiles And Local Environment
+## Runtime Profile And Local Environment
 
-Spring profiles:
+Spring profile:
 
-- `test` - локальная разработка и быстрая проверка через Docker Compose;
-- `preprod` - предпродовая среда с внешними managed-сервисами и production-like настройками;
-- `prod` - production environment.
+- `local` - единый профиль для разработки, Swagger/API-проверки и локальных нагрузочных сценариев.
 
 Config files:
 
 - `application.yaml` - базовая конфигурация и defaults;
-- `application-test.yaml` - локальный профиль;
-- `application-preprod.yaml` - preprod profile;
-- `application-prod.yaml` - prod profile.
+- `application-local.yaml` - локальные overrides для запуска Spring Boot на машине разработчика.
+- `.env.example` - шаблон переменных без реальных секретов;
+- `.env` - локальный файл разработчика с реальными значениями, не попадает в git.
 
 Local Docker Compose поднимает:
 

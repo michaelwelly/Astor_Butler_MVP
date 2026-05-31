@@ -14,7 +14,7 @@ spring:
   application:
     name: astor-butler
   profiles:
-    default: test
+    default: local
 
   data:
     redis:

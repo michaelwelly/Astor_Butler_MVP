@@ -170,8 +170,8 @@ Ollama/local LLM не входит в default compose-профиль и вклю
 Локальная схема: инфраструктура поднимается в Docker Compose, а один инстанс Spring Boot запускается прямо на машине разработчика.
 
 ```bash
-cp .env.local.example .env.local
-docker compose up -d postgres redis ollama
+cp .env.example .env
+docker compose up -d postgres redis mongo kafka minio minio-init prometheus grafana
 scripts/run_local_app.sh
 ```
 
