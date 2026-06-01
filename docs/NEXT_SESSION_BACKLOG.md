@@ -4,6 +4,9 @@
 
 The next session should continue from the saved MVP foundation:
 
+- PR #5 merged the first C3FLEX.com frontend scaffold into `main`.
+- Frontend app lives in `frontend/` and runs on `http://localhost:3001` because Grafana uses `3000`.
+- Backend Swagger runs on `http://localhost:8088/swagger-ui/index.html`.
 - API Contract v0 exists and Swagger contains non-empty paths.
 - MongoDB document store is populated with diploma, pitch, one-pager, conference and project-memory materials.
 - Capability modules are mapped to the eight emotional axes.
@@ -70,17 +73,22 @@ Planned pipeline:
 
 ## Frontend Preparation
 
-Prepare frontend contract for the evening launch session:
+Current frontend baseline:
 
-- manager dashboard;
-- booking list/card;
-- users/search;
-- timelines;
-- posts/afisha;
-- media library;
-- promo landing blocks;
+- Next.js/React/TypeScript scaffold is merged.
+- Current UI is accepted only as baseline, not final visual direction.
+- Portfolio data is still mock/sample-based.
+- Lead form is demo-mode until backend endpoint is selected.
+- Next redesign work should happen from a new branch, for example `frontend/c3flex-redesign`.
+
+Prepare frontend contract for the next launch session:
+
+- C3FLEX.com visual redesign;
+- real 3-video sample mapping: Event Stories, Reels & Product Content, Commercials;
+- media card/detail behavior;
 - lead capture;
-- System Design/JavaGuru promo section.
+- backend adapter to Swagger/OpenAPI where endpoints exist;
+- System Design/JavaGuru promo section if it supports sales narrative.
 
 Frontend should use generated API clients from Swagger once DTO contracts stabilize.
 

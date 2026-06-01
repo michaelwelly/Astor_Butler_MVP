@@ -87,6 +87,7 @@ scripts/run_local_app.sh
 - Swagger UI: http://localhost:8088/swagger-ui/index.html
 - OpenAPI JSON: http://localhost:8088/v3/api-docs
 - Health: http://localhost:8088/actuator/health
+- C3FLEX frontend: http://localhost:3001
 
 Ollama/local LLM не входит в default compose-профиль и включается отдельно через `--profile ai`, чтобы тяжелая модель не блокировала запуск инфраструктуры.
 

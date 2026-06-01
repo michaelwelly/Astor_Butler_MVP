@@ -20,12 +20,14 @@ npm run dev
 Open:
 
 ```text
-http://localhost:3000
+http://localhost:3001
 ```
+
+Port `3000` is reserved for local Grafana in the backend Docker Compose stack.
 
 ## Backend Connection
 
-Copy `.env.local.example` to `.env.local` when custom values are needed.
+Use `.env.local` only when custom frontend values are needed.
 
 The current lead form works in demo mode until `NEXT_PUBLIC_LEAD_ENDPOINT` is defined. The portfolio dataset lives in `lib/portfolio.ts`; replace its three sample video URLs with public MinIO URLs from `astor-media/raw/` after local curation.
 
