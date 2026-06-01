@@ -455,18 +455,18 @@ Quality gates:
 
 Цель - максимальное покрытие business-critical кода. Формальный процент coverage утверждается после выделения слоев, где покрытие действительно отражает качество, а не декоративную метрику.
 
-## Runtime Profile And Local Environment
+## Runtime Configuration And Local Environment
 
-Spring profile:
+Runtime configuration:
 
-- `local` - единый профиль для разработки, Swagger/API-проверки и локальных нагрузочных сценариев.
+- one `application.yaml` is the only Spring Boot YAML config for local development;
+- `.env` is the only local source for credentials, ports and service endpoints;
+- `.env` is ignored by git and stays only on the developer machine.
 
 Config files:
 
-- `application.yaml` - базовая конфигурация и defaults;
-- `application-local.yaml` - локальные overrides для запуска Spring Boot на машине разработчика.
-- `.env.example` - шаблон переменных без реальных секретов;
-- `.env` - локальный файл разработчика с реальными значениями, не попадает в git.
+- `application.yaml` - reads local values from environment variables;
+- `.env` - local developer credentials and endpoints, not committed.
 
 Local Docker Compose поднимает:
 
@@ -501,7 +501,7 @@ After local backend startup:
 
 Ollama is intentionally excluded from the default local infrastructure profile. Heavy local models can take tens of gigabytes and should not block PostgreSQL, Redis, MongoDB, Kafka, MinIO, Prometheus or Grafana startup.
 
-`.env.example` хранит безопасный шаблон переменных. Реальный `.env` не коммитится.
+Реальный `.env` не коммитится и остается единственным местом для локальных кредов.
 
 ## Sequence Diagram
 

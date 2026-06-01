@@ -29,7 +29,7 @@ Docker Compose provides MinIO:
 - media bucket: `astor-media`
 - documents bucket: `astor-documents`
 
-Credentials are configured through `.env` / `.env.example`.
+Credentials are configured through local `.env`.
 
 ## Inventory
 

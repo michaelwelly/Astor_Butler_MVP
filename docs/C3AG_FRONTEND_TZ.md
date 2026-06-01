@@ -153,11 +153,9 @@ These can be shown as editable content cards, not hardcoded business logic.
 
 ## Local Environment Contract
 
-Only one local backend profile remains:
+Only one local backend runtime remains:
 
-- Spring profile: `local`;
-- config files: `application.yaml`, `application-local.yaml`;
-- env template in git: `.env.example`;
+- config file: `application.yaml`;
 - real credentials: local `.env`, ignored by git.
 
 Local Docker Compose is infrastructure only:
@@ -174,7 +172,6 @@ Local Docker Compose is infrastructure only:
 Spring Boot is started locally from IDE or Maven:
 
 ```bash
-cp .env.example .env
 docker compose up -d postgres redis mongo kafka minio minio-init prometheus grafana
 scripts/run_local_app.sh
 ```
@@ -229,7 +226,7 @@ Use this prompt when starting the separate frontend-building Codex account:
 Важно:
 - WordPress не использовать;
 - backend business logic не тащить во frontend;
-- локально backend работает через Spring profile local;
+- локально backend работает через один application.yaml и локальный .env;
 - Docker Compose держит только инфраструктуру;
 - медиа: в Mongo metadata по 102 файлам, все можно показывать публично после курации, в MinIO для локальной разработки только 3 sample videos under bucket astor-media/raw/;
 - не копировать весь Yandex Disk в MinIO.

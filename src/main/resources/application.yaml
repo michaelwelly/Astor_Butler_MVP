@@ -1,20 +1,18 @@
 astor:
   media:
-    menu-dir: ${ASTOR_MEDIA_MENU_DIR:/opt/astor-butler/media/menu/}
+    menu-dir: ${ASTOR_MEDIA_MENU_DIR:./media/menu/}
   storage:
     s3:
       endpoint: ${S3_ENDPOINT:http://localhost:9000}
       public-endpoint: ${S3_PUBLIC_ENDPOINT:http://localhost:9000}
-      access-key: ${S3_ACCESS_KEY:astor}
-      secret-key: ${S3_SECRET_KEY:astor_minio_password}
+      access-key: ${S3_ACCESS_KEY}
+      secret-key: ${S3_SECRET_KEY}
       media-bucket: ${S3_BUCKET_MEDIA:astor-media}
       documents-bucket: ${S3_BUCKET_DOCUMENTS:astor-documents}
 
 spring:
   application:
     name: astor-butler
-  profiles:
-    default: local
 
   data:
     redis:
@@ -22,43 +20,45 @@ spring:
       port: ${REDIS_PORT:6379}
       password: ${REDIS_PASSWORD:}
     mongodb:
-      uri: ${MONGODB_URI:mongodb://localhost:27017/astor_butler_documents}
+      uri: ${MONGODB_URI}
 
   datasource:
-    url: ${POSTGRES_URL:jdbc:postgresql://localhost:5434/astor_butler}
-    username: ${POSTGRES_USER:astor}
-    password: ${POSTGRES_PASSWORD:astor}
+    url: ${POSTGRES_URL}
+    username: ${POSTGRES_USER}
+    password: ${POSTGRES_PASSWORD}
     driver-class-name: org.postgresql.Driver
 
   jpa:
     hibernate:
       ddl-auto: none
-    show-sql: true
+    open-in-view: false
+    show-sql: false
     properties:
       hibernate:
-        format_sql: true
+        format_sql: false
 
   liquibase:
-    change-log: ${SPRING_LIQUIBASE_CHANGE_LOG:classpath:db/changelog/changelog-master.yaml}
+    change-log: ${SPRING_LIQUIBASE_CHANGE_LOG:classpath:/db/changelog/changelog-master.yaml}
     enabled: true
 
 telegram:
   bot:
+    enabled: ${TELEGRAM_BOT_ENABLED:false}
     token: ${TELEGRAM_BOT_TOKEN:}
     username: ${TELEGRAM_BOT_USERNAME:astor_butler_bot}
   oauth:
     client-id: ${TELEGRAM_CLIENT_ID:}
-    redirect-uri: ${TELEGRAM_REDIRECT_URI:http://localhost:8080/oauth/telegram/callback}
+    redirect-uri: ${TELEGRAM_REDIRECT_URI:http://localhost:8080/auth/telegram/callback}
 
 llm:
   ollama:
-    base-url: http://localhost:11434
-    model: qwen2.5:1.5b
+    base-url: ${LLM_OLLAMA_BASE_URL:http://localhost:11434}
+    model: ${LLM_OLLAMA_MODEL:qwen2.5:1.5b}
 
 yandex:
   ai:
     agent-endpoint: ${YANDEX_AGENT_ENDPOINT:https://ai.api.cloud.yandex.net/v1/agents/fvt51f9cslgi648vvg35:execute}
-    folder-id: ${YANDEX_FOLDER_ID:b1glau5tifq7ttbeb2fa}
+    folder-id: ${YANDEX_FOLDER_ID:}
     iam-token: ${YANDEX_IAM_TOKEN:}
 
 server:
@@ -68,11 +68,12 @@ management:
   endpoints:
     web:
       exposure:
-        include: health,info,prometheus
+        include: health,info,metrics,prometheus
   endpoint:
     health:
       probes:
         enabled: true
+      show-details: always
   metrics:
     tags:
       application: ${spring.application.name}

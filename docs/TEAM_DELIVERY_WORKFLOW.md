@@ -51,7 +51,7 @@ Recommended spaces/pages:
   - UI flows.
 - `Astor Butler / Operations`
   - Docker Compose;
-  - local profile and environment variables;
+  - local `.env` and single `application.yaml`;
   - CI/CD;
   - incident and support runbooks.
 

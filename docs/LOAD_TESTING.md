@@ -4,16 +4,15 @@ This project keeps the backend as a local Spring Boot process and runs the infra
 
 ## Local environment
 
-1. Copy `.env.example` to `.env`.
-2. Adjust passwords or ports if needed.
-3. Check `ASTOR_JAVA_HOME` points to a Java 21 installation.
-4. Start infrastructure:
+1. Make sure local `.env` exists and contains database/service credentials.
+2. Check `ASTOR_JAVA_HOME` points to a Java 21 installation.
+3. Start infrastructure:
 
 ```bash
 docker compose up -d postgres redis mongo kafka minio minio-init prometheus grafana
 ```
 
-5. Start the backend locally:
+4. Start the backend locally:
 
 ```bash
 scripts/run_local_app.sh
@@ -44,4 +43,4 @@ The smoke scenario checks:
 scripts/run_k6_read_load.sh
 ```
 
-The first load profile is intentionally small. It validates the local path before heavier scenarios are added for users, bookings, media, timeline and notifications.
+The first load scenario is intentionally small. It validates the local path before heavier scenarios are added for users, bookings, media, timeline and notifications.
