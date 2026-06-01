@@ -179,7 +179,7 @@ scripts/run_local_app.sh
 Swagger:
 
 ```text
-http://localhost:8080/swagger-ui/index.html
+http://localhost:8088/swagger-ui/index.html
 ```
 
 ## Resolved Decisions And Remaining Checks
@@ -232,5 +232,5 @@ Use this prompt when starting the separate frontend-building Codex account:
 - не копировать весь Yandex Disk в MinIO.
 
 Перед кодом проверь текущий API/Swagger:
-http://localhost:8080/swagger-ui/index.html
+http://localhost:8088/swagger-ui/index.html
 ```

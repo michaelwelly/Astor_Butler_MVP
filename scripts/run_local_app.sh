@@ -27,7 +27,7 @@ set +a
 : "${S3_BUCKET_DOCUMENTS:?S3_BUCKET_DOCUMENTS is required in .env}"
 
 unset SPRING_PROFILES_ACTIVE
-export SERVER_PORT="${SERVER_PORT:-8080}"
+export SERVER_PORT="${SERVER_PORT:-8088}"
 
 export REDIS_HOST="localhost"
 export REDIS_PASSWORD="${REDIS_PASSWORD:-}"

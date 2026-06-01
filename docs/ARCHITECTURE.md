@@ -495,9 +495,9 @@ scripts/run_local_app.sh
 
 After local backend startup:
 
-- Swagger UI: `http://localhost:8080/swagger-ui/index.html`;
-- OpenAPI JSON: `http://localhost:8080/v3/api-docs`;
-- metrics: `http://localhost:8080/actuator/prometheus`.
+- Swagger UI: `http://localhost:8088/swagger-ui/index.html`;
+- OpenAPI JSON: `http://localhost:8088/v3/api-docs`;
+- metrics: `http://localhost:8088/actuator/prometheus`.
 
 Ollama is intentionally excluded from the default local infrastructure profile. Heavy local models can take tens of gigabytes and should not block PostgreSQL, Redis, MongoDB, Kafka, MinIO, Prometheus or Grafana startup.
 

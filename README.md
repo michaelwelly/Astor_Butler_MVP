@@ -84,9 +84,9 @@ scripts/run_local_app.sh
 
 После старта:
 
-- Swagger UI: http://localhost:8080/swagger-ui/index.html
-- OpenAPI JSON: http://localhost:8080/v3/api-docs
-- Health: http://localhost:8080/actuator/health
+- Swagger UI: http://localhost:8088/swagger-ui/index.html
+- OpenAPI JSON: http://localhost:8088/v3/api-docs
+- Health: http://localhost:8088/actuator/health
 
 Ollama/local LLM не входит в default compose-профиль и включается отдельно через `--profile ai`, чтобы тяжелая модель не блокировала запуск инфраструктуры.
 
@@ -179,7 +179,7 @@ scripts/run_local_app.sh
 Swagger UI:
 
 ```text
-http://localhost:8080/swagger-ui/index.html
+http://localhost:8088/swagger-ui/index.html
 ```
 
 Быстрая проверка REST API и Swagger/OpenAPI:

@@ -21,7 +21,7 @@ scripts/run_local_app.sh
 Swagger UI should be available at:
 
 ```text
-http://localhost:8080/swagger-ui/index.html
+http://localhost:8088/swagger-ui/index.html
 ```
 
 ## Smoke test

@@ -48,7 +48,7 @@ telegram:
     username: ${TELEGRAM_BOT_USERNAME:astor_butler_bot}
   oauth:
     client-id: ${TELEGRAM_CLIENT_ID:}
-    redirect-uri: ${TELEGRAM_REDIRECT_URI:http://localhost:8080/auth/telegram/callback}
+    redirect-uri: ${TELEGRAM_REDIRECT_URI:http://localhost:8088/auth/telegram/callback}
 
 llm:
   ollama:
@@ -62,7 +62,7 @@ yandex:
     iam-token: ${YANDEX_IAM_TOKEN:}
 
 server:
-  port: ${SERVER_PORT:8080}
+  port: ${SERVER_PORT:8088}
 
 management:
   endpoints:
