@@ -12,8 +12,8 @@ public class SwaggerConfig {
     public OpenAPI astorOpenAPI() {
         return new OpenAPI()
                 .info(new Info()
-                        .title("Astor Butler — Alisa LLM API")
-                        .description("✨ Swagger-интерфейс для взаимодействия с Yandex Cloud LLM от лица Astor Butler")
+                        .title("Astor Butler MVP API")
+                        .description("Backend API для Astor Butler MVP: C3FLEX.com lead-gen frontend, Telegram/FSM guest assistant и System Design delivery контур.")
                         .version("1.0.0"));
     }
 }

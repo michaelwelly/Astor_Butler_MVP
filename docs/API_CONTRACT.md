@@ -81,6 +81,23 @@ CRUD-style resources expose `POST`, `GET`, `PUT`, `PATCH` and `DELETE` where the
 
 Auth and observability are lifecycle/system APIs rather than CRUD resources. They still use typed request/response models and the same error contract.
 
+## Adding Or Changing API Groups
+
+Use this template before adding a new controller, endpoint group or DTO family:
+
+- Name the API group by product boundary: `Auth API`, `User API`, `Booking API`, `Media API`, `Timeline API`, `Content API`, `Manager API`, `Notification API`, `Integration API` or `System API`.
+- Add only controller-level orchestration to REST controllers; business behavior belongs in service/domain layers.
+- Define typed request and response DTOs before implementation.
+- Reuse `ApiErrorResponse` and stable `ErrorCode` values for every non-2xx response.
+- Keep existing endpoint paths, methods, request fields and response fields backward compatible.
+- Add new optional fields instead of renaming/removing existing fields.
+- Version breaking changes explicitly through a new path or DTO version.
+- Add Swagger annotations for summary, request body, parameters and response schema.
+- Add idempotency readiness for state-changing commands.
+- Add or update tests before replacing stubs with business logic.
+
+New API groups may start as stubs if they preserve the final route shape. Stubs must return typed DTOs and realistic status codes so frontend work can proceed without guessing contracts.
+
 ## Swagger
 
 Swagger/OpenAPI is the source for frontend generation. The backend currently adds standard error responses to operations through `OpenApiContractConfig`, so generated clients can rely on the common error schema.
