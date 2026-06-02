@@ -2,66 +2,54 @@ package museon_online.astor_butler.telegram.adapter;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import museon_online.astor_butler.fsm.core.BotState;
-import museon_online.astor_butler.fsm.core.CommandContext;
-import museon_online.astor_butler.fsm.core.FSMRouter;
 import museon_online.astor_butler.fsm.core.event.InboundEvent;
 import museon_online.astor_butler.fsm.core.idempotency.IdempotencyGuard;
-import museon_online.astor_butler.fsm.storage.FSMStorage;
+import museon_online.astor_butler.service.message.IncomingMessage;
+import museon_online.astor_butler.service.message.MessageGatewayService;
+import museon_online.astor_butler.service.message.OutgoingMessage;
 import museon_online.astor_butler.telegram.exeption.TelegramExceptionHandler;
-import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.stereotype.Service;
+import org.telegram.telegrambots.meta.api.methods.BotApiMethod;
+import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
+import org.telegram.telegrambots.meta.api.objects.Contact;
+import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.Update;
+import org.telegram.telegrambots.meta.api.objects.User;
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardMarkup;
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardButton;
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardRow;
 import org.telegram.telegrambots.meta.bots.AbsSender;
+
+import java.util.List;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
 @Slf4j
 public class TelegramRouter {
 
-    private final ObjectProvider<FSMRouter> fsmRouterProvider;
     private final TelegramExceptionHandler exceptionHandler;
-    private final FSMStorage fsmStorage;
     private final IdempotencyGuard idempotencyGuard;
+    private final MessageGatewayService messageGatewayService;
 
 
     public void handle(Update update, AbsSender sender) {
         try {
-
-            // Architecture entrypoint: Update → InboundEvent → idempotency gate.
-            // The legacy CommandContext route below is still the active FSM path,
-            // so a duplicate event must stop here before it reaches handlers.
             if (!processInboundEvent(update)) {
                 return;
             }
 
-            // ⬇️ Старый код — без изменений
-            CommandContext ctx = CommandContext.from(update);
-            FSMRouter fsmRouter = fsmRouterProvider.getObject();
-            Long chatId = ctx.getChatId();
-            String text = ctx.getMessageText();
-
-            // 👀 1. Логируем входящее сообщение
-            log.info("📨 [TG] Incoming message from {}: {}", chatId, text);
-
-            // 🚀 2. Обработка команды /start
-            if ("/start".equalsIgnoreCase(text)) {
-                log.info("🚀 [CMD] /start received → FSM set to GREETING (chatId={})", chatId);
-                fsmStorage.setState(chatId, BotState.GREETING);
+            IncomingMessage incoming = toIncomingMessage(update);
+            if (incoming == null) {
+                log.debug("📭 [TG] Update ignored: cannot map to IncomingMessage");
+                return;
             }
 
-            // 🧭 3. Проверяем текущее состояние
-            BotState currentState = fsmStorage.getState(chatId);
-            if (currentState == null) {
-                currentState = BotState.UNKNOWN;
-                fsmStorage.setState(chatId, BotState.UNKNOWN);
-                log.warn("⚠️ [FSM] No state found in Redis → set to UNKNOWN (chatId={})", chatId);
-            }
+            log.info("📨 [TG] Incoming message from {}: {}", incoming.chatId(), incoming.text());
 
-            log.info("📊 [FSM] Current state for chatId={} → {}", chatId, currentState);
-
-            // 🔄 4. Передаём в FSMRouter (он выберет нужный handler)
-            fsmRouter.route(ctx);
+            OutgoingMessage outgoing = messageGatewayService.handle(incoming);
+            send(outgoing, sender);
+            sendAdminAlert(outgoing, sender);
 
         } catch (Exception e) {
             log.error("💥 [TG] Exception while handling update: {}", e.getMessage(), e);
@@ -94,15 +82,86 @@ public class TelegramRouter {
                     inboundEvent.getChatId()
             );
 
-            // ⚠️ FSM пока может не уметь принимать InboundEvent —
-            // этот вызов будет подключён на следующем шаге
-            // FSMRouter fsmRouter = fsmRouterProvider.getObject();
-            // fsmRouter.handle(inboundEvent);
             return true;
 
         } catch (Exception e) {
             log.error("💥 [PIPELINE] Error while processing inbound event", e);
             return true;
+        }
+    }
+
+    private IncomingMessage toIncomingMessage(Update update) {
+        if (update == null || update.getMessage() == null) {
+            return null;
+        }
+
+        Message message = update.getMessage();
+        Long chatId = message.getChatId();
+        User user = message.getFrom();
+        Contact contact = message.getContact();
+
+        return IncomingMessage.telegram(
+                chatId,
+                message.hasText() ? message.getText() : "",
+                contact == null ? null : contact.getPhoneNumber(),
+                user == null ? null : user.getFirstName(),
+                user == null ? null : user.getUserName(),
+                update.getUpdateId() == null ? UUID.randomUUID().toString() : update.getUpdateId().toString()
+        );
+    }
+
+    private void send(OutgoingMessage outgoing, AbsSender sender) {
+        if (outgoing == null || outgoing.chatId() == null || outgoing.text() == null || outgoing.text().isBlank()) {
+            return;
+        }
+
+        SendMessage.SendMessageBuilder builder = SendMessage.builder()
+                .chatId(outgoing.chatId().toString())
+                .text(outgoing.text());
+
+        if (outgoing.html()) {
+            builder.parseMode("HTML");
+        }
+        if (outgoing.requestContact()) {
+            builder.replyMarkup(contactKeyboard());
+        }
+
+        execute(sender, builder.build());
+    }
+
+    private void sendAdminAlert(OutgoingMessage outgoing, AbsSender sender) {
+        if (outgoing == null
+                || outgoing.adminAlert() == null
+                || !outgoing.adminAlert().required()
+                || outgoing.adminAlert().chatId() == null
+                || outgoing.adminAlert().chatId().isBlank()) {
+            return;
+        }
+
+        execute(sender, SendMessage.builder()
+                .chatId(outgoing.adminAlert().chatId())
+                .text(outgoing.adminAlert().text())
+                .build());
+    }
+
+    private ReplyKeyboardMarkup contactKeyboard() {
+        KeyboardButton shareContact = KeyboardButton.builder()
+                .text("📱 Поделиться контактом")
+                .requestContact(true)
+                .build();
+
+        return ReplyKeyboardMarkup.builder()
+                .keyboard(List.of(new KeyboardRow(List.of(shareContact))))
+                .resizeKeyboard(true)
+                .oneTimeKeyboard(true)
+                .build();
+    }
+
+    private void execute(AbsSender sender, BotApiMethod<?> method) {
+        try {
+            sender.execute(method);
+        } catch (Exception e) {
+            log.error("Telegram API call failed: {}", method.getMethod(), e);
         }
     }
 }

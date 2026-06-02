@@ -8,6 +8,9 @@ The next session should continue from the saved MVP foundation:
 - Frontend app lives in `frontend/` and runs on `http://localhost:3001` because Grafana uses `3000`.
 - Backend Swagger runs on `http://localhost:8088/swagger-ui/index.html`.
 - API Contract v0 exists and Swagger contains non-empty paths.
+- Telegram/FSM message gateway now has a visible vertical slice: `/start`, contact request, AI-assisted reply and fallback-to-admin.
+- `POST /api/messages` exposes the same FSM gateway for future web chat.
+- `Consent Vault API` is reserved early for policy, grant, revoke and export flows.
 - MongoDB document store is populated with diploma, pitch, one-pager, conference and project-memory materials.
 - Capability modules are mapped to the eight emotional axes.
 - Docker Compose has PostgreSQL, Redis, MongoDB, Kafka/Redpanda, Prometheus, Grafana and S3-compatible MinIO.
@@ -152,6 +155,8 @@ Execution model:
 Create Jira backlog tasks for:
 
 - backend API contracts;
+- Telegram/FSM vertical slice tests;
+- Consent Vault persistence design;
 - service/gRPC boundaries;
 - Kafka topics/events;
 - S3 media pipeline;

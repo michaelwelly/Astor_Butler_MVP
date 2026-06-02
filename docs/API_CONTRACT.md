@@ -78,14 +78,61 @@ CRUD-style resources expose `POST`, `GET`, `PUT`, `PATCH` and `DELETE` where the
 - Manager tasks
 - Notifications
 - Integrations
+- Consents
 
 Auth and observability are lifecycle/system APIs rather than CRUD resources. They still use typed request/response models and the same error contract.
+
+## API Groups And Product Boundaries
+
+Swagger groups should map to real product/system boundaries, not random implementation folders.
+
+- `Auth API` - OAuth2/OIDC, JWT, current principal, role and access boundary.
+- `Consent Vault API` - consent capture, privacy policy acceptance, revoke and export boundary.
+- `User API` - Memory Engine identity profile, roles and lookup boundary.
+- `FSM API` - normalized message gateway, FSM state, safe reset, Safe Play and Panic Exit transitions.
+- `Booking API` - Slot Keeper booking requests, drafts, statuses and manager notes.
+- `Timeline API` - user, booking, manager and system timeline history.
+- `Posts/Content API` - Quiet Guide posts, afisha, promo blocks and SEO content.
+- `Media API` - media metadata, upload contracts, S3 links and soft delete.
+- `Notifications API` - Smart Tip, Hidden Heart and operational delivery commands.
+- `Manager API` - manager dashboard, tasks, escalations and staff workflow.
+- `Integrations API` - Telegram, CRM, analytics and external integrations.
+- `Observability API` - readiness, liveness, Prometheus and local smoke boundaries.
+- `System API` - read-only system checks for local and load-test scenarios.
+
+New endpoints must be added into the closest existing product group whenever possible. A new Swagger group is allowed only when it introduces a real boundary with its own ownership, lifecycle and contracts.
+
+## Message Gateway Contract
+
+`POST /api/messages` is the shared UI-message entry point for future web chat and messenger adapters. Telegram long polling calls the same application service internally, while REST exposes the same normalized contract for frontend experiments and API tests.
+
+Message gateway rules:
+
+- UI channel sends a normalized message with `channel`, `externalUserId`, `chatId`, `text`, optional contact and correlation metadata.
+- Backend resolves FSM state outside UI.
+- AI/LLM is used only as adapter for understanding and short response generation.
+- If AI cannot produce a reliable answer, backend returns a fallback response and may create an admin alert.
+- Future messengers must reuse this contract instead of copying Telegram-specific logic.
+
+## Consent Vault Contract
+
+Consent Vault is planned early because the first Telegram scenario already asks for contact data and links the user to privacy policy acceptance.
+
+Minimum contract:
+
+- grant consent;
+- list user consents;
+- revoke consent;
+- request consent/personal-data export;
+- expose current policy version for frontend/Telegram flows.
+
+The current implementation is a Swagger-visible stub. Persistence and legal evidence fields will be implemented after the user/auth data model is finalized.
 
 ## Adding Or Changing API Groups
 
 Use this template before adding a new controller, endpoint group or DTO family:
 
-- Name the API group by product boundary: `Auth API`, `User API`, `Booking API`, `Media API`, `Timeline API`, `Content API`, `Manager API`, `Notification API`, `Integration API` or `System API`.
+- Name the API group by product boundary: `Auth API`, `Consent Vault API`, `User API`, `FSM API`, `Booking API`, `Timeline API`, `Posts/Content API`, `Media API`, `Notifications API`, `Manager API`, `Integrations API`, `Observability API` or `System API`.
 - Add only controller-level orchestration to REST controllers; business behavior belongs in service/domain layers.
 - Define typed request and response DTOs before implementation.
 - Reuse `ApiErrorResponse` and stable `ErrorCode` values for every non-2xx response.

@@ -7,7 +7,7 @@ if [[ $# -lt 1 ]]; then
 fi
 
 MANIFEST="$(cd "$(dirname "$1")" && pwd)/$(basename "$1")"
-DATABASE="${2:-${MONGO_DB:-astor_butler_documents_test}}"
+DATABASE="${2:-${MONGO_DB:-aether}}"
 COLLECTION="${3:-media_assets}"
 CONTAINER="${MONGO_CONTAINER:-astor_mongo_test}"
 

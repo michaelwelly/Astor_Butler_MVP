@@ -25,14 +25,28 @@ public class InboundEvent {
         String text = update.getMessage().getText();
         String eventId = String.valueOf(update.getUpdateId());
 
+        if (update.getMessage().getContact() != null) {
+            return new InboundEvent(
+                    eventId,
+                    chatId,
+                    EventType.CONTACT,
+                    update.getMessage().getContact().getPhoneNumber()
+            );
+        }
+
         if (text == null) {
-            return null;
+            return new InboundEvent(
+                    eventId,
+                    chatId,
+                    EventType.UNKNOWN,
+                    ""
+            );
         }
 
         return new InboundEvent(
                 eventId,
                 chatId,
-                EventType.TEXT,
+                text.startsWith("/") ? EventType.COMMAND : EventType.TEXT,
                 text
         );
     }

@@ -16,8 +16,8 @@ Yandex Disk / local folder
 Current C3FLEX.com rule:
 
 - all 102 portfolio files can be public after curation;
-- local MinIO keeps only 3 video samples for development;
-- the 3 samples represent top-level branches: Event Stories, Reels & Product Content, Commercials;
+- local MinIO keeps only the lightweight video sample set for development;
+- the sample set is enough for the first frontend tabs/cards without syncing the whole Yandex Disk folder;
 - nested folders from Yandex Disk remain category metadata for the production catalog.
 
 ## Local S3
@@ -30,6 +30,14 @@ Docker Compose provides MinIO:
 - documents bucket: `astor-documents`
 
 Credentials are configured through local `.env`.
+
+Local access policy:
+
+- `astor-media` is read-only/public for local frontend playback;
+- `astor-documents` stays private;
+- MinIO Console is available at `http://localhost:9001`.
+
+`minio-init` is an init job. It creates buckets and exits with code `0`; it is expected to look stopped after successful startup.
 
 ## Inventory
 
@@ -68,8 +76,20 @@ s3://astor-media/raw
 For local C3FLEX.com frontend work, prefer the lightweight sample workflow instead of syncing the full media set:
 
 ```bash
-python3 scripts/media_sample.py /private/tmp/astor_media_manifest.jsonl --count 3 --out /private/tmp/astor_media_sample_manifest.jsonl --copy-to /private/tmp/astor_media_sample
+python3 scripts/media_sample.py /private/tmp/astor_media_manifest.jsonl --limit 10 --out /private/tmp/astor_media_sample_manifest.jsonl --copy-dir /private/tmp/astor_media_sample
 scripts/sync_media_to_minio.sh /private/tmp/astor_media_sample astor-media
+```
+
+Current local sample bucket contains `10` video objects under:
+
+```text
+http://localhost:9000/astor-media/raw/...
+```
+
+Example:
+
+```text
+http://localhost:9000/astor-media/raw/AI/TANGIERS.mp4
 ```
 
 ## Metadata Import
@@ -77,7 +97,7 @@ scripts/sync_media_to_minio.sh /private/tmp/astor_media_sample astor-media
 After inventory is created:
 
 ```bash
-scripts/import_media_manifest_to_mongo.sh /private/tmp/astor_media_manifest.jsonl astor_butler_documents_test media_assets
+scripts/import_media_manifest_to_mongo.sh /private/tmp/astor_media_manifest.jsonl aether media_assets
 ```
 
 This upserts media metadata into MongoDB and creates indexes:

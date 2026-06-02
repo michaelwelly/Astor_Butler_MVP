@@ -82,6 +82,15 @@ Spring Boot приложение запускается локально из ID
 scripts/run_local_app.sh
 ```
 
+Для frontend-разработчика без Telegram long polling:
+
+```bash
+docker compose --env-file .env.frontend up -d postgres redis mongo kafka minio minio-init prometheus grafana
+scripts/run_local_app.sh .env.frontend
+```
+
+Этот режим оставляет `TELEGRAM_BOT_ENABLED=false`, чтобы второй локальный запуск не конфликтовал с основным Telegram-ботом.
+
 После старта:
 
 - Swagger UI: http://localhost:8088/swagger-ui/index.html
@@ -112,10 +121,10 @@ Ollama/local LLM не входит в default compose-профиль и вклю
 
 - 🔗 **Direct Channel Hub** — прямое API «гость ↔ PMS»
 - 🏟 **Arena Reboot Engine** — сценарии «отели ↔ стадионы»
-- 🔐 **Consent Vault** — хранение и экспорт согласий (GDPR / PDPA / PIPL / 152-ФЗ)
+- 🔐 **Consent Vault** — хранение, отзыв и экспорт согласий (GDPR / PDPA / PIPL / 152-ФЗ)
 - 📑 **Impact Meter** — культурные KPI и отчётность
 
-В MVP реализуются только **точки расширения**, без полной бизнес-логики.
+В MVP реализуются только **точки расширения**, без полной бизнес-логики. Consent Vault резервируется раньше остальных внешних блоков, потому что первый сценарий `/start` уже связан с контактом, профилем гостя и политикой обработки данных.
 
 ---
 

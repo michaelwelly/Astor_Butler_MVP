@@ -11,8 +11,18 @@ It does not replace PostgreSQL. PostgreSQL remains the primary relational databa
 Local test database:
 
 ```text
-astor_butler_documents_test
+aether
 ```
+
+Local MongoDB requires authentication:
+
+```text
+MONGO_USER=oracle
+MONGO_PASSWORD=astor_unlock
+MONGODB_URI=mongodb://oracle:astor_unlock@localhost:27017/aether?authSource=admin
+```
+
+MongoDB stores document metadata, extracted text and chunks for AI/search workflows. Original files stay on local disk, Yandex Disk or S3-compatible object storage. Heavy media and binary source files should not be duplicated into MongoDB as raw blobs.
 
 ## Collections
 

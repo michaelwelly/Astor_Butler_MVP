@@ -36,14 +36,17 @@ services:
   mongo:
     image: mongo:7
     container_name: astor_mongo_test
+    command: ["mongod", "--auth", "--bind_ip_all"]
     ports:
       - "${MONGO_PORT:-27017}:27017"
     environment:
-      MONGO_INITDB_DATABASE: ${MONGO_DB:-astor_butler_documents_test}
+      MONGO_INITDB_DATABASE: ${MONGO_DB:-aether}
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_USER:-oracle}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD:-astor_unlock}
     volumes:
       - mongodata:/data/db
     healthcheck:
-      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping').ok"]
+      test: ["CMD-SHELL", "mongosh --quiet -u \"$${MONGO_INITDB_ROOT_USERNAME}\" -p \"$${MONGO_INITDB_ROOT_PASSWORD}\" --authenticationDatabase admin --eval 'db.adminCommand({ ping: 1 }).ok'"]
       interval: 10s
       timeout: 5s
       retries: 10

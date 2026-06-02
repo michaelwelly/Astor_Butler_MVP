@@ -46,6 +46,8 @@ telegram:
     enabled: ${TELEGRAM_BOT_ENABLED:false}
     token: ${TELEGRAM_BOT_TOKEN:}
     username: ${TELEGRAM_BOT_USERNAME:astor_butler_bot}
+  admin:
+    chat-id: ${TELEGRAM_ADMIN_CHAT_ID:}
   oauth:
     client-id: ${TELEGRAM_CLIENT_ID:}
     redirect-uri: ${TELEGRAM_REDIRECT_URI:http://localhost:8088/auth/telegram/callback}
