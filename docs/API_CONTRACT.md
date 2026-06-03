@@ -7,6 +7,7 @@ This document fixes the first REST API contract for Swagger/OpenAPI and future f
 ## Principles
 
 - REST API is the public backend boundary for web and promo frontends.
+- External HTTP traffic enters through API Gateway / Load Balancer before reaching backend instances.
 - Controllers stay thin and must not contain business logic.
 - FSM, service layer and domain modules own behavior.
 - All request and response payloads must be represented by typed DTO/schema models.
@@ -114,6 +115,33 @@ Message gateway rules:
 - If AI cannot produce a reliable answer, backend returns a fallback response and may create an admin alert.
 - Future messengers must reuse this contract instead of copying Telegram-specific logic.
 
+## API Gateway And Load Balancer
+
+Local MVP gateway:
+
+- container: `api-gateway`;
+- implementation: Nginx;
+- local port: `8080`;
+- backend target: Spring Boot from IDE on internal dev port `host.docker.internal:8088`;
+- Swagger through gateway: `http://localhost:8080/swagger-ui/index.html`;
+- health: `http://localhost:8080/gateway/health`.
+
+Gateway responsibilities:
+
+- route `/api/**`, `/auth/**`, `/actuator/**`, `/swagger-ui/**` and `/v3/api-docs`;
+- add `X-Request-Id`, `X-Real-IP`, `X-Forwarded-For`, `X-Forwarded-Proto`;
+- enforce soft local rate limit;
+- enforce request body limit;
+- keep backend controllers independent from transport details.
+
+Target production shape:
+
+- baseline MVP: `3` backend instances behind load balancer;
+- minimum resilient preprod: `2` backend instances;
+- local development: `1` backend instance from IDE plus Docker infrastructure.
+
+Telegram long polling is enabled on one backend instance only. REST/Web Chat APIs can be served by multiple instances because FSM state is in Redis, business data is in PostgreSQL, and event/audit flow goes through Kafka. If Telegram moves to webhook mode, webhook traffic can enter through API Gateway and be horizontally scaled with strict idempotency on Telegram `updateId`.
+
 ## Consent Vault Contract
 
 Consent Vault is planned early because the first Telegram scenario already asks for contact data and links the user to privacy policy acceptance.
@@ -126,7 +154,35 @@ Minimum contract:
 - request consent/personal-data export;
 - expose current policy version for frontend/Telegram flows.
 
-The current implementation is a Swagger-visible stub. Persistence and legal evidence fields will be implemented after the user/auth data model is finalized.
+Current backend persistence:
+
+- Telegram `/start` asks the guest to share contact and links the current privacy policy.
+- Contact capture grants `PRIVACY_POLICY` consent for policy version `2026-06-02-local`.
+- Consent evidence is stored in PostgreSQL table `user_consents`.
+- Telegram identity data is stored in `users` and `telegram_profiles`.
+- All accepted Telegram messages are stored in `telegram_messages` for later AI/entity extraction and audit.
+
+The REST Consent Vault endpoints still preserve the frontend-facing route shape while the user/auth model is being finalized.
+
+## Internal Event Contract
+
+Kafka is an internal backend boundary for audit, analytics and future notifications. It is not exposed to frontend clients.
+
+Current local event topic:
+
+- topic: `astor.user.events`;
+- partitions: `3`;
+- replication factor: `1` for local Redpanda;
+- producer idempotence: enabled with `acks=all`;
+- event key/idempotency key: `<channel>:<correlationId>`, usually `telegram:<updateId>`.
+- local Kafka UI: Redpanda Console at `http://localhost:8081`.
+
+Analytics consumer:
+
+- group id: `astor-analytics-admin`;
+- manual commits;
+- duplicate processing guard: PostgreSQL table `processed_kafka_events`;
+- current side effect: send a compact event copy into `TELEGRAM_ANALYTICS_CHAT_ID`.
 
 ## Adding Or Changing API Groups
 

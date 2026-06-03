@@ -13,12 +13,15 @@ import org.telegram.telegrambots.meta.api.methods.BotApiMethod;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Contact;
 import org.telegram.telegrambots.meta.api.objects.Message;
+import org.telegram.telegrambots.meta.api.objects.ResponseParameters;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.User;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardMarkup;
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardRemove;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardButton;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardRow;
 import org.telegram.telegrambots.meta.bots.AbsSender;
+import org.telegram.telegrambots.meta.exceptions.TelegramApiRequestException;
 
 import java.util.List;
 import java.util.UUID;
@@ -102,10 +105,16 @@ public class TelegramRouter {
 
         return IncomingMessage.telegram(
                 chatId,
+                user == null ? null : user.getId(),
+                message.getMessageId(),
+                update.getUpdateId(),
                 message.hasText() ? message.getText() : "",
                 contact == null ? null : contact.getPhoneNumber(),
                 user == null ? null : user.getFirstName(),
+                user == null ? null : user.getLastName(),
                 user == null ? null : user.getUserName(),
+                user == null ? null : user.getLanguageCode(),
+                user == null ? null : user.getIsBot(),
                 update.getUpdateId() == null ? UUID.randomUUID().toString() : update.getUpdateId().toString()
         );
     }
@@ -124,6 +133,8 @@ public class TelegramRouter {
         }
         if (outgoing.requestContact()) {
             builder.replyMarkup(contactKeyboard());
+        } else if (outgoing.removeKeyboard()) {
+            builder.replyMarkup(ReplyKeyboardRemove.builder().removeKeyboard(true).build());
         }
 
         execute(sender, builder.build());
@@ -146,7 +157,7 @@ public class TelegramRouter {
 
     private ReplyKeyboardMarkup contactKeyboard() {
         KeyboardButton shareContact = KeyboardButton.builder()
-                .text("📱 Поделиться контактом")
+                .text("Согласиться и поделиться контактом")
                 .requestContact(true)
                 .build();
 
@@ -160,8 +171,52 @@ public class TelegramRouter {
     private void execute(AbsSender sender, BotApiMethod<?> method) {
         try {
             sender.execute(method);
+        } catch (TelegramApiRequestException e) {
+            Long migratedChatId = migratedChatId(e);
+            if (migratedChatId != null && method instanceof SendMessage sendMessage) {
+                log.warn(
+                        "Telegram chat migrated to supergroup. Update TELEGRAM_ADMIN_CHAT_ID/TELEGRAM_ANALYTICS_CHAT_ID to {}. Retrying once.",
+                        migratedChatId
+                );
+                try {
+                    sendMessage.setChatId(migratedChatId);
+                    sender.execute(sendMessage);
+                    return;
+                } catch (Exception retryException) {
+                    log.error("Telegram API retry after chat migration failed: {}", method.getMethod(), retryException);
+                    return;
+                }
+            }
+            log.error("Telegram API call failed: {}", method.getMethod(), e);
         } catch (Exception e) {
             log.error("Telegram API call failed: {}", method.getMethod(), e);
+        }
+    }
+
+    private Long migratedChatId(TelegramApiRequestException e) {
+        ResponseParameters parameters = e.getParameters();
+        if (parameters != null && parameters.getMigrateToChatId() != null) {
+            return parameters.getMigrateToChatId();
+        }
+
+        String apiResponse = e.getApiResponse();
+        if (apiResponse == null || apiResponse.isBlank()) {
+            return null;
+        }
+
+        int marker = apiResponse.indexOf("migrate_to_chat_id");
+        if (marker < 0) {
+            return null;
+        }
+
+        String suffix = apiResponse.substring(marker).replaceAll("[^0-9-]", " ").trim();
+        if (suffix.isBlank()) {
+            return null;
+        }
+        try {
+            return Long.parseLong(suffix.split("\\s+")[0]);
+        } catch (NumberFormatException ignored) {
+            return null;
         }
     }
 }

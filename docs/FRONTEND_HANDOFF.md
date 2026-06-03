@@ -26,7 +26,7 @@ scripts/run_local_app.sh .env.frontend
 Полезные адреса:
 
 - Frontend: `http://localhost:3001`
-- Swagger: `http://localhost:8088/swagger-ui/index.html`
+- Swagger: `http://localhost:8080/swagger-ui/index.html`
 - MinIO Console: `http://localhost:9001`
 - MinIO media base URL: `http://localhost:9000/astor-media`
 
@@ -56,7 +56,7 @@ Frontend task:
 2. Use local frontend env:
 
 ```bash
-NEXT_PUBLIC_API_BASE_URL=http://localhost:8088
+NEXT_PUBLIC_API_BASE_URL=http://localhost:8080
 NEXT_PUBLIC_MEDIA_BASE_URL=http://localhost:9000/astor-media
 ```
 

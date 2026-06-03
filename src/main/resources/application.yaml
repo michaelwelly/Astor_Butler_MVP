@@ -1,4 +1,17 @@
 astor:
+  redis:
+    fsm-ttl-seconds: ${FSM_REDIS_TTL_SECONDS:259200}
+    idempotency-ttl-seconds: ${IDEMPOTENCY_REDIS_TTL_SECONDS:86400}
+    key-prefix: ${ASTOR_REDIS_KEY_PREFIX:astor}
+  kafka:
+    enabled: ${KAFKA_ENABLED:true}
+    log-published-events: ${KAFKA_LOG_PUBLISHED_EVENTS:true}
+    analytics-admin-chat-enabled: ${KAFKA_ANALYTICS_ADMIN_CHAT_ENABLED:true}
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    user-events-topic: ${KAFKA_USER_EVENTS_TOPIC:astor.user.events}
+    analytics-group-id: ${KAFKA_ANALYTICS_GROUP_ID:astor-analytics-admin}
+    user-events-partitions: ${KAFKA_USER_EVENTS_PARTITIONS:3}
+    replication-factor: ${KAFKA_REPLICATION_FACTOR:1}
   media:
     menu-dir: ${ASTOR_MEDIA_MENU_DIR:./media/menu/}
   storage:
@@ -9,6 +22,8 @@ astor:
       secret-key: ${S3_SECRET_KEY}
       media-bucket: ${S3_BUCKET_MEDIA:astor-media}
       documents-bucket: ${S3_BUCKET_DOCUMENTS:astor-documents}
+  message:
+    log-conversations-enabled: ${ASTOR_LOG_CONVERSATIONS_ENABLED:true}
 
 spring:
   application:
@@ -48,14 +63,21 @@ telegram:
     username: ${TELEGRAM_BOT_USERNAME:astor_butler_bot}
   admin:
     chat-id: ${TELEGRAM_ADMIN_CHAT_ID:}
+  analytics:
+    chat-id: ${TELEGRAM_ANALYTICS_CHAT_ID:${TELEGRAM_ADMIN_CHAT_ID:}}
   oauth:
     client-id: ${TELEGRAM_CLIENT_ID:}
-    redirect-uri: ${TELEGRAM_REDIRECT_URI:http://localhost:8088/auth/telegram/callback}
+    redirect-uri: ${TELEGRAM_REDIRECT_URI:http://localhost:8080/auth/telegram/callback}
 
 llm:
   ollama:
     base-url: ${LLM_OLLAMA_BASE_URL:http://localhost:11434}
     model: ${LLM_OLLAMA_MODEL:qwen2.5:1.5b}
+    keep-alive: ${LLM_OLLAMA_KEEP_ALIVE:30m}
+    warmup-enabled: ${LLM_WARMUP_ENABLED:true}
+    warmup-interval-seconds: ${LLM_WARMUP_INTERVAL_SECONDS:120}
+    connect-timeout-ms: ${LLM_CONNECT_TIMEOUT_MS:2000}
+    read-timeout-ms: ${LLM_READ_TIMEOUT_MS:8000}
 
 yandex:
   ai:

@@ -1,9 +1,15 @@
 package museon_online.astor_butler.llm;
 
 import jakarta.annotation.PostConstruct;
+import jakarta.annotation.PreDestroy;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 @Slf4j
 @Component
@@ -11,26 +17,46 @@ import org.springframework.stereotype.Component;
 public class LlmWarmup {
 
     private final OllamaClient ollamaClient;
+    private final ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor(r -> {
+        Thread thread = new Thread(r, "llm-warmup-thread");
+        thread.setDaemon(true);
+        return thread;
+    });
+
+    @Value("${llm.ollama.warmup-enabled:true}")
+    private boolean warmupEnabled;
+
+    @Value("${llm.ollama.warmup-interval-seconds:120}")
+    private long warmupIntervalSeconds;
 
     @PostConstruct
     public void warmup() {
-        new Thread(() -> {
-            try {
-                log.info("🔥 [LLM] Warm-up started");
+        if (!warmupEnabled) {
+            log.info("[LLM] Warm-up disabled");
+            return;
+        }
 
-                long start = System.currentTimeMillis();
+        executor.scheduleWithFixedDelay(
+                this::ping,
+                0,
+                Math.max(15, warmupIntervalSeconds),
+                TimeUnit.SECONDS
+        );
+    }
 
-                ollamaClient.ask(
-                        "Ответь одним словом: готов."
-                );
+    @PreDestroy
+    public void stop() {
+        executor.shutdownNow();
+    }
 
-                long duration = System.currentTimeMillis() - start;
-
-                log.info("🔥 [LLM] Warm-up finished in {} ms", duration);
-
-            } catch (Exception e) {
-                log.warn("⚠️ [LLM] Warm-up failed", e);
-            }
-        }, "llm-warmup-thread").start();
+    private void ping() {
+        try {
+            long start = System.currentTimeMillis();
+            ollamaClient.ask("Ответь одним словом: готов.");
+            long duration = System.currentTimeMillis() - start;
+            log.info("[LLM] Warm-up ping finished in {} ms", duration);
+        } catch (Exception e) {
+            log.warn("[LLM] Warm-up ping failed: {}", e.getMessage());
+        }
     }
 }

@@ -34,6 +34,7 @@ public class User {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "role", nullable = false)
+    @Builder.Default
     private UserRole role = UserRole.GUEST;
 
     @Column(name = "created_at", updatable = false)

@@ -156,6 +156,33 @@ WordPress/Headless CMS не является целевой backend-архите
 
 ## Backend
 
+### API Gateway / Load Balancer
+
+Локальный MVP уже содержит API Gateway как отдельный Nginx-контейнер:
+
+- внешний порт: `8080`;
+- внешний локальный вход: `http://localhost:8080`;
+- локальный upstream: `host.docker.internal:8088`, то есть внутренний dev-порт Spring Boot из IDEA;
+- Swagger через gateway: `http://localhost:8080/swagger-ui/index.html`;
+- health gateway: `http://localhost:8080/gateway/health`;
+- мягкий rate limit для `/api/**`, `/auth/**`, `/actuator/**`, Swagger/OpenAPI;
+- прокидывание `X-Request-Id`, `X-Forwarded-*`, `X-Real-IP`.
+
+Целевая конфигурация для ресторанного пилота на 100 гостей за вечер:
+
+- `1` локальный backend instance для разработки;
+- `2` backend instances для preprod/review;
+- `3` backend instances для production MVP.
+
+В production MVP роли инстансов разделяются:
+
+- `1` Telegram ingress/adapter instance с `TELEGRAM_BOT_ENABLED=true`;
+- `2` application/API instances с `TELEGRAM_BOT_ENABLED=false`;
+- все REST/Web Chat запросы идут через API Gateway/Load Balancer;
+- FSM state хранится в Redis, данные в PostgreSQL, события и аудит в Kafka.
+
+Почему Telegram long polling только на одном instance: несколько long-polling процессов с одним bot token конфликтуют за доставку update. Горизонтальное масштабирование Telegram-входа возможно после перехода на webhook через API Gateway и строгой idempotency по `updateId`.
+
 ### Public Boundary
 
 Наружу система предоставляет:
@@ -347,6 +374,16 @@ Redis используется для:
 - кеша меню, справочников и публичного контента;
 - feature flags/cache для landing blocks.
 
+Текущая TTL-стратегия MVP:
+
+- `astor:fsm:telegram:{chatId}:state` - FSM state, TTL `3` дня (`FSM_REDIS_TTL_SECONDS=259200`);
+- `astor:idem:telegram:{eventId}` - idempotency guard, TTL `24` часа (`IDEMPOTENCY_REDIS_TTL_SECONDS=86400`);
+- будущие booking drafts - `3` дня;
+- будущие menu/reference caches - `6-12` часов;
+- future rate limit keys - секунды/минуты.
+
+Redis не является единственным источником правды. Важные факты пишутся в PostgreSQL и Kafka: user/profile/consent/messages, timeline/domain events and LLM responses. Если Redis потерян или ключ истек, backend должен восстановить safe state из PostgreSQL/timeline и продолжить сценарий без привязки к конкретному Java instance.
+
 ### S3-Compatible Object Storage
 
 Object Storage используется для:
@@ -475,6 +512,7 @@ Local Docker Compose поднимает:
 - Redis;
 - MongoDB;
 - Kafka-compatible broker for local tests;
+- Redpanda Console for Kafka topics, partitions, messages and consumer groups;
 - MinIO S3-compatible object storage;
 - Prometheus;
 - Grafana;
@@ -496,9 +534,9 @@ scripts/run_local_app.sh
 
 After local backend startup:
 
-- Swagger UI: `http://localhost:8088/swagger-ui/index.html`;
-- OpenAPI JSON: `http://localhost:8088/v3/api-docs`;
-- metrics: `http://localhost:8088/actuator/prometheus`.
+- Swagger UI: `http://localhost:8080/swagger-ui/index.html`;
+- OpenAPI JSON: `http://localhost:8080/v3/api-docs`;
+- metrics: `http://localhost:8080/actuator/prometheus`.
 
 Ollama is intentionally excluded from the default local infrastructure profile. Heavy local models can take tens of gigabytes and should not block PostgreSQL, Redis, MongoDB, Kafka, MinIO, Prometheus or Grafana startup.
 

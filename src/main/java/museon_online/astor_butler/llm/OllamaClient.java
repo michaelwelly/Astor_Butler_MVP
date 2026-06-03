@@ -22,12 +22,15 @@ public class OllamaClient {
     @Value("${llm.ollama.model}")
     private String model;
 
+    @Value("${llm.ollama.keep-alive:30m}")
+    private String keepAlive;
+
     public String ask(String prompt) {
         Map<String, Object> body = Map.of(
                 "model", model,
                 "prompt", prompt,
                 "stream", false,
-                "keep_alive", "5m",
+                "keep_alive", keepAlive,
                 "options", Map.of(
                         "num_predict", 50,
                         "temperature", 0.2,

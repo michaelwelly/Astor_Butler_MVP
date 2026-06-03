@@ -10,6 +10,9 @@ Current MVP slice:
 - backend moves the user into `CONTACT`;
 - backend asks for contact and links privacy policy;
 - contact capture moves the user into `MENU`;
+- backend stores Telegram profile, incoming message and privacy-policy consent evidence in PostgreSQL;
+- backend publishes each accepted user message into Kafka topic `astor.user.events`;
+- analytics consumer forwards Kafka events into a separate admin Telegram chat when configured;
 - free text is routed through AI-assisted response;
 - unclear/failed AI response falls back to admin alert when `TELEGRAM_ADMIN_CHAT_ID` is configured.
 
@@ -24,8 +27,10 @@ sequenceDiagram
     participant Router as TelegramRouter
     participant Idem as IdempotencyGuard
     participant Gateway as MessageGatewayService
+    participant Pg as PostgreSQL
     participant FSM as FSMStorage
     participant LLM as OllamaClient
+    participant Kafka as Kafka / Redpanda
     participant Admin as Admin Telegram Chat
 
     Guest->>Tg: /start
@@ -33,8 +38,10 @@ sequenceDiagram
     Router->>Idem: check updateId
     Idem-->>Router: accepted
     Router->>Gateway: IncomingMessage(TELEGRAM)
+    Gateway->>Pg: upsert user/profile, store message
     Gateway->>FSM: set CONTACT
     Gateway->>LLM: short greeting
+    Gateway->>Kafka: USER_MESSAGE_RECEIVED
     LLM-->>Gateway: greeting or fallback text
     Gateway-->>Router: OutgoingMessage(requestContact=true)
     Router-->>Guest: greeting + contact button
@@ -43,22 +50,29 @@ sequenceDiagram
     Tg->>Router: Update(contact)
     Router->>Idem: check updateId
     Router->>Gateway: IncomingMessage(contactPhone)
+    Gateway->>Pg: upsert phone + grant PRIVACY_POLICY consent
     Gateway->>FSM: set MENU
+    Gateway->>Kafka: USER_MESSAGE_RECEIVED
     Gateway-->>Router: menu-ready response
     Router-->>Guest: next step
 
     Guest->>Tg: unclear free text
     Tg->>Router: Update(text)
     Router->>Gateway: IncomingMessage(text)
+    Gateway->>Pg: store message
     Gateway->>LLM: parse/answer request
     alt LLM responds
         Gateway->>FSM: set AI_FALLBACK
+        Gateway->>Kafka: USER_MESSAGE_RECEIVED
         Router-->>Guest: AI-assisted answer
     else LLM fails or blank
         Gateway->>FSM: set AI_FALLBACK
+        Gateway->>Kafka: USER_MESSAGE_RECEIVED
         Router-->>Guest: safe fallback
         Router-->>Admin: fallback alert
     end
+
+    Kafka-->>Admin: analytics event copy
 ```
 
 ## States
@@ -69,6 +83,8 @@ sequenceDiagram
 | `CONTACT` | backend needs phone/contact and consent evidence | asks user to share contact | persist contact and consent |
 | `MENU` | safe basic menu state | confirms contact and offers next action | connect Booking/Quiet Guide |
 | `AI_FALLBACK` | free-text or unclear request path | AI-assisted reply or admin fallback | replace with structured intent/entity adapter |
+
+Redis FSM keys use `astor:fsm:telegram:{chatId}:state` and live for 3 days in MVP. This lets a guest return after a pause during the same restaurant/event cycle without losing the scenario. Redis is a hot state layer; durable facts still go to PostgreSQL and Kafka.
 
 Future states:
 
@@ -84,7 +100,7 @@ Future states:
 - `POST /api/fsm/events` - lower-level normalized event boundary.
 - `GET /api/fsm/users/{userId}/state` - state read model.
 - `POST /api/fsm/users/{userId}/reset` - safe reset.
-- `POST /api/consents` - consent grant placeholder for contact/policy flow.
+- `POST /api/consents` - consent grant boundary for contact/policy flow.
 - `GET /api/consents/policy/current` - current policy version.
 
 ## Local Check
@@ -104,7 +120,7 @@ scripts/run_local_app.sh
 3. Open Swagger:
 
 ```text
-http://localhost:8088/swagger-ui/index.html
+http://localhost:8080/swagger-ui/index.html
 ```
 
 4. For Telegram bot check, `.env` must contain:
@@ -114,6 +130,9 @@ TELEGRAM_BOT_ENABLED=true
 TELEGRAM_BOT_TOKEN=...
 TELEGRAM_BOT_USERNAME=...
 TELEGRAM_ADMIN_CHAT_ID=...
+TELEGRAM_ANALYTICS_CHAT_ID=...
+KAFKA_BOOTSTRAP_SERVERS=localhost:9092
+KAFKA_USER_EVENTS_TOPIC=astor.user.events
 ```
 
 5. Send `/start` to the bot and verify:
@@ -121,4 +140,9 @@ TELEGRAM_ADMIN_CHAT_ID=...
 - bot answers with greeting;
 - bot requests contact;
 - contact moves state to `MENU`;
+- PostgreSQL contains rows in `users`, `telegram_profiles`, `telegram_messages`, and `user_consents`;
+- Kafka topic `astor.user.events` receives one event per accepted Telegram message;
+- analytics admin chat receives event copies when `TELEGRAM_ANALYTICS_CHAT_ID` points to a valid chat/supergroup;
 - unclear text returns fallback and sends admin alert if admin chat id is set.
+
+If Telegram reports `group chat was upgraded to a supergroup chat`, read the logged `migrate_to_chat_id` value and put it into `TELEGRAM_ADMIN_CHAT_ID` or `TELEGRAM_ANALYTICS_CHAT_ID`. The backend retries once with the migrated id, but the `.env` value must still be updated for the next restart.

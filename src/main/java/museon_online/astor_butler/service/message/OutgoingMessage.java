@@ -12,6 +12,7 @@ public record OutgoingMessage(
         String nextState,
         boolean html,
         boolean requestContact,
+        boolean removeKeyboard,
         boolean fallback,
         AdminAlert adminAlert,
         List<String> actions,
@@ -24,6 +25,7 @@ public record OutgoingMessage(
             String nextState,
             boolean html,
             boolean requestContact,
+            boolean removeKeyboard,
             boolean fallback,
             AdminAlert adminAlert,
             List<String> actions
@@ -36,6 +38,7 @@ public record OutgoingMessage(
                 nextState,
                 html,
                 requestContact,
+                removeKeyboard,
                 fallback,
                 adminAlert == null ? AdminAlert.none() : adminAlert,
                 actions == null ? List.of() : actions,

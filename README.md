@@ -91,14 +91,18 @@ scripts/run_local_app.sh .env.frontend
 
 Этот режим оставляет `TELEGRAM_BOT_ENABLED=false`, чтобы второй локальный запуск не конфликтовал с основным Telegram-ботом.
 
-После старта:
+После старта внешний локальный вход один:
 
-- Swagger UI: http://localhost:8088/swagger-ui/index.html
-- OpenAPI JSON: http://localhost:8088/v3/api-docs
-- Health: http://localhost:8088/actuator/health
+- Swagger UI: http://localhost:8080/swagger-ui/index.html
+- OpenAPI JSON: http://localhost:8080/v3/api-docs
+- API Gateway health: http://localhost:8080/gateway/health
+- Backend health: http://localhost:8080/actuator/health
+- Kafka / Redpanda Console: http://localhost:8081
 - C3FLEX frontend: http://localhost:3001
 
 Ollama/local LLM не входит в default compose-профиль и включается отдельно через `--profile ai`, чтобы тяжелая модель не блокировала запуск инфраструктуры.
+
+API Gateway в локальном контуре поднимается как отдельный Nginx-контейнер и проксирует запросы на Spring Boot, запущенный из IDEA на внутреннем dev-порту `8088`. Пользовательский и frontend-facing адрес всегда `http://localhost:8080`.
 
 ---
 
@@ -189,7 +193,7 @@ scripts/run_local_app.sh
 Swagger UI:
 
 ```text
-http://localhost:8088/swagger-ui/index.html
+http://localhost:8080/swagger-ui/index.html
 ```
 
 Быстрая проверка REST API и Swagger/OpenAPI:

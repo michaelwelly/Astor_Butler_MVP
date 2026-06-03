@@ -6,7 +6,7 @@ The next session should continue from the saved MVP foundation:
 
 - PR #5 merged the first C3FLEX.com frontend scaffold into `main`.
 - Frontend app lives in `frontend/` and runs on `http://localhost:3001` because Grafana uses `3000`.
-- Backend Swagger runs on `http://localhost:8088/swagger-ui/index.html`.
+- Backend Swagger runs through API Gateway on `http://localhost:8080/swagger-ui/index.html`.
 - API Contract v0 exists and Swagger contains non-empty paths.
 - Telegram/FSM message gateway now has a visible vertical slice: `/start`, contact request, AI-assisted reply and fallback-to-admin.
 - `POST /api/messages` exposes the same FSM gateway for future web chat.

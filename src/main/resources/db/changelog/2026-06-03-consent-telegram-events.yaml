@@ -1,0 +1,229 @@
+databaseChangeLog:
+  - changeSet:
+      id: consent-telegram-events
+      author: astor-butler
+      preConditions:
+        - onFail: MARK_RAN
+        - onError: CONTINUE
+        - not:
+            tableExists:
+              tableName: telegram_profiles
+      changes:
+        - createTable:
+            tableName: telegram_profiles
+            columns:
+              - column:
+                  name: telegram_user_id
+                  type: BIGINT
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: chat_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: username
+                  type: TEXT
+              - column:
+                  name: first_name
+                  type: TEXT
+              - column:
+                  name: last_name
+                  type: TEXT
+              - column:
+                  name: language_code
+                  type: VARCHAR(16)
+              - column:
+                  name: is_bot
+                  type: BOOLEAN
+                  defaultValueBoolean: false
+              - column:
+                  name: phone_number
+                  type: TEXT
+              - column:
+                  name: source_channel
+                  type: VARCHAR(32)
+                  defaultValue: TELEGRAM
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created_at
+                  type: TIMESTAMP WITH TIME ZONE
+                  defaultValueComputed: CURRENT_TIMESTAMP
+                  constraints:
+                    nullable: false
+              - column:
+                  name: updated_at
+                  type: TIMESTAMP WITH TIME ZONE
+                  defaultValueComputed: CURRENT_TIMESTAMP
+                  constraints:
+                    nullable: false
+              - column:
+                  name: last_seen_at
+                  type: TIMESTAMP WITH TIME ZONE
+                  defaultValueComputed: CURRENT_TIMESTAMP
+                  constraints:
+                    nullable: false
+
+        - createTable:
+            tableName: telegram_messages
+            columns:
+              - column:
+                  name: id
+                  type: UUID
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: event_id
+                  type: VARCHAR(96)
+                  constraints:
+                    nullable: false
+                    unique: true
+                    uniqueConstraintName: uq_telegram_messages_event_id
+              - column:
+                  name: telegram_user_id
+                  type: BIGINT
+              - column:
+                  name: chat_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: message_id
+                  type: INTEGER
+              - column:
+                  name: update_id
+                  type: INTEGER
+              - column:
+                  name: message_kind
+                  type: VARCHAR(32)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: text
+                  type: TEXT
+              - column:
+                  name: contact_phone
+                  type: TEXT
+              - column:
+                  name: raw_payload
+                  type: JSONB
+              - column:
+                  name: received_at
+                  type: TIMESTAMP WITH TIME ZONE
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created_at
+                  type: TIMESTAMP WITH TIME ZONE
+                  defaultValueComputed: CURRENT_TIMESTAMP
+                  constraints:
+                    nullable: false
+        - createIndex:
+            tableName: telegram_messages
+            indexName: idx_telegram_messages_user_time
+            columns:
+              - column:
+                  name: telegram_user_id
+              - column:
+                  name: received_at
+        - createIndex:
+            tableName: telegram_messages
+            indexName: idx_telegram_messages_chat_time
+            columns:
+              - column:
+                  name: chat_id
+              - column:
+                  name: received_at
+
+        - createTable:
+            tableName: user_consents
+            columns:
+              - column:
+                  name: id
+                  type: UUID
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: telegram_user_id
+                  type: BIGINT
+              - column:
+                  name: chat_id
+                  type: BIGINT
+              - column:
+                  name: consent_type
+                  type: VARCHAR(64)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: policy_version
+                  type: VARCHAR(64)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: status
+                  type: VARCHAR(32)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: source
+                  type: VARCHAR(64)
+              - column:
+                  name: evidence
+                  type: JSONB
+              - column:
+                  name: granted_at
+                  type: TIMESTAMP WITH TIME ZONE
+              - column:
+                  name: revoked_at
+                  type: TIMESTAMP WITH TIME ZONE
+              - column:
+                  name: created_at
+                  type: TIMESTAMP WITH TIME ZONE
+                  defaultValueComputed: CURRENT_TIMESTAMP
+                  constraints:
+                    nullable: false
+              - column:
+                  name: updated_at
+                  type: TIMESTAMP WITH TIME ZONE
+                  defaultValueComputed: CURRENT_TIMESTAMP
+                  constraints:
+                    nullable: false
+        - addUniqueConstraint:
+            tableName: user_consents
+            columnNames: telegram_user_id, consent_type, policy_version
+            constraintName: uq_user_consents_telegram_policy
+
+        - createTable:
+            tableName: processed_kafka_events
+            columns:
+              - column:
+                  name: id
+                  type: UUID
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: consumer_name
+                  type: VARCHAR(96)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: event_id
+                  type: VARCHAR(128)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: processed_at
+                  type: TIMESTAMP WITH TIME ZONE
+                  defaultValueComputed: CURRENT_TIMESTAMP
+                  constraints:
+                    nullable: false
+        - addUniqueConstraint:
+            tableName: processed_kafka_events
+            columnNames: consumer_name, event_id
+            constraintName: uq_processed_kafka_events_consumer_event
