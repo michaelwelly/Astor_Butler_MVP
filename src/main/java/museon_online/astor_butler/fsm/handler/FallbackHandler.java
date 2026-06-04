@@ -7,15 +7,14 @@ import lombok.extern.slf4j.Slf4j;
 import museon_online.astor_butler.fsm.core.BotState;
 import museon_online.astor_butler.fsm.core.CommandContext;
 import museon_online.astor_butler.telegram.utils.TelegramSender;
-import org.springframework.stereotype.Component;
 
 /**
  * Fallback — осмысленный ответ AI,
  * когда сообщение не попало ни в один сценарий FSM.
  */
-@Component
 @RequiredArgsConstructor
 @Slf4j
+@Deprecated(forRemoval = false)
 public class FallbackHandler implements FSMHandler {
 
 //    private final AlisaClient alisaClient;

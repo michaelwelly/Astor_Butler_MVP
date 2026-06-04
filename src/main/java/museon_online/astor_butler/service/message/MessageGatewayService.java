@@ -2,9 +2,9 @@ package museon_online.astor_butler.service.message;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import museon_online.astor_butler.domain.consent.ConsentVaultService;
 import museon_online.astor_butler.domain.telegram.TelegramIntakeService;
 import museon_online.astor_butler.fsm.core.BotState;
+import museon_online.astor_butler.fsm.scenario.FirstTouchScenario;
 import museon_online.astor_butler.fsm.storage.FSMStorage;
 import museon_online.astor_butler.kafka.UserEventProducer;
 import museon_online.astor_butler.llm.OllamaClient;
@@ -18,12 +18,10 @@ import java.util.List;
 @Slf4j
 public class MessageGatewayService {
 
-    private static final String POLICY_URL = "https://michaelwelly.github.io/Astor_Butler_MVP/docs/policy.html";
-
     private final FSMStorage fsmStorage;
     private final OllamaClient ollamaClient;
     private final TelegramIntakeService telegramIntakeService;
-    private final ConsentVaultService consentVaultService;
+    private final FirstTouchScenario firstTouchScenario;
     private final UserEventProducer userEventProducer;
 
     @Value("${telegram.admin.chat-id:}")
@@ -75,29 +73,8 @@ public class MessageGatewayService {
             ));
         }
 
-        if (incoming.contactPhone() != null && !incoming.contactPhone().isBlank()) {
-            fsmStorage.setState(incoming.chatId(), BotState.MENU);
-            consentVaultService.grantPrivacyPolicyFromTelegramContact(incoming);
-            return finish(incoming, currentState, OutgoingMessage.of(
-                    incoming,
-                    "Спасибо, контакт получил. Теперь могу узнавать вас и вести сценарии аккуратнее.\n\nОткройте меню или напишите, что хотите забронировать.",
-                    BotState.MENU.name(),
-                    false,
-                    false,
-                    true,
-                    false,
-                    AdminAlert.none(),
-                    List.of("CONTACT_CAPTURED", "OPEN_MENU")
-            ));
-        }
-
-        if ("/start".equalsIgnoreCase(text)) {
-            fsmStorage.setState(incoming.chatId(), BotState.CONTACT);
-            return finish(incoming, currentState, greeting(incoming));
-        }
-
-        if (currentState == BotState.CONTACT) {
-            return contactConsentNudge(incoming, currentState, text);
+        if (firstTouchScenario.supports(incoming, currentState, text)) {
+            return finish(incoming, currentState, firstTouchScenario.handle(incoming, currentState, text));
         }
 
         if (text.isBlank()) {
@@ -105,11 +82,11 @@ public class MessageGatewayService {
         }
 
         if (isMenuRequest(text)) {
-            fsmStorage.setState(incoming.chatId(), BotState.MENU);
+            fsmStorage.setState(incoming.chatId(), BotState.READY_FOR_DIALOG);
             return finish(incoming, currentState, OutgoingMessage.of(
                     incoming,
                     "Меню MVP: бронирование, афиша, таймлайн, медиа и связь с менеджером. Пока это первый FSM-срез, дальше наполним сценариями.",
-                    BotState.MENU.name(),
+                    BotState.READY_FOR_DIALOG.name(),
                     false,
                     false,
                     true,
@@ -120,64 +97,6 @@ public class MessageGatewayService {
         }
 
         return aiAssistedReply(incoming, currentState, text);
-    }
-
-    private OutgoingMessage greeting(IncomingMessage incoming) {
-        String name = incoming.firstName() == null || incoming.firstName().isBlank()
-                ? "гость"
-                : incoming.firstName();
-        String response = "Здравствуйте, " + name + ". Я Astor Butler, ваш цифровой дворецкий для бронирований, меню и событий.\n\n"
-                + "Чтобы продолжить, нажмите кнопку \"Согласиться и поделиться контактом\".\n\n"
-                + "Нажимая кнопку, вы соглашаетесь с "
-                + "<a href=\"" + POLICY_URL + "\">политикой обработки персональных данных</a>.";
-
-        return OutgoingMessage.of(
-                incoming,
-                response,
-                BotState.CONTACT.name(),
-                true,
-                true,
-                false,
-                false,
-                AdminAlert.none(),
-                List.of("REQUEST_CONTACT", "CONSENT_REQUIRED")
-        );
-    }
-
-    private OutgoingMessage contactConsentNudge(IncomingMessage incoming, BotState currentState, String text) {
-        String prompt = """
-                        Ты Astor Butler, цифровой дворецкий. Гость еще не нажал кнопку согласия и не поделился контактом.
-                        Твоя задача: очень коротко, спокойно и элегантно ответить на реплику гостя и вернуть его к кнопке.
-                        Не продолжай бронирование, не собирай данные, не обещай действие менеджера.
-                        Обязательно упомяни, что для продолжения нужно нажать кнопку "Согласиться и поделиться контактом".
-                        Максимум 2 коротких предложения.
-
-                        Реплика гостя: "%s"
-                        """.formatted(text);
-        LlmAnswer answer = askOrFallback(
-                prompt,
-                "Понимаю. Чтобы продолжить, нажмите кнопку \"Согласиться и поделиться контактом\" ниже."
-        );
-        userEventProducer.publishLlmResponse(
-                incoming,
-                currentState,
-                "PRE_AUTH_CONSENT_NUDGE",
-                prompt,
-                answer.text(),
-                answer.fallbackUsed()
-        );
-
-        return finish(incoming, currentState, OutgoingMessage.of(
-                incoming,
-                answer.text(),
-                BotState.CONTACT.name(),
-                false,
-                true,
-                false,
-                false,
-                AdminAlert.none(),
-                List.of("PRE_AUTH_CONSENT_NUDGE", "REQUEST_CONTACT", "CONSENT_REQUIRED")
-        ));
     }
 
     private OutgoingMessage aiAssistedReply(IncomingMessage incoming, BotState currentState, String text) {
@@ -278,23 +197,6 @@ public class MessageGatewayService {
         }
         fsmStorage.setState(chatId, BotState.UNKNOWN);
         return BotState.UNKNOWN;
-    }
-
-    private LlmAnswer askOrFallback(String prompt, String fallback) {
-        try {
-            String response = ollamaClient.ask(prompt);
-            if (response == null || response.isBlank()) {
-                log.warn("LLM returned blank response, fallback used");
-                return new LlmAnswer(fallback, true);
-            }
-            return new LlmAnswer(response, false);
-        } catch (Exception e) {
-            log.warn("LLM fallback used: {}", e.getMessage());
-            return new LlmAnswer(fallback, true);
-        }
-    }
-
-    private record LlmAnswer(String text, boolean fallbackUsed) {
     }
 
     private boolean isMenuRequest(String text) {

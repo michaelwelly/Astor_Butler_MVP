@@ -9,11 +9,10 @@ import museon_online.astor_butler.fsm.storage.FSMStorage;
 import museon_online.astor_butler.telegram.utils.TelegramSender;
 import museon_online.astor_butler.telegram.command.MainMenuCommand;
 import museon_online.astor_butler.telegram.utils.BotResponse;
-import org.springframework.stereotype.Component;
 
 @Slf4j
-@Component
 @RequiredArgsConstructor
+@Deprecated(forRemoval = false)
 public class MenuHandler implements FSMHandler {
 
     private final TelegramSender sender;

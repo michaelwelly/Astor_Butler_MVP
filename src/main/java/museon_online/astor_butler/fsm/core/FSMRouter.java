@@ -5,14 +5,13 @@ import museon_online.astor_butler.fsm.core.event.InboundEvent;
 import museon_online.astor_butler.fsm.handler.FSMHandler;
 import museon_online.astor_butler.fsm.storage.FSMStorage;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
 
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Slf4j
-@Component
+@Deprecated(forRemoval = false)
 public class FSMRouter {
 
     private final Map<BotState, FSMHandler> handlers = new ConcurrentHashMap<>();

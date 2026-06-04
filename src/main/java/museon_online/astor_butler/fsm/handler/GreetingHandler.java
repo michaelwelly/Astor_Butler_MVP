@@ -7,7 +7,6 @@ import museon_online.astor_butler.fsm.core.CommandContext;
 import museon_online.astor_butler.fsm.storage.FSMStorage;
 import museon_online.astor_butler.llm.OllamaClient;
 import museon_online.astor_butler.telegram.utils.TelegramSender;
-import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardButton;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardRow;
@@ -17,9 +16,9 @@ import java.util.List;
 /**
  * Обрабатывает /start — визитка Astor Butler.
  */
-    @Component
     @RequiredArgsConstructor
     @Slf4j
+    @Deprecated(forRemoval = false)
     public class GreetingHandler implements FSMHandler {
 
         private static final String POLICY_URL = "https://michaelwelly.github.io/Astor_Butler_MVP/docs/policy.html";

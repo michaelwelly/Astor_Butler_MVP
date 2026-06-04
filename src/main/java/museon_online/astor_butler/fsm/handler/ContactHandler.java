@@ -8,7 +8,6 @@ import museon_online.astor_butler.fsm.storage.FSMStorage;
 import museon_online.astor_butler.telegram.utils.TelegramSender;
 import museon_online.astor_butler.domain.user.*;
 import org.springframework.beans.factory.ObjectProvider;
-import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.objects.Contact;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardButton;
@@ -17,8 +16,8 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.Keyboard
 import java.util.List;
 
 @Slf4j
-@Component
 @RequiredArgsConstructor
+@Deprecated(forRemoval = false)
 public class ContactHandler implements FSMHandler {
 
     private final UserRepository userRepo;

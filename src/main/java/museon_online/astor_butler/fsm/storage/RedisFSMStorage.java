@@ -33,7 +33,7 @@ public class RedisFSMStorage implements FSMStorage {
     public BotState getState(Long chatId) {
         String value = redisTemplate.opsForValue().get(stateKey(chatId));
         log.debug("🔹 Redis getState for chatId={} → {}", chatId, value);
-        return value != null ? BotState.valueOf(value) : null;
+        return BotState.fromStorageValue(value);
     }
 
     @Override
