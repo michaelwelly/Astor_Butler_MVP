@@ -156,6 +156,60 @@ landing:block:{slug}
 menu:active:{locationId}
 ```
 
+## AERIS Menu Assets
+
+Current local source:
+
+```text
+/Users/michaelwelly/Desktop/AERISMENU
+```
+
+This folder contains current AERIS menu PDFs, images, an interior video and event/budget supporting files. It must not be committed to Git.
+
+Storage decision:
+
+- original files live on local disk or Yandex Disk as source of truth;
+- local runtime copy lives in MinIO bucket `astor-media`;
+- object prefix for AERIS menu: `content/aeris-menu`;
+- MongoDB database: `aether`;
+- MongoDB collection: `menu_assets`;
+- Redis should cache only the active menu index / selected URLs, not binary files.
+
+Run local bootstrap after Docker infrastructure is up:
+
+```bash
+docker compose up -d minio minio-init mongo
+scripts/ingest_aeris_menu_assets.sh "/Users/michaelwelly/Desktop/AERISMENU"
+```
+
+Result:
+
+```text
+s3://astor-media/content/aeris-menu/...
+http://localhost:9000/astor-media/content/aeris-menu/...
+Mongo: aether.menu_assets
+```
+
+Recommended hot cache keys:
+
+```text
+menu:aeris:active
+menu:aeris:pdfs
+menu:aeris:images
+menu:aeris:last-updated
+```
+
+Guest flow target:
+
+```text
+Guest asks "меню"
+  -> Quiet Guide / Menu API
+  -> Redis active menu index
+  -> Mongo fallback if cache miss
+  -> public MinIO/S3 URL
+  -> Telegram sends document/link or web frontend renders card
+```
+
 ## Next Steps
 
 1. Keep the full Yandex Disk source as the media origin.

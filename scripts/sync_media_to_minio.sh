@@ -8,6 +8,7 @@ fi
 
 SOURCE_DIR="$(cd "$1" && pwd)"
 BUCKET="${2:-${S3_BUCKET_MEDIA:-astor-media}}"
+PREFIX="${3:-raw}"
 COMPOSE_PROJECT="${COMPOSE_PROJECT_NAME:-astor_butler_mvp}"
 NETWORK="${COMPOSE_PROJECT}_default"
 ACCESS_KEY="${S3_ACCESS_KEY:-astor}"
@@ -21,6 +22,6 @@ docker run --rm \
   -v "${SOURCE_DIR}:/source:ro" \
   --entrypoint sh \
   minio/mc:RELEASE.2025-04-16T18-13-26Z \
-  -c "mc alias set astor '${ENDPOINT}' '${ACCESS_KEY}' '${SECRET_KEY}' && mc mb --ignore-existing astor/'${BUCKET}' && mc mirror --overwrite --exclude '.DS_Store' /source astor/'${BUCKET}'/raw"
+  -c "mc alias set astor '${ENDPOINT}' '${ACCESS_KEY}' '${SECRET_KEY}' && mc mb --ignore-existing astor/'${BUCKET}' && mc mirror --overwrite --exclude '.DS_Store' /source astor/'${BUCKET}'/'${PREFIX}'"
 
-echo "Synced ${SOURCE_DIR} to s3://${BUCKET}/raw"
+echo "Synced ${SOURCE_DIR} to s3://${BUCKET}/${PREFIX}"

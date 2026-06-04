@@ -22,6 +22,7 @@ def main() -> None:
     parser.add_argument("source_dir", help="Local folder with media/content files, for example a synced Yandex Disk folder.")
     parser.add_argument("--out", default="/private/tmp/astor_media_manifest.jsonl")
     parser.add_argument("--bucket", default="astor-media")
+    parser.add_argument("--prefix", default="raw", help="Object storage prefix, for example raw or content/aeris-menu.")
     args = parser.parse_args()
 
     source_dir = Path(args.source_dir).expanduser().resolve()
@@ -37,7 +38,7 @@ def main() -> None:
         if media_type == "unknown":
             continue
         stat = path.stat()
-        object_key = object_key_for(media_type, relative_path)
+        object_key = object_key_for(args.prefix, relative_path)
         rows.append({
             "_id": stable_id(str(source_dir), str(relative_path)),
             "sourceRoot": str(source_dir),
@@ -85,8 +86,9 @@ def classify(path: Path) -> str:
     return "unknown"
 
 
-def object_key_for(media_type: str, relative_path: Path) -> str:
-    return "/".join(["raw", *relative_path.parts])
+def object_key_for(prefix: str, relative_path: Path) -> str:
+    clean_prefix = prefix.strip("/")
+    return "/".join([clean_prefix, *relative_path.parts]) if clean_prefix else "/".join(relative_path.parts)
 
 
 def tags_for(relative_path: Path, media_type: str) -> list[str]:
