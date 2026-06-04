@@ -38,7 +38,7 @@ public class TelegramRouter {
 
     public void handle(Update update, AbsSender sender) {
         try {
-            if (!processInboundEvent(update)) {
+            if (!acceptInboundEvent(update)) {
                 return;
             }
 
@@ -59,7 +59,7 @@ public class TelegramRouter {
             exceptionHandler.handle(update, e, sender);
         }
     }
-    private boolean processInboundEvent(Update update) {
+    private boolean acceptInboundEvent(Update update) {
         try {
             InboundEvent inboundEvent = InboundEvent.from(update);
 
@@ -79,7 +79,7 @@ public class TelegramRouter {
             }
 
             log.info(
-                    "➡️ [PIPELINE] InboundEvent accepted → forwarding to FSM (eventId={}, type={}, chatId={})",
+                    "➡️ [PIPELINE] InboundEvent accepted by idempotency guard → forwarding to MessageGateway (eventId={}, type={}, chatId={})",
                     inboundEvent.getEventId(),
                     inboundEvent.getType(),
                     inboundEvent.getChatId()
