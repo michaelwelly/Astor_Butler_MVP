@@ -1,0 +1,9 @@
+databaseChangeLog:
+  - changeSet:
+      id: harden-relational-constraints
+      author: astor-butler
+      changes:
+        - sqlFile:
+            path: db/changelog/2026-06-05-relational-constraints.sql
+            splitStatements: false
+            stripComments: false

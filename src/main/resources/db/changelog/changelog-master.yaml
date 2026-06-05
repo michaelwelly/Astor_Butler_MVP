@@ -6,4 +6,6 @@ databaseChangeLog:
   - include:
       file: db/changelog/2026-06-04-normalize-identity.yaml
   - include:
+      file: db/changelog/2026-06-05-relational-constraints.yaml
+  - include:
       file: db/changelog/2026-06-04-create-outbox-events.yaml

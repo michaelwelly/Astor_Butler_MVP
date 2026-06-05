@@ -57,7 +57,68 @@ telegram_messages
   text
   raw_payload
   received_at
+
+event_bookings
+  id
+  user_id -> users.id
+  manager_user_id -> users.id
+  status
+  event_type
+  event_date
+  guest_count
+  budget
+  created_at
 ```
+
+## Отношения и constraints
+
+```text
+users 1 -- 0..1 telegram_profiles
+users 1 -- 0..N user_contacts
+users 1 -- 0..N user_consents
+users 1 -- 0..N telegram_messages
+users 1 -- 0..N event_bookings as guest/client
+users 1 -- 0..N event_bookings as manager
+```
+
+Целевые ключи:
+
+- `telegram_profiles.user_id -> users.id`, `ON DELETE SET NULL`;
+- `telegram_messages.user_id -> users.id`, `ON DELETE SET NULL`;
+- `user_consents.user_id -> users.id`, `ON DELETE SET NULL`;
+- `user_contacts.user_id -> users.id`, `ON DELETE CASCADE`;
+- `event_bookings.user_id -> users.id`, `ON DELETE SET NULL`;
+- `event_bookings.manager_user_id -> users.id`, `ON DELETE SET NULL`.
+
+Целевые уникальности и индексы:
+
+- `telegram_profiles.telegram_user_id` — primary key внешнего Telegram-аккаунта;
+- `telegram_profiles.user_id` — unique partial index для текущего MVP-правила `1 user = 1 Telegram profile`;
+- `telegram_messages(user_id, received_at)` — история сообщений пользователя;
+- `user_consents(user_id, consent_type, policy_version)` — быстрый поиск актуального согласия;
+- `user_contacts(contact_type, contact_value)` — поиск пользователя по телефону/e-mail;
+- `event_bookings(user_id, status, created_at)` — карточка гостя и история заявок;
+- `event_bookings(manager_user_id, status, created_at)` — менеджерский workload.
+
+## CQRS-подход для MVP
+
+CQRS вводим сначала внутри монолита, без отдельной PostgreSQL read replica:
+
+```text
+Command side:
+  identity command service
+  booking command service
+  consent command service
+
+Query side:
+  user profile query service
+  booking read model
+  manager dashboard read model
+```
+
+Правило: write-сервисы меняют состояние и публикуют события, query-сервисы собирают read model для Swagger, manager UI и будущего frontend.
+
+Read replica планируется после появления стабильных API и первого k6-нагрузочного сценария. В MVP local/dev весь read/write traffic идет в один PostgreSQL primary, чтобы не усложнять отладку Telegram/FSM.
 
 ## Совместимость текущего кода
 
