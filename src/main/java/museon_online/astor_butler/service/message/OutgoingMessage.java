@@ -46,4 +46,26 @@ public record OutgoingMessage(
                 Instant.now()
         );
     }
+
+    public OutgoingMessage withMetadata(Map<String, Object> extraMetadata) {
+        Map<String, Object> merged = new java.util.LinkedHashMap<>(metadata == null ? Map.of() : metadata);
+        if (extraMetadata != null) {
+            merged.putAll(extraMetadata);
+        }
+        return new OutgoingMessage(
+                channel,
+                externalUserId,
+                chatId,
+                text,
+                nextState,
+                html,
+                requestContact,
+                removeKeyboard,
+                fallback,
+                adminAlert,
+                actions,
+                Map.copyOf(merged),
+                createdAt
+        );
+    }
 }

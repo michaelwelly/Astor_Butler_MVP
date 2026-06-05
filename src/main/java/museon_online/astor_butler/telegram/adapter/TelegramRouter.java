@@ -11,9 +11,11 @@ import museon_online.astor_butler.service.message.OutgoingMessage;
 import museon_online.astor_butler.telegram.exeption.TelegramExceptionHandler;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
+import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Service;
 import org.telegram.telegrambots.meta.api.methods.BotApiMethod;
 import org.telegram.telegrambots.meta.api.methods.AnswerCallbackQuery;
+import org.telegram.telegrambots.meta.api.methods.send.SendDocument;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.methods.send.SendPhoto;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.DeleteMessage;
@@ -51,6 +53,7 @@ public class TelegramRouter {
     private final TelegramChatViewService chatViewService;
     private final TelegramVoiceTranscriptionService voiceTranscriptionService;
     private final HostessReservationApprovalService hostessReservationApprovalService;
+    private final ResourceLoader resourceLoader;
 
     @Value("${telegram.ui.preview-enabled:true}")
     private boolean previewEnabled;
@@ -93,6 +96,7 @@ public class TelegramRouter {
             OutgoingMessage outgoing = messageGatewayService.handle(incoming);
             ensurePreview(incoming, sender);
             cleanupPreviousExchangeIfSafe(incoming, outgoing, sender);
+            sendDocumentIfPresent(outgoing, sender);
             send(incoming, outgoing, sender);
             trackCurrentUserMessage(incoming);
             sendAdminAlert(outgoing, sender);
@@ -225,6 +229,31 @@ public class TelegramRouter {
                 .text(outgoing.adminAlert().text())
                 .parseMode("HTML")
                 .build());
+    }
+
+    private void sendDocumentIfPresent(OutgoingMessage outgoing, AbsSender sender) {
+        if (outgoing == null || outgoing.chatId() == null || outgoing.metadata() == null) {
+            return;
+        }
+        Object location = outgoing.metadata().get("documentResource");
+        if (location == null || location.toString().isBlank()) {
+            return;
+        }
+        try {
+            Resource resource = resourceLoader.getResource(location.toString());
+            File file = resource.getFile();
+            execute(sender, SendDocument.builder()
+                    .chatId(outgoing.chatId().toString())
+                    .document(new InputFile(file, text(outgoing.metadata().get("documentFilename"), file.getName())))
+                    .caption(text(outgoing.metadata().get("documentCaption"), ""))
+                    .build());
+        } catch (Exception e) {
+            log.warn("Telegram document was not sent: {}", e.getMessage());
+        }
+    }
+
+    private String text(Object value, String fallback) {
+        return value == null ? fallback : value.toString();
     }
 
     private ReplyKeyboardMarkup contactKeyboard() {
@@ -373,6 +402,15 @@ public class TelegramRouter {
             log.error("Telegram API call failed: {}", method.getMethod(), e);
         }
         return null;
+    }
+
+    private Message execute(AbsSender sender, SendDocument method) {
+        try {
+            return sender.execute(method);
+        } catch (Exception e) {
+            log.error("Telegram API call failed: {}", method.getMethod(), e);
+            return null;
+        }
     }
 
     private Long migratedChatId(TelegramApiRequestException e) {

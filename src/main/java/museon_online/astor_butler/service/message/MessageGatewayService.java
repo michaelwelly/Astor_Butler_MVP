@@ -5,6 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import museon_online.astor_butler.domain.telegram.TelegramIntakeService;
 import museon_online.astor_butler.fsm.core.BotState;
 import museon_online.astor_butler.fsm.scenario.FirstTouchScenario;
+import museon_online.astor_butler.fsm.scenario.TableBookingScenario;
 import museon_online.astor_butler.fsm.storage.FSMStorage;
 import museon_online.astor_butler.kafka.UserEventProducer;
 import museon_online.astor_butler.llm.OllamaClient;
@@ -22,6 +23,7 @@ public class MessageGatewayService {
     private final OllamaClient ollamaClient;
     private final TelegramIntakeService telegramIntakeService;
     private final FirstTouchScenario firstTouchScenario;
+    private final TableBookingScenario tableBookingScenario;
     private final UserEventProducer userEventProducer;
     private final LlmScenarioPromptCatalog llmScenarioPromptCatalog;
 
@@ -76,6 +78,10 @@ public class MessageGatewayService {
 
         if (firstTouchScenario.supports(incoming, currentState, text)) {
             return finish(incoming, currentState, firstTouchScenario.handle(incoming, currentState, text));
+        }
+
+        if (tableBookingScenario.supports(incoming, currentState, text)) {
+            return finish(incoming, currentState, tableBookingScenario.handle(incoming, currentState, text));
         }
 
         if (isVoiceMessage(incoming) && text.isBlank()) {
