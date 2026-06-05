@@ -36,6 +36,7 @@ import org.telegram.telegrambots.meta.bots.AbsSender;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiRequestException;
 
 import java.io.File;
+import java.io.InputStream;
 import java.io.Serializable;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -241,12 +242,15 @@ public class TelegramRouter {
         }
         try {
             Resource resource = resourceLoader.getResource(location.toString());
-            File file = resource.getFile();
-            execute(sender, SendDocument.builder()
-                    .chatId(outgoing.chatId().toString())
-                    .document(new InputFile(file, text(outgoing.metadata().get("documentFilename"), file.getName())))
-                    .caption(text(outgoing.metadata().get("documentCaption"), ""))
-                    .build());
+            String filename = text(outgoing.metadata().get("documentFilename"), resource.getFilename() == null ? "document.pdf" : resource.getFilename());
+            try (InputStream inputStream = resource.getInputStream()) {
+                execute(sender, SendDocument.builder()
+                        .chatId(outgoing.chatId().toString())
+                        .document(new InputFile(inputStream, filename))
+                        .caption(text(outgoing.metadata().get("documentCaption"), ""))
+                        .build());
+                log.info("Telegram document sent: chatId={}, resource={}", outgoing.chatId(), location);
+            }
         } catch (Exception e) {
             log.warn("Telegram document was not sent: {}", e.getMessage());
         }
