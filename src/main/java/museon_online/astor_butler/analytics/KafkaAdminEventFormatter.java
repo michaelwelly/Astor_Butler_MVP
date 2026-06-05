@@ -42,6 +42,10 @@ public class KafkaAdminEventFormatter {
         String nextState = text(event.get("nextState"));
         String stateTransition = stateTransition(previousState, nextState);
         String text = text(event.get("text"));
+        String transcript = text(event.get("transcript"));
+        String mediaKind = text(event.get("mediaKind"));
+        String transcriptionStatus = text(event.get("transcriptionStatus"));
+        String storageObjectKey = text(event.get("storageObjectKey"));
         boolean contactPhonePresent = bool(event.get("contactPhonePresent"));
         boolean fallback = bool(event.get("fallback"));
 
@@ -54,10 +58,13 @@ public class KafkaAdminEventFormatter {
 
                 <b>Сообщение</b>
                 %s
+                %s
 
                 <b>Контекст</b>
                 Type: %s
                 State: %s
+                Media: %s
+                Transcription: %s
                 Contact: %s
                 Actions: %s
 
@@ -70,8 +77,11 @@ public class KafkaAdminEventFormatter {
                 html(displayName),
                 userMeta(event),
                 quote(text),
+                mediaDetails(transcript, storageObjectKey),
                 html(text(event.get("eventType"))),
                 html(stateTransition),
+                html(blankAsEmptyLabel(mediaKind)),
+                html(blankAsEmptyLabel(transcriptionStatus)),
                 contactPhonePresent ? "shared" : "not shared",
                 html(actions(event.get("actions"))),
                 html(record.topic()),
@@ -80,6 +90,25 @@ public class KafkaAdminEventFormatter {
                 html(text(record.key())),
                 html(eventId)
         );
+    }
+
+    private String mediaDetails(String transcript, String storageObjectKey) {
+        if (transcript.isBlank() && storageObjectKey.isBlank()) {
+            return "";
+        }
+
+        StringBuilder builder = new StringBuilder();
+        if (!transcript.isBlank()) {
+            builder.append("\n<b>Расшифровка</b>\n")
+                    .append(quote(transcript));
+        }
+        if (!storageObjectKey.isBlank()) {
+            builder.append("\n<b>Voice object</b>\n")
+                    .append("<code>")
+                    .append(html(storageObjectKey))
+                    .append("</code>");
+        }
+        return builder.toString();
     }
 
     private String llmResponse(ConsumerRecord<String, ?> record, String eventId, Map<String, Object> event) {

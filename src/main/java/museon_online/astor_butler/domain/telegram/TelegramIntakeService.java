@@ -72,6 +72,10 @@ public class TelegramIntakeService {
         if (incoming.contactPhone() != null && !incoming.contactPhone().isBlank()) {
             return "CONTACT";
         }
+        Object mediaKind = incoming.payload() == null ? null : incoming.payload().get("mediaKind");
+        if ("VOICE".equals(mediaKind) || "AUDIO".equals(mediaKind)) {
+            return mediaKind.toString();
+        }
         String text = incoming.text() == null ? "" : incoming.text().trim();
         if (text.startsWith("/")) {
             return "COMMAND";

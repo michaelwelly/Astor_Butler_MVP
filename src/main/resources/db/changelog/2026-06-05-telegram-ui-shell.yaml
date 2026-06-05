@@ -1,0 +1,9 @@
+databaseChangeLog:
+  - changeSet:
+      id: telegram-ui-shell-state
+      author: astor-butler
+      changes:
+        - sqlFile:
+            path: db/changelog/2026-06-05-telegram-ui-shell.sql
+            splitStatements: true
+            stripComments: false

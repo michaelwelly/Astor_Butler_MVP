@@ -58,12 +58,7 @@ public class FirstTouchScenario {
 
     private OutgoingMessage handleStart(IncomingMessage incoming) {
         fsmStorage.setState(incoming.chatId(), BotState.CONSENT_REQUIRED);
-        String name = incoming.firstName() == null || incoming.firstName().isBlank()
-                ? "гость"
-                : incoming.firstName();
-        String response = "Здравствуйте, " + name + ". Я Astor Butler, ваш цифровой дворецкий для бронирований, меню и событий.\n\n"
-                + "Чтобы продолжить, нажмите кнопку \"Согласиться и поделиться контактом\".\n\n"
-                + "Нажимая кнопку, вы соглашаетесь с "
+        String response = "Нажимая кнопку \"Согласиться и поделиться контактом\", вы соглашаетесь с "
                 + "<a href=\"" + POLICY_URL + "\">политикой обработки персональных данных</a>.";
 
         return OutgoingMessage.of(

@@ -20,6 +20,27 @@ Current MVP slice:
 
 `MessageGatewayService` is the current application boundary for UI messages. Telegram long polling calls it internally. REST exposes the same contract as `POST /api/messages` for future web chat and smoke tests.
 
+Telegram UI preview shell:
+
+- first private Telegram touch sends a persistent Butler preview with avatar and short product copy;
+- preview message id is stored in `telegram_profiles.preview_message_id`;
+- transient bot replies can be deleted from Telegram UI, but all incoming messages remain stored in PostgreSQL/Kafka;
+- previous guest message and previous bot reply are deleted from private Telegram UI on the next accepted guest message when `TELEGRAM_UI_DELETE_USER_MESSAGES_ENABLED=true`;
+- the target guest screen model is `persistent preview + current request/response`, while PostgreSQL/Kafka keep the full audit trail;
+- legal/contact/booking confirmation messages are not cleaned up.
+
+Voice messages:
+
+- Telegram transport stores `mediaKind`, `telegramFileId`, duration and MIME type in message payload;
+- Telegram transport downloads voice/audio files to local STT work dir when voice download is enabled;
+- downloaded binary is uploaded to MinIO/S3 under `transient/telegram-voice/...`;
+- object lifecycle expires voice binaries after `3` days (`S3_VOICE_TTL_DAYS`);
+- transcript and message metadata remain in PostgreSQL/Kafka after the binary expires;
+- admin Telegram chat receives the transcript, transcription status and S3 object key in the Kafka event summary;
+- `SpeechToTextService` is an adapter boundary: current implementation can call an external command configured by `ASTOR_STT_COMMAND`;
+- successful transcript replaces empty text before `MessageGatewayService`, so FSM sees it as a normal user message;
+- if STT is disabled or unavailable, MVP acknowledges voice messages without fallback-to-admin.
+
 ```mermaid
 sequenceDiagram
     actor Guest as Guest / Telegram

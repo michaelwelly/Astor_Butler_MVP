@@ -10,6 +10,7 @@ import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -113,5 +114,56 @@ class KafkaAdminEventFormatterTest {
         assertThat(text).contains("CONSENT_REQUIRED -&gt; READY_FOR_DIALOG");
         assertThat(text).contains("astor.user.events[1] offset=40");
         assertThat(text).contains("Event: telegram:update:284069874");
+    }
+
+    @Test
+    void formatsAvroVoiceTranscriptForAdminChat() {
+        AvroUserEventFactory factory = new AvroUserEventFactory();
+        IncomingMessage incoming = IncomingMessage.telegram(
+                1773317437L,
+                1773317437L,
+                350,
+                284069875,
+                "Хочу забронировать стол на вечер",
+                null,
+                "Наталья",
+                "Поединенко",
+                "Poedinenko",
+                "ru",
+                false,
+                "284069875",
+                Map.of(
+                        "mediaKind", "VOICE",
+                        "transcriptionStatus", "TRANSCRIBED",
+                        "transcript", "Хочу забронировать стол на вечер",
+                        "storageObjectKey", "transient/telegram-voice/2026-06-05/chat-1773317437/message-350.ogg"
+                )
+        );
+        OutgoingMessage outgoing = OutgoingMessage.of(
+                incoming,
+                "Конечно. На какое время бронируем?",
+                BotState.AI_FALLBACK.name(),
+                false,
+                false,
+                true,
+                false,
+                AdminAlert.none(),
+                List.of("AI_RESPONSE")
+        );
+        ConsumerRecord<String, Object> record = new ConsumerRecord<>(
+                "astor.user.events",
+                0,
+                41,
+                factory.partitionKey(incoming),
+                factory.userMessageReceived(incoming, BotState.READY_FOR_DIALOG, outgoing)
+        );
+
+        String text = formatter.format(record, factory.eventId(incoming));
+
+        assertThat(text).contains("Media: VOICE");
+        assertThat(text).contains("Transcription: TRANSCRIBED");
+        assertThat(text).contains("Расшифровка");
+        assertThat(text).contains("Хочу забронировать стол на вечер");
+        assertThat(text).contains("transient/telegram-voice/2026-06-05/chat-1773317437/message-350.ogg");
     }
 }

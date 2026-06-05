@@ -8,14 +8,21 @@ import museon_online.astor_butler.service.message.IncomingMessage;
 import museon_online.astor_butler.service.message.MessageGatewayService;
 import museon_online.astor_butler.service.message.OutgoingMessage;
 import museon_online.astor_butler.telegram.exeption.TelegramExceptionHandler;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 import org.telegram.telegrambots.meta.api.methods.BotApiMethod;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
+import org.telegram.telegrambots.meta.api.methods.send.SendPhoto;
+import org.telegram.telegrambots.meta.api.methods.updatingmessages.DeleteMessage;
+import org.telegram.telegrambots.meta.api.objects.Audio;
 import org.telegram.telegrambots.meta.api.objects.Contact;
+import org.telegram.telegrambots.meta.api.objects.InputFile;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.ResponseParameters;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.User;
+import org.telegram.telegrambots.meta.api.objects.Voice;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardRemove;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardButton;
@@ -23,7 +30,11 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.Keyboard
 import org.telegram.telegrambots.meta.bots.AbsSender;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiRequestException;
 
+import java.io.File;
+import java.io.Serializable;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @Service
@@ -34,6 +45,23 @@ public class TelegramRouter {
     private final TelegramExceptionHandler exceptionHandler;
     private final IdempotencyGuard idempotencyGuard;
     private final MessageGatewayService messageGatewayService;
+    private final TelegramChatViewService chatViewService;
+    private final TelegramVoiceTranscriptionService voiceTranscriptionService;
+
+    @Value("${telegram.ui.preview-enabled:true}")
+    private boolean previewEnabled;
+
+    @Value("${telegram.ui.cleanup-enabled:true}")
+    private boolean cleanupEnabled;
+
+    @Value("${telegram.ui.delete-user-messages-enabled:true}")
+    private boolean deleteUserMessagesEnabled;
+
+    @Value("${telegram.ui.preview-version:2026-06-05-aeris}")
+    private String previewVersion;
+
+    @Value("${telegram.ui.preview-avatar-path:classpath:telegram/aeris-butler-preview.png}")
+    private Resource previewAvatar;
 
 
     public void handle(Update update, AbsSender sender) {
@@ -47,11 +75,15 @@ public class TelegramRouter {
                 log.debug("📭 [TG] Update ignored: cannot map to IncomingMessage");
                 return;
             }
+            incoming = voiceTranscriptionService.enrich(incoming, sender);
 
             log.info("📨 [TG] Incoming message from {}: {}", incoming.chatId(), incoming.text());
 
             OutgoingMessage outgoing = messageGatewayService.handle(incoming);
-            send(outgoing, sender);
+            ensurePreview(incoming, sender);
+            cleanupPreviousExchangeIfSafe(incoming, outgoing, sender);
+            send(incoming, outgoing, sender);
+            trackCurrentUserMessage(incoming);
             sendAdminAlert(outgoing, sender);
 
         } catch (Exception e) {
@@ -102,6 +134,7 @@ public class TelegramRouter {
         Long chatId = message.getChatId();
         User user = message.getFrom();
         Contact contact = message.getContact();
+        Map<String, Object> payload = mediaPayload(message);
 
         return IncomingMessage.telegram(
                 chatId,
@@ -115,11 +148,12 @@ public class TelegramRouter {
                 user == null ? null : user.getUserName(),
                 user == null ? null : user.getLanguageCode(),
                 user == null ? null : user.getIsBot(),
-                update.getUpdateId() == null ? UUID.randomUUID().toString() : update.getUpdateId().toString()
+                update.getUpdateId() == null ? UUID.randomUUID().toString() : update.getUpdateId().toString(),
+                payload
         );
     }
 
-    private void send(OutgoingMessage outgoing, AbsSender sender) {
+    private void send(IncomingMessage incoming, OutgoingMessage outgoing, AbsSender sender) {
         if (outgoing == null || outgoing.chatId() == null || outgoing.text() == null || outgoing.text().isBlank()) {
             return;
         }
@@ -137,7 +171,10 @@ public class TelegramRouter {
             builder.replyMarkup(ReplyKeyboardRemove.builder().removeKeyboard(true).build());
         }
 
-        execute(sender, builder.build());
+        Message sentMessage = execute(sender, builder.build());
+        if (sentMessage != null && shouldTrackAsDisposable(outgoing)) {
+            chatViewService.saveLastBotMessageId(incoming.telegramUserId(), sentMessage.getMessageId());
+        }
     }
 
     private void sendAdminAlert(OutgoingMessage outgoing, AbsSender sender) {
@@ -169,9 +206,117 @@ public class TelegramRouter {
                 .build();
     }
 
-    private void execute(AbsSender sender, BotApiMethod<?> method) {
+    private void ensurePreview(IncomingMessage incoming, AbsSender sender) {
+        if (!previewEnabled
+                || incoming == null
+                || incoming.chatId() == null
+                || incoming.telegramUserId() == null
+                || incoming.chatId() < 0
+                || chatViewService.findPreviewMessageId(incoming.telegramUserId(), previewVersion) != null) {
+            return;
+        }
+
         try {
-            sender.execute(method);
+            File avatar = previewAvatar.getFile();
+            Message preview = sender.execute(SendPhoto.builder()
+                    .chatId(incoming.chatId().toString())
+                    .photo(new InputFile(avatar))
+                    .caption(previewText())
+                    .parseMode("HTML")
+                    .build());
+
+            if (preview != null) {
+                chatViewService.savePreviewMessageId(incoming.telegramUserId(), preview.getMessageId(), previewVersion);
+            }
+        } catch (Exception e) {
+            log.warn("Telegram preview was not sent: {}", e.getMessage());
+        }
+    }
+
+    private void cleanupPreviousExchangeIfSafe(IncomingMessage incoming, OutgoingMessage outgoing, AbsSender sender) {
+        if (!cleanupEnabled
+                || incoming == null
+                || outgoing == null
+                || incoming.telegramUserId() == null
+                || incoming.chatId() == null
+                || incoming.chatId() < 0
+                || outgoing.adminAlert().required()) {
+            return;
+        }
+
+        deleteMessage(sender, incoming.chatId(), chatViewService.findLastBotMessageId(incoming.telegramUserId()));
+
+        if (deleteUserMessagesEnabled) {
+            deleteMessage(sender, incoming.chatId(), chatViewService.findLastUserMessageId(incoming.telegramUserId()));
+        }
+    }
+
+    private void trackCurrentUserMessage(IncomingMessage incoming) {
+        if (!deleteUserMessagesEnabled
+                || incoming == null
+                || incoming.telegramUserId() == null
+                || incoming.telegramMessageId() == null
+                || incoming.chatId() == null
+                || incoming.chatId() < 0) {
+            return;
+        }
+        chatViewService.saveLastUserMessageId(incoming.telegramUserId(), incoming.telegramMessageId());
+    }
+
+    private void deleteMessage(AbsSender sender, Long chatId, Integer messageId) {
+        if (chatId == null || messageId == null) {
+            return;
+        }
+        execute(sender, DeleteMessage.builder()
+                .chatId(chatId.toString())
+                .messageId(messageId)
+                .build());
+    }
+
+    private boolean shouldTrackAsDisposable(OutgoingMessage outgoing) {
+        return cleanupEnabled
+                && outgoing != null
+                && outgoing.chatId() != null
+                && !outgoing.adminAlert().required();
+    }
+
+    private Map<String, Object> mediaPayload(Message message) {
+        if (message == null) {
+            return Map.of();
+        }
+
+        Map<String, Object> payload = new LinkedHashMap<>();
+        if (message.hasVoice()) {
+            Voice voice = message.getVoice();
+            payload.put("mediaKind", "VOICE");
+            payload.put("telegramFileId", voice.getFileId());
+            payload.put("durationSeconds", voice.getDuration());
+            payload.put("mimeType", voice.getMimeType());
+        } else if (message.hasAudio()) {
+            Audio audio = message.getAudio();
+            payload.put("mediaKind", "AUDIO");
+            payload.put("telegramFileId", audio.getFileId());
+            payload.put("durationSeconds", audio.getDuration());
+            payload.put("mimeType", audio.getMimeType());
+            payload.put("fileName", audio.getFileName());
+        }
+        return payload;
+    }
+
+    private String previewText() {
+        return """
+                <b><a href="https://aeris.bar/">AERIS gastro bar</a></b>
+
+                Я Astor Butler. В AERIS я отвечаю за маленькие удобства: меню, бронь, события и быстрый контакт с командой.
+
+                Пишите свободно: <i>хочу забронировать</i>, <i>покажи меню</i>, <i>есть ли события?</i>
+                Голосовые тоже можно — дворецкие умеют слушать.
+                """;
+    }
+
+    private <T extends Serializable> T execute(AbsSender sender, BotApiMethod<T> method) {
+        try {
+            return sender.execute(method);
         } catch (TelegramApiRequestException e) {
             Long migratedChatId = migratedChatId(e);
             if (migratedChatId != null && method instanceof SendMessage sendMessage) {
@@ -181,17 +326,19 @@ public class TelegramRouter {
                 );
                 try {
                     sendMessage.setChatId(migratedChatId);
-                    sender.execute(sendMessage);
-                    return;
+                    @SuppressWarnings("unchecked")
+                    T result = (T) sender.execute(sendMessage);
+                    return result;
                 } catch (Exception retryException) {
                     log.error("Telegram API retry after chat migration failed: {}", method.getMethod(), retryException);
-                    return;
+                    return null;
                 }
             }
             log.error("Telegram API call failed: {}", method.getMethod(), e);
         } catch (Exception e) {
             log.error("Telegram API call failed: {}", method.getMethod(), e);
         }
+        return null;
     }
 
     private Long migratedChatId(TelegramApiRequestException e) {

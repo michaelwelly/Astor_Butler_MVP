@@ -77,6 +77,20 @@ public class MessageGatewayService {
             return finish(incoming, currentState, firstTouchScenario.handle(incoming, currentState, text));
         }
 
+        if (isVoiceMessage(incoming) && text.isBlank()) {
+            return finish(incoming, currentState, OutgoingMessage.of(
+                    incoming,
+                    voicePendingText(incoming),
+                    currentState.name(),
+                    false,
+                    false,
+                    true,
+                    false,
+                    AdminAlert.none(),
+                    List.of("VOICE_RECEIVED", "TRANSCRIPTION_PENDING")
+            ));
+        }
+
         if (text.isBlank()) {
             return fallback(incoming, currentState, "Empty message");
         }
@@ -236,6 +250,22 @@ public class MessageGatewayService {
     private boolean isMenuRequest(String text) {
         String lower = text.toLowerCase();
         return lower.contains("меню") || lower.equals("/menu") || lower.contains("menu");
+    }
+
+    private boolean isVoiceMessage(IncomingMessage incoming) {
+        if (incoming == null || incoming.payload() == null) {
+            return false;
+        }
+        Object mediaKind = incoming.payload().get("mediaKind");
+        return "VOICE".equals(mediaKind) || "AUDIO".equals(mediaKind);
+    }
+
+    private String voicePendingText(IncomingMessage incoming) {
+        Object reason = incoming.payload() == null ? null : incoming.payload().get("transcriptionReason");
+        if (reason == null || reason.toString().isBlank() || "STT disabled".equals(reason)) {
+            return "Голосовое принял. Слуховой аппарат уже в кармане, но расшифровку еще подключаем. Пока напишите, пожалуйста, коротко текстом.";
+        }
+        return "Голосовое получил, но сейчас не смог его расшифровать. Напишите коротко текстом — я продолжу сценарий без паузы.";
     }
 
     private boolean isAdminChat(Long chatId) {

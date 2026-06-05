@@ -1,0 +1,9 @@
+databaseChangeLog:
+  - changeSet:
+      id: scope-outbox-publication
+      author: astor-butler
+      changes:
+        - sqlFile:
+            path: db/changelog/2026-06-05-scope-outbox-publication.sql
+            splitStatements: false
+            stripComments: false

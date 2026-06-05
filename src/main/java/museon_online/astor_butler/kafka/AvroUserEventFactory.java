@@ -106,6 +106,10 @@ public class AvroUserEventFactory {
         payload.put("telegramMessageId", incoming.telegramMessageId());
         payload.put("telegramUpdateId", incoming.telegramUpdateId());
         payload.put("text", incoming.text());
+        payload.put("mediaKind", payloadValue(incoming, "mediaKind"));
+        payload.put("transcriptionStatus", payloadValue(incoming, "transcriptionStatus"));
+        payload.put("transcript", payloadValue(incoming, "transcript"));
+        payload.put("storageObjectKey", payloadValue(incoming, "storageObjectKey"));
         payload.put("contactPhonePresent", incoming.contactPhone() != null && !incoming.contactPhone().isBlank());
         payload.put("previousState", previousState == null ? null : previousState.name());
         payload.put("nextState", outgoing == null ? null : outgoing.nextState());
@@ -143,5 +147,13 @@ public class AvroUserEventFactory {
             return "unknown";
         }
         return stage.trim().toLowerCase().replaceAll("[^a-z0-9_-]+", "_");
+    }
+
+    private String payloadValue(IncomingMessage incoming, String key) {
+        if (incoming == null || incoming.payload() == null) {
+            return null;
+        }
+        Object value = incoming.payload().get(key);
+        return value == null ? null : String.valueOf(value);
     }
 }

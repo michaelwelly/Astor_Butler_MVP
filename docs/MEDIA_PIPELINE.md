@@ -156,6 +156,29 @@ landing:block:{slug}
 menu:active:{locationId}
 ```
 
+## Ephemeral Telegram Voice
+
+Голосовые сообщения гостя считаются временными бинарными файлами:
+
+- Telegram adapter скачивает `voice/audio` во временную локальную папку;
+- backend загружает файл в MinIO/S3 bucket `astor-media`;
+- object key строится под prefix `transient/telegram-voice/YYYY-MM-DD/...`;
+- MinIO lifecycle удаляет эти объекты через `3` дня;
+- transcript, Telegram metadata, `storageBucket`, `storageObjectKey`, `storageTtlDays` остаются в PostgreSQL `telegram_messages.raw_payload`.
+- Kafka admin summary показывает `transcript`, `transcriptionStatus` и `storageObjectKey`, чтобы админ видел смысл голосового без поиска по логам IDEA.
+
+Локальные env:
+
+```bash
+S3_EPHEMERAL_PREFIX=transient
+S3_VOICE_PREFIX=telegram-voice
+S3_VOICE_TTL_DAYS=3
+ASTOR_STT_KEEP_LOCAL_FILES=false
+TELEGRAM_UI_DELETE_USER_MESSAGES_ENABLED=true
+```
+
+Правило: Postgres хранит смысл и аудит, MinIO/S3 хранит тяжелый временный бинарник.
+
 ## AERIS Menu Assets
 
 Current local source:
