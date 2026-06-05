@@ -339,6 +339,10 @@ PostgreSQL - основная СУБД для:
 
 Persistence strategy: JDBC without JPA/Hibernate. Причина: явный контроль SQL, транзакций, индексов и performance-critical запросов. Миграции схемы - Liquibase.
 
+Identity model описан отдельно в [DATABASE_MODEL.md](DATABASE_MODEL.md). Базовое правило: `users` - внутренняя личность Astor Butler, а `telegram_profiles` - внешний Telegram-аккаунт. Новые домены (`Booking`, `Timeline`, `Notifications`, `Consent Vault`) должны ссылаться на `users.id`, а не на `telegram_user_id`.
+
+Transition note: в коде еще есть legacy JPA-слой `UserRepository/UserProfileService` и совместимые колонки `users.telegram_id`, `users.first_name`, `users.phone`. Новая логика первого касания работает через identity boundary и нормализованные связи `user_id`.
+
 PostgreSQL design rules:
 
 - primary/master принимает write traffic;

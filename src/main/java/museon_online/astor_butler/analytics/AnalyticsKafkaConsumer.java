@@ -1,13 +1,17 @@
 package museon_online.astor_butler.analytics;
 
+import io.confluent.kafka.serializers.KafkaAvroDeserializer;
+import io.confluent.kafka.serializers.KafkaAvroDeserializerConfig;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import museon_online.astor_butler.telegram.adapter.TelegramAdminNotifier;
+import org.apache.avro.generic.GenericRecord;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
+import org.apache.kafka.common.errors.RecordDeserializationException;
 import org.apache.kafka.common.errors.WakeupException;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.springframework.beans.factory.annotation.Value;
@@ -16,6 +20,7 @@ import org.springframework.stereotype.Service;
 import java.time.Duration;
 import java.util.List;
 import java.util.Properties;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -28,12 +33,16 @@ public class AnalyticsKafkaConsumer {
 
     private final AnalyticsProcessedEventRepository processedEventRepository;
     private final TelegramAdminNotifier telegramAdminNotifier;
+    private final KafkaAdminEventFormatter kafkaAdminEventFormatter;
 
     @Value("${astor.kafka.enabled:true}")
     private boolean enabled;
 
     @Value("${astor.kafka.bootstrap-servers:localhost:9092}")
     private String bootstrapServers;
+
+    @Value("${astor.kafka.schema-registry-url:http://localhost:8082}")
+    private String schemaRegistryUrl;
 
     @Value("${astor.kafka.user-events-topic:astor.user.events}")
     private String topic;
@@ -51,7 +60,7 @@ public class AnalyticsKafkaConsumer {
     });
 
     private volatile boolean running;
-    private volatile KafkaConsumer<String, String> consumer;
+    private volatile KafkaConsumer<String, GenericRecord> consumer;
 
     @PostConstruct
     public void start() {
@@ -61,13 +70,18 @@ public class AnalyticsKafkaConsumer {
         }
 
         running = true;
-        executor.submit(this::consumeLoop);
+        CompletableFuture.runAsync(this::consumeLoop, executor)
+                .whenComplete((ignored, throwable) -> {
+                    if (throwable != null && running) {
+                        log.error("Analytics Kafka consumer thread stopped unexpectedly", throwable);
+                    }
+                });
     }
 
     @PreDestroy
     public void stop() {
         running = false;
-        KafkaConsumer<String, String> currentConsumer = consumer;
+        KafkaConsumer<String, GenericRecord> currentConsumer = consumer;
         if (currentConsumer != null) {
             currentConsumer.wakeup();
         }
@@ -76,13 +90,13 @@ public class AnalyticsKafkaConsumer {
 
     private void consumeLoop() {
         while (running) {
-            try (KafkaConsumer<String, String> kafkaConsumer = new KafkaConsumer<>(consumerProperties())) {
+            try (KafkaConsumer<String, GenericRecord> kafkaConsumer = new KafkaConsumer<>(consumerProperties())) {
                 consumer = kafkaConsumer;
                 kafkaConsumer.subscribe(List.of(topic));
                 log.info("Analytics Kafka consumer subscribed: topic={}, groupId={}", topic, groupId);
 
                 while (running) {
-                    for (ConsumerRecord<String, String> record : kafkaConsumer.poll(Duration.ofSeconds(1))) {
+                    for (ConsumerRecord<String, GenericRecord> record : kafkaConsumer.poll(Duration.ofSeconds(1))) {
                         process(record);
                     }
                     kafkaConsumer.commitSync();
@@ -91,8 +105,10 @@ public class AnalyticsKafkaConsumer {
                 if (running) {
                     log.warn("Analytics Kafka consumer wakeup while running", e);
                 }
+            } catch (RecordDeserializationException e) {
+                skipPoisonRecord(e);
             } catch (Exception e) {
-                log.warn("Analytics Kafka consumer failed, retrying in 3s: {}", e.getMessage());
+                log.warn("Analytics Kafka consumer failed, retrying in 3s: {}", e.getMessage(), e);
                 sleepBeforeRetry();
             } finally {
                 consumer = null;
@@ -100,35 +116,51 @@ public class AnalyticsKafkaConsumer {
         }
     }
 
-    private void process(ConsumerRecord<String, String> record) {
-        String eventId = record.key() == null || record.key().isBlank()
-                ? topic + ":" + record.partition() + ":" + record.offset()
-                : record.key();
+    private void skipPoisonRecord(RecordDeserializationException e) {
+        KafkaConsumer<String, GenericRecord> currentConsumer = consumer;
+        if (currentConsumer == null || e.topicPartition() == null) {
+            log.warn("Analytics Kafka consumer cannot skip unreadable record: {}", e.getMessage());
+            sleepBeforeRetry();
+            return;
+        }
+
+        long nextOffset = e.offset() + 1;
+        log.warn(
+                "Analytics Kafka consumer skipped unreadable record: topicPartition={}, offset={}, nextOffset={}",
+                e.topicPartition(),
+                e.offset(),
+                nextOffset
+        );
+        currentConsumer.seek(e.topicPartition(), nextOffset);
+        currentConsumer.commitSync();
+    }
+
+    private void process(ConsumerRecord<String, GenericRecord> record) {
+        String eventId = extractEventId(record);
 
         if (!processedEventRepository.markProcessed(CONSUMER_NAME, eventId)) {
             log.debug("Analytics Kafka event already processed: eventId={}", eventId);
             return;
         }
 
-        String text = """
-                Astor Butler user event
-                topic=%s partition=%d offset=%d
-                key=%s
-
-                %s
-                """.formatted(
-                record.topic(),
-                record.partition(),
-                record.offset(),
-                eventId,
-                truncate(record.value())
-        );
+        String text = kafkaAdminEventFormatter.format(record, eventId);
 
         if (adminChatEnabled) {
             telegramAdminNotifier.sendAnalytics(text);
+            log.info("Analytics Kafka event delivered to admin chat: eventId={}, key={}", eventId, record.key());
         } else {
-            log.info("Analytics admin chat disabled. Kafka event consumed: key={}", eventId);
+            log.info("Analytics admin chat disabled. Kafka event consumed: eventId={}, key={}", eventId, record.key());
         }
+    }
+
+    private String extractEventId(ConsumerRecord<String, GenericRecord> record) {
+        GenericRecord value = record.value();
+        if (value != null && value.get("eventId") != null) {
+            return value.get("eventId").toString();
+        }
+        return record.key() == null || record.key().isBlank()
+                ? topic + ":" + record.partition() + ":" + record.offset()
+                : record.key();
     }
 
     private Properties consumerProperties() {
@@ -136,18 +168,13 @@ public class AnalyticsKafkaConsumer {
         properties.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
         properties.put(ConsumerConfig.GROUP_ID_CONFIG, groupId);
         properties.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName());
-        properties.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName());
+        properties.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, KafkaAvroDeserializer.class.getName());
+        properties.put(KafkaAvroDeserializerConfig.SCHEMA_REGISTRY_URL_CONFIG, schemaRegistryUrl);
+        properties.put(KafkaAvroDeserializerConfig.SPECIFIC_AVRO_READER_CONFIG, "false");
         properties.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, "false");
-        properties.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
+        properties.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "latest");
         properties.put(ConsumerConfig.ISOLATION_LEVEL_CONFIG, "read_committed");
         return properties;
-    }
-
-    private String truncate(String value) {
-        if (value == null) {
-            return "";
-        }
-        return value.length() <= 3200 ? value : value.substring(0, 3200) + "\n...";
     }
 
     private void sleepBeforeRetry() {

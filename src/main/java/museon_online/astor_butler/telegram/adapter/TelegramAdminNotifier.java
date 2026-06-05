@@ -31,6 +31,7 @@ public class TelegramAdminNotifier {
         SendMessage message = SendMessage.builder()
                 .chatId(analyticsChatId)
                 .text(text)
+                .parseMode("HTML")
                 .build();
 
         try {

@@ -42,14 +42,16 @@ public class ConsentVaultService {
                 "correlationId", incoming.correlationId() == null ? "" : incoming.correlationId()
         );
 
+        Long userId = findUserIdByTelegramUserId(incoming.telegramUserId());
         jdbcTemplate.update("""
                 INSERT INTO user_consents (
-                    id, telegram_user_id, chat_id, consent_type, policy_version, status,
+                    id, user_id, telegram_user_id, chat_id, consent_type, policy_version, status,
                     source, evidence, granted_at, updated_at
                 )
-                VALUES (?, ?, ?, ?, ?, 'GRANTED', ?, ?, ?, CURRENT_TIMESTAMP)
+                VALUES (?, ?, ?, ?, ?, ?, 'GRANTED', ?, ?, ?, CURRENT_TIMESTAMP)
                 ON CONFLICT ON CONSTRAINT uq_user_consents_telegram_policy
                 DO UPDATE SET
+                    user_id = COALESCE(user_consents.user_id, EXCLUDED.user_id),
                     chat_id = EXCLUDED.chat_id,
                     status = 'GRANTED',
                     source = EXCLUDED.source,
@@ -59,6 +61,7 @@ public class ConsentVaultService {
                     updated_at = CURRENT_TIMESTAMP
                 """,
                 UUID.randomUUID(),
+                userId,
                 incoming.telegramUserId(),
                 incoming.chatId(),
                 PRIVACY_POLICY,
@@ -69,10 +72,22 @@ public class ConsentVaultService {
         );
 
         log.info(
-                "Consent granted: telegramUserId={}, type={}, version={}",
+                "Consent granted: userId={}, telegramUserId={}, type={}, version={}",
+                userId,
                 incoming.telegramUserId(),
                 PRIVACY_POLICY,
                 CURRENT_POLICY_VERSION
+        );
+    }
+
+    private Long findUserIdByTelegramUserId(Long telegramUserId) {
+        return jdbcTemplate.query("""
+                SELECT user_id
+                FROM telegram_profiles
+                WHERE telegram_user_id = ?
+                """,
+                resultSet -> resultSet.next() ? resultSet.getObject("user_id", Long.class) : null,
+                telegramUserId
         );
     }
 

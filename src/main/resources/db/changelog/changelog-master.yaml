@@ -3,3 +3,7 @@ databaseChangeLog:
       file: db/changelog/2025-06-19-create-users.yaml
   - include:
       file: db/changelog/2026-06-03-consent-telegram-events.yaml
+  - include:
+      file: db/changelog/2026-06-04-normalize-identity.yaml
+  - include:
+      file: db/changelog/2026-06-04-create-outbox-events.yaml

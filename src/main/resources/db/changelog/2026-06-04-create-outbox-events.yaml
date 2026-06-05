@@ -1,0 +1,72 @@
+databaseChangeLog:
+  - changeSet:
+      id: create-outbox-events
+      author: astor-butler
+      preConditions:
+        - onFail: MARK_RAN
+        - onError: CONTINUE
+        - not:
+            tableExists:
+              tableName: outbox_events
+      changes:
+        - createTable:
+            tableName: outbox_events
+            columns:
+              - column:
+                  name: id
+                  type: UUID
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: aggregatetype
+                  type: VARCHAR(160)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: aggregateid
+                  type: VARCHAR(160)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: type
+                  type: VARCHAR(160)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: event_version
+                  type: VARCHAR(32)
+                  defaultValue: "1.0"
+                  constraints:
+                    nullable: false
+              - column:
+                  name: payload
+                  type: JSONB
+                  constraints:
+                    nullable: false
+              - column:
+                  name: timestamp
+                  type: TIMESTAMP WITH TIME ZONE
+                  defaultValueComputed: CURRENT_TIMESTAMP
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created_at
+                  type: TIMESTAMP WITH TIME ZONE
+                  defaultValueComputed: CURRENT_TIMESTAMP
+                  constraints:
+                    nullable: false
+        - createIndex:
+            tableName: outbox_events
+            indexName: idx_outbox_events_timestamp
+            columns:
+              - column:
+                  name: timestamp
+        - createIndex:
+            tableName: outbox_events
+            indexName: idx_outbox_events_aggregate
+            columns:
+              - column:
+                  name: aggregatetype
+              - column:
+                  name: aggregateid

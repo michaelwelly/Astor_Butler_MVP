@@ -152,6 +152,7 @@ public class TelegramRouter {
         execute(sender, SendMessage.builder()
                 .chatId(outgoing.adminAlert().chatId())
                 .text(outgoing.adminAlert().text())
+                .parseMode("HTML")
                 .build());
     }
 

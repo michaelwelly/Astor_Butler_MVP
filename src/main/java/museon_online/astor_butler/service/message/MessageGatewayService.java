@@ -137,7 +137,13 @@ public class MessageGatewayService {
                     List.of("AI_RESPONSE")
             ));
         } catch (Exception e) {
-            log.error("LLM failed for chatId={}", incoming.chatId(), e);
+            log.warn(
+                    "LLM fallback used for chatId={}, state={}, reason={}: {}",
+                    incoming.chatId(),
+                    currentState,
+                    e.getClass().getSimpleName(),
+                    e.getMessage()
+            );
             return fallback(incoming, currentState, e.getClass().getSimpleName());
         }
     }
@@ -170,24 +176,52 @@ public class MessageGatewayService {
         }
 
         String text = """
-                Astor Butler fallback
-                Channel: %s
-                Chat: %s
-                User: %s
-                State: %s
+                <b>Astor Butler / fallback</b>
+                Требуется внимание администратора
+
+                <b>%s</b>
+                chat %s / user %s%s
+
+                <b>Сообщение гостя</b>
+                <blockquote>%s</blockquote>
+
+                <b>Что случилось</b>
+                State: %s -> %s
                 Reason: %s
-                Text: %s
+
+                <b>Действие</b>
+                Проверь диалог и ответь гостю вручную, если AI/FSM не восстановится.
+
+                <b>Техника</b>
+                Channel: %s
                 Correlation: %s
                 """.formatted(
-                incoming.channel(),
-                incoming.chatId(),
-                incoming.username() == null ? "" : incoming.username(),
-                currentState,
-                reason,
-                incoming.text() == null ? "" : incoming.text(),
-                incoming.correlationId() == null ? "" : incoming.correlationId()
+                html(displayName(incoming)),
+                html(text(incoming.chatId())),
+                html(text(incoming.telegramUserId())),
+                incoming.username() == null || incoming.username().isBlank() ? "" : " / @" + html(incoming.username()),
+                html(blankAsEmptyLabel(incoming.text())),
+                html(text(currentState)),
+                html(BotState.AI_FALLBACK.name()),
+                html(blankAsEmptyLabel(reason)),
+                html(text(incoming.channel())),
+                html(blankAsEmptyLabel(incoming.correlationId()))
         );
         return new AdminAlert(true, adminChatId, text);
+    }
+
+    private String displayName(IncomingMessage incoming) {
+        String firstName = normalize(incoming.firstName());
+        String lastName = normalize(incoming.lastName());
+        String username = normalize(incoming.username());
+        String fullName = (firstName + " " + lastName).trim();
+        if (!fullName.isBlank()) {
+            return fullName;
+        }
+        if (!username.isBlank()) {
+            return "@" + username;
+        }
+        return "unknown";
     }
 
     private BotState resolveState(Long chatId) {
@@ -214,5 +248,21 @@ public class MessageGatewayService {
 
     private String normalize(String text) {
         return text == null ? "" : text.trim();
+    }
+
+    private String text(Object value) {
+        return value == null ? "" : String.valueOf(value);
+    }
+
+    private String blankAsEmptyLabel(String value) {
+        String normalized = normalize(value);
+        return normalized.isBlank() ? "(empty)" : normalized;
+    }
+
+    private String html(String value) {
+        return text(value)
+                .replace("&", "&amp;")
+                .replace("<", "&lt;")
+                .replace(">", "&gt;");
     }
 }
