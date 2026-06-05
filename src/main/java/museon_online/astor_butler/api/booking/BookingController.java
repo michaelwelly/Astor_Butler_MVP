@@ -2,6 +2,13 @@ package museon_online.astor_butler.api.booking;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import museon_online.astor_butler.domain.booking.TableAvailability;
+import museon_online.astor_butler.domain.booking.TableReservationCommand;
+import museon_online.astor_butler.domain.booking.TableReservationOrder;
+import museon_online.astor_butler.domain.booking.TableReservationService;
+import museon_online.astor_butler.domain.booking.TableReservationStatus;
+import museon_online.astor_butler.domain.booking.VenueTable;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -24,7 +31,10 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/api/bookings")
 @Tag(name = "Booking API", description = "Booking requests, statuses and manager notes")
+@RequiredArgsConstructor
 public class BookingController {
+
+    private final TableReservationService tableReservationService;
 
     @PostMapping
     @Operation(summary = "Create booking request")
@@ -53,6 +63,48 @@ public class BookingController {
             @RequestParam(name = "to", required = false) LocalDate to
     ) {
         return ResponseEntity.ok(new BookingSearchResponse(status, query, from, to, List.of()));
+    }
+
+    @GetMapping("/tables")
+    @Operation(summary = "List venue tables")
+    public ResponseEntity<List<VenueTableResponse>> listTables(
+            @RequestParam(name = "venueCode", defaultValue = "AERIS") String venueCode
+    ) {
+        return ResponseEntity.ok(tableReservationService.listTables(venueCode).stream()
+                .map(VenueTableResponse::from)
+                .toList());
+    }
+
+    @GetMapping("/tables/availability")
+    @Operation(summary = "Find available tables for a requested time window")
+    public ResponseEntity<List<TableAvailabilityResponse>> availability(
+            @RequestParam(name = "venueCode", defaultValue = "AERIS") String venueCode,
+            @RequestParam(name = "from") Instant from,
+            @RequestParam(name = "to") Instant to,
+            @RequestParam(name = "partySize") Integer partySize
+    ) {
+        return ResponseEntity.ok(tableReservationService.availability(venueCode, from, to, partySize).stream()
+                .map(TableAvailabilityResponse::from)
+                .toList());
+    }
+
+    @PostMapping("/table-reservations")
+    @Operation(summary = "Create table reservation request and temporary hold")
+    public ResponseEntity<TableReservationResponse> createTableReservation(@RequestBody TableReservationCreateRequest request) {
+        TableReservationOrder order = tableReservationService.createReservation(request.toCommand());
+        return ResponseEntity.status(HttpStatus.CREATED).body(TableReservationResponse.from(order));
+    }
+
+    @PostMapping("/table-reservations/{id}/confirm")
+    @Operation(summary = "Confirm table reservation and notify hostess chat")
+    public ResponseEntity<TableReservationResponse> confirmTableReservation(@PathVariable("id") Long id) {
+        return ResponseEntity.ok(TableReservationResponse.from(tableReservationService.confirm(id)));
+    }
+
+    @PostMapping("/table-reservations/{id}/reject")
+    @Operation(summary = "Reject table reservation and release temporary hold")
+    public ResponseEntity<TableReservationResponse> rejectTableReservation(@PathVariable("id") Long id) {
+        return ResponseEntity.ok(TableReservationResponse.from(tableReservationService.reject(id)));
     }
 
     @PatchMapping("/{id}/status")
@@ -119,6 +171,134 @@ public class BookingController {
 
         BookingResponse withStatus(String status) {
             return new BookingResponse(id, userId, status, date, time, eventFormat, guestCount, budget, Instant.now());
+        }
+    }
+
+    public record TableReservationCreateRequest(
+            Long chatId,
+            Long telegramUserId,
+            Long userId,
+            String venueCode,
+            String tableCode,
+            Instant requestedStartAt,
+            Instant requestedEndAt,
+            Integer partySize,
+            String guestName,
+            String guestPhone,
+            String guestComment,
+            Long managerTelegramId,
+            String hostessChatId
+    ) {
+        TableReservationCommand toCommand() {
+            return new TableReservationCommand(
+                    chatId,
+                    telegramUserId,
+                    userId,
+                    venueCode,
+                    tableCode,
+                    requestedStartAt,
+                    requestedEndAt,
+                    partySize,
+                    guestName,
+                    guestPhone,
+                    guestComment,
+                    managerTelegramId,
+                    hostessChatId
+            );
+        }
+    }
+
+    public record VenueTableResponse(
+            Long id,
+            String venueCode,
+            String tableCode,
+            String displayName,
+            String zone,
+            Integer capacityMin,
+            Integer capacityMax,
+            String combinableGroup,
+            Boolean bookable,
+            Boolean active,
+            Integer planPage,
+            String planRef,
+            Integer sortOrder
+    ) {
+        static VenueTableResponse from(VenueTable table) {
+            return new VenueTableResponse(
+                    table.id(),
+                    table.venueCode(),
+                    table.tableCode(),
+                    table.displayName(),
+                    table.zone(),
+                    table.capacityMin(),
+                    table.capacityMax(),
+                    table.combinableGroup(),
+                    table.bookable(),
+                    table.active(),
+                    table.planPage(),
+                    table.planRef(),
+                    table.sortOrder()
+            );
+        }
+    }
+
+    public record TableAvailabilityResponse(
+            VenueTableResponse table,
+            boolean available,
+            String reason
+    ) {
+        static TableAvailabilityResponse from(TableAvailability availability) {
+            return new TableAvailabilityResponse(
+                    VenueTableResponse.from(availability.table()),
+                    availability.available(),
+                    availability.reason()
+            );
+        }
+    }
+
+    public record TableReservationResponse(
+            Long id,
+            Long chatId,
+            Long telegramUserId,
+            Long userId,
+            Long tableId,
+            String tableCode,
+            String tableDisplayName,
+            TableReservationStatus status,
+            Instant requestedStartAt,
+            Instant requestedEndAt,
+            Integer partySize,
+            String guestName,
+            String guestPhone,
+            String guestComment,
+            Long managerTelegramId,
+            String hostessChatId,
+            String sbisExternalId,
+            Instant createdAt,
+            Instant updatedAt
+    ) {
+        static TableReservationResponse from(TableReservationOrder order) {
+            return new TableReservationResponse(
+                    order.id(),
+                    order.chatId(),
+                    order.telegramUserId(),
+                    order.userId(),
+                    order.tableId(),
+                    order.tableCode(),
+                    order.tableDisplayName(),
+                    order.status(),
+                    order.requestedStartAt(),
+                    order.requestedEndAt(),
+                    order.partySize(),
+                    order.guestName(),
+                    order.guestPhone(),
+                    order.guestComment(),
+                    order.managerTelegramId(),
+                    order.hostessChatId(),
+                    order.sbisExternalId(),
+                    order.createdAt(),
+                    order.updatedAt()
+            );
         }
     }
 }

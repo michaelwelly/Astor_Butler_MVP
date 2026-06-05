@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import museon_online.astor_butler.fsm.core.event.InboundEvent;
 import museon_online.astor_butler.fsm.core.idempotency.IdempotencyGuard;
+import museon_online.astor_butler.domain.booking.HostessReservationApprovalService;
 import museon_online.astor_butler.service.message.IncomingMessage;
 import museon_online.astor_butler.service.message.MessageGatewayService;
 import museon_online.astor_butler.service.message.OutgoingMessage;
@@ -12,10 +13,12 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 import org.telegram.telegrambots.meta.api.methods.BotApiMethod;
+import org.telegram.telegrambots.meta.api.methods.AnswerCallbackQuery;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.methods.send.SendPhoto;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.DeleteMessage;
 import org.telegram.telegrambots.meta.api.objects.Audio;
+import org.telegram.telegrambots.meta.api.objects.CallbackQuery;
 import org.telegram.telegrambots.meta.api.objects.Contact;
 import org.telegram.telegrambots.meta.api.objects.InputFile;
 import org.telegram.telegrambots.meta.api.objects.Message;
@@ -47,6 +50,7 @@ public class TelegramRouter {
     private final MessageGatewayService messageGatewayService;
     private final TelegramChatViewService chatViewService;
     private final TelegramVoiceTranscriptionService voiceTranscriptionService;
+    private final HostessReservationApprovalService hostessReservationApprovalService;
 
     @Value("${telegram.ui.preview-enabled:true}")
     private boolean previewEnabled;
@@ -70,6 +74,10 @@ public class TelegramRouter {
                 return;
             }
 
+            if (handleCallback(update, sender)) {
+                return;
+            }
+
             IncomingMessage incoming = toIncomingMessage(update);
             if (incoming == null) {
                 log.debug("📭 [TG] Update ignored: cannot map to IncomingMessage");
@@ -78,6 +86,9 @@ public class TelegramRouter {
             incoming = voiceTranscriptionService.enrich(incoming, sender);
 
             log.info("📨 [TG] Incoming message from {}: {}", incoming.chatId(), incoming.text());
+            if (hostessReservationApprovalService.handle(incoming)) {
+                return;
+            }
 
             OutgoingMessage outgoing = messageGatewayService.handle(incoming);
             ensurePreview(incoming, sender);
@@ -90,6 +101,29 @@ public class TelegramRouter {
             log.error("💥 [TG] Exception while handling update: {}", e.getMessage(), e);
             exceptionHandler.handle(update, e, sender);
         }
+    }
+
+    private boolean handleCallback(Update update, AbsSender sender) {
+        if (update == null || !update.hasCallbackQuery()) {
+            return false;
+        }
+
+        CallbackQuery callbackQuery = update.getCallbackQuery();
+        Long chatId = callbackQuery.getMessage() == null ? null : callbackQuery.getMessage().getChatId();
+        HostessReservationApprovalService.CallbackResult result = hostessReservationApprovalService.handleCallback(
+                callbackQuery.getData(),
+                chatId
+        );
+        if (!result.handled()) {
+            return false;
+        }
+
+        execute(sender, AnswerCallbackQuery.builder()
+                .callbackQueryId(callbackQuery.getId())
+                .text(result.answerText())
+                .showAlert(false)
+                .build());
+        return true;
     }
     private boolean acceptInboundEvent(Update update) {
         try {

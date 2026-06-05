@@ -23,6 +23,7 @@ public class MessageGatewayService {
     private final TelegramIntakeService telegramIntakeService;
     private final FirstTouchScenario firstTouchScenario;
     private final UserEventProducer userEventProducer;
+    private final LlmScenarioPromptCatalog llmScenarioPromptCatalog;
 
     @Value("${telegram.admin.chat-id:}")
     private String adminChatId;
@@ -116,13 +117,15 @@ public class MessageGatewayService {
     private OutgoingMessage aiAssistedReply(IncomingMessage incoming, BotState currentState, String text) {
         String prompt = """
                 Ты AI-адаптер Astor Butler. Telegram является только UI, бизнес-логика живет в FSM.
-                Ответь пользователю коротко и вежливо.
-                Если запрос похож на бронирование, мягко попроси дату, время, количество гостей и контакт.
-                Если запрос неясен, честно скажи, что уточнишь у менеджера.
+                Ответь пользователю коротко и вежливо, строго по FSM-контракту ниже.
+                Не подтверждай бронь сам: подтверждение делает только доменный слой после кнопки хостес.
+                Если запрос неясен, честно попроси одно уточнение или скажи, что уточнишь у команды.
+
+                %s
 
                 Текущее FSM-состояние: %s
                 Сообщение пользователя: "%s"
-                """.formatted(currentState, text);
+                """.formatted(llmScenarioPromptCatalog.tableBookingContract(), currentState, text);
 
         try {
             String aiText = ollamaClient.ask(prompt);

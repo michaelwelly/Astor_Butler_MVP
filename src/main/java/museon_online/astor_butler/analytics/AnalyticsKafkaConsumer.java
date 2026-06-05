@@ -1,17 +1,13 @@
 package museon_online.astor_butler.analytics;
 
-import io.confluent.kafka.serializers.KafkaAvroDeserializer;
-import io.confluent.kafka.serializers.KafkaAvroDeserializerConfig;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import museon_online.astor_butler.telegram.adapter.TelegramAdminNotifier;
-import org.apache.avro.generic.GenericRecord;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
-import org.apache.kafka.common.errors.RecordDeserializationException;
 import org.apache.kafka.common.errors.WakeupException;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.springframework.beans.factory.annotation.Value;
@@ -41,13 +37,10 @@ public class AnalyticsKafkaConsumer {
     @Value("${astor.kafka.bootstrap-servers:localhost:9092}")
     private String bootstrapServers;
 
-    @Value("${astor.kafka.schema-registry-url:http://localhost:8082}")
-    private String schemaRegistryUrl;
-
     @Value("${astor.kafka.user-events-topic:astor.user.events}")
     private String topic;
 
-    @Value("${astor.kafka.analytics-group-id:astor-analytics-admin}")
+    @Value("${astor.kafka.analytics-group-id:astor-admin-events}")
     private String groupId;
 
     @Value("${astor.kafka.analytics-admin-chat-enabled:true}")
@@ -60,7 +53,7 @@ public class AnalyticsKafkaConsumer {
     });
 
     private volatile boolean running;
-    private volatile KafkaConsumer<String, GenericRecord> consumer;
+    private volatile KafkaConsumer<String, String> consumer;
 
     @PostConstruct
     public void start() {
@@ -81,7 +74,7 @@ public class AnalyticsKafkaConsumer {
     @PreDestroy
     public void stop() {
         running = false;
-        KafkaConsumer<String, GenericRecord> currentConsumer = consumer;
+        KafkaConsumer<String, String> currentConsumer = consumer;
         if (currentConsumer != null) {
             currentConsumer.wakeup();
         }
@@ -90,13 +83,13 @@ public class AnalyticsKafkaConsumer {
 
     private void consumeLoop() {
         while (running) {
-            try (KafkaConsumer<String, GenericRecord> kafkaConsumer = new KafkaConsumer<>(consumerProperties())) {
+            try (KafkaConsumer<String, String> kafkaConsumer = new KafkaConsumer<>(consumerProperties())) {
                 consumer = kafkaConsumer;
                 kafkaConsumer.subscribe(List.of(topic));
                 log.info("Analytics Kafka consumer subscribed: topic={}, groupId={}", topic, groupId);
 
                 while (running) {
-                    for (ConsumerRecord<String, GenericRecord> record : kafkaConsumer.poll(Duration.ofSeconds(1))) {
+                    for (ConsumerRecord<String, String> record : kafkaConsumer.poll(Duration.ofSeconds(1))) {
                         process(record);
                     }
                     kafkaConsumer.commitSync();
@@ -105,8 +98,6 @@ public class AnalyticsKafkaConsumer {
                 if (running) {
                     log.warn("Analytics Kafka consumer wakeup while running", e);
                 }
-            } catch (RecordDeserializationException e) {
-                skipPoisonRecord(e);
             } catch (Exception e) {
                 log.warn("Analytics Kafka consumer failed, retrying in 3s: {}", e.getMessage(), e);
                 sleepBeforeRetry();
@@ -116,26 +107,7 @@ public class AnalyticsKafkaConsumer {
         }
     }
 
-    private void skipPoisonRecord(RecordDeserializationException e) {
-        KafkaConsumer<String, GenericRecord> currentConsumer = consumer;
-        if (currentConsumer == null || e.topicPartition() == null) {
-            log.warn("Analytics Kafka consumer cannot skip unreadable record: {}", e.getMessage());
-            sleepBeforeRetry();
-            return;
-        }
-
-        long nextOffset = e.offset() + 1;
-        log.warn(
-                "Analytics Kafka consumer skipped unreadable record: topicPartition={}, offset={}, nextOffset={}",
-                e.topicPartition(),
-                e.offset(),
-                nextOffset
-        );
-        currentConsumer.seek(e.topicPartition(), nextOffset);
-        currentConsumer.commitSync();
-    }
-
-    private void process(ConsumerRecord<String, GenericRecord> record) {
+    private void process(ConsumerRecord<String, String> record) {
         String eventId = extractEventId(record);
 
         if (!processedEventRepository.markProcessed(CONSUMER_NAME, eventId)) {
@@ -153,11 +125,7 @@ public class AnalyticsKafkaConsumer {
         }
     }
 
-    private String extractEventId(ConsumerRecord<String, GenericRecord> record) {
-        GenericRecord value = record.value();
-        if (value != null && value.get("eventId") != null) {
-            return value.get("eventId").toString();
-        }
+    private String extractEventId(ConsumerRecord<String, String> record) {
         return record.key() == null || record.key().isBlank()
                 ? topic + ":" + record.partition() + ":" + record.offset()
                 : record.key();
@@ -168,9 +136,7 @@ public class AnalyticsKafkaConsumer {
         properties.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
         properties.put(ConsumerConfig.GROUP_ID_CONFIG, groupId);
         properties.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName());
-        properties.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, KafkaAvroDeserializer.class.getName());
-        properties.put(KafkaAvroDeserializerConfig.SCHEMA_REGISTRY_URL_CONFIG, schemaRegistryUrl);
-        properties.put(KafkaAvroDeserializerConfig.SPECIFIC_AVRO_READER_CONFIG, "false");
+        properties.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName());
         properties.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, "false");
         properties.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "latest");
         properties.put(ConsumerConfig.ISOLATION_LEVEL_CONFIG, "read_committed");

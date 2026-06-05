@@ -117,8 +117,7 @@ services:
         condition: service_healthy
 
   debezium-connect:
-    build:
-      context: ./docker/debezium-connect
+    image: debezium/connect:2.7.3.Final
     container_name: astor_debezium_connect
     ports:
       - "${DEBEZIUM_CONNECT_PORT:-8083}:8083"
@@ -129,9 +128,8 @@ services:
       OFFSET_STORAGE_TOPIC: astor.connect.offsets
       STATUS_STORAGE_TOPIC: astor.connect.statuses
       KEY_CONVERTER: org.apache.kafka.connect.storage.StringConverter
-      VALUE_CONVERTER: io.confluent.connect.avro.AvroConverter
-      VALUE_CONVERTER_SCHEMA_REGISTRY_URL: http://kafka:8081
-      VALUE_CONVERTER_AUTO_REGISTER_SCHEMAS: "true"
+      VALUE_CONVERTER: org.apache.kafka.connect.json.JsonConverter
+      VALUE_CONVERTER_SCHEMAS_ENABLE: "false"
     depends_on:
       kafka:
         condition: service_healthy

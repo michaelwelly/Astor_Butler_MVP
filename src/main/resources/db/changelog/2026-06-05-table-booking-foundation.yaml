@@ -1,0 +1,9 @@
+databaseChangeLog:
+  - changeSet:
+      id: table-booking-foundation
+      author: astor-butler
+      changes:
+        - sqlFile:
+            path: db/changelog/2026-06-05-table-booking-foundation.sql
+            splitStatements: false
+            stripComments: false

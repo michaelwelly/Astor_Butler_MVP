@@ -15,3 +15,5 @@ databaseChangeLog:
       file: db/changelog/2026-06-05-scope-outbox-publication.yaml
   - include:
       file: db/changelog/2026-06-05-telegram-current-exchange.yaml
+  - include:
+      file: db/changelog/2026-06-05-table-booking-foundation.yaml

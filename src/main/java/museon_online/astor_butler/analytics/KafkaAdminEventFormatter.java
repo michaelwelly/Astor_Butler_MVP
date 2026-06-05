@@ -3,8 +3,6 @@ package museon_online.astor_butler.analytics;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
-import org.apache.avro.Schema;
-import org.apache.avro.generic.GenericRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.springframework.stereotype.Component;
 
@@ -201,37 +199,26 @@ public class KafkaAdminEventFormatter {
     }
 
     private Map<String, Object> parse(Object value) {
-        if (value instanceof GenericRecord record) {
-            return avroRecord(record);
-        }
         if (!(value instanceof String text) || text.isBlank()) {
             return Map.of();
         }
         try {
-            return objectMapper.readValue(text, MAP_TYPE);
+            return flatten(objectMapper.readValue(text, MAP_TYPE));
         } catch (Exception e) {
             return Map.of();
         }
     }
 
-    private Map<String, Object> avroRecord(GenericRecord record) {
-        Map<String, Object> event = new LinkedHashMap<>();
-        for (Schema.Field field : record.getSchema().getFields()) {
-            Object value = record.get(field.name());
-            if (value instanceof GenericRecord nested && "actor".equals(field.name())) {
-                putNested(event, nested);
-            } else if (value instanceof GenericRecord nested && "payload".equals(field.name())) {
-                putNested(event, nested);
-            } else {
-                event.put(field.name(), value);
-            }
-        }
+    private Map<String, Object> flatten(Map<String, Object> source) {
+        Map<String, Object> event = new LinkedHashMap<>(source);
+        putNested(event, source.get("actor"));
+        putNested(event, source.get("payload"));
         return event;
     }
 
-    private void putNested(Map<String, Object> target, GenericRecord record) {
-        for (Schema.Field field : record.getSchema().getFields()) {
-            target.put(field.name(), record.get(field.name()));
+    private void putNested(Map<String, Object> target, Object value) {
+        if (value instanceof Map<?, ?> nested) {
+            nested.forEach((key, nestedValue) -> target.put(String.valueOf(key), nestedValue));
         }
     }
 

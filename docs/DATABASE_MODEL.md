@@ -79,6 +79,11 @@ users 1 -- 0..N user_consents
 users 1 -- 0..N telegram_messages
 users 1 -- 0..N event_bookings as guest/client
 users 1 -- 0..N event_bookings as manager
+users 1 -- 0..N table_reservation_orders as guest/client
+users 1 -- 0..N table_reservation_orders as manager
+venue_tables 1 -- 0..N table_reservation_orders
+venue_tables 1 -- 0..N table_reservation_holds
+table_reservation_orders 1 -- 0..N table_reservation_holds
 ```
 
 Целевые ключи:
@@ -89,6 +94,11 @@ users 1 -- 0..N event_bookings as manager
 - `user_contacts.user_id -> users.id`, `ON DELETE CASCADE`;
 - `event_bookings.user_id -> users.id`, `ON DELETE SET NULL`;
 - `event_bookings.manager_user_id -> users.id`, `ON DELETE SET NULL`.
+- `table_reservation_orders.user_id -> users.id`, `ON DELETE SET NULL`;
+- `table_reservation_orders.manager_user_id -> users.id`, `ON DELETE SET NULL`;
+- `table_reservation_orders.table_id -> venue_tables.id`, `ON DELETE SET NULL`;
+- `table_reservation_holds.table_id -> venue_tables.id`, `ON DELETE CASCADE`;
+- `table_reservation_holds.order_id -> table_reservation_orders.id`, `ON DELETE CASCADE`.
 
 Целевые уникальности и индексы:
 
@@ -99,6 +109,9 @@ users 1 -- 0..N event_bookings as manager
 - `user_contacts(contact_type, contact_value)` — поиск пользователя по телефону/e-mail;
 - `event_bookings(user_id, status, created_at)` — карточка гостя и история заявок;
 - `event_bookings(manager_user_id, status, created_at)` — менеджерский workload.
+- `venue_tables(venue_code, zone, active, sort_order)` — справочник посадочных мест;
+- `table_reservation_orders(status, requested_start_at)` — менеджерская очередь брони столов;
+- `table_reservation_holds(table_id, start_at, end_at, status)` — проверка занятости стола.
 
 ## CQRS-подход для MVP
 

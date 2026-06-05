@@ -115,6 +115,21 @@ Future states:
 - `MANAGER_ESCALATION` - manager review or manual response required.
 - `SAFE_IDLE` - Panic Exit state after reset or scenario exit.
 
+Table booking states are now specified separately in
+`docs/TABLE_BOOKING_FSM.md`. The code enum already reserves:
+
+- `TABLE_BOOKING_INTENT`;
+- `TABLE_BOOKING_COLLECT_DATE`;
+- `TABLE_BOOKING_COLLECT_TIME`;
+- `TABLE_BOOKING_COLLECT_PARTY_SIZE`;
+- `TABLE_BOOKING_SHOW_PLAN`;
+- `TABLE_BOOKING_WAIT_TABLE_SELECTION`;
+- `TABLE_BOOKING_WAIT_HOSTESS_CONFIRMATION`;
+- `TABLE_BOOKING_CONFIRMED`;
+- `TABLE_BOOKING_REJECTED`;
+- `TABLE_BOOKING_CHANGE_REQUESTED`;
+- `TABLE_BOOKING_CANCELLED`.
+
 ## API Links
 
 - `POST /api/messages` - normalized message gateway for web chat and future messengers.

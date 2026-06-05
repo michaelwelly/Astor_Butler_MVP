@@ -15,7 +15,6 @@ POSTGRES_PORT_INTERNAL="${DEBEZIUM_POSTGRES_PORT:-5432}"
 POSTGRES_DB_NAME="${POSTGRES_DB:-astor_butler_test}"
 POSTGRES_USER_NAME="${POSTGRES_USER:-astor}"
 POSTGRES_PASSWORD_VALUE="${POSTGRES_PASSWORD:-astor}"
-SCHEMA_REGISTRY_URL_INTERNAL="${DEBEZIUM_SCHEMA_REGISTRY_URL:-http://kafka:8081}"
 
 echo "Registering Debezium outbox connector '${CONNECTOR_NAME}' at ${CONNECT_URL}"
 
@@ -25,9 +24,8 @@ curl -fsS -X PUT "${CONNECT_URL}/connectors/${CONNECTOR_NAME}/config" \
 {
   "connector.class": "io.debezium.connector.postgresql.PostgresConnector",
   "key.converter": "org.apache.kafka.connect.storage.StringConverter",
-  "value.converter": "io.confluent.connect.avro.AvroConverter",
-  "value.converter.schema.registry.url": "${SCHEMA_REGISTRY_URL_INTERNAL}",
-  "value.converter.auto.register.schemas": "true",
+  "value.converter": "org.apache.kafka.connect.json.JsonConverter",
+  "value.converter.schemas.enable": "false",
   "plugin.name": "pgoutput",
   "database.hostname": "${POSTGRES_HOST}",
   "database.port": "${POSTGRES_PORT_INTERNAL}",

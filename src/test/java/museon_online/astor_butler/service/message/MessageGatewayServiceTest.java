@@ -38,6 +38,9 @@ class MessageGatewayServiceTest {
     @Mock
     private UserEventProducer userEventProducer;
 
+    @Mock
+    private LlmScenarioPromptCatalog llmScenarioPromptCatalog;
+
     private MessageGatewayService service;
 
     @BeforeEach
@@ -47,7 +50,8 @@ class MessageGatewayServiceTest {
                 ollamaClient,
                 telegramIntakeService,
                 firstTouchScenario,
-                userEventProducer
+                userEventProducer,
+                llmScenarioPromptCatalog
         );
         ReflectionTestUtils.setField(service, "adminChatId", "100500");
         ReflectionTestUtils.setField(service, "analyticsChatId", "100501");
@@ -58,6 +62,7 @@ class MessageGatewayServiceTest {
     void returnsFallbackWhenLlmTimesOut() {
         IncomingMessage incoming = telegram("Check админки");
         when(fsmStorage.getState(incoming.chatId())).thenReturn(BotState.READY_FOR_DIALOG);
+        when(llmScenarioPromptCatalog.tableBookingContract()).thenReturn("table booking contract");
         when(firstTouchScenario.supports(eq(incoming), eq(BotState.READY_FOR_DIALOG), eq("Check админки")))
                 .thenReturn(false);
         when(ollamaClient.ask(any())).thenThrow(new ResourceAccessException("Read timed out"));

@@ -2,7 +2,7 @@ package museon_online.astor_butler.analytics;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import museon_online.astor_butler.fsm.core.BotState;
-import museon_online.astor_butler.kafka.AvroUserEventFactory;
+import museon_online.astor_butler.kafka.UserEventFactory;
 import museon_online.astor_butler.service.message.AdminAlert;
 import museon_online.astor_butler.service.message.IncomingMessage;
 import museon_online.astor_butler.service.message.OutgoingMessage;
@@ -16,7 +16,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class KafkaAdminEventFormatterTest {
 
-    private final KafkaAdminEventFormatter formatter = new KafkaAdminEventFormatter(new ObjectMapper());
+    private final ObjectMapper objectMapper = new ObjectMapper();
+    private final KafkaAdminEventFormatter formatter = new KafkaAdminEventFormatter(objectMapper);
 
     @Test
     void formatsUserMessageEventForHumans() {
@@ -71,8 +72,8 @@ class KafkaAdminEventFormatterTest {
     }
 
     @Test
-    void formatsAvroUserMessageEventForHumans() {
-        AvroUserEventFactory factory = new AvroUserEventFactory();
+    void formatsJsonUserMessageEventForHumans() throws Exception {
+        UserEventFactory factory = new UserEventFactory();
         IncomingMessage incoming = IncomingMessage.telegram(
                 1773317437L,
                 1773317437L,
@@ -103,7 +104,7 @@ class KafkaAdminEventFormatterTest {
                 1,
                 40,
                 factory.partitionKey(incoming),
-                factory.userMessageReceived(incoming, BotState.CONSENT_REQUIRED, outgoing)
+                objectMapper.writeValueAsString(factory.userMessageReceived(incoming, BotState.CONSENT_REQUIRED, outgoing))
         );
 
         String text = formatter.format(record, factory.eventId(incoming));
@@ -117,8 +118,8 @@ class KafkaAdminEventFormatterTest {
     }
 
     @Test
-    void formatsAvroVoiceTranscriptForAdminChat() {
-        AvroUserEventFactory factory = new AvroUserEventFactory();
+    void formatsJsonVoiceTranscriptForAdminChat() throws Exception {
+        UserEventFactory factory = new UserEventFactory();
         IncomingMessage incoming = IncomingMessage.telegram(
                 1773317437L,
                 1773317437L,
@@ -155,7 +156,7 @@ class KafkaAdminEventFormatterTest {
                 0,
                 41,
                 factory.partitionKey(incoming),
-                factory.userMessageReceived(incoming, BotState.READY_FOR_DIALOG, outgoing)
+                objectMapper.writeValueAsString(factory.userMessageReceived(incoming, BotState.READY_FOR_DIALOG, outgoing))
         );
 
         String text = formatter.format(record, factory.eventId(incoming));

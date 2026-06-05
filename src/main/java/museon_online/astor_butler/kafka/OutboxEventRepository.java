@@ -3,14 +3,11 @@ package museon_online.astor_butler.kafka;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
-import org.apache.avro.Schema;
-import org.apache.avro.generic.GenericRecord;
 import org.postgresql.util.PGobject;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 
 import java.sql.SQLException;
-import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.UUID;
 
@@ -21,7 +18,7 @@ public class OutboxEventRepository {
     private final JdbcTemplate jdbcTemplate;
     private final ObjectMapper objectMapper;
 
-    public void append(String topic, String eventKey, String eventType, GenericRecord event) {
+    public void append(String topic, String eventKey, String eventType, Map<String, Object> event) {
         jdbcTemplate.update("""
                 INSERT INTO outbox_events (
                     id, aggregatetype, aggregateid, type, event_version, payload, timestamp
@@ -33,34 +30,13 @@ public class OutboxEventRepository {
                 eventKey,
                 eventType,
                 version(event),
-                jsonb(toMap(event))
+                jsonb(event)
         );
     }
 
-    private String version(GenericRecord event) {
+    private String version(Map<String, Object> event) {
         Object value = event == null ? null : event.get("eventVersion");
         return value == null ? "1.0" : value.toString();
-    }
-
-    private Map<String, Object> toMap(GenericRecord record) {
-        Map<String, Object> result = new LinkedHashMap<>();
-        if (record == null) {
-            return result;
-        }
-        for (Schema.Field field : record.getSchema().getFields()) {
-            result.put(field.name(), value(record.get(field.name())));
-        }
-        return result;
-    }
-
-    private Object value(Object value) {
-        if (value instanceof GenericRecord nested) {
-            return toMap(nested);
-        }
-        if (value instanceof Iterable<?> iterable) {
-            return objectMapper.convertValue(iterable, Object.class);
-        }
-        return value;
     }
 
     private PGobject jsonb(Map<String, Object> value) {

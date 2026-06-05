@@ -8,14 +8,12 @@ astor:
     log-published-events: ${KAFKA_LOG_PUBLISHED_EVENTS:true}
     analytics-admin-chat-enabled: ${KAFKA_ANALYTICS_ADMIN_CHAT_ENABLED:true}
     bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
-    schema-registry-url: ${KAFKA_SCHEMA_REGISTRY_URL:http://localhost:8082}
     user-events-topic: ${KAFKA_USER_EVENTS_TOPIC:astor.user.events}
     outbox-user-events-topic: ${KAFKA_OUTBOX_USER_EVENTS_TOPIC:astor.user.events}
-    analytics-group-id: ${KAFKA_ANALYTICS_GROUP_ID:astor-analytics-admin-avro-v2}
+    analytics-group-id: ${KAFKA_ANALYTICS_GROUP_ID:astor-admin-events}
     user-events-partitions: ${KAFKA_USER_EVENTS_PARTITIONS:3}
     replication-factor: ${KAFKA_REPLICATION_FACTOR:1}
     outbox-enabled: ${KAFKA_OUTBOX_ENABLED:true}
-    direct-publish-enabled: ${KAFKA_DIRECT_PUBLISH_ENABLED:false}
   media:
     menu-dir: ${ASTOR_MEDIA_MENU_DIR:./media/menu/}
   storage:
@@ -88,6 +86,11 @@ telegram:
     chat-id: ${TELEGRAM_ADMIN_CHAT_ID:}
   analytics:
     chat-id: ${TELEGRAM_ANALYTICS_CHAT_ID:${TELEGRAM_ADMIN_CHAT_ID:}}
+  booking:
+    notifications-enabled: ${TELEGRAM_BOOKING_NOTIFICATIONS_ENABLED:true}
+    manager-chat-id: ${TELEGRAM_BOOKING_MANAGER_CHAT_ID:876857557}
+    hostess-chat-id: ${TELEGRAM_HOSTESS_CHAT_ID:}
+    plan-pdf-path: ${TELEGRAM_BOOKING_PLAN_PDF_PATH:classpath:booking/aeris-plan.pdf}
   oauth:
     client-id: ${TELEGRAM_CLIENT_ID:}
     redirect-uri: ${TELEGRAM_REDIRECT_URI:http://localhost:8080/auth/telegram/callback}
@@ -128,4 +131,3 @@ management:
 logging:
   level:
     org.apache.kafka: WARN
-    io.confluent: WARN
