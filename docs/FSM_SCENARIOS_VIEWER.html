@@ -197,12 +197,18 @@
   <nav>
     <a href="#system">Система</a>
     <a href="#registry">Реестр</a>
+    <a href="#product-layer">8 осей</a>
+    <a href="#legacy">Legacy</a>
     <a href="#intake">Вход</a>
     <a href="#first-touch">Первое касание</a>
     <a href="#main-menu">Главное меню</a>
     <a href="#table-booking">Стол</a>
     <a href="#event-booking">Мероприятие</a>
     <a href="#menu-assets">Меню</a>
+    <a href="#smart-tip">Чаевые</a>
+    <a href="#hidden-heart">Донаты</a>
+    <a href="#art-auction">Аукцион</a>
+    <a href="#impact">Impact</a>
     <a href="#manager-help">Менеджер</a>
     <a href="#change-cancel">Изменить</a>
     <a href="#recovery">Recovery</a>
@@ -233,6 +239,12 @@ flowchart TD
     MenuAssets["MenuAssetsScenario<br/>меню / карта бара"]
     ManagerHelp["ManagerHelpScenario<br/>подключить команду"]
     ChangeCancel["ChangeCancelScenario<br/>изменить / отменить"]
+    SmartTip["SmartTipScenario<br/>чаевые / благодарность"]
+    HiddenHeart["HiddenHeartScenario<br/>донаты / социальный вклад"]
+    ArtAuction["ArtAuctionScenario<br/>картины / аукцион"]
+    QuietGuide["QuietGuideScenario<br/>афиши / справки"]
+    SafePlay["SafePlayScenario<br/>мини-сценарии"]
+    Impact["ImpactMeterScenario<br/>культурный вклад"]
     Recovery["RecoveryScenario<br/>непонятно / сбой"]
 
     Domain["Domain services<br/>booking / media / consent / notifications"]
@@ -253,6 +265,12 @@ flowchart TD
     Router --> MenuAssets
     Router --> ManagerHelp
     Router --> ChangeCancel
+    Router --> SmartTip
+    Router --> HiddenHeart
+    Router --> ArtAuction
+    Router --> QuietGuide
+    Router --> SafePlay
+    Router --> Impact
     Router --> Recovery
 
     TableBooking --> Domain --> Hostess
@@ -260,6 +278,12 @@ flowchart TD
     MenuAssets --> Minio
     ManagerHelp --> Manager
     ChangeCancel --> Domain
+    SmartTip --> Domain
+    HiddenHeart --> Domain
+    ArtAuction --> Domain
+    QuietGuide --> Domain
+    SafePlay --> Domain
+    Impact --> Domain
     Recovery --> Manager
 
     Gateway --> Redis
@@ -273,6 +297,12 @@ flowchart TD
     MenuAssets --> MainMenu
     ManagerHelp --> MainMenu
     ChangeCancel --> MainMenu
+    SmartTip --> MainMenu
+    HiddenHeart --> MainMenu
+    ArtAuction --> MainMenu
+    QuietGuide --> MainMenu
+    SafePlay --> MainMenu
+    Impact --> MainMenu
     Recovery --> MainMenu
 
     classDef core fill:#E8F5E9,stroke:#2E7D32,stroke-width:1px,color:#1B5E20;
@@ -282,7 +312,7 @@ flowchart TD
     classDef human fill:#FCE4EC,stroke:#AD1457,stroke-width:1px,color:#880E4F;
 
     class Gateway,Domain core;
-    class FirstTouch,MainMenu,TableBooking,EventBooking,MenuAssets,ManagerHelp,ChangeCancel,Recovery scenario;
+    class FirstTouch,MainMenu,TableBooking,EventBooking,MenuAssets,ManagerHelp,ChangeCancel,SmartTip,HiddenHeart,ArtAuction,QuietGuide,SafePlay,Impact,Recovery scenario;
     class Transport,LLM adapter;
     class Redis,Postgres,EventTrail,Minio,Intake storage;
     class Guest,Hostess,Admin,Manager human;
@@ -308,6 +338,11 @@ flowchart TD
       <tr><td><code>TableBookingScenario</code></td><td>стол, посадка, на двоих</td><td>заявка хостес / подтверждение</td><td><code>READY_FOR_DIALOG</code></td></tr>
       <tr><td><code>EventBookingScenario</code></td><td>банкет, день рождения, корпоратив</td><td>structured request менеджеру</td><td><code>READY_FOR_DIALOG</code></td></tr>
       <tr><td><code>MenuAssetsScenario</code></td><td>меню, карта бара, банкетное меню</td><td>релевантный файл/раздел</td><td><code>READY_FOR_DIALOG</code></td></tr>
+      <tr><td><code>QuietGuideScenario</code></td><td>афиша, что сегодня, справка</td><td>контент без спама</td><td><code>READY_FOR_DIALOG</code></td></tr>
+      <tr><td><code>SmartTipScenario</code></td><td>чаевые, благодарность</td><td>tip intent до payment boundary</td><td><code>READY_FOR_DIALOG</code></td></tr>
+      <tr><td><code>HiddenHeartScenario</code></td><td>донат, благотворительность</td><td>анонимный donation draft</td><td><code>READY_FOR_DIALOG</code></td></tr>
+      <tr><td><code>ArtAuctionScenario</code></td><td>картина, аукцион, ставка</td><td>bid flow с подтверждением</td><td><code>READY_FOR_DIALOG</code></td></tr>
+      <tr><td><code>ImpactMeterScenario</code></td><td>сколько собрали, итоги, impact</td><td>агрегированный отчет</td><td><code>READY_FOR_DIALOG</code></td></tr>
       <tr><td><code>ManagerHelpScenario</code></td><td>менеджер, человек, жалоба</td><td>карточка команде</td><td><code>READY_FOR_DIALOG</code></td></tr>
       <tr><td><code>ChangeCancelScenario</code></td><td>отмена, перенос, изменить бронь</td><td>изменение/отмена order</td><td><code>READY_FOR_DIALOG</code></td></tr>
       <tr><td><code>RecoveryScenario</code></td><td>непонятно, конфликт, сбой</td><td>уточнение или admin alert</td><td><code>READY_FOR_DIALOG</code></td></tr>
@@ -315,8 +350,72 @@ flowchart TD
     </table>
   </section>
 
+  <section id="product-layer">
+    <h2>2. Дипломный product layer: 8 осей боли</h2>
+    <p>Центральная категория исследования: потребность быть распознанным без давления. FSM переводит ее в явные сценарии, где каждая ось боли имеет capability и допустимые переходы.</p>
+    <div class="diagram mermaid">
+flowchart TD
+    Center["Потребность быть распознанным<br/>без давления"]
+    Memory["Идентичность<br/>Memory Engine"]
+    Preference["Персонализация<br/>Preference Map"]
+    Tip["Благодарность<br/>Smart Tip"]
+    Guide["Инфо-поддержка<br/>Quiet Guide"]
+    Heart["Социальный вклад<br/>Hidden Heart"]
+    Play["Игровой опыт<br/>Safe Play"]
+    Slot["Управление временем<br/>Slot Keeper"]
+    Exit["Безопасность<br/>Panic Exit"]
+
+    First["FirstTouch / MainMenu"]
+    Pref["PreferenceScenario<br/>later"]
+    SmartTip["SmartTipScenario"]
+    Quiet["MenuAssets / QuietGuide"]
+    Donate["HiddenHeart / ArtAuction"]
+    Safe["SafePlay / SafeExit"]
+    Booking["TableBooking / EventBooking / ChangeCancel"]
+    Recovery["Recovery / SafeExit"]
+
+    Center --> Memory --> First
+    Center --> Preference --> Pref
+    Center --> Tip --> SmartTip
+    Center --> Guide --> Quiet
+    Center --> Heart --> Donate
+    Center --> Play --> Safe
+    Center --> Slot --> Booking
+    Center --> Exit --> Recovery
+    </div>
+    <table>
+      <thead><tr><th>Ось боли</th><th>Capability</th><th>FSM-сценарии</th><th>Смысл</th></tr></thead>
+      <tbody>
+      <tr><td>Идентичность</td><td>Memory Engine</td><td>FirstTouch, MainMenu</td><td>Гостя узнают по профилю и истории.</td></tr>
+      <tr><td>Персонализация</td><td>Preference Map</td><td>PreferenceScenario later</td><td>Можно предложить "как в прошлый раз".</td></tr>
+      <tr><td>Благодарность</td><td>Smart Tip</td><td>SmartTipScenario</td><td>Гость благодарит команду без неловкости.</td></tr>
+      <tr><td>Инфо-поддержка</td><td>Quiet Guide</td><td>MenuAssets, QuietGuide</td><td>Меню, афиши и справки без спама.</td></tr>
+      <tr><td>Социальный вклад</td><td>Hidden Heart</td><td>HiddenHeart, ArtAuction</td><td>Анонимные донаты и благотворительные сценарии.</td></tr>
+      <tr><td>Игровой опыт</td><td>Safe Play</td><td>SafePlay, ArtAuction</td><td>Интерактив с мгновенным выходом.</td></tr>
+      <tr><td>Управление временем</td><td>Slot Keeper</td><td>TableBooking, EventBooking, ChangeCancel</td><td>Слоты, бронь, перенос и напоминания.</td></tr>
+      <tr><td>Безопасность</td><td>Panic Exit</td><td>Recovery, SafeExit</td><td>Сценарий можно остановить и вернуться домой.</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section id="legacy">
+    <h2>3. Legacy как источник продуктовых сценариев</h2>
+    <p>Legacy не переносится как архитектура. Он используется как память продуктовых веток: auction, charity, tip, merch, poster, feedback.</p>
+    <table>
+      <thead><tr><th>Legacy area</th><th>Новый слой</th><th>FSM-сценарий</th></tr></thead>
+      <tbody>
+      <tr><td><code>auction/*</code></td><td>Hidden Heart + Safe Play + Impact Meter + Event</td><td><code>ArtAuctionScenario</code></td></tr>
+      <tr><td><code>charity/*</code></td><td>Hidden Heart</td><td><code>HiddenHeartScenario</code></td></tr>
+      <tr><td><code>tip/*</code></td><td>Smart Tip</td><td><code>SmartTipScenario</code></td></tr>
+      <tr><td><code>merch/*</code></td><td>future commerce/order boundary</td><td><code>MerchOrderScenario</code> later</td></tr>
+      <tr><td><code>poster/*</code></td><td>Content + Quiet Guide</td><td><code>QuietGuideScenario</code></td></tr>
+      <tr><td><code>feedback/*</code></td><td>Timeline + future feedback capability</td><td><code>ManagerHelpScenario</code> / future feedback</td></tr>
+      </tbody>
+    </table>
+  </section>
+
   <section id="intake">
-    <h2>2. Общий вход</h2>
+    <h2>4. Общий вход</h2>
     <p>Служебные чаты не запускают гостевой FSM. Они нужны для наблюдаемости, аудита и ручного контроля.</p>
     <div class="diagram mermaid compact">
 flowchart LR
@@ -337,7 +436,7 @@ flowchart LR
   </section>
 
   <section id="first-touch">
-    <h2>3. Первое касание</h2>
+    <h2>5. Первое касание</h2>
     <p>До контакта и согласия система не ведет бизнес-сценарии и не собирает детали брони.</p>
     <div class="diagram mermaid compact">
 flowchart TD
@@ -354,7 +453,7 @@ flowchart TD
   </section>
 
   <section id="main-menu">
-    <h2>4. Главное меню</h2>
+    <h2>6. Главное меню</h2>
     <p><code>READY_FOR_DIALOG</code> - дом сценариев. Это не свободный чат и не прямой путь в fallback.</p>
     <div class="diagram mermaid">
 flowchart TD
@@ -364,6 +463,10 @@ flowchart TD
     Table["TableBookingScenario"]
     Event["EventBookingScenario"]
     Menu["MenuAssetsScenario"]
+    Guide["QuietGuideScenario"]
+    Tip["SmartTipScenario"]
+    Donation["HiddenHeartScenario"]
+    Auction["ArtAuctionScenario"]
     Manager["ManagerHelpScenario"]
     Change["ChangeCancelScenario"]
     Clarify["Уточнение + quick options"]
@@ -372,6 +475,10 @@ flowchart TD
     Intent -- "стол / посадка" --> Table
     Intent -- "банкет / корпоратив" --> Event
     Intent -- "меню / бар" --> Menu
+    Intent -- "афиша / что сегодня" --> Guide
+    Intent -- "чаевые / спасибо команде" --> Tip
+    Intent -- "донат / благотворительность" --> Donation
+    Intent -- "картина / аукцион / ставка" --> Auction
     Intent -- "менеджер / человек" --> Manager
     Intent -- "отмена / перенос" --> Change
     Intent -- "непонятно" --> Clarify
@@ -379,6 +486,10 @@ flowchart TD
     Table --> Ready
     Event --> Ready
     Menu --> Ready
+    Guide --> Ready
+    Tip --> Ready
+    Donation --> Ready
+    Auction --> Ready
     Manager --> Ready
     Change --> Ready
     Clarify --> Ready
@@ -386,7 +497,7 @@ flowchart TD
   </section>
 
   <section id="table-booking">
-    <h2>5. Бронь стола</h2>
+    <h2>7. Бронь стола</h2>
     <p>Обычная посадка в AERIS: собрать дату, время, гостей, отправить план, получить стол, создать заявку и дождаться кнопки хостес.</p>
     <div class="diagram mermaid">
 flowchart TD
@@ -419,7 +530,7 @@ flowchart TD
   </section>
 
   <section id="event-booking">
-    <h2>6. Мероприятие</h2>
+    <h2>8. Мероприятие</h2>
     <p>Отдельная ветка для банкетов, дней рождения, корпоративов, свадеб и выкупа зала. Итог - структурированная заявка менеджеру, не автоматическое подтверждение.</p>
     <div class="diagram mermaid">
 flowchart TD
@@ -445,7 +556,7 @@ flowchart TD
   </section>
 
   <section id="menu-assets">
-    <h2>7. Меню и материалы</h2>
+    <h2>9. Меню и материалы</h2>
     <p>Сценарий выдачи релевантных материалов: не валить все файлы сразу, а понять, что нужно гостю.</p>
     <div class="diagram mermaid compact">
 flowchart TD
@@ -467,8 +578,121 @@ flowchart TD
     </div>
   </section>
 
+  <section id="smart-tip">
+    <h2>10. Smart Tip / благодарность</h2>
+    <p>Сценарий благодарности из Legacy <code>tip/*</code>. Пока нет платежной интеграции, FSM создает только подтвержденное намерение и не обещает оплату.</p>
+    <div class="diagram mermaid">
+flowchart TD
+    Start["Intent: чаевые / благодарность"]
+    Target{"Кому благодарность?"}
+    AskTarget["Уточнить: команда / официант / бар"]
+    Amount{"Есть сумма?"}
+    AskAmount["Спросить сумму"]
+    Summary["Сводка благодарности"]
+    Confirm{"Гость подтверждает?"}
+    Boundary["Create tip intent<br/>future payment boundary"]
+    Thanks["Спасибо + timeline event"]
+    Cancel["Отмена без давления"]
+    Home["READY_FOR_DIALOG"]
+
+    Start --> Target
+    Target -- "известно" --> Amount
+    Target -- "неизвестно" --> AskTarget --> Amount
+    Amount -- "нет" --> AskAmount --> Summary
+    Amount -- "да" --> Summary
+    Summary --> Confirm
+    Confirm -- "да" --> Boundary --> Thanks --> Home
+    Confirm -- "нет" --> Cancel --> Home
+    </div>
+  </section>
+
+  <section id="hidden-heart">
+    <h2>11. Hidden Heart / донаты</h2>
+    <p>Социальный вклад из Legacy <code>charity/*</code>: анонимный донат или поддержка инициативы. Никакого давления, публичного сравнения и лишних персональных данных.</p>
+    <div class="diagram mermaid">
+flowchart TD
+    Start["Intent: донат / благотворительность"]
+    Cause{"Понятна цель?"}
+    Causes["Показать инициативы"]
+    Amount{"Есть сумма?"}
+    AskAmount["Спросить сумму"]
+    Privacy{"Анонимно?"}
+    Anonymous["anonymous=true"]
+    Named["named donation"]
+    Summary["Donation summary"]
+    Confirm{"Гость подтверждает?"}
+    Draft["Create donation draft/order<br/>future payment boundary"]
+    Impact["Impact event<br/>aggregated only"]
+    Cancel["Отмена без давления"]
+    Home["READY_FOR_DIALOG"]
+
+    Start --> Cause
+    Cause -- "нет" --> Causes --> Amount
+    Cause -- "да" --> Amount
+    Amount -- "нет" --> AskAmount --> Privacy
+    Amount -- "да" --> Privacy
+    Privacy -- "да / default" --> Anonymous --> Summary
+    Privacy -- "нет" --> Named --> Summary
+    Summary --> Confirm
+    Confirm -- "да" --> Draft --> Impact --> Home
+    Confirm -- "нет" --> Cancel --> Home
+    </div>
+  </section>
+
+  <section id="art-auction">
+    <h2>12. Art Auction / картины на событии</h2>
+    <p>Аукцион на мероприятии - это стык Hidden Heart, Safe Play, Impact Meter и EventBooking. Он не запускается случайной фразой: нужен активный event/lot.</p>
+    <div class="diagram mermaid">
+flowchart TD
+    Start["Intent: картина / аукцион / ставка"]
+    Active{"Есть активный аукцион?"}
+    Info["Показать ближайший аукцион<br/>или предложить менеджера"]
+    Lot["Показать лот<br/>описание / текущая ставка"]
+    Bid{"Гость делает ставку?"}
+    Watch["Остаться наблюдателем<br/>или выйти"]
+    Validate["Проверить шаг ставки<br/>current + minStep"]
+    Explain["Объяснить минимальную ставку"]
+    Confirm["Явно подтвердить ставку"]
+    Place["Принять bid<br/>обновить лидера"]
+    Notify["Уведомить event/manager"]
+    Impact["Impact event"]
+    Home["READY_FOR_DIALOG"]
+
+    Start --> Active
+    Active -- "нет" --> Info --> Home
+    Active -- "да" --> Lot --> Bid
+    Bid -- "нет" --> Watch --> Home
+    Bid -- "да" --> Validate
+    Validate -- "ниже minStep" --> Explain --> Lot
+    Validate -- "ok" --> Confirm
+    Confirm -- "да" --> Place --> Notify --> Impact --> Home
+    Confirm -- "нет" --> Watch
+    </div>
+  </section>
+
+  <section id="impact">
+    <h2>13. Impact Meter / культурный вклад</h2>
+    <p>Extension point для отчетности: донаты, аукционы, чаевые и события превращаются в агрегированные KPI без раскрытия приватных платежных данных.</p>
+    <div class="diagram mermaid compact">
+flowchart TD
+    Start["Intent: impact / итоги / сколько собрали"]
+    Scope{"Какой scope?"}
+    Event["Событие"]
+    Cause["Инициатива"]
+    Venue["Площадка"]
+    Report["Человекочитаемый отчет"]
+    Home["READY_FOR_DIALOG"]
+
+    Start --> Scope
+    Scope -- "событие" --> Event --> Report
+    Scope -- "инициатива" --> Cause --> Report
+    Scope -- "общий" --> Venue --> Report
+    Report --> Home
+    </div>
+  </section>
+
   <section id="manager-help">
-    <h2>8. Менеджер / ручная помощь</h2>
+    <h2>14. Менеджер / ручная помощь</h2>
     <p>Ручное подключение команды должно быть явным сценарием, а не побочным эффектом любой непонятной фразы.</p>
     <div class="diagram mermaid compact">
 flowchart TD
@@ -484,7 +708,7 @@ flowchart TD
   </section>
 
   <section id="change-cancel">
-    <h2>9. Изменить или отменить</h2>
+    <h2>15. Изменить или отменить</h2>
     <p>Отмена и изменение должны искать активную бронь, освобождать holds и при изменении заново проходить подтверждение.</p>
     <div class="diagram mermaid">
 flowchart TD
@@ -507,7 +731,7 @@ flowchart TD
   </section>
 
   <section id="recovery">
-    <h2>10. Recovery / fallback</h2>
+    <h2>16. Recovery / fallback</h2>
     <p>Recovery сначала уточняет, и только потом эскалирует. Это должен быть редкий safety-net.</p>
     <div class="diagram mermaid compact">
 flowchart TD
@@ -524,17 +748,17 @@ flowchart TD
   </section>
 
   <section id="llm">
-    <h2>11. Контракт LLM</h2>
+    <h2>17. Контракт LLM</h2>
     <p>LLM - адаптер языка. Он помогает понять и красиво сказать, но не владеет бизнес-решениями.</p>
     <div class="grid">
-      <div class="card"><strong>LLM может</strong><span>Классифицировать intent, извлекать дату/время/гостей/зону, задавать одно уточнение, помогать с тоном.</span></div>
-      <div class="card"><strong>LLM не может</strong><span>Подтверждать бронь, создавать holds, обещать свободный стол, менять статус заявки, подтверждать от имени хостес.</span></div>
+      <div class="card"><strong>LLM может</strong><span>Классифицировать intent, извлекать дату/время/гостей/зону/сумму/лот, задавать одно уточнение, помогать с тоном.</span></div>
+      <div class="card"><strong>LLM не может</strong><span>Подтверждать бронь, создавать holds, принимать ставки без подтверждения, раскрывать приватные донаты, менять статус заявки.</span></div>
       <div class="card"><strong>Формат будущего результата</strong><span><code>intent</code>, <code>confidence</code>, <code>entities</code>, <code>needsClarification</code>, <code>clarificationQuestion</code>.</span></div>
     </div>
   </section>
 
   <section id="tests">
-    <h2>12. Предкодовый тест-план</h2>
+    <h2>18. Предкодовый тест-план</h2>
     <p>Перед кодом проверяем эту карту глазами, затем переносим ее в unit/integration тесты.</p>
     <table>
       <thead>
@@ -546,8 +770,14 @@ flowchart TD
       <tr><td>Main Menu</td><td>"хочу столик завтра"</td><td>route <code>TABLE_BOOKING</code></td></tr>
       <tr><td>Main Menu</td><td>"скинь меню"</td><td>route <code>MENU_ASSETS</code></td></tr>
       <tr><td>Main Menu</td><td>"позови менеджера"</td><td>route <code>MANAGER_HELP</code></td></tr>
+      <tr><td>Main Menu</td><td>"что сегодня по афише"</td><td>route <code>QUIET_GUIDE</code></td></tr>
+      <tr><td>Smart Tip</td><td>"хочу оставить чаевые 1000"</td><td>route <code>SMART_TIP</code>, confirmation before payment boundary</td></tr>
+      <tr><td>Hidden Heart</td><td>"донат 5000 анонимно"</td><td>anonymous donation draft, no public pressure</td></tr>
+      <tr><td>Art Auction</td><td>"ставлю 20000 за картину"</td><td>active auction check, min step validation, explicit confirmation</td></tr>
+      <tr><td>Impact Meter</td><td>"сколько собрали?"</td><td>aggregated report only</td></tr>
       <tr><td>Table Booking</td><td>"столик завтра в 20:00 на двоих"</td><td>send plan, wait table</td></tr>
       <tr><td>Table Booking</td><td><code>TABLE_BOOKING_WAIT_TABLE_SELECTION</code> + "17"</td><td>create order/hold, send hostess card</td></tr>
+      <tr><td>Safe Exit</td><td>любой активный сценарий + "стоп"</td><td>return <code>READY_FOR_DIALOG</code></td></tr>
       <tr><td>Observability</td><td>admin chat message</td><td>stored + projection, guest FSM skipped</td></tr>
       </tbody>
     </table>
