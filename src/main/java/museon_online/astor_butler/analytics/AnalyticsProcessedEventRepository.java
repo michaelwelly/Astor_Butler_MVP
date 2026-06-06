@@ -12,6 +12,22 @@ public class AnalyticsProcessedEventRepository {
 
     private final JdbcTemplate jdbcTemplate;
 
+    public boolean existsByConsumerNameAndEventId(String consumerName, String eventId) {
+        Boolean exists = jdbcTemplate.queryForObject("""
+                SELECT EXISTS (
+                    SELECT 1
+                    FROM processed_kafka_events
+                    WHERE consumer_name = ?
+                      AND event_id = ?
+                )
+                """,
+                Boolean.class,
+                consumerName,
+                eventId
+        );
+        return Boolean.TRUE.equals(exists);
+    }
+
     public boolean markProcessed(String consumerName, String eventId) {
         int inserted = jdbcTemplate.update("""
                 INSERT INTO processed_kafka_events (id, consumer_name, event_id)

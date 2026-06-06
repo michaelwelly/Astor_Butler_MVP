@@ -82,3 +82,70 @@ Interpretation:
   - deterministic FSM matrix with no LLM dependency
   - LLM stress matrix for capacity measurement
 - Consider a faster local LLM model or external inference for weekend parallel tests.
+
+## k6 Deterministic FSM Baseline
+
+Added a separate baseline script:
+
+```text
+k6/weekend-fsm-baseline.js
+```
+
+The baseline avoids free-form LLM prompts and exercises deterministic FSM routes:
+
+- first touch -> `CONSENT_REQUIRED`
+- contact share -> `READY_FOR_DIALOG`
+- table booking -> `TABLE_BOOKING_WAIT_TABLE_SELECTION`
+- menu / poster / manager / impact / event booking -> `READY_FOR_DIALOG`
+- donation -> `DONATION_COLLECT_AMOUNT`
+- auction -> `AUCTION_WAIT_BID`
+- smart tip with amount -> `TIP_CONFIRMATION`
+
+Fast weekend smoke command:
+
+```bash
+docker run --rm \
+  -e K6_BASE_URL=http://host.docker.internal:8080 \
+  -e K6_CHAT_ID_BASE=910500000 \
+  -v "$PWD/k6:/scripts:ro" \
+  grafana/k6 run /scripts/weekend-fsm-baseline.js
+```
+
+Result after rebuilding the `app` container:
+
+- 9 fresh guests completed.
+- 27 HTTP requests.
+- 81/81 checks passed.
+- HTTP failures: 0/27.
+- p95 duration: about 288 ms.
+
+Paced 45-guest command:
+
+```bash
+docker run --rm \
+  -e K6_BASE_URL=http://host.docker.internal:8080 \
+  -e K6_CHAT_ID_BASE=910400000 \
+  -e K6_VUS=3 \
+  -e K6_ITERATIONS=45 \
+  -e K6_STEP_SLEEP=0.6 \
+  -v "$PWD/k6:/scripts:ro" \
+  grafana/k6 run /scripts/weekend-fsm-baseline.js
+```
+
+Result:
+
+- 45 fresh guests completed.
+- 135 HTTP requests.
+- 405/405 checks passed.
+- HTTP failures: 0/135.
+- p95 duration: about 100 ms.
+
+## Load Findings
+
+- A bursty 45-guest run with 9 VUs hit `api-gateway` `limit_req` and produced 503 responses. This is expected gateway protection, not an FSM failure.
+- Kafka consumer group `astor-admin-events` returned to total lag 0 after the smoke run.
+- Telegram admin chat has real API rate limits. A high-volume analytics burst produced `429 Too Many Requests` before throttling was added.
+- `TelegramAdminNotifier` now serializes analytics delivery, waits between admin-chat messages and retries when Telegram returns `retry_after`.
+- `AnalyticsKafkaConsumer` now marks events processed only after admin notification delivery succeeds.
+
+Manual weekend testing should use the running Docker Compose app container and avoid IDEA-run Spring Boot unless debugging code locally.

@@ -110,7 +110,7 @@ public class AnalyticsKafkaConsumer {
     private void process(ConsumerRecord<String, String> record) {
         String eventId = extractEventId(record);
 
-        if (!processedEventRepository.markProcessed(CONSUMER_NAME, eventId)) {
+        if (processedEventRepository.existsByConsumerNameAndEventId(CONSUMER_NAME, eventId)) {
             log.debug("Analytics Kafka event already processed: eventId={}", eventId);
             return;
         }
@@ -118,11 +118,16 @@ public class AnalyticsKafkaConsumer {
         String text = kafkaAdminEventFormatter.format(record, eventId);
 
         if (adminChatEnabled) {
-            telegramAdminNotifier.sendAnalytics(text);
+            boolean delivered = telegramAdminNotifier.sendAnalytics(text);
+            if (!delivered) {
+                throw new IllegalStateException("Telegram analytics notification was not delivered");
+            }
             log.info("Analytics Kafka event delivered to admin chat: eventId={}, key={}", eventId, record.key());
         } else {
             log.info("Analytics admin chat disabled. Kafka event consumed: eventId={}, key={}", eventId, record.key());
         }
+
+        processedEventRepository.markProcessed(CONSUMER_NAME, eventId);
     }
 
     private String extractEventId(ConsumerRecord<String, String> record) {

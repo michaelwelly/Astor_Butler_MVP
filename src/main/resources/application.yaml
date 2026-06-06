@@ -86,6 +86,8 @@ telegram:
     chat-id: ${TELEGRAM_ADMIN_CHAT_ID:}
   analytics:
     chat-id: ${TELEGRAM_ANALYTICS_CHAT_ID:${TELEGRAM_ADMIN_CHAT_ID:}}
+    min-send-interval-ms: ${TELEGRAM_ANALYTICS_MIN_SEND_INTERVAL_MS:3200}
+    max-retries: ${TELEGRAM_ANALYTICS_MAX_RETRIES:2}
   booking:
     notifications-enabled: ${TELEGRAM_BOOKING_NOTIFICATIONS_ENABLED:true}
     manager-chat-id: ${TELEGRAM_BOOKING_MANAGER_CHAT_ID:876857557}
