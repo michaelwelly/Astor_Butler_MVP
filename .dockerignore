@@ -1,0 +1,13 @@
+.codex/
+.codex_audio_chunks/
+.codex_frames/
+.codex_transcripts/
+.codex_whisper_chunks/
+.codex_whisper_out/
+.git/
+.idea/
+target/
+.env
+.env.*
+*.log
+*.wav

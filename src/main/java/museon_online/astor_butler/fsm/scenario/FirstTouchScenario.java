@@ -50,6 +50,9 @@ public class FirstTouchScenario {
         if ("/start".equalsIgnoreCase(text)) {
             return FirstTouchSignal.START_COMMAND;
         }
+        if (currentState == BotState.UNKNOWN && incoming.telegramUserId() != null) {
+            return FirstTouchSignal.START_COMMAND;
+        }
         if (currentState != null && currentState.waitsForConsentAndContact()) {
             return FirstTouchSignal.PRE_AUTH_TEXT;
         }

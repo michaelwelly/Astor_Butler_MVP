@@ -56,6 +56,18 @@ class FirstTouchScenarioTest {
     }
 
     @Test
+    void unknownTelegramGuestRequestsContactAndConsentWithoutStartCommand() {
+        IncomingMessage incoming = telegram("Привет", null);
+
+        OutgoingMessage outgoing = scenario.handle(incoming, BotState.UNKNOWN, "Привет");
+
+        assertThat(outgoing.nextState()).isEqualTo(BotState.CONSENT_REQUIRED.name());
+        assertThat(outgoing.requestContact()).isTrue();
+        assertThat(outgoing.actions()).containsExactly("REQUEST_CONTACT", "CONSENT_REQUIRED");
+        verify(fsmStorage).setState(421441838L, BotState.CONSENT_REQUIRED);
+    }
+
+    @Test
     void storesConsentAndOpensMenuAfterContact() {
         IncomingMessage incoming = telegram("", "+79990000000");
 

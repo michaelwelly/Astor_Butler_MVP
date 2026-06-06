@@ -45,24 +45,44 @@ public class MessageController {
             );
         }
 
-        IncomingMessage incoming = new IncomingMessage(
-                channel(request.channel()),
-                request.externalUserId(),
-                request.chatId(),
-                null,
-                null,
-                null,
-                request.text(),
-                request.contactPhone(),
-                request.firstName(),
-                null,
-                request.username(),
-                null,
-                false,
-                request.correlationId() == null ? UUID.randomUUID().toString() : request.correlationId(),
-                Instant.now(),
-                request.payload() == null ? Map.of() : request.payload()
-        );
+        MessageChannel messageChannel = channel(request.channel());
+        String correlationId = request.correlationId() == null ? UUID.randomUUID().toString() : request.correlationId();
+        Map<String, Object> payload = request.payload() == null ? Map.of() : request.payload();
+
+        IncomingMessage incoming = messageChannel == MessageChannel.TELEGRAM
+                ? IncomingMessage.telegram(
+                        request.chatId(),
+                        telegramUserId(request.externalUserId(), request.chatId()),
+                        null,
+                        null,
+                        request.text(),
+                        request.contactPhone(),
+                        request.firstName(),
+                        null,
+                        request.username(),
+                        null,
+                        false,
+                        correlationId,
+                        payload
+                )
+                : new IncomingMessage(
+                        messageChannel,
+                        request.externalUserId(),
+                        request.chatId(),
+                        null,
+                        null,
+                        null,
+                        request.text(),
+                        request.contactPhone(),
+                        request.firstName(),
+                        null,
+                        request.username(),
+                        null,
+                        false,
+                        correlationId,
+                        Instant.now(),
+                        payload
+                );
 
         return ResponseEntity.ok(MessageResponse.from(messageGatewayService.handle(incoming)));
     }
@@ -81,6 +101,22 @@ public class MessageController {
                     Map.of("channel", channel)
             );
         }
+    }
+
+    private Long telegramUserId(String externalUserId, Long chatId) {
+        if (externalUserId != null && !externalUserId.isBlank()) {
+            try {
+                return Long.parseLong(externalUserId.trim());
+            } catch (NumberFormatException e) {
+                throw new ApiException(
+                        HttpStatus.BAD_REQUEST,
+                        ErrorCode.BAD_REQUEST,
+                        "Telegram externalUserId must be numeric",
+                        Map.of("externalUserId", externalUserId)
+                );
+            }
+        }
+        return chatId != null && chatId > 0 ? chatId : null;
     }
 
     public record MessageRequest(
