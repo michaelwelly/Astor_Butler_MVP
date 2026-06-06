@@ -1,0 +1,295 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Astor Butler FSM Viewer</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f6f7f9;
+      --panel: #ffffff;
+      --ink: #172026;
+      --muted: #667085;
+      --line: #d0d7de;
+      --accent: #1f6feb;
+    }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      line-height: 1.5;
+    }
+
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 24px;
+      padding: 18px 28px;
+      background: rgba(255, 255, 255, 0.92);
+      border-bottom: 1px solid var(--line);
+      backdrop-filter: blur(12px);
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 22px;
+      letter-spacing: 0;
+    }
+
+    nav {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      font-size: 14px;
+    }
+
+    nav a {
+      color: var(--accent);
+      text-decoration: none;
+      padding: 6px 8px;
+      border-radius: 6px;
+    }
+
+    nav a:hover {
+      background: #eef5ff;
+    }
+
+    main {
+      max-width: 1440px;
+      margin: 0 auto;
+      padding: 28px;
+    }
+
+    section {
+      margin: 0 0 28px;
+      padding: 24px;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(16, 24, 40, 0.04);
+    }
+
+    h2 {
+      margin: 0 0 8px;
+      font-size: 20px;
+      letter-spacing: 0;
+    }
+
+    p {
+      margin: 0 0 18px;
+      color: var(--muted);
+      max-width: 920px;
+    }
+
+    .diagram {
+      overflow: auto;
+      min-height: 360px;
+      padding: 18px;
+      background: #fbfcfe;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+    }
+
+    .diagram svg {
+      min-width: 980px;
+      max-width: none !important;
+      height: auto !important;
+    }
+
+    .hint {
+      margin: 10px 0 0;
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    code {
+      font-family: "JetBrains Mono", "SFMono-Regular", Menlo, monospace;
+      font-size: 0.95em;
+    }
+
+    @media (max-width: 760px) {
+      header {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+
+      main {
+        padding: 16px;
+      }
+
+      section {
+        padding: 16px;
+      }
+    }
+  </style>
+</head>
+<body>
+<header>
+  <h1>Astor Butler FSM Viewer</h1>
+  <nav>
+    <a href="#overview">Общий вход</a>
+    <a href="#first-touch">Первое касание</a>
+    <a href="#main-menu">Главное меню</a>
+    <a href="#table-booking">Бронь стола</a>
+    <a href="#observability">Наблюдаемость</a>
+  </nav>
+</header>
+
+<main>
+  <section id="overview">
+    <h2>1. Общий вход</h2>
+    <p>Все сообщения проходят через <code>MessageGatewayService</code>. Админ-чат не является бизнес-сценарием гостя: он сохраняется и используется для наблюдаемости.</p>
+    <div class="diagram mermaid">
+flowchart LR
+    Start((Новое сообщение))
+    Gateway["MessageGatewayService<br/>единая точка входа"]
+    Store["Сохранить сообщение<br/>PostgreSQL"]
+    Events["Outbox / Kafka<br/>astor.user.events"]
+    Admin["Admin / Analytics chat<br/>человекочитаемая проекция"]
+    Check{"Служебный чат?"}
+    GuestGate{"Гость прошел<br/>first touch?"}
+    Stop["Только сохранить<br/>гостевой FSM не запускать"]
+
+    Start --> Gateway --> Store --> Events --> Admin
+    Store --> Check
+    Check -- "да" --> Stop
+    Check -- "нет" --> GuestGate
+    </div>
+    <div class="hint">Открывай этот файл в браузере: <code>Cmd +</code> / <code>Cmd -</code> масштабируют диаграммы.</div>
+  </section>
+
+  <section id="first-touch">
+    <h2>2. Первое касание</h2>
+    <p>До контакта и согласия не запускаем бронь и не собираем дополнительные данные.</p>
+    <div class="diagram mermaid">
+flowchart TD
+    Unknown["UNKNOWN<br/>состояния еще нет"]
+    Consent["CONSENT_REQUIRED<br/>нужен контакт + согласие"]
+    Nudge["PRE_AUTH_CONSENT_NUDGE<br/>вернуть к кнопке контакта"]
+    Ready["READY_FOR_DIALOG<br/>дом сценариев"]
+
+    Unknown -- "/start" --> Consent
+    Consent -- "текст без контакта" --> Nudge --> Consent
+    Consent -- "Telegram contact" --> Ready
+    </div>
+  </section>
+
+  <section id="main-menu">
+    <h2>3. Главное меню</h2>
+    <p><code>READY_FOR_DIALOG</code> должно стать домом сценариев. Чем больше явных сценариев, тем меньше ручной помощи и случайных AI fallback.</p>
+    <div class="diagram mermaid">
+flowchart TD
+    Ready["READY_FOR_DIALOG<br/>MainMenuScenario"]
+    Render["Показать основные действия<br/>бронь стола / меню / менеджер / событие"]
+    Router{"Какой сценарий<br/>хочет гость?"}
+    Table["TABLE_BOOKING<br/>бронь стола"]
+    Event["EVENT_BOOKING<br/>будущий сценарий мероприятия"]
+    Menu["MENU_ASSETS<br/>меню / карта бара"]
+    Manager["MANAGER_HELP<br/>позвать команду"]
+    Fallback["AI_FALLBACK<br/>последняя страховка"]
+
+    Ready --> Render --> Router
+    Router -- "стол / посадка / на двоих" --> Table
+    Router -- "банкет / день рождения / корпоратив" --> Event
+    Router -- "меню / карта бара" --> Menu
+    Router -- "менеджер / человек" --> Manager
+    Router -- "непонятно" --> Fallback
+
+    Table -- "сценарий завершен" --> Ready
+    Event -- "сценарий завершен" --> Ready
+    Menu -- "сценарий завершен" --> Ready
+    Manager -- "сценарий завершен" --> Ready
+    Fallback -- "следующее сообщение" --> Ready
+    </div>
+  </section>
+
+  <section id="table-booking">
+    <h2>4. Бронь стола</h2>
+    <p>Сценарий обычной посадки в AERIS: собрать дату, время, гостей, отправить план, получить стол, создать заявку и отправить хостес кнопки подтверждения.</p>
+    <div class="diagram mermaid">
+flowchart TD
+    Intent{"Intent:<br/>бронь стола?"}
+    Date["TABLE_BOOKING_COLLECT_DATE<br/>спросить дату"]
+    Time["TABLE_BOOKING_COLLECT_TIME<br/>спросить время"]
+    Party["TABLE_BOOKING_COLLECT_PARTY_SIZE<br/>спросить гостей"]
+    Draft["Сохранить booking draft<br/>Redis TTL"]
+    Plan["Отправить AERIS PLAN.pdf"]
+    WaitTable["TABLE_BOOKING_WAIT_TABLE_SELECTION<br/>ждем стол / зону / выбери сам"]
+    Create["Создать order + HELD hold<br/>PostgreSQL"]
+    Hostess["TABLE_BOOKING_WAIT_HOSTESS_CONFIRMATION<br/>кнопки Да / Нет в чате хостес"]
+    Confirmed["TABLE_BOOKING_CONFIRMED<br/>гостю красивый ордер"]
+    Rejected["TABLE_BOOKING_REJECTED<br/>вежливый отказ"]
+    Change["TABLE_BOOKING_CHANGE_REQUESTED<br/>другой вариант"]
+    Cancelled["TABLE_BOOKING_CANCELLED<br/>отмена"]
+    Home["READY_FOR_DIALOG<br/>вернуться домой"]
+
+    Intent -- "нет даты" --> Date --> Time
+    Intent -- "есть дата, нет времени" --> Time
+    Intent -- "есть дата/время, нет гостей" --> Party
+    Time --> Party
+    Party --> Draft
+    Intent -- "дата + время + гости" --> Draft
+    Draft --> Plan --> WaitTable
+    WaitTable -- "повтор intent / неясно" --> Plan
+    WaitTable -- "17 / стол 17 / vip / бар / выбери сам" --> Create --> Hostess
+    WaitTable -- "draft потерян" --> Date
+    Hostess -- "Да" --> Confirmed --> Home
+    Hostess -- "Нет" --> Rejected
+    Rejected -- "гость выбирает другой вариант" --> Change --> Plan
+    Rejected -- "закончить" --> Home
+    Hostess -- "отмена" --> Cancelled --> Home
+    </div>
+  </section>
+
+  <section id="observability">
+    <h2>5. Наблюдаемость</h2>
+    <p>Админ-чат нужен для контроля и сохранения картины происходящего. Он не должен сам становиться гостевым сценарием.</p>
+    <div class="diagram mermaid">
+flowchart LR
+    Guest["Гость / Telegram"]
+    Gateway["MessageGatewayService"]
+    Outbox["PostgreSQL outbox"]
+    Kafka["Kafka topic<br/>astor.user.events"]
+    Formatter["Human-readable formatter"]
+    Admin["Admin / Analytics chat"]
+    Fallback["AI_FALLBACK<br/>admin alert"]
+
+    Guest --> Gateway --> Outbox --> Kafka --> Formatter --> Admin
+    Fallback --> Formatter
+    </div>
+  </section>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>
+  mermaid.initialize({
+    startOnLoad: true,
+    securityLevel: "loose",
+    theme: "base",
+    flowchart: {
+      htmlLabels: true,
+      curve: "basis",
+      nodeSpacing: 60,
+      rankSpacing: 70
+    },
+    themeVariables: {
+      fontFamily: "Inter, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif",
+      fontSize: "18px",
+      primaryColor: "#E8F5E9",
+      primaryBorderColor: "#2E7D32",
+      primaryTextColor: "#1B5E20",
+      secondaryColor: "#E3F2FD",
+      tertiaryColor: "#FFF8E1",
+      lineColor: "#455A64"
+    }
+  });
+</script>
+</body>
+</html>

@@ -4,6 +4,12 @@
 
 Главная диаграмма ниже написана в Mermaid. GitHub умеет рендерить Mermaid прямо в Markdown, поэтому этот файл можно читать как один self-contained blueprint для человека и для LLM.
 
+Для удобного просмотра крупными блоками в браузере есть отдельный HTML-viewer:
+
+```text
+docs/FSM_SCENARIOS_VIEWER.html
+```
+
 Дополнительная UML-диаграмма в формате PlantUML лежит рядом:
 
 ```text
@@ -19,12 +25,13 @@ docs/FSM_WORKING_SCENARIOS_UML.puml
 Порядок маршрутизации:
 
 1. Сохраняем входящее сообщение и профиль Telegram в PostgreSQL.
-2. Если сообщение пришло из admin/analytics чата, не пускаем его в гостевой FSM.
-3. Проверяем сценарий первого касания `FirstTouchScenario`.
-4. Проверяем сценарий брони стола `TableBookingScenario`.
-5. Обрабатываем voice/empty/menu.
-6. Если ничего не подошло, идем в AI fallback и, при необходимости, шлем alert админу.
-7. Публикуем событие в outbox/Kafka `astor.user.events`; admin chat получает человекочитаемую проекцию.
+2. Публикуем событие в outbox/Kafka `astor.user.events`; admin/analytics chat получает человекочитаемую проекцию для наблюдаемости.
+3. Если это служебный admin/analytics chat, сохраняем сообщение и не запускаем гостевой FSM.
+4. Если это первое касание или гость еще не дал контакт/согласие, запускаем `FirstTouchScenario`.
+5. Если гость уже в системе, он находится в базовом состоянии `READY_FOR_DIALOG`, которое в продуктовой логике играет роль `MainMenuScenario`.
+6. Из `MainMenuScenario` запускаются конкретные сценарии: бронь стола, будущая бронь мероприятия, меню, менеджер, изменение брони.
+7. Каждый завершенный сценарий возвращает гостя в `READY_FOR_DIALOG`.
+8. `AI_FALLBACK` остается safety-net для неизвестных сообщений, а не основной дорогой диалога.
 
 ## Визуальная карта FSM
 
@@ -34,9 +41,11 @@ flowchart TD
 
     subgraph Intake["Общее правило входа"]
         Gateway --> Store["Сохранить входящее сообщение<br/>PostgreSQL + outbox/Kafka"]
-        Store --> AdminCheck{"Это admin/analytics chat?"}
-        AdminCheck -- "да" --> AdminSkip["Не запускать гостевой FSM<br/>ADMIN_CHAT_CHECK"]
-        AdminCheck -- "нет" --> Route{"Выбор сценария"}
+        Store --> ProjectionTap["Событие наблюдаемости<br/>astor.user.events"]
+        ProjectionTap --> AdminProjection["Admin / Analytics chat<br/>человекочитаемая проекция"]
+        Store --> ServiceCheck{"Служебный admin/analytics chat?"}
+        ServiceCheck -- "да" --> AdminOnly["Только сохранить и наблюдать<br/>гостевой FSM не запускать"]
+        ServiceCheck -- "нет" --> GuestGate{"Гость прошел first touch?"}
     end
 
     subgraph FirstTouch["Первое касание / FirstTouchScenario"]
@@ -45,6 +54,17 @@ flowchart TD
         Consent -- "текст без контакта" --> Nudge["PRE_AUTH_CONSENT_NUDGE<br/>вернуть к кнопке контакта"]
         Nudge --> Consent
         Consent -- "Telegram contact" --> Ready["READY_FOR_DIALOG<br/>можно вести сценарии"]
+    end
+
+    subgraph MainMenu["Базовое состояние / MainMenuScenario"]
+        Ready --> Home["MAIN_MENU / READY_FOR_DIALOG<br/>дом сценариев"]
+        Home --> MenuRender["Показать основные действия<br/>бронь стола / меню / менеджер / событие"]
+        MenuRender --> ScenarioRouter{"Какой сценарий хочет гость?"}
+        ScenarioRouter -- "стол / посадка / на двоих" --> Intent
+        ScenarioRouter -- "банкет / день рождения / корпоратив" --> EventBooking["EVENT_BOOKING<br/>будущий сценарий мероприятия"]
+        ScenarioRouter -- "меню / карта бара" --> MenuAssets["MENU_ASSETS<br/>будущий сценарий меню"]
+        ScenarioRouter -- "менеджер / человек" --> ManagerHelp["MANAGER_HELP<br/>ручное подключение команды"]
+        ScenarioRouter -- "непонятно" --> Ai
     end
 
     subgraph TableBooking["Бронь стола / TableBookingScenario"]
@@ -70,6 +90,9 @@ flowchart TD
         Rejected -- "гость выбирает другой вариант" --> Change["TABLE_BOOKING_CHANGE_REQUESTED<br/>обновить draft"]
         Change --> Plan
         Hostess -- "отмена" --> Cancelled["TABLE_BOOKING_CANCELLED<br/>закрыть бронь и release holds"]
+        Confirmed --> ReturnHome["Вернуть гостя в READY_FOR_DIALOG"]
+        Rejected --> ReturnHome
+        Cancelled --> ReturnHome
     end
 
     subgraph Fallback["AI fallback / ручная помощь"]
@@ -78,32 +101,32 @@ flowchart TD
         Ai --> Alert
     end
 
-    subgraph Projection["Наблюдаемость"]
-        Kafka["astor.user.events<br/>human-readable admin projection"]
-    end
+    GuestGate -- "нет / UNKNOWN" --> Consent
+    GuestGate -- "CONSENT_REQUIRED" --> Consent
+    GuestGate -- "да / READY_FOR_DIALOG" --> Home
+    GuestGate -- "внутри активного сценария" --> ScenarioState{"Текущее FSM-состояние"}
+    ScenarioState -- "TABLE_BOOKING_*" --> Intent
+    ScenarioState -- "AI_FALLBACK" --> Home
 
-    Route -- "/start или нужен контакт" --> Consent
-    Route -- "контакт получен" --> Ready
-    Route -- "гость уже READY_FOR_DIALOG" --> Intent
-    Route -- "не first-touch и не booking" --> Ai
-
-    Ready --> Intent
+    ReturnHome --> Home
+    EventBooking --> Home
+    MenuAssets --> Home
+    ManagerHelp --> Home
     Ai -- "следующее сообщение гостя" --> Gateway
 
-    Store --> Kafka
-    CreateOrder --> Kafka
-    Confirmed --> Kafka
-    Rejected --> Kafka
+    CreateOrder --> ProjectionTap
+    Confirmed --> ProjectionTap
+    Rejected --> ProjectionTap
 
     classDef state fill:#E8F5E9,stroke:#2E7D32,stroke-width:1px,color:#1B5E20;
     classDef decision fill:#FFF8E1,stroke:#F9A825,stroke-width:1px,color:#3E2723;
     classDef storage fill:#E3F2FD,stroke:#1565C0,stroke-width:1px,color:#0D47A1;
     classDef terminal fill:#FCE4EC,stroke:#AD1457,stroke-width:1px,color:#880E4F;
 
-    class Unknown,Consent,Ready,Date,Time,Party,WaitTable,Hostess,Ai state;
-    class AdminCheck,Route,Intent decision;
-    class Store,Draft,CreateOrder,Kafka,Plan storage;
-    class Confirmed,Rejected,Cancelled,AdminSkip terminal;
+    class Unknown,Consent,Ready,Home,Date,Time,Party,WaitTable,Hostess,Ai state;
+    class ServiceCheck,GuestGate,ScenarioRouter,ScenarioState,Intent decision;
+    class Store,ProjectionTap,AdminProjection,Draft,CreateOrder,Plan,MenuRender storage;
+    class Confirmed,Rejected,Cancelled,AdminOnly,ReturnHome terminal;
 ```
 
 ## Перевод состояний на русский
@@ -112,8 +135,8 @@ flowchart TD
 | --- | --- | --- |
 | `UNKNOWN` | Состояния еще нет | Redis не знает гостя; backend создает начальное состояние. |
 | `CONSENT_REQUIRED` | Нужен контакт и согласие | Просим нажать кнопку контакта; без этого не ведем бронирование. |
-| `READY_FOR_DIALOG` | Можно вести диалог | Гость прошел первый контакт, можно запускать сценарии. |
-| `AI_FALLBACK` | Непонятный текст или LLM-проблема | Отвечаем безопасно, при необходимости шлем alert админу. |
+| `READY_FOR_DIALOG` | Главное меню / дом сценариев | Гость прошел первый контакт; отсюда запускаются сценарии и сюда они возвращаются после завершения. |
+| `AI_FALLBACK` | Непонятный текст или LLM-проблема | Последняя страховка, а не основной путь: отвечаем безопасно, при необходимости шлем alert админу. |
 | `TABLE_BOOKING_COLLECT_DATE` | Нужна дата | Спрашиваем дату брони. |
 | `TABLE_BOOKING_COLLECT_TIME` | Нужно время | Спрашиваем время брони. |
 | `TABLE_BOOKING_COLLECT_PARTY_SIZE` | Нужно количество гостей | Спрашиваем, на сколько гостей бронировать. |
@@ -144,6 +167,21 @@ Astor: сохраняет consent/profile/contact, переводит гостя
 ```
 
 Если гость пишет текст до контакта, система не продолжает бронирование. Она коротко возвращает его к кнопке согласия и контакта.
+
+## Главное меню
+
+`READY_FOR_DIALOG` должно быть не пустым состоянием свободного чата, а базовым состоянием `MainMenuScenario`.
+
+Из него запускаются сценарии:
+
+- бронь стола;
+- будущая бронь мероприятия;
+- меню/карта бара;
+- помощь менеджера;
+- изменение или отмена брони;
+- другие будущие сценарии.
+
+Правило: завершенный сценарий возвращает гостя в `READY_FOR_DIALOG`. Чем больше сценариев описано явно, тем реже система должна попадать в `AI_FALLBACK`.
 
 ## Бронь стола
 
