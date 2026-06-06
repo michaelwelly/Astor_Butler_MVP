@@ -2,13 +2,15 @@
 
 Этот документ описывает фактическую рабочую FSM-модель, которая сейчас есть в коде. Telegram остается транспортом и UI, а источником истины по состояниям является backend FSM.
 
-UML-диаграмма в формате PlantUML лежит рядом:
+Главная диаграмма ниже написана в Mermaid. GitHub умеет рендерить Mermaid прямо в Markdown, поэтому этот файл можно читать как один self-contained blueprint для человека и для LLM.
+
+Дополнительная UML-диаграмма в формате PlantUML лежит рядом:
 
 ```text
 docs/FSM_WORKING_SCENARIOS_UML.puml
 ```
 
-Ее можно открыть в IntelliJ IDEA через PlantUML plugin или вставить в любой PlantUML renderer.
+Ее можно открыть в IntelliJ IDEA через PlantUML plugin или вставить в любой PlantUML renderer. Но основной рабочий файл для чтения - этот Markdown.
 
 ## Главная идея
 
@@ -24,79 +26,84 @@ docs/FSM_WORKING_SCENARIOS_UML.puml
 6. Если ничего не подошло, идем в AI fallback и, при необходимости, шлем alert админу.
 7. Публикуем событие в outbox/Kafka `astor.user.events`; admin chat получает человекочитаемую проекцию.
 
-## UML
+## Визуальная карта FSM
 
-```plantuml
-@startuml
-title Astor Butler MVP - рабочие FSM-сценарии
+```mermaid
+flowchart TD
+    Start((Новое сообщение)) --> Gateway["MessageGatewayService<br/>единая точка входа"]
 
-hide empty description
+    subgraph Intake["Общее правило входа"]
+        Gateway --> Store["Сохранить входящее сообщение<br/>PostgreSQL + outbox/Kafka"]
+        Store --> AdminCheck{"Это admin/analytics chat?"}
+        AdminCheck -- "да" --> AdminSkip["Не запускать гостевой FSM<br/>ADMIN_CHAT_CHECK"]
+        AdminCheck -- "нет" --> Route{"Выбор сценария"}
+    end
 
-[*] --> UNKNOWN : нет состояния в Redis
+    subgraph FirstTouch["Первое касание / FirstTouchScenario"]
+        Unknown["UNKNOWN<br/>состояния еще нет"] --> Consent["CONSENT_REQUIRED<br/>нужен контакт + согласие"]
+        Consent -- "/start" --> Consent
+        Consent -- "текст без контакта" --> Nudge["PRE_AUTH_CONSENT_NUDGE<br/>вернуть к кнопке контакта"]
+        Nudge --> Consent
+        Consent -- "Telegram contact" --> Ready["READY_FOR_DIALOG<br/>можно вести сценарии"]
+    end
 
-state "MessageGatewayService\nединая точка входа" as Gateway
-UNKNOWN --> Gateway : Telegram/API сообщение
-READY_FOR_DIALOG --> Gateway : любое новое сообщение
-AI_FALLBACK --> Gateway : повторное сообщение гостя
+    subgraph TableBooking["Бронь стола / TableBookingScenario"]
+        Intent{"Intent: бронь стола?"}
+        Intent -- "нет даты" --> Date["TABLE_BOOKING_COLLECT_DATE<br/>спросить дату"]
+        Intent -- "есть дата, нет времени" --> Time["TABLE_BOOKING_COLLECT_TIME<br/>спросить время"]
+        Intent -- "есть дата/время, нет гостей" --> Party["TABLE_BOOKING_COLLECT_PARTY_SIZE<br/>спросить гостей"]
+        Intent -- "дата + время + гости" --> Draft["Сохранить booking draft<br/>Redis TTL"]
 
-state "Первое касание\nFirstTouchScenario" as FirstTouch {
-  state "CONSENT_REQUIRED\nнужен контакт + согласие" as CONSENT_REQUIRED
-  state "READY_FOR_DIALOG\nможно запускать сценарии" as READY_FOR_DIALOG
+        Date --> Time
+        Time --> Party
+        Party --> Draft
+        Draft --> Plan["Отправить AERIS PLAN.pdf<br/>classpath:booking/aeris-plan.pdf"]
+        Plan --> WaitTable["TABLE_BOOKING_WAIT_TABLE_SELECTION<br/>ждем номер стола / зону / выбери сам"]
 
-  [*] --> CONSENT_REQUIRED : /start
-  CONSENT_REQUIRED --> CONSENT_REQUIRED : текст без контакта\nPRE_AUTH_CONSENT_NUDGE
-  CONSENT_REQUIRED --> READY_FOR_DIALOG : Telegram contact\nCONTACT_CAPTURED + OPEN_MENU
-}
+        WaitTable -- "повтор intent или неясный выбор" --> Plan
+        WaitTable -- "стол 17 / 17 / vip / бар / выбери сам" --> CreateOrder["Создать order + HELD hold<br/>PostgreSQL"]
+        WaitTable -- "выбран стол, но draft потерян" --> Date
 
-Gateway --> CONSENT_REQUIRED : /start
-Gateway --> CONSENT_REQUIRED : состояние требует согласие
-Gateway --> READY_FOR_DIALOG : контакт получен
+        CreateOrder --> Hostess["TABLE_BOOKING_WAIT_HOSTESS_CONFIRMATION<br/>карточка хостес с кнопками Да/Нет"]
+        Hostess -- "Да" --> Confirmed["TABLE_BOOKING_CONFIRMED<br/>order + hold CONFIRMED<br/>гостю красивый ордер"]
+        Hostess -- "Нет" --> Rejected["TABLE_BOOKING_REJECTED<br/>hold RELEASED<br/>гостю вежливый отказ"]
+        Rejected -- "гость выбирает другой вариант" --> Change["TABLE_BOOKING_CHANGE_REQUESTED<br/>обновить draft"]
+        Change --> Plan
+        Hostess -- "отмена" --> Cancelled["TABLE_BOOKING_CANCELLED<br/>закрыть бронь и release holds"]
+    end
 
-state "Бронь стола AERIS\nTableBookingScenario" as TableBooking {
-  state "TABLE_BOOKING_COLLECT_DATE\nне хватает даты" as TABLE_BOOKING_COLLECT_DATE
-  state "TABLE_BOOKING_COLLECT_TIME\nне хватает времени" as TABLE_BOOKING_COLLECT_TIME
-  state "TABLE_BOOKING_COLLECT_PARTY_SIZE\nне хватает гостей" as TABLE_BOOKING_COLLECT_PARTY_SIZE
-  state "TABLE_BOOKING_WAIT_TABLE_SELECTION\nплан отправлен, ждем стол/зону" as TABLE_BOOKING_WAIT_TABLE_SELECTION
-  state "TABLE_BOOKING_WAIT_HOSTESS_CONFIRMATION\nзаявка создана, ждем кнопки хостес" as TABLE_BOOKING_WAIT_HOSTESS_CONFIRMATION
-  state "TABLE_BOOKING_CONFIRMED\nхостес нажала Да" as TABLE_BOOKING_CONFIRMED
-  state "TABLE_BOOKING_REJECTED\nхостес нажала Нет" as TABLE_BOOKING_REJECTED
-  state "TABLE_BOOKING_CHANGE_REQUESTED\nгость просит другой вариант" as TABLE_BOOKING_CHANGE_REQUESTED
-  state "TABLE_BOOKING_CANCELLED\nбронь отменена" as TABLE_BOOKING_CANCELLED
+    subgraph Fallback["AI fallback / ручная помощь"]
+        Ai["AI_FALLBACK<br/>непонятный текст или LLM-проблема"]
+        Alert["Admin alert<br/>если включен TELEGRAM_ADMIN_CHAT_ID"]
+        Ai --> Alert
+    end
 
-  [*] --> TABLE_BOOKING_COLLECT_DATE : intent брони\nнет даты
-  [*] --> TABLE_BOOKING_COLLECT_TIME : есть дата\nнет времени
-  [*] --> TABLE_BOOKING_COLLECT_PARTY_SIZE : есть дата/время\nнет гостей
-  [*] --> TABLE_BOOKING_WAIT_TABLE_SELECTION : дата + время + гости\nsave draft + send AERIS plan
+    subgraph Projection["Наблюдаемость"]
+        Kafka["astor.user.events<br/>human-readable admin projection"]
+    end
 
-  TABLE_BOOKING_COLLECT_DATE --> TABLE_BOOKING_COLLECT_TIME : дата получена
-  TABLE_BOOKING_COLLECT_TIME --> TABLE_BOOKING_COLLECT_PARTY_SIZE : время получено
-  TABLE_BOOKING_COLLECT_PARTY_SIZE --> TABLE_BOOKING_WAIT_TABLE_SELECTION : гости получены\nsend AERIS plan
+    Route -- "/start или нужен контакт" --> Consent
+    Route -- "контакт получен" --> Ready
+    Route -- "гость уже READY_FOR_DIALOG" --> Intent
+    Route -- "не first-touch и не booking" --> Ai
 
-  TABLE_BOOKING_WAIT_TABLE_SELECTION --> TABLE_BOOKING_WAIT_TABLE_SELECTION : повтор intent/неясный выбор\nresend AERIS plan
-  TABLE_BOOKING_WAIT_TABLE_SELECTION --> TABLE_BOOKING_WAIT_HOSTESS_CONFIRMATION : стол/зона/выбери сам\ncreate order + HELD hold\nsend hostess card
-  TABLE_BOOKING_WAIT_TABLE_SELECTION --> TABLE_BOOKING_COLLECT_DATE : выбран стол, но draft потерян\nask details again
+    Ready --> Intent
+    Ai -- "следующее сообщение гостя" --> Gateway
 
-  TABLE_BOOKING_WAIT_HOSTESS_CONFIRMATION --> TABLE_BOOKING_CONFIRMED : callback Да\nconfirm order + hold\nsend guest order
-  TABLE_BOOKING_WAIT_HOSTESS_CONFIRMATION --> TABLE_BOOKING_REJECTED : callback Нет\nreject order + release hold\nsend polite refusal
+    Store --> Kafka
+    CreateOrder --> Kafka
+    Confirmed --> Kafka
+    Rejected --> Kafka
 
-  TABLE_BOOKING_REJECTED --> TABLE_BOOKING_CHANGE_REQUESTED : гость выбирает другой стол/время
-  TABLE_BOOKING_CHANGE_REQUESTED --> TABLE_BOOKING_WAIT_TABLE_SELECTION : обновить draft\nпоказать/переиспользовать план
-  TABLE_BOOKING_WAIT_HOSTESS_CONFIRMATION --> TABLE_BOOKING_CANCELLED : отмена гостя/команды
-}
+    classDef state fill:#E8F5E9,stroke:#2E7D32,stroke-width:1px,color:#1B5E20;
+    classDef decision fill:#FFF8E1,stroke:#F9A825,stroke-width:1px,color:#3E2723;
+    classDef storage fill:#E3F2FD,stroke:#1565C0,stroke-width:1px,color:#0D47A1;
+    classDef terminal fill:#FCE4EC,stroke:#AD1457,stroke-width:1px,color:#880E4F;
 
-Gateway --> TABLE_BOOKING_COLLECT_DATE : intent "забронировать стол"\nслоты неполные
-Gateway --> TABLE_BOOKING_WAIT_TABLE_SELECTION : intent с датой/временем/гостями
-Gateway --> TABLE_BOOKING_WAIT_HOSTESS_CONFIRMATION : явный выбор стола после плана
-
-state "AI fallback / ручная помощь" as AI_FALLBACK
-Gateway --> AI_FALLBACK : не first-touch\nне table booking\nLLM ответил или упал
-AI_FALLBACK --> Gateway : следующий текст гостя\nпереоценить intent
-
-state "Admin / Analytics projection" as AdminProjection
-Gateway --> AdminProjection : outbox/Kafka astor.user.events\nhuman-readable admin card
-AI_FALLBACK --> AdminProjection : admin alert при fallback
-
-@enduml
+    class Unknown,Consent,Ready,Date,Time,Party,WaitTable,Hostess,Ai state;
+    class AdminCheck,Route,Intent decision;
+    class Store,Draft,CreateOrder,Kafka,Plan storage;
+    class Confirmed,Rejected,Cancelled,AdminSkip terminal;
 ```
 
 ## Перевод состояний на русский
