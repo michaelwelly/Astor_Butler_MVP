@@ -134,6 +134,7 @@
 <header>
   <h1>Astor Butler FSM Viewer</h1>
   <nav>
+    <a href="#system-map">Система</a>
     <a href="#overview">Общий вход</a>
     <a href="#first-touch">Первое касание</a>
     <a href="#main-menu">Главное меню</a>
@@ -143,6 +144,71 @@
 </header>
 
 <main>
+  <section id="system-map">
+    <h2>0. Общая карта системы</h2>
+    <p>Это верхний уровень: крупные блоки и связи между ними. Детали каждого сценария раскрыты в отдельных секциях ниже.</p>
+    <div class="diagram mermaid">
+flowchart TD
+    Guest["Гость<br/>Telegram / будущий web chat"]
+    Telegram["TelegramRouter<br/>transport adapter"]
+    Gateway["MessageGatewayService<br/>единая точка входа"]
+
+    FirstTouch["FirstTouchScenario<br/>контакт + consent"]
+    MainMenu["MainMenuScenario<br/>READY_FOR_DIALOG<br/>дом сценариев"]
+    TableBooking["TableBookingScenario<br/>бронь стола AERIS"]
+    FutureScenarios["Будущие сценарии<br/>EVENT_BOOKING / MENU_ASSETS / MANAGER_HELP"]
+    Fallback["AI_FALLBACK<br/>последняя страховка"]
+
+    BookingDomain["TableReservationService<br/>orders + holds"]
+    Hostess["Hostess chat<br/>кнопки Да / Нет"]
+    Admin["Admin / Analytics chat<br/>наблюдаемость"]
+    LLM["LLM adapter<br/>intent / phrasing only"]
+
+    Redis["Redis<br/>FSM state + runtime drafts"]
+    Postgres["PostgreSQL<br/>profiles / messages / consents / bookings"]
+    Outbox["Outbox + Kafka<br/>astor.user.events"]
+    Minio["MinIO / resources<br/>AERIS PLAN.pdf / media"]
+
+    Guest --> Telegram --> Gateway
+    Gateway --> FirstTouch
+    FirstTouch --> MainMenu
+    Gateway --> MainMenu
+    MainMenu --> TableBooking
+    MainMenu --> FutureScenarios
+    MainMenu --> Fallback
+    Fallback --> MainMenu
+
+    TableBooking --> BookingDomain
+    BookingDomain --> Hostess
+    Hostess -- "Да / Нет callback" --> BookingDomain
+    BookingDomain -- "результат" --> Guest
+    TableBooking --> MainMenu
+    FutureScenarios --> MainMenu
+
+    Gateway --> Postgres
+    Gateway --> Redis
+    Gateway --> Outbox --> Admin
+    BookingDomain --> Postgres
+    TableBooking --> Redis
+    TableBooking --> Minio
+    Gateway -. "если нужен текст/intent" .-> LLM
+    LLM -. "не владеет бизнес-логикой" .-> Gateway
+
+    classDef core fill:#E8F5E9,stroke:#2E7D32,stroke-width:1px,color:#1B5E20;
+    classDef scenario fill:#FFF8E1,stroke:#F9A825,stroke-width:1px,color:#3E2723;
+    classDef adapter fill:#E3F2FD,stroke:#1565C0,stroke-width:1px,color:#0D47A1;
+    classDef storage fill:#F3E5F5,stroke:#6A1B9A,stroke-width:1px,color:#4A148C;
+    classDef human fill:#FCE4EC,stroke:#AD1457,stroke-width:1px,color:#880E4F;
+
+    class Gateway,BookingDomain core;
+    class FirstTouch,MainMenu,TableBooking,FutureScenarios,Fallback scenario;
+    class Telegram,LLM adapter;
+    class Redis,Postgres,Outbox,Minio storage;
+    class Guest,Hostess,Admin human;
+    </div>
+    <div class="hint">Смысл верхней карты: сначала смотри связи между крупными блоками, потом спускайся в конкретный сценарий ниже.</div>
+  </section>
+
   <section id="overview">
     <h2>1. Общий вход</h2>
     <p>Все сообщения проходят через <code>MessageGatewayService</code>. Админ-чат не является бизнес-сценарием гостя: он сохраняется и используется для наблюдаемости.</p>
