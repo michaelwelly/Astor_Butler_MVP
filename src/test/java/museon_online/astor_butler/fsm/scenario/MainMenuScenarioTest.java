@@ -74,6 +74,47 @@ class MainMenuScenarioTest {
     }
 
     @Test
+    void confirmsSmartTipDraftAndReturnsHome() {
+        IncomingMessage incoming = telegram("да");
+
+        OutgoingMessage outgoing = scenario.handle(incoming, BotState.TIP_CONFIRMATION, incoming.text());
+
+        assertThat(outgoing.nextState()).isEqualTo(BotState.READY_FOR_DIALOG.name());
+        assertThat(outgoing.text()).contains("draft благодарности");
+        assertThat(outgoing.actions()).containsExactly("SMART_TIP", "TIP_DRAFT_CONFIRMED", "RETURN_MAIN_MENU");
+        verify(fsmStorage).setState(incoming.chatId(), BotState.READY_FOR_DIALOG);
+    }
+
+    @Test
+    void cancelsSmartTipDraftAndReturnsHome() {
+        IncomingMessage incoming = telegram("нет");
+
+        OutgoingMessage outgoing = scenario.handle(incoming, BotState.TIP_CONFIRMATION, incoming.text());
+
+        assertThat(outgoing.nextState()).isEqualTo(BotState.READY_FOR_DIALOG.name());
+        assertThat(outgoing.text()).contains("чаевые не фиксирую");
+        assertThat(outgoing.actions()).containsExactly("SMART_TIP", "TIP_CANCELLED", "RETURN_MAIN_MENU");
+        verify(fsmStorage).setState(incoming.chatId(), BotState.READY_FOR_DIALOG);
+    }
+
+    @Test
+    void confirmsDonationDraftAndReturnsHome() {
+        IncomingMessage incoming = telegram("подтверждаю");
+
+        OutgoingMessage outgoing = scenario.handle(incoming, BotState.DONATION_CONFIRMATION, incoming.text());
+
+        assertThat(outgoing.nextState()).isEqualTo(BotState.READY_FOR_DIALOG.name());
+        assertThat(outgoing.text()).contains("анонимный donation draft", "без приватных данных");
+        assertThat(outgoing.actions()).containsExactly(
+                "HIDDEN_HEART",
+                "DONATION_DRAFT_CONFIRMED",
+                "IMPACT_EVENT_DRAFT",
+                "RETURN_MAIN_MENU"
+        );
+        verify(fsmStorage).setState(incoming.chatId(), BotState.READY_FOR_DIALOG);
+    }
+
+    @Test
     void validatesAuctionBidInsteadOfAcceptingItDirectly() {
         IncomingMessage incoming = telegram("ставлю 20000 за картину");
 
@@ -83,6 +124,35 @@ class MainMenuScenarioTest {
         assertThat(outgoing.text()).contains("проверю активный лот", "LLM ставку сам не принимает");
         assertThat(outgoing.actions()).containsExactly("ART_AUCTION", "VALIDATE_AUCTION_BID", "ASK_EXPLICIT_CONFIRMATION");
         verify(fsmStorage).setState(incoming.chatId(), BotState.AUCTION_WAIT_BID);
+    }
+
+    @Test
+    void confirmsAuctionBidAsManagerCheckedRequest() {
+        IncomingMessage incoming = telegram("ok");
+
+        OutgoingMessage outgoing = scenario.handle(incoming, BotState.AUCTION_WAIT_BID, incoming.text());
+
+        assertThat(outgoing.nextState()).isEqualTo(BotState.READY_FOR_DIALOG.name());
+        assertThat(outgoing.text()).contains("Финальный прием ставки требует проверки");
+        assertThat(outgoing.actions()).containsExactly(
+                "ART_AUCTION",
+                "AUCTION_BID_GUEST_CONFIRMED",
+                "MANAGER_CONFIRMATION_REQUIRED",
+                "RETURN_MAIN_MENU"
+        );
+        verify(fsmStorage).setState(incoming.chatId(), BotState.READY_FOR_DIALOG);
+    }
+
+    @Test
+    void cancelsAuctionBidAndReturnsHome() {
+        IncomingMessage incoming = telegram("нет");
+
+        OutgoingMessage outgoing = scenario.handle(incoming, BotState.AUCTION_WAIT_BID, incoming.text());
+
+        assertThat(outgoing.nextState()).isEqualTo(BotState.READY_FOR_DIALOG.name());
+        assertThat(outgoing.text()).contains("ставку не фиксирую");
+        assertThat(outgoing.actions()).containsExactly("ART_AUCTION", "AUCTION_BID_CANCELLED", "RETURN_MAIN_MENU");
+        verify(fsmStorage).setState(incoming.chatId(), BotState.READY_FOR_DIALOG);
     }
 
     @Test

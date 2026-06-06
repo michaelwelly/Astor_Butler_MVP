@@ -47,11 +47,17 @@ public class MainMenuScenario {
         if (state == BotState.TIP_COLLECT_AMOUNT) {
             return smartTip(incoming, normalized);
         }
+        if (state == BotState.TIP_CONFIRMATION) {
+            return confirmSmartTip(incoming, normalized);
+        }
         if (state == BotState.DONATION_COLLECT_AMOUNT) {
             return hiddenHeart(incoming, normalized);
         }
+        if (state == BotState.DONATION_CONFIRMATION) {
+            return confirmDonation(incoming, normalized);
+        }
         if (state == BotState.AUCTION_WAIT_BID) {
-            return artAuction(incoming, normalized);
+            return continueAuction(incoming, normalized);
         }
 
         MainMenuIntent intent = detect(normalized);
@@ -155,6 +161,34 @@ public class MainMenuScenario {
         );
     }
 
+    private OutgoingMessage confirmSmartTip(IncomingMessage incoming, String text) {
+        if (isConfirmIntent(text)) {
+            return ready(
+                    incoming,
+                    "Зафиксировал draft благодарности. Следующий слой подключит платежный контур, а сейчас я вернул вас в главное меню.",
+                    "SMART_TIP",
+                    "TIP_DRAFT_CONFIRMED",
+                    "RETURN_MAIN_MENU"
+            );
+        }
+        if (isRejectIntent(text)) {
+            return ready(
+                    incoming,
+                    "Хорошо, чаевые не фиксирую. Возвращаюсь в главное меню.",
+                    "SMART_TIP",
+                    "TIP_CANCELLED",
+                    "RETURN_MAIN_MENU"
+            );
+        }
+        return message(
+                incoming,
+                "Подтвердите, пожалуйста: да — зафиксировать draft чаевых, нет — отменить.",
+                BotState.TIP_CONFIRMATION,
+                "SMART_TIP",
+                "ASK_CONFIRMATION"
+        );
+    }
+
     private OutgoingMessage hiddenHeart(IncomingMessage incoming, String text) {
         if (!hasMoney(text)) {
             fsmStorage.setState(incoming.chatId(), BotState.DONATION_COLLECT_AMOUNT);
@@ -174,6 +208,35 @@ public class MainMenuScenario {
                 "HIDDEN_HEART",
                 "DONATION_CONFIRMATION",
                 "IMPACT_EVENT_DRAFT"
+        );
+    }
+
+    private OutgoingMessage confirmDonation(IncomingMessage incoming, String text) {
+        if (isConfirmIntent(text)) {
+            return ready(
+                    incoming,
+                    "Зафиксировал анонимный donation draft. В impact попадет только агрегированный вклад, без приватных данных.",
+                    "HIDDEN_HEART",
+                    "DONATION_DRAFT_CONFIRMED",
+                    "IMPACT_EVENT_DRAFT",
+                    "RETURN_MAIN_MENU"
+            );
+        }
+        if (isRejectIntent(text)) {
+            return ready(
+                    incoming,
+                    "Хорошо, донат не фиксирую. Возвращаюсь в главное меню.",
+                    "HIDDEN_HEART",
+                    "DONATION_CANCELLED",
+                    "RETURN_MAIN_MENU"
+            );
+        }
+        return message(
+                incoming,
+                "Подтвердите, пожалуйста: да — зафиксировать анонимный donation draft, нет — отменить.",
+                BotState.DONATION_CONFIRMATION,
+                "HIDDEN_HEART",
+                "ASK_CONFIRMATION"
         );
     }
 
@@ -197,6 +260,29 @@ public class MainMenuScenario {
                 "VALIDATE_AUCTION_BID",
                 "ASK_EXPLICIT_CONFIRMATION"
         );
+    }
+
+    private OutgoingMessage continueAuction(IncomingMessage incoming, String text) {
+        if (isConfirmIntent(text)) {
+            return ready(
+                    incoming,
+                    "Принял подтверждение ставки как заявку к активному лоту. Финальный прием ставки требует проверки лота, минимального шага и подтверждения event owner.",
+                    "ART_AUCTION",
+                    "AUCTION_BID_GUEST_CONFIRMED",
+                    "MANAGER_CONFIRMATION_REQUIRED",
+                    "RETURN_MAIN_MENU"
+            );
+        }
+        if (isRejectIntent(text)) {
+            return ready(
+                    incoming,
+                    "Хорошо, ставку не фиксирую. Можно остаться наблюдателем или вернуться к другому сценарию.",
+                    "ART_AUCTION",
+                    "AUCTION_BID_CANCELLED",
+                    "RETURN_MAIN_MENU"
+            );
+        }
+        return artAuction(incoming, text);
     }
 
     private OutgoingMessage impact(IncomingMessage incoming) {
@@ -238,8 +324,10 @@ public class MainMenuScenario {
     private boolean supportsContinuation(BotState state, String text) {
         return switch (state) {
             case TIP_COLLECT_AMOUNT -> hasMoney(text) || isSafeExitIntent(text);
+            case TIP_CONFIRMATION -> isConfirmIntent(text) || isRejectIntent(text) || isSafeExitIntent(text);
             case DONATION_COLLECT_AMOUNT -> hasMoney(text) || isSafeExitIntent(text);
-            case AUCTION_WAIT_BID -> hasMoney(text) || isSafeExitIntent(text);
+            case DONATION_CONFIRMATION -> isConfirmIntent(text) || isRejectIntent(text) || isSafeExitIntent(text);
+            case AUCTION_WAIT_BID -> hasMoney(text) || isConfirmIntent(text) || isRejectIntent(text) || isSafeExitIntent(text);
             default -> false;
         };
     }
@@ -299,6 +387,25 @@ public class MainMenuScenario {
                 || text.equals("отмена")
                 || text.equals("отмени")
                 || text.equals("/cancel");
+    }
+
+    private boolean isConfirmIntent(String text) {
+        return text.equals("да")
+                || text.equals("ок")
+                || text.equals("okay")
+                || text.equals("ok")
+                || text.equals("подтверждаю")
+                || text.equals("подтвердить")
+                || text.equals("согласен")
+                || text.equals("согласна");
+    }
+
+    private boolean isRejectIntent(String text) {
+        return text.equals("нет")
+                || text.equals("не надо")
+                || text.equals("отмена")
+                || text.equals("отмени")
+                || text.equals("не подтверждаю");
     }
 
     private boolean containsAny(String text, String... needles) {
