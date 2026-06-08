@@ -36,6 +36,7 @@ astor:
     command: ${ASTOR_STT_COMMAND:}
     work-dir: ${ASTOR_STT_WORK_DIR:/private/tmp/astor-butler-stt}
     timeout-seconds: ${ASTOR_STT_TIMEOUT_SECONDS:30}
+    retry-ttl-seconds: ${ASTOR_STT_RETRY_TTL_SECONDS:1800}
     keep-local-files: ${ASTOR_STT_KEEP_LOCAL_FILES:false}
 
 spring:
@@ -78,7 +79,7 @@ telegram:
     preview-enabled: ${TELEGRAM_UI_PREVIEW_ENABLED:true}
     cleanup-enabled: ${TELEGRAM_UI_CLEANUP_ENABLED:true}
     delete-user-messages-enabled: ${TELEGRAM_UI_DELETE_USER_MESSAGES_ENABLED:true}
-    preview-version: ${TELEGRAM_UI_PREVIEW_VERSION:2026-06-05-aeris}
+    preview-version: ${TELEGRAM_UI_PREVIEW_VERSION:2026-06-08-aeris-guide}
     preview-avatar-path: ${TELEGRAM_UI_PREVIEW_AVATAR_PATH:classpath:telegram/aeris-butler-preview.png}
   voice:
     download-enabled: ${TELEGRAM_VOICE_DOWNLOAD_ENABLED:true}
@@ -93,6 +94,8 @@ telegram:
     manager-chat-id: ${TELEGRAM_BOOKING_MANAGER_CHAT_ID:876857557}
     hostess-chat-id: ${TELEGRAM_HOSTESS_CHAT_ID:}
     plan-pdf-path: ${TELEGRAM_BOOKING_PLAN_PDF_PATH:classpath:booking/aeris-plan.pdf}
+  quiet-guide:
+    interior-video-object-key: ${TELEGRAM_QUIET_GUIDE_INTERIOR_VIDEO_OBJECT_KEY:content/aeris/interior/INTERIOR.mp4}
   oauth:
     client-id: ${TELEGRAM_CLIENT_ID:}
     redirect-uri: ${TELEGRAM_REDIRECT_URI:http://localhost:8080/auth/telegram/callback}

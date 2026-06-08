@@ -1,250 +1,277 @@
-# 🧠 Astor Butler — Soft-Governance Tool для премиального HoReCa
+# Astor Butler — цифровой дворецкий для AERIS и премиального HoReCa
 
-Цифровой «дворецкий», который синхронизирует гостя, стафф и менеджмент — без давления.  
-Основан на **FSM-логике**, работает внутри мессенджеров (Telegram → WeChat / Meta), не ломает текущие каналы продаж и подключается к системам отеля по **read-only API**.
+Astor Butler — backend MVP для Telegram/FSM-сценариев, где мессенджер является только транспортом, а состояние диалога, согласия, профиль гостя, события и аудит живут внутри системы.
 
-Проект реализован как **MVP** с фокусом на корректную архитектуру, предсказуемое поведение сценариев и чёткое разделение ответственности между транспортом, логикой и состоянием.
+Текущий практический фокус проекта: проверить на реальном контуре AERIS gastro bar первый путь гостя — от `/start` до сохраненного профиля, согласия, сообщений, голосовых запросов, Kafka-событий и админского наблюдения.
 
----
+Проект развивается как soft-governance tool для HoReCa: не давить на гостя, а спокойно распознавать его, помнить контекст и передавать команде только то, что действительно важно.
 
-## 🎯 Назначение системы
+## Что уже есть
 
-Astor Butler предназначен для:
+- Telegram bot long polling как первый UI.
+- AERIS preview-карточка с изображением цифрового дворецкого и ссылкой на `https://aeris.bar/`.
+- First-touch flow: `/start` -> Consent Vault -> контакт -> режим свободного диалога.
+- PostgreSQL persistence для пользователей, Telegram-профилей, сообщений, контактов и согласий.
+- Redis FSM hot state с TTL для сценариев.
+- Kafka/Redpanda user event trail и admin-chat projection.
+- Voice/audio intake: Telegram voice -> MinIO/S3 -> STT boundary -> transcript в Postgres/Kafka.
+- MinIO lifecycle для временных voice-бинарей: `transient/telegram-voice/...`, TTL 3 дня.
+- Admin Telegram chat видит user events, AI responses, voice transcript/status и object key.
+- Swagger/OpenAPI группы для backend API и будущей frontend-интеграции.
+- Local API gateway на `localhost:8080`.
+- MongoDB `aether` для document/media metadata.
+- Prometheus/Grafana и Redpanda Console для локального наблюдения.
 
-- 📨 обработки запросов гостей заведения
-- 🧠 интерпретации намерений пользователя
-- 🔀 маршрутизации запросов к стаффу и менеджеру
-- ⚙️ автоматического выполнения части сценариев
-- 🔁 ведения диалога как набора управляемых состояний
+## UX-контракт Telegram
 
-Telegram используется исключительно как **транспорт и UI**.  
-Бизнес-логика, FSM-состояния и сценарии хранятся и управляются **вне мессенджера**.
-
----
-
-## 🏗 Архитектурный подход
-
-В основе системы — **конечный автомат (FSM)**.
-
-FSM:
-- управляет состояниями диалога
-- определяет допустимые переходы
-- хранится вне Telegram
-- является **источником истины** для сценариев
-
-🤖 **AI** используется как вспомогательный компонент:
-- для интерпретации сообщений
-- для сопоставления намерений сценариям
-
-AI **не содержит бизнес-логики** и может быть заменён без изменения FSM.
-
----
-
-## 🧩 Что внутри MVP
-
-- ☕ **Java 21 + Spring Boot** — монолит с модульной упаковкой по доменам
-- 🔁 **FSM-движок** — сценарии гостя, стаффа и менеджера
-- 💬 **Telegram Bot API (Long Polling)** — диалоги без push-спама
-- 🐘 **PostgreSQL** — основное хранилище состояния и контекста
-- ⚡ **Redis** — кеш меню, слотов и временных данных
-- 🐳 **Docker / docker-compose** — инфраструктура MVP
-- 📊 **Grafana / Prometheus** — базовая наблюдаемость
-- ☁️ **Yandex Cloud** — целевая облачная платформа MVP
-
----
-
-## ☁️ Инфраструктура и деплой (MVP)
-
-В рамках MVP система разворачивается в **Yandex Cloud**:
-
-- 🖥 **Compute Cloud** — backend-сервисы
-- 🐘 **Managed PostgreSQL** — основное хранилище
-- ⚡ **Managed Redis** — кеш и временные состояния
-- 📦 **Container Registry** — Docker-образы
-- 🗂 **Object Storage** — статические ресурсы (афиши, меню)
-- 📈 **Monitoring / Logging** — сбор метрик и логов
-
-Kubernetes и autoscaling **не используются в MVP**, но архитектура не блокирует дальнейший переход.
-
----
-
-## 🚀 Локальный запуск
-
-Docker Compose используется для инфраструктурных зависимостей:
-
-```bash
-scripts/start_local_infra.sh
-```
-
-Этот скрипт поднимает локальную инфраструктуру и, если на машине есть папка `/Users/michaelwelly/Desktop/AERISMENU`, сразу загружает AERIS menu assets в MinIO и MongoDB.
-
-Spring Boot приложение запускается локально из IDE или Maven:
-
-```bash
-scripts/run_local_app.sh
-```
-
-Для frontend-разработчика без Telegram long polling:
-
-```bash
-docker compose --env-file .env.frontend up -d postgres redis mongo kafka minio minio-init prometheus grafana
-scripts/run_local_app.sh .env.frontend
-```
-
-Этот режим оставляет `TELEGRAM_BOT_ENABLED=false`, чтобы второй локальный запуск не конфликтовал с основным Telegram-ботом.
-
-После старта внешний локальный вход один:
-
-- Swagger UI: http://localhost:8080/swagger-ui/index.html
-- OpenAPI JSON: http://localhost:8080/v3/api-docs
-- API Gateway health: http://localhost:8080/gateway/health
-- Backend health: http://localhost:8080/actuator/health
-- Kafka / Redpanda Console: http://localhost:8081
-- C3FLEX frontend: http://localhost:3001
-
-Ollama/local LLM не входит в default compose-профиль и включается отдельно через `--profile ai`, чтобы тяжелая модель не блокировала запуск инфраструктуры.
-
-API Gateway в локальном контуре поднимается как отдельный Nginx-контейнер и проксирует запросы на Spring Boot, запущенный из IDEA на внутреннем dev-порту `8088`. Пользовательский и frontend-facing адрес всегда `http://localhost:8080`.
-
----
-
-## 💡 Ключевые модули
-
-| Ось боли | Модуль | Что делает |
-|--------|--------|-----------|
-| Идентичность | 🧠 **Memory Engine** | Узнаёт гостя по телефону и предпочтениям |
-| Персонализация | 🎯 **Preference Map** | Предлагает «как в прошлый раз» |
-| Благодарность | 💸 **Smart Tip** | Цифровые чаевые и фиксация сценария |
-| Инфо-поддержка | 📘 **Quiet Guide** | Меню и афиши без спама |
-| Социальный вклад | ❤️ **Hidden Heart** | Анонимные донейты |
-| Игровой опыт | 🎮 **Safe Play** | Мини-сценарии с мгновенным выходом |
-| Управление временем | ⏱ **Slot Keeper** | Контроль и напоминания по слотам |
-| Безопасность | 🛑 **Panic Exit** | Немедленное завершение сценария |
-
----
-
-## 🌐 Внешние блоки (необязательные для MVP)
-
-- 🔗 **Direct Channel Hub** — прямое API «гость ↔ PMS»
-- 🏟 **Arena Reboot Engine** — сценарии «отели ↔ стадионы»
-- 🔐 **Consent Vault** — хранение, отзыв и экспорт согласий (GDPR / PDPA / PIPL / 152-ФЗ)
-- 📑 **Impact Meter** — культурные KPI и отчётность
-
-В MVP реализуются только **точки расширения**, без полной бизнес-логики. Consent Vault резервируется раньше остальных внешних блоков, потому что первый сценарий `/start` уже связан с контактом, профилем гостя и политикой обработки данных.
-
----
-
-## 👥 Роли в системе
-
-**🙋 Гость**
-- инициирует диалог
-- отправляет запросы
-- получает ответы и уведомления
-
-**🧑‍🍳 Стафф**
-- получает маршрутизированные запросы
-- отвечает гостям
-- обновляет статус сценариев
-
-**🧭 Менеджер**
-- видит активные сценарии
-- получает эскалации
-- имеет обзор состояния системы
-
-**🤖 Бот (Astor)**
-- интерпретирует сообщения
-- управляет FSM
-- маршрутизирует запросы
-- взаимодействует с внешними сервисами
-
----
-
-## 🔒 Состояние и данные
-
-- пользователь идентифицируется по **Telegram ID**
-- пользовательский контекст хранится **вне Telegram**
-- FSM-состояния сохраняются в базе
-- система корректно восстанавливается после рестарта
-
----
-
-## 🚧 Ограничения MVP
-
-В текущей версии:
-
-- Telegram — единственный клиент
-- реализованы только базовые сценарии
-- отсутствует сложная аналитика
-- отсутствует RAG и обучение моделей
-- допускается ручная отладка и анализ логов
-- отсутствуют SLA и high-availability
-
----
-
-## 🧪 Локальный запуск и проверка API
-
-Локальная схема: инфраструктура поднимается в Docker Compose, а один инстанс Spring Boot запускается прямо на машине разработчика.
-
-```bash
-scripts/start_local_infra.sh
-scripts/run_local_app.sh
-```
-
-Локальные креды и порты читаются из `.env`. Файл `.env` не коммитится и хранится только на машине разработчика.
-
-Swagger UI:
+Telegram-экран гостя держится в формате:
 
 ```text
-http://localhost:8080/swagger-ui/index.html
+persistent AERIS preview
++ current guest request
++ current Astor Butler response
 ```
 
-Быстрая проверка REST API и Swagger/OpenAPI:
+При следующем сообщении гостя предыдущая пара `request/response` удаляется из Telegram UI. При этом в системе ничего не теряется: входящие сообщения, metadata, transcript, consent evidence и Kafka events сохраняются в PostgreSQL/Kafka.
+
+Первое сообщение после preview:
+
+```text
+Нажимая кнопку "Согласиться и поделиться контактом", вы соглашаетесь с политикой обработки персональных данных.
+```
+
+Кнопка контакта одновременно является явным согласием с политикой. До контакта бот не собирает бизнес-данные и не запускает бронирование.
+
+## Архитектурные принципы
+
+- FSM является source of truth для сценариев.
+- Telegram, будущий web chat и другие мессенджеры не содержат бизнес-логики.
+- AI Adapter помогает интерпретировать ввод, но не принимает доменные решения.
+- Consent Vault фиксирует согласие, источник, версию политики и evidence.
+- Voice binaries хранятся временно в object storage; смысл и аудит хранятся долго.
+- Kafka event trail нужен для аналитики, admin projection и будущих read models.
+- PostgreSQL publication ограничена доменными/outbox-таблицами и не включает служебные таблицы Liquibase.
+
+## Стек MVP
+
+- Java 21
+- Spring Boot 3
+- JDBC/Liquibase как целевое направление persistence
+- PostgreSQL
+- Redis
+- MongoDB
+- Kafka / Redpanda
+- MinIO как S3-compatible object storage
+- Telegram Bot API
+- Swagger / OpenAPI
+- Docker Compose
+- Nginx local API gateway
+- Prometheus / Grafana
+- Ollama/local LLM как заменяемый AI Adapter для dev-контура
+
+## Локальный запуск
+
+Локальная схема: инфраструктура работает в Docker Compose, Spring Boot запускается как один локальный инстанс из IDEA или Maven.
+
+```bash
+scripts/start_local_infra.sh
+scripts/run_local_app.sh
+```
+
+Файл `.env` не коммитится. В нем лежат локальные креды, Telegram token, admin chat id и настройки инфраструктуры.
+
+Основные локальные адреса:
+
+- Swagger UI: `http://localhost:8080/swagger-ui/index.html`
+- OpenAPI JSON: `http://localhost:8080/v3/api-docs`
+- API Gateway health: `http://localhost:8080/gateway/health`
+- Backend health: `http://localhost:8080/actuator/health`
+- Redpanda Console: `http://localhost:8081`
+- Grafana: `http://localhost:3000`
+- C3FLEX frontend: `http://localhost:3001`
+
+API Gateway проксирует внешний `localhost:8080` на Spring Boot dev-порт. Это позволяет держать единый вход для Swagger/frontend и не путаться между локальными портами.
+
+## Voice pipeline
+
+Голосовые сообщения обрабатываются как временные media assets:
+
+1. Telegram adapter принимает `voice/audio`.
+2. Файл скачивается во временную локальную папку.
+3. Backend загружает бинарь в MinIO/S3 bucket `astor-media`.
+4. Object key строится под `transient/telegram-voice/YYYY-MM-DD/...`.
+5. MinIO lifecycle удаляет voice-бинарь через `S3_VOICE_TTL_DAYS=3`.
+6. `SpeechToTextService` пытается получить transcript через внешний command adapter.
+7. Transcript, Telegram metadata, `storageObjectKey` и audit trail сохраняются в PostgreSQL/Kafka.
+8. Admin chat получает human-readable summary с transcript/status/object key.
+
+Локальные env:
+
+```bash
+ASTOR_STT_ENABLED=false
+ASTOR_STT_COMMAND=
+ASTOR_STT_WORK_DIR=/private/tmp/astor-butler-stt
+ASTOR_STT_TIMEOUT_SECONDS=30
+ASTOR_STT_KEEP_LOCAL_FILES=false
+S3_EPHEMERAL_PREFIX=transient
+S3_VOICE_PREFIX=telegram-voice
+S3_VOICE_TTL_DAYS=3
+```
+
+При выключенном STT бот не падает и не эскалирует голосовое как ошибку. Он сохраняет metadata и просит гостя коротко написать текстом.
+
+## Data layer
+
+PostgreSQL сейчас хранит:
+
+- `users` — внутренняя identity-модель;
+- `telegram_profiles` — внешний Telegram-профиль и UI-state сообщения;
+- `telegram_messages` — входящие сообщения и raw payload;
+- `user_contacts` — контакты пользователя;
+- `user_consents` — согласия и evidence;
+- `event_bookings` — задел под booking domain;
+- `outbox_events` и `processed_kafka_events` — event handoff/idempotency boundary.
+
+Redis хранит быстрый FSM state.
+
+MongoDB `aether` используется для document/media metadata и проектной библиотеки.
+
+MinIO/S3 используется для media/document binaries. В локальном MVP полный продакшн-контент не держится в MinIO: для разработки используется ограниченный sample-набор.
+
+## Kafka и наблюдаемость
+
+Основной топик MVP:
+
+```text
+astor.user.events
+```
+
+События имеют стабильный partition key по Telegram user/chat и deterministic `eventId`/`idempotencyKey` от source update id.
+
+Admin Telegram chat — это человекочитаемая проекция Kafka-событий, а не основной транспорт. Ее можно выключить feature flag, чтобы не спамить при дальнейшей разработке.
+
+Redpanda Console доступен на:
+
+```text
+http://localhost:8081
+```
+
+## API и frontend boundary
+
+Swagger уже группирует будущие границы:
+
+- Auth API
+- Consent Vault API
+- User API
+- FSM API
+- Booking API
+- Timeline API
+- Posts/Content API
+- Media API
+- Notifications API
+- Manager API
+- Integration API
+- System API
+
+Часть REST API пока является stub/reserved contract. Реальная бизнес-логика сейчас сосредоточена в Telegram/FSM/Consent/Kafka pipeline. Это осознанно: сначала проверяется работающая ось гостевого взаимодействия, потом API расширяется до frontend/web-chat и manager dashboard.
+
+## Capability-модули
+
+| Ось боли | Capability | MVP-статус |
+| --- | --- | --- |
+| Идентичность | Memory Engine | профиль, контакт, сообщения, consent evidence |
+| Персонализация | Preference Map | reserved boundary |
+| Благодарность | Smart Tip | reserved boundary |
+| Инфо-поддержка | Quiet Guide | меню/media pipeline готовится |
+| Социальный вклад | Hidden Heart | reserved boundary |
+| Игровой опыт | Safe Play | FSM extension point |
+| Управление временем | Slot Keeper | booking/timeline next step |
+| Безопасность | Panic Exit | safe reset/exit сценарии планируются |
+
+Внешние extension points:
+
+- Direct Channel Hub
+- Arena Reboot Engine
+- Consent Vault
+- Impact Meter
+
+Consent Vault вынесен раньше остальных, потому что первый пользовательский сценарий уже требует политики, согласия и хранения персональных данных.
+
+## Проверки
+
+Unit/integration smoke:
+
+```bash
+mvn test
+```
+
+Swagger smoke:
 
 ```bash
 scripts/run_k6_smoke.sh
 ```
 
-Первый небольшой read-load сценарий:
+Read-load сценарий:
 
 ```bash
 scripts/run_k6_read_load.sh
 ```
 
-Детали профиля, переменных окружения и k6-сценариев описаны в [docs/LOAD_TESTING.md](docs/LOAD_TESTING.md).
+Ручной Telegram first-touch чек:
 
----
+1. Очистить тестового Telegram-пользователя в Postgres/Redis.
+2. Перезапустить `AstorButlerApplication`.
+3. Отправить `/start`.
+4. Проверить AERIS preview, кнопку контакта, запись profile/message/consent.
+5. Отправить текст/voice и проверить admin chat, Kafka event и PostgreSQL payload.
 
-## 📚 Научный фундамент
+## Что не готово
 
-Проект основан на исследовании методом **Grounded Theory**  
-(Барни Глейзер, Ансельм Страусс).
+- Production auth через Keycloak/OAuth2/JWT.
+- Полный booking flow и manager dashboard.
+- Production STT/LLM adapter.
+- Web chat поверх того же `MessageGatewayService`.
+- Consumer-side idempotency как отдельный hardened слой.
+- Multi-instance/load-balancer режим.
+- CI/CD quality gates.
+- Финальное System Design ДЗ и sequence diagrams.
+- SLA/high-availability режим.
 
-Центральная категория:  
-**«Потребность быть распознанным — без давления»**
+## Документация
 
-Astor Butler реализует эту модель как **инструмент мягкого управления**  
-(soft governance tool) на FSM-архитектуре.
+- [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)
+- [docs/FSM_SCENARIOS.md](docs/FSM_SCENARIOS.md)
+- [docs/MEDIA_PIPELINE.md](docs/MEDIA_PIPELINE.md)
+- [docs/API_CONTRACT.md](docs/API_CONTRACT.md)
+- [docs/LOAD_TESTING.md](docs/LOAD_TESTING.md)
+- [docs/FRONTEND_HANDOFF.md](docs/FRONTEND_HANDOFF.md)
 
----
+Локальная проектная память ведется отдельно в Obsidian и не является production-репозиторием.
 
-## 🤝 Вклад
+## Научный фундамент
 
-Pull-request приветствуются:
+Проект опирается на исследовательскую рамку Grounded Theory.
 
-- придерживайтесь модульной структуры
-- покрывайте FSM-переходы тестами
-- не коммитьте артефакты IDE и сборки
+Центральная категория:
 
----
+```text
+Потребность быть распознанным — без давления
+```
 
-## ⚖️ Лицензия
+Astor Butler переводит эту идею в инженерную форму: FSM-сценарии, consent-aware identity, soft routing, event trail и спокойный интерфейс вместо навязчивого приложения.
 
-Apache License 2.0.  
-Используя бот, вы также принимаете Политику конфиденциальности.
+## Git hygiene
 
----
+Не коммитить:
 
-## 📬 Контакты
+- `.env`
+- `target/`
+- локальные `.idea/*`, если это не согласованная настройка проекта;
+- локальные медиа-исходники из `Desktop`, `Downloads`, Yandex Disk.
 
-email: **michael.poedinenko.mxr@gmail.com**  
-telegram: **@michael_welly**
+Pull requests приветствуются, но изменения должны сохранять границу: Telegram/UI отдельно, FSM/application logic отдельно, storage/event trail отдельно.
+
+## Контакты
+
+email: `michael.poedinenko.mxr@gmail.com`
+telegram: `@michael_welly`

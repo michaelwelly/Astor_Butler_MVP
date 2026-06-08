@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Astor Butler · инструкция гостя</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #18201b;
+      --muted: #5d6860;
+      --line: #d7ded8;
+      --paper: #fbfcfa;
+      --soft: #eef4ee;
+      --accent: #2e6f4f;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--ink);
+      background: var(--paper);
+      line-height: 1.55;
+    }
+    main {
+      width: min(860px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 36px 0 56px;
+    }
+    h1, h2 { line-height: 1.15; margin: 0; }
+    h1 { font-size: clamp(34px, 7vw, 58px); letter-spacing: 0; }
+    h2 { font-size: 23px; margin-top: 34px; }
+    p { margin: 14px 0 0; }
+    a { color: var(--accent); font-weight: 650; }
+    .lead { font-size: 20px; color: var(--muted); margin-top: 16px; }
+    .panel {
+      margin-top: 26px;
+      border: 1px solid var(--line);
+      background: var(--soft);
+      border-radius: 8px;
+      padding: 18px;
+    }
+    ul { margin: 12px 0 0; padding-left: 22px; }
+    li { margin: 8px 0; }
+    code {
+      display: inline-block;
+      padding: 2px 6px;
+      border-radius: 6px;
+      background: #e5ece6;
+      color: #102418;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: 0.95em;
+    }
+    .examples {
+      display: grid;
+      gap: 10px;
+      margin-top: 12px;
+    }
+    .example {
+      border-left: 3px solid var(--accent);
+      padding: 10px 12px;
+      background: white;
+    }
+  </style>
+</head>
+<body>
+<main>
+  <h1>Astor Butler</h1>
+  <p class="lead">Тихий цифровой дворецкий AERIS: помогает гостю быстрее добраться до меню, брони, атмосферы зала и команды.</p>
+
+  <section class="panel">
+    <h2>Как начать</h2>
+    <p>Пишите естественно, без командного языка. Можно текстом или голосом. Если голос не разобрался, я попрошу повторить или перейти на текст.</p>
+    <div class="examples">
+      <div class="example">Хочу забронировать столик завтра на 20:00 на двоих.</div>
+      <div class="example">Пришли меню кухни, винную карту и бар.</div>
+      <div class="example">Покажи, как выглядит ресторан внутри.</div>
+      <div class="example">Расскажи, что за концепция кухни у AERIS.</div>
+      <div class="example">Позови менеджера.</div>
+    </div>
+  </section>
+
+  <h2>Что я уже умею</h2>
+  <ul>
+    <li><b>Бронь стола.</b> Уточняю дату, время, гостей, стол и отправляю заявку хостес на подтверждение.</li>
+    <li><b>Меню и карты бара.</b> Присылаю актуальные PDF: кухня, бар, коктейли Elements, винная карта.</li>
+    <li><b>Видео-тур.</b> Отправляю интерьер AERIS как файл, чтобы не портить исходное качество.</li>
+    <li><b>Концепция.</b> Рассказываю о гастрономической экспедиции Георгия Матвеева и кухне 21 страны Средиземноморья.</li>
+    <li><b>Менеджер.</b> Если сценарий не уверен, передаю контекст администратору.</li>
+  </ul>
+
+  <h2>Главное меню</h2>
+  <p>После завершения сценария я возвращаю диалог в открытое состояние. Можно написать <code>Главное меню</code> или просто следующий запрос.</p>
+
+  <h2>Если что-то пошло не так</h2>
+  <p>Я не должен нагружать гостя техническими ошибками. Если не понял запрос, я уточню коротко. Если сломался внешний сервис, передам ситуацию администратору.</p>
+
+  <h2>Что дальше</h2>
+  <p>Сценарии будут расширяться: события, закрытые ужины, благотворительность и аукционы, чаевые и благодарность команде, персональная поддержка постоянного гостя.</p>
+</main>
+</body>
+</html>

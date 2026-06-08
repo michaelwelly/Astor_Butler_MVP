@@ -1,6 +1,7 @@
 package museon_online.astor_butler.storage;
 
 import io.minio.BucketExistsArgs;
+import io.minio.GetObjectArgs;
 import io.minio.MakeBucketArgs;
 import io.minio.MinioClient;
 import io.minio.UploadObjectArgs;
@@ -8,6 +9,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import java.io.InputStream;
 import java.nio.file.Path;
 import java.time.LocalDate;
 import java.util.Locale;
@@ -65,6 +67,20 @@ public class ObjectStorageService {
         }
     }
 
+    public InputStream openMediaObject(String objectKey) {
+        if (objectKey == null || objectKey.isBlank()) {
+            throw new IllegalArgumentException("objectKey is required");
+        }
+        try {
+            return minioClient.getObject(GetObjectArgs.builder()
+                    .bucket(mediaBucket)
+                    .object(cleanObjectKey(objectKey))
+                    .build());
+        } catch (Exception e) {
+            throw new IllegalStateException("Cannot open media object " + objectKey, e);
+        }
+    }
+
     private void ensureBucket(String bucket) {
         try {
             boolean exists = minioClient.bucketExists(BucketExistsArgs.builder().bucket(bucket).build());
@@ -106,6 +122,10 @@ public class ObjectStorageService {
             return "transient";
         }
         return value.strip().replaceAll("^/+", "").replaceAll("/+$", "");
+    }
+
+    private String cleanObjectKey(String value) {
+        return value.strip().replaceAll("^/+", "");
     }
 
     private String safe(Object value) {

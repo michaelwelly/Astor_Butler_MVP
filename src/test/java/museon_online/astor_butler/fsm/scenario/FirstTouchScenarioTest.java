@@ -34,11 +34,14 @@ class FirstTouchScenarioTest {
     @Mock
     private UserEventProducer userEventProducer;
 
+    @Mock
+    private TableBookingDraftStorage tableBookingDraftStorage;
+
     private FirstTouchScenario scenario;
 
     @BeforeEach
     void setUp() {
-        scenario = new FirstTouchScenario(fsmStorage, ollamaClient, consentVaultService, userEventProducer);
+        scenario = new FirstTouchScenario(fsmStorage, ollamaClient, consentVaultService, userEventProducer, tableBookingDraftStorage);
     }
 
     @Test
@@ -51,8 +54,24 @@ class FirstTouchScenarioTest {
         assertThat(outgoing.requestContact()).isTrue();
         assertThat(outgoing.html()).isTrue();
         assertThat(outgoing.text()).contains("Согласиться и поделиться контактом");
-        assertThat(outgoing.actions()).containsExactly("REQUEST_CONTACT", "CONSENT_REQUIRED");
+        assertThat(outgoing.actions()).containsExactly("SAFE_RESTART", "REQUEST_CONTACT", "CONSENT_REQUIRED");
         verify(fsmStorage).setState(421441838L, BotState.CONSENT_REQUIRED);
+        verify(tableBookingDraftStorage).clear(incoming.chatId());
+    }
+
+    @Test
+    void startForKnownGuestResetsRuntimeAndReturnsReady() {
+        IncomingMessage incoming = telegram("/start", null);
+        when(consentVaultService.hasGrantedPrivacyPolicy(incoming.telegramUserId())).thenReturn(true);
+
+        OutgoingMessage outgoing = scenario.handle(incoming, BotState.TABLE_BOOKING_WAIT_TABLE_SELECTION, "/start");
+
+        assertThat(outgoing.nextState()).isEqualTo(BotState.READY_FOR_DIALOG.name());
+        assertThat(outgoing.removeKeyboard()).isTrue();
+        assertThat(outgoing.text()).contains("обновил начало диалога", "главном меню");
+        assertThat(outgoing.actions()).containsExactly("SAFE_RESTART", "OPEN_MENU");
+        verify(tableBookingDraftStorage).clear(incoming.chatId());
+        verify(fsmStorage).setState(incoming.chatId(), BotState.READY_FOR_DIALOG);
     }
 
     @Test
@@ -63,7 +82,7 @@ class FirstTouchScenarioTest {
 
         assertThat(outgoing.nextState()).isEqualTo(BotState.CONSENT_REQUIRED.name());
         assertThat(outgoing.requestContact()).isTrue();
-        assertThat(outgoing.actions()).containsExactly("REQUEST_CONTACT", "CONSENT_REQUIRED");
+        assertThat(outgoing.actions()).containsExactly("SAFE_RESTART", "REQUEST_CONTACT", "CONSENT_REQUIRED");
         verify(fsmStorage).setState(421441838L, BotState.CONSENT_REQUIRED);
     }
 

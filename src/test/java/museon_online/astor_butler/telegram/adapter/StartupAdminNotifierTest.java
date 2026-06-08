@@ -24,6 +24,8 @@ class StartupAdminNotifierTest {
         assertThat(message).contains("Profile: local");
         assertThat(message).contains("Backend: localhost:8088");
         assertThat(message).contains("Kafka admin stream: watching");
+        assertThat(message).contains("guest-guide.html");
+        assertThat(message).contains("staff-guide.html");
     }
 
     @Test

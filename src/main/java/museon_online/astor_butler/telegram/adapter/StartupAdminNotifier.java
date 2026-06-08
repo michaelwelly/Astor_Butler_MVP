@@ -51,6 +51,10 @@ public class StartupAdminNotifier {
                 FSM: ready
                 Kafka admin stream: watching
 
+                <b>Инструкции</b>
+                Guest: https://michaelwelly.github.io/Astor_Butler_MVP/docs/guest-guide.html
+                Staff: https://michaelwelly.github.io/Astor_Butler_MVP/docs/staff-guide.html
+
                 <b>Техника</b>
                 Started at: %s
                 """.formatted(

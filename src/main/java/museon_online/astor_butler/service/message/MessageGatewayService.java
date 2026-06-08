@@ -6,6 +6,8 @@ import museon_online.astor_butler.domain.telegram.TelegramIntakeService;
 import museon_online.astor_butler.fsm.core.BotState;
 import museon_online.astor_butler.fsm.scenario.FirstTouchScenario;
 import museon_online.astor_butler.fsm.scenario.MainMenuScenario;
+import museon_online.astor_butler.fsm.scenario.MenuAssetsScenario;
+import museon_online.astor_butler.fsm.scenario.QuietGuideScenario;
 import museon_online.astor_butler.fsm.scenario.TableBookingScenario;
 import museon_online.astor_butler.fsm.storage.FSMStorage;
 import museon_online.astor_butler.kafka.UserEventProducer;
@@ -25,9 +27,12 @@ public class MessageGatewayService {
     private final TelegramIntakeService telegramIntakeService;
     private final FirstTouchScenario firstTouchScenario;
     private final MainMenuScenario mainMenuScenario;
+    private final MenuAssetsScenario menuAssetsScenario;
+    private final QuietGuideScenario quietGuideScenario;
     private final TableBookingScenario tableBookingScenario;
     private final UserEventProducer userEventProducer;
     private final LlmScenarioPromptCatalog llmScenarioPromptCatalog;
+    private final VoiceTranscriptionRetryService voiceTranscriptionRetryService;
 
     @Value("${telegram.admin.chat-id:}")
     private String adminChatId;
@@ -78,49 +83,60 @@ public class MessageGatewayService {
             ));
         }
 
-        if (firstTouchScenario.supports(incoming, currentState, text)) {
-            return finish(incoming, currentState, firstTouchScenario.handle(incoming, currentState, text));
+        if (!isVoiceMessage(incoming) || !text.isBlank()) {
+            voiceTranscriptionRetryService.reset(incoming.chatId());
         }
 
-        if (mainMenuScenario.supports(incoming, currentState, text)) {
-            return finish(incoming, currentState, mainMenuScenario.handle(incoming, currentState, text));
+        if (firstTouchScenario.supports(incoming, currentState, text)) {
+            return finish(incoming, currentState, firstTouchScenario.handle(incoming, currentState, text));
         }
 
         if (tableBookingScenario.supports(incoming, currentState, text)) {
             return finish(incoming, currentState, tableBookingScenario.handle(incoming, currentState, text));
         }
 
+        if (menuAssetsScenario.supports(incoming, currentState, text)) {
+            return finish(incoming, currentState, menuAssetsScenario.handle(incoming, currentState, text));
+        }
+
+        if (quietGuideScenario.supports(incoming, currentState, text)) {
+            return finish(incoming, currentState, quietGuideScenario.handle(incoming, currentState, text));
+        }
+
+        if (mainMenuScenario.supports(incoming, currentState, text)) {
+            return finish(incoming, currentState, mainMenuScenario.handle(incoming, currentState, text));
+        }
+
         if (isVoiceMessage(incoming) && text.isBlank()) {
+            long attempts = voiceTranscriptionRetryService.recordFailure(incoming.chatId());
+            if (attempts >= 2) {
+                return finish(incoming, currentState, OutgoingMessage.of(
+                        incoming,
+                        voiceTextFallbackText(incoming),
+                        currentState.name(),
+                        false,
+                        false,
+                        true,
+                        false,
+                        AdminAlert.none(),
+                        List.of("VOICE_RECEIVED", "TRANSCRIPTION_FAILED_TWICE", "ASK_TEXT_INPUT")
+                ));
+            }
             return finish(incoming, currentState, OutgoingMessage.of(
                     incoming,
-                    voicePendingText(incoming),
+                    voiceRetryText(incoming),
                     currentState.name(),
                     false,
                     false,
                     true,
                     false,
                     AdminAlert.none(),
-                    List.of("VOICE_RECEIVED", "TRANSCRIPTION_PENDING")
+                    List.of("VOICE_RECEIVED", "TRANSCRIPTION_RETRY_REQUESTED")
             ));
         }
 
         if (text.isBlank()) {
             return fallback(incoming, currentState, "Empty message");
-        }
-
-        if (isMenuRequest(text)) {
-            fsmStorage.setState(incoming.chatId(), BotState.READY_FOR_DIALOG);
-            return finish(incoming, currentState, OutgoingMessage.of(
-                    incoming,
-                    "Меню MVP: бронирование, афиша, таймлайн, медиа и связь с менеджером. Пока это первый FSM-срез, дальше наполним сценариями.",
-                    BotState.READY_FOR_DIALOG.name(),
-                    false,
-                    false,
-                    true,
-                    false,
-                    AdminAlert.none(),
-                    List.of("SHOW_MENU")
-            ));
         }
 
         return aiAssistedReply(incoming, currentState, text);
@@ -262,11 +278,6 @@ public class MessageGatewayService {
         return BotState.UNKNOWN;
     }
 
-    private boolean isMenuRequest(String text) {
-        String lower = text.toLowerCase();
-        return lower.contains("меню") || lower.equals("/menu") || lower.contains("menu");
-    }
-
     private boolean isVoiceMessage(IncomingMessage incoming) {
         if (incoming == null || incoming.payload() == null) {
             return false;
@@ -275,12 +286,16 @@ public class MessageGatewayService {
         return "VOICE".equals(mediaKind) || "AUDIO".equals(mediaKind);
     }
 
-    private String voicePendingText(IncomingMessage incoming) {
+    private String voiceRetryText(IncomingMessage incoming) {
         Object reason = incoming.payload() == null ? null : incoming.payload().get("transcriptionReason");
         if (reason == null || reason.toString().isBlank() || "STT disabled".equals(reason)) {
-            return "Голосовое принял. Слуховой аппарат уже в кармане, но расшифровку еще подключаем. Пока напишите, пожалуйста, коротко текстом.";
+            return "Голосовое принял, но сейчас не смог уверенно его разобрать. Запишите, пожалуйста, еще раз чуть ближе к микрофону и одной короткой фразой.";
         }
-        return "Голосовое получил, но сейчас не смог его расшифровать. Напишите коротко текстом — я продолжу сценарий без паузы.";
+        return "Голосовое получил, но расшифровка не сложилась. Попробуйте, пожалуйста, еще раз: чуть медленнее и без фонового шума.";
+    }
+
+    private String voiceTextFallbackText(IncomingMessage incoming) {
+        return "Я дважды не смог надежно разобрать голосовое. Чтобы не потерять ваш запрос, напишите, пожалуйста, коротко текстом — я сразу продолжу сценарий.";
     }
 
     private boolean isAdminChat(Long chatId) {

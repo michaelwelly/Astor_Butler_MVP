@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Astor Butler · инструкция команды</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #161d1a;
+      --muted: #65716b;
+      --line: #d9e0dc;
+      --paper: #fbfcfb;
+      --soft: #eff4f1;
+      --accent: #285f49;
+      --warn: #8a4b22;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--ink);
+      background: var(--paper);
+      line-height: 1.55;
+    }
+    main {
+      width: min(920px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 36px 0 56px;
+    }
+    h1, h2 { line-height: 1.15; margin: 0; }
+    h1 { font-size: clamp(32px, 6vw, 54px); letter-spacing: 0; }
+    h2 { font-size: 23px; margin-top: 34px; }
+    p { margin: 14px 0 0; }
+    ul { margin: 12px 0 0; padding-left: 22px; }
+    li { margin: 8px 0; }
+    code {
+      display: inline-block;
+      padding: 2px 6px;
+      border-radius: 6px;
+      background: #e7eee9;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: 0.95em;
+    }
+    .lead { font-size: 20px; color: var(--muted); margin-top: 16px; }
+    .panel {
+      margin-top: 24px;
+      border: 1px solid var(--line);
+      background: var(--soft);
+      border-radius: 8px;
+      padding: 18px;
+    }
+    .warning { border-left: 4px solid var(--warn); background: #fff7ef; }
+  </style>
+</head>
+<body>
+<main>
+  <h1>Astor Butler для команды</h1>
+  <p class="lead">Короткая инструкция по чатам, ролям и тому, как не ломать гостевой сценарий руками.</p>
+
+  <section class="panel">
+    <h2>Главное правило</h2>
+    <p>Гостевой диалог ведет FSM. Админские и хостес-чаты нужны для наблюдаемости и подтверждений, а не для запуска гостевых сценариев.</p>
+  </section>
+
+  <h2>Чаты</h2>
+  <ul>
+    <li><b>Гостевой чат с ботом.</b> Гость пишет текстом или голосом. Бот ведет сценарии, сохраняет события и возвращает гостя в главное меню.</li>
+    <li><b>Admin / analytics chat.</b> Поток наблюдаемости: user events, fallback, startup, ошибки STT/LLM/FSM. Здесь читаем, но не пытаемся управлять гостем как из гостевого чата.</li>
+    <li><b>Hostess chat.</b> Заявки на бронь. Подтверждение и отказ делаются кнопками, чтобы не ловить случайные “ок” из переписки.</li>
+    <li><b>Manager / admin private.</b> Ручное вмешательство, когда сценарий не уверен или внешний сервис не отвечает.</li>
+  </ul>
+
+  <h2>Бронь</h2>
+  <ul>
+    <li>Гость выбирает дату, время, гостей и стол.</li>
+    <li>Бот создает черновик/ордер и отправляет его в хостес-чат.</li>
+    <li>Хостес подтверждает или отклоняет кнопкой.</li>
+    <li>При отказе нужна причина: бот красиво объяснит гостю и предложит альтернативу.</li>
+  </ul>
+
+  <h2>Меню и Quiet Guide</h2>
+  <ul>
+    <li>PDF-меню должны лежать в ресурсах проекта и в объектном хранилище, чтобы контейнер работал без локального Desktop.</li>
+    <li>Видео-тур отправляется как документ, если нужно сохранить исходное качество и формат.</li>
+    <li>Концепция AERIS и Георгия Матвеева хранится как сценарный текст и позже попадет в RAG.</li>
+  </ul>
+
+  <h2>Голос</h2>
+  <ul>
+    <li>STT работает на входном транспортном слое: Telegram voice/audio превращается в обычный текст до FSM.</li>
+    <li>Технические предупреждения STT не должны попадать в текст гостя.</li>
+    <li>Если распознавание не удалось, бот просит повторить один раз, затем предлагает написать текстом.</li>
+  </ul>
+
+  <section class="panel warning">
+    <h2>Что делать при fallback</h2>
+    <p>Если в админ-чат пришла карточка fallback, проверьте гостевой диалог и ответьте вручную только при необходимости. После восстановления сценария гость должен вернуться в главное меню.</p>
+  </section>
+
+  <h2>Ручной тест Натальи</h2>
+  <p>Перед повторным ручным прогоном можно очистить тестового пользователя скриптом <code>scripts/reset_natalia_test_user.sh</code>, затем отправить гостю <code>/start</code> и пройти сценарии заново.</p>
+</main>
+</body>
+</html>

@@ -70,7 +70,7 @@ public class TelegramVoiceTranscriptionService {
             payload.put("storageLifecycle", "EXPIRE_AFTER_%s_DAYS".formatted(objectStorage.ttlDays()));
             SpeechToTextResult result = speechToTextService.transcribe(audioFile, payload);
             payload.put("transcriptionAvailable", result.available());
-            payload.put("transcriptionStatus", result.transcribed() ? "TRANSCRIBED" : "PENDING");
+            payload.put("transcriptionStatus", transcriptionStatus(result));
             payload.put("transcriptionReason", result.reason());
             payload.put("transcriptionMetadata", result.metadata());
             if (result.transcribed()) {
@@ -92,9 +92,19 @@ public class TelegramVoiceTranscriptionService {
     private IncomingMessage withTranscriptionStatus(IncomingMessage incoming, SpeechToTextResult result) {
         Map<String, Object> payload = new LinkedHashMap<>(incoming.payload());
         payload.put("transcriptionAvailable", result.available());
-        payload.put("transcriptionStatus", result.transcribed() ? "TRANSCRIBED" : "FAILED");
+        payload.put("transcriptionStatus", transcriptionStatus(result));
         payload.put("transcriptionReason", result.reason());
         return incoming.withTextAndPayload(incoming.text(), payload);
+    }
+
+    private String transcriptionStatus(SpeechToTextResult result) {
+        if (result == null) {
+            return "FAILED";
+        }
+        if (result.transcribed()) {
+            return "TRANSCRIBED";
+        }
+        return result.available() ? "FAILED" : "PENDING";
     }
 
     private Path download(AbsSender sender, String fileId, IncomingMessage incoming) throws Exception {

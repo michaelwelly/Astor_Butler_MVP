@@ -80,6 +80,29 @@ public class ConsentVaultService {
         );
     }
 
+    public boolean hasGrantedPrivacyPolicy(Long telegramUserId) {
+        if (telegramUserId == null) {
+            return false;
+        }
+        Boolean granted = jdbcTemplate.query("""
+                SELECT EXISTS (
+                    SELECT 1
+                    FROM user_consents
+                    WHERE telegram_user_id = ?
+                      AND consent_type = ?
+                      AND policy_version = ?
+                      AND status = 'GRANTED'
+                      AND revoked_at IS NULL
+                )
+                """,
+                resultSet -> resultSet.next() && resultSet.getBoolean(1),
+                telegramUserId,
+                PRIVACY_POLICY,
+                CURRENT_POLICY_VERSION
+        );
+        return Boolean.TRUE.equals(granted);
+    }
+
     private Long findUserIdByTelegramUserId(Long telegramUserId) {
         return jdbcTemplate.query("""
                 SELECT user_id

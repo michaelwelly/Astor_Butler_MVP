@@ -16,10 +16,17 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.time.Instant;
+import java.time.LocalDate;
+import java.time.LocalTime;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -93,6 +100,52 @@ class TableBookingScenarioTest {
 
         assertThat(outgoing.nextState()).isEqualTo(BotState.TABLE_BOOKING_COLLECT_DATE.name());
         assertThat(outgoing.actions()).contains("ASK_BOOKING_DETAILS");
+    }
+
+    @Test
+    void collectsDateTimeAndPartySizeAcrossSeparateManualReplies() {
+        AtomicReference<TableBookingDraftStorage.Draft> storedDraft = new AtomicReference<>();
+        LocalDate bookingDate = LocalDate.now(ZoneId.of("Asia/Yekaterinburg")).plusDays(7);
+        String bookingDateText = bookingDate.format(DateTimeFormatter.ofPattern("dd.MM"));
+        doAnswer(invocation -> Optional.ofNullable(storedDraft.get()))
+                .when(draftStorage).find(eq(1773317437L));
+        doAnswer(invocation -> {
+            storedDraft.set(invocation.getArgument(1));
+            return null;
+        }).when(draftStorage).save(eq(1773317437L), any(TableBookingDraftStorage.Draft.class));
+
+        OutgoingMessage datePrompt = scenario.handle(
+                telegram("Хочу забронировать столик"),
+                BotState.READY_FOR_DIALOG,
+                "Хочу забронировать столик"
+        );
+        assertThat(datePrompt.nextState()).isEqualTo(BotState.TABLE_BOOKING_COLLECT_DATE.name());
+
+        OutgoingMessage timePrompt = scenario.handle(
+                telegram(bookingDateText),
+                BotState.TABLE_BOOKING_COLLECT_DATE,
+                bookingDateText
+        );
+        assertThat(timePrompt.nextState()).isEqualTo(BotState.TABLE_BOOKING_COLLECT_TIME.name());
+
+        OutgoingMessage partyPrompt = scenario.handle(
+                telegram("20:00"),
+                BotState.TABLE_BOOKING_COLLECT_TIME,
+                "20:00"
+        );
+        assertThat(partyPrompt.nextState()).isEqualTo(BotState.TABLE_BOOKING_COLLECT_PARTY_SIZE.name());
+
+        OutgoingMessage plan = scenario.handle(
+                telegram("на двоих"),
+                BotState.TABLE_BOOKING_COLLECT_PARTY_SIZE,
+                "на двоих"
+        );
+        assertThat(plan.nextState()).isEqualTo(BotState.TABLE_BOOKING_WAIT_TABLE_SELECTION.name());
+        assertThat(plan.actions()).contains("SEND_HALL_PLAN", "ASK_TABLE_SELECTION");
+        assertThat(storedDraft.get().requestedDate()).isEqualTo(bookingDate);
+        assertThat(storedDraft.get().requestedTime()).isEqualTo(LocalTime.of(20, 0));
+        assertThat(storedDraft.get().partySize()).isEqualTo(2);
+        assertThat(storedDraft.get().requestedStartAt()).isNotNull();
     }
 
     private IncomingMessage telegram(String text) {

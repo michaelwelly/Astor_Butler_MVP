@@ -8,6 +8,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -39,9 +40,7 @@ public class ExternalCommandSpeechToTextService implements SpeechToTextService {
 
         List<String> commandLine = commandLine(audioFile);
         try {
-            Process process = new ProcessBuilder(commandLine)
-                    .redirectErrorStream(true)
-                    .start();
+            Process process = new ProcessBuilder(commandLine).start();
             boolean finished = process.waitFor(Math.max(1, timeoutSeconds), TimeUnit.SECONDS);
             if (!finished) {
                 process.destroyForcibly();
@@ -52,21 +51,25 @@ public class ExternalCommandSpeechToTextService implements SpeechToTextService {
             }
 
             String output = new String(process.getInputStream().readAllBytes(), StandardCharsets.UTF_8).trim();
+            String diagnostics = new String(process.getErrorStream().readAllBytes(), StandardCharsets.UTF_8).trim();
             if (process.exitValue() != 0) {
-                log.warn("STT command failed with exitCode={}, output={}", process.exitValue(), output);
-                return SpeechToTextResult.failed("STT command failed with exit code " + process.exitValue(), Map.of(
-                        "exitCode", process.exitValue(),
-                        "output", output
-                ));
+                log.warn("STT command failed with exitCode={}, stdout={}, stderr={}", process.exitValue(), output, diagnostics);
+                return SpeechToTextResult.failed(
+                        "STT command failed with exit code " + process.exitValue(),
+                        metadata(process.exitValue(), output, diagnostics)
+                );
             }
             if (output.isBlank()) {
-                return SpeechToTextResult.failed("STT command returned blank text", Map.of("command", command));
+                if (!diagnostics.isBlank()) {
+                    log.debug("STT command returned blank text with stderr={}", diagnostics);
+                }
+                return SpeechToTextResult.failed("STT command returned blank text", metadata(null, output, diagnostics));
+            }
+            if (!diagnostics.isBlank()) {
+                log.debug("STT command diagnostics: {}", diagnostics);
             }
 
-            return SpeechToTextResult.transcribed(output, Map.of(
-                    "provider", "external-command",
-                    "command", command
-            ));
+            return SpeechToTextResult.transcribed(output, metadata(null, "", diagnostics));
         } catch (Exception e) {
             log.warn("STT command execution failed: {}", e.getMessage());
             return SpeechToTextResult.failed(e.getClass().getSimpleName() + ": " + e.getMessage(), Map.of("command", command));
@@ -83,5 +86,21 @@ public class ExternalCommandSpeechToTextService implements SpeechToTextService {
             }
         }
         return result;
+    }
+
+    private Map<String, Object> metadata(Integer exitCode, String stdout, String stderr) {
+        Map<String, Object> metadata = new LinkedHashMap<>();
+        metadata.put("provider", "external-command");
+        metadata.put("command", command);
+        if (exitCode != null) {
+            metadata.put("exitCode", exitCode);
+        }
+        if (stdout != null && !stdout.isBlank()) {
+            metadata.put("stdout", stdout);
+        }
+        if (stderr != null && !stderr.isBlank()) {
+            metadata.put("stderr", stderr);
+        }
+        return Map.copyOf(metadata);
     }
 }

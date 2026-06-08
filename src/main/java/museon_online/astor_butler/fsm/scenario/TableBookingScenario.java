@@ -21,6 +21,7 @@ import java.time.ZoneId;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 @Component
@@ -28,7 +29,8 @@ import java.util.regex.Pattern;
 @Slf4j
 public class TableBookingScenario {
 
-    private static final Pattern TIME = Pattern.compile("\\b([01]?\\d|2[0-3])[:.]?([0-5]\\d)?\\b");
+    private static final Pattern DATE = Pattern.compile("\\b(\\d{1,2})[./-](\\d{1,2})(?:[./-](\\d{2,4}))?\\b");
+    private static final Pattern TIME = Pattern.compile("(?<![./-])\\b([01]?\\d|2[0-3])(?::([0-5]\\d)|\\s*(?:час(?:ов|а)?|ч))?\\b(?![./-])");
     private static final Pattern TABLE_NUMBER_SELECTION = Pattern.compile("^(?:стол(?:ик)?\\s*)?(?:[1-9]|1\\d)$");
     private static final Pattern TABLE_NUMBER_IN_TEXT = Pattern.compile(".*\\bстол(?:ик)?\\s*(?:[1-9]|1\\d)\\b.*");
     private static final ZoneId VENUE_ZONE = ZoneId.of("Asia/Yekaterinburg");
@@ -64,19 +66,20 @@ public class TableBookingScenario {
             }
             return tableSelected(incoming, normalized);
         }
-        if (!hasDate(normalized)) {
+
+        TableBookingDraftStorage.Draft draft = mergeDraft(incoming, normalized);
+        if (draft.requestedDate() == null) {
             fsmStorage.setState(incoming.chatId(), BotState.TABLE_BOOKING_COLLECT_DATE);
             return message(incoming, "Конечно. На какую дату бронируем стол?", BotState.TABLE_BOOKING_COLLECT_DATE, "ASK_DATE");
         }
-        if (!hasTime(normalized)) {
+        if (draft.requestedTime() == null) {
             fsmStorage.setState(incoming.chatId(), BotState.TABLE_BOOKING_COLLECT_TIME);
             return message(incoming, "Принял дату. На какое время поставить бронь?", BotState.TABLE_BOOKING_COLLECT_TIME, "ASK_TIME");
         }
-        if (!hasPartySize(normalized)) {
+        if (draft.partySize() == null) {
             fsmStorage.setState(incoming.chatId(), BotState.TABLE_BOOKING_COLLECT_PARTY_SIZE);
             return message(incoming, "На сколько гостей бронируем?", BotState.TABLE_BOOKING_COLLECT_PARTY_SIZE, "ASK_PARTY_SIZE");
         }
-        saveDraftIfComplete(incoming, normalized);
         return sendHallPlan(incoming);
     }
 
@@ -96,8 +99,8 @@ public class TableBookingScenario {
     }
 
     private OutgoingMessage tableSelected(IncomingMessage incoming, String normalized) {
-        Optional<TableBookingDraftStorage.Draft> draft = draftStorage.find(incoming.chatId());
-        if (draft.isEmpty()) {
+        Optional<TableBookingDraftStorage.Draft> draft = findDraft(incoming.chatId());
+        if (draft.isEmpty() || draft.get().requestedStartAt() == null || draft.get().requestedEndAt() == null) {
             fsmStorage.setState(incoming.chatId(), BotState.TABLE_BOOKING_COLLECT_DATE);
             return message(
                     incoming,
@@ -169,9 +172,32 @@ public class TableBookingScenario {
                 defaultVenueCode,
                 startAt,
                 startAt.plusSeconds(2 * 60 * 60),
+                requestedDate(normalized),
+                requestedTime(normalized),
                 partySize(normalized),
                 incoming.text()
         ));
+    }
+
+    private TableBookingDraftStorage.Draft mergeDraft(IncomingMessage incoming, String normalized) {
+        Optional<TableBookingDraftStorage.Draft> stored = findDraft(incoming.chatId());
+        LocalDate date = extractDate(normalized).or(() -> stored.map(TableBookingDraftStorage.Draft::requestedDate)).orElse(null);
+        LocalTime time = extractTime(normalized).or(() -> stored.map(TableBookingDraftStorage.Draft::requestedTime)).orElse(null);
+        Integer partySize = extractPartySize(normalized).or(() -> stored.map(TableBookingDraftStorage.Draft::partySize)).orElse(null);
+        String originalText = mergeOriginalText(stored.map(TableBookingDraftStorage.Draft::originalText).orElse(null), incoming.text());
+
+        Instant startAt = date == null || time == null ? null : date.atTime(time).atZone(VENUE_ZONE).toInstant();
+        TableBookingDraftStorage.Draft draft = new TableBookingDraftStorage.Draft(
+                defaultVenueCode,
+                startAt,
+                startAt == null ? null : startAt.plusSeconds(2 * 60 * 60),
+                date,
+                time,
+                partySize,
+                originalText
+        );
+        draftStorage.save(incoming.chatId(), draft);
+        return draft;
     }
 
     private boolean isTableBookingIntent(String text) {
@@ -199,21 +225,46 @@ public class TableBookingScenario {
     }
 
     private boolean hasDate(String text) {
-        return text.contains("сегодня")
+        return extractDate(text).isPresent();
+    }
+
+    private Optional<LocalDate> extractDate(String text) {
+        if (text.contains("послезавтра")) {
+            return Optional.of(LocalDate.now(VENUE_ZONE).plusDays(2));
+        }
+        if (text.contains("сегодня")
                 || text.contains("завтра")
-                || text.matches(".*\\b\\d{1,2}[./-]\\d{1,2}([./-]\\d{2,4})?\\b.*");
+                || DATE.matcher(text).find()) {
+            return Optional.of(requestedDate(text));
+        }
+        return Optional.empty();
     }
 
     private boolean hasTime(String text) {
-        return TIME.matcher(text).find();
+        return extractTime(text).isPresent();
+    }
+
+    private Optional<LocalTime> extractTime(String text) {
+        Matcher matcher = TIME.matcher(text);
+        return matcher.find() ? Optional.of(parseTime(matcher)) : Optional.empty();
     }
 
     private boolean hasPartySize(String text) {
-        return text.contains("двоих")
-                || text.contains("двоем")
-                || text.contains("троих")
-                || text.contains("четверых")
-                || text.matches(".*\\bна\\s+\\d{1,2}\\b.*");
+        return extractPartySize(text).isPresent();
+    }
+
+    private Optional<Integer> extractPartySize(String text) {
+        if (text.contains("двоих") || text.contains("двоем")) {
+            return Optional.of(2);
+        }
+        if (text.contains("троих")) {
+            return Optional.of(3);
+        }
+        if (text.contains("четверых")) {
+            return Optional.of(4);
+        }
+        Matcher matcher = Pattern.compile("\\bна\\s+(\\d{1,2})\\b").matcher(text);
+        return matcher.find() ? Optional.of(Integer.parseInt(matcher.group(1))) : Optional.empty();
     }
 
     private boolean looksLikeTableSelection(String text) {
@@ -235,34 +286,33 @@ public class TableBookingScenario {
 
     private LocalDate requestedDate(String text) {
         LocalDate today = LocalDate.now(VENUE_ZONE);
+        if (text.contains("послезавтра")) {
+            return today.plusDays(2);
+        }
         if (text.contains("завтра")) {
             return today.plusDays(1);
+        }
+        Matcher matcher = DATE.matcher(text);
+        if (matcher.find()) {
+            int day = Integer.parseInt(matcher.group(1));
+            int month = Integer.parseInt(matcher.group(2));
+            int year = matcher.group(3) == null ? today.getYear() : parseYear(matcher.group(3));
+            LocalDate parsed = LocalDate.of(year, month, day);
+            return matcher.group(3) == null && parsed.isBefore(today) ? parsed.plusYears(1) : parsed;
         }
         return today;
     }
 
     private LocalTime requestedTime(String text) {
-        java.util.regex.Matcher matcher = TIME.matcher(text);
+        Matcher matcher = TIME.matcher(text);
         if (!matcher.find()) {
             return LocalTime.of(20, 0);
         }
-        int hour = Integer.parseInt(matcher.group(1));
-        int minute = matcher.group(2) == null ? 0 : Integer.parseInt(matcher.group(2));
-        return LocalTime.of(hour, minute);
+        return parseTime(matcher);
     }
 
     private Integer partySize(String text) {
-        if (text.contains("двоих") || text.contains("двоем")) {
-            return 2;
-        }
-        if (text.contains("троих")) {
-            return 3;
-        }
-        if (text.contains("четверых")) {
-            return 4;
-        }
-        java.util.regex.Matcher matcher = Pattern.compile("\\bна\\s+(\\d{1,2})\\b").matcher(text);
-        return matcher.find() ? Integer.parseInt(matcher.group(1)) : 2;
+        return extractPartySize(text).orElse(2);
     }
 
     private String tableCode(String text) {
@@ -278,8 +328,30 @@ public class TableBookingScenario {
         if (text.contains("выбери сам") || text.contains("любой") || text.contains("на твой выбор") || text.contains("где удобно")) {
             return null;
         }
-        java.util.regex.Matcher matcher = Pattern.compile("\\b(?:стол(?:ик)?\\s*)?(1\\d|[1-9])\\b").matcher(text);
+        Matcher matcher = Pattern.compile("\\b(?:стол(?:ик)?\\s*)?(1\\d|[1-9])\\b").matcher(text);
         return matcher.find() ? matcher.group(1) : null;
+    }
+
+    private LocalTime parseTime(Matcher matcher) {
+        int hour = Integer.parseInt(matcher.group(1));
+        int minute = matcher.group(2) == null ? 0 : Integer.parseInt(matcher.group(2));
+        return LocalTime.of(hour, minute);
+    }
+
+    private int parseYear(String value) {
+        int year = Integer.parseInt(value);
+        return year < 100 ? 2000 + year : year;
+    }
+
+    private String mergeOriginalText(String existing, String next) {
+        String safeNext = next == null ? "" : next.trim();
+        if (existing == null || existing.isBlank()) {
+            return safeNext;
+        }
+        if (safeNext.isBlank() || existing.contains(safeNext)) {
+            return existing;
+        }
+        return existing + " | " + safeNext;
     }
 
     private String guestName(IncomingMessage incoming) {
@@ -287,6 +359,11 @@ public class TableBookingScenario {
         String lastName = incoming.lastName() == null ? "" : incoming.lastName().trim();
         String fullName = (firstName + " " + lastName).trim();
         return fullName.isBlank() ? incoming.username() : fullName;
+    }
+
+    private Optional<TableBookingDraftStorage.Draft> findDraft(Long chatId) {
+        Optional<TableBookingDraftStorage.Draft> draft = draftStorage.find(chatId);
+        return draft == null ? Optional.empty() : draft;
     }
 
     private String normalize(String text) {

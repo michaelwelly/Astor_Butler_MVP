@@ -10,6 +10,8 @@ import org.springframework.stereotype.Component;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.Optional;
 
 @Component
@@ -67,8 +69,19 @@ public class TableBookingDraftStorage {
             String venueCode,
             Instant requestedStartAt,
             Instant requestedEndAt,
+            LocalDate requestedDate,
+            LocalTime requestedTime,
             Integer partySize,
             String originalText
     ) {
+        public Draft(
+                String venueCode,
+                Instant requestedStartAt,
+                Instant requestedEndAt,
+                Integer partySize,
+                String originalText
+        ) {
+            this(venueCode, requestedStartAt, requestedEndAt, null, null, partySize, originalText);
+        }
     }
 }

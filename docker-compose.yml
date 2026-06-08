@@ -56,6 +56,7 @@ services:
       TELEGRAM_ADMIN_CHAT_ID: ${TELEGRAM_ADMIN_CHAT_ID:-}
       TELEGRAM_ANALYTICS_CHAT_ID: ${TELEGRAM_ANALYTICS_CHAT_ID:-}
       TELEGRAM_HOSTESS_CHAT_ID: ${TELEGRAM_HOSTESS_CHAT_ID:-}
+      TELEGRAM_QUIET_GUIDE_INTERIOR_VIDEO_OBJECT_KEY: ${TELEGRAM_QUIET_GUIDE_INTERIOR_VIDEO_OBJECT_KEY:-content/aeris/interior/INTERIOR.mp4}
       TELEGRAM_CLIENT_ID: ${TELEGRAM_CLIENT_ID:-}
       TELEGRAM_REDIRECT_URI: ${APP_TELEGRAM_REDIRECT_URI:-http://localhost:8080/auth/telegram/callback}
       LLM_OLLAMA_BASE_URL: ${APP_LLM_OLLAMA_BASE_URL:-http://llm-gateway:11434}
@@ -64,11 +65,22 @@ services:
       LLM_CONNECT_TIMEOUT_MS: ${LLM_CONNECT_TIMEOUT_MS:-5000}
       LLM_READ_TIMEOUT_MS: ${LLM_READ_TIMEOUT_MS:-45000}
       LLM_OLLAMA_KEEP_ALIVE: ${LLM_OLLAMA_KEEP_ALIVE:-30m}
+      ASTOR_STT_ENABLED: ${ASTOR_STT_ENABLED:-true}
+      ASTOR_STT_COMMAND: ${ASTOR_STT_COMMAND:-python3 /app/stt_faster_whisper.py {file}}
+      ASTOR_STT_TIMEOUT_SECONDS: ${ASTOR_STT_TIMEOUT_SECONDS:-90}
+      ASTOR_STT_RETRY_TTL_SECONDS: ${ASTOR_STT_RETRY_TTL_SECONDS:-1800}
+      ASTOR_STT_MODEL: ${ASTOR_STT_MODEL:-base}
+      ASTOR_STT_LANGUAGE: ${ASTOR_STT_LANGUAGE:-ru}
+      ASTOR_STT_DEVICE: ${ASTOR_STT_DEVICE:-cpu}
+      ASTOR_STT_COMPUTE_TYPE: ${ASTOR_STT_COMPUTE_TYPE:-int8}
+      HF_HOME: /root/.cache/huggingface
       YANDEX_FOLDER_ID: ${YANDEX_FOLDER_ID:-}
       YANDEX_IAM_TOKEN: ${YANDEX_IAM_TOKEN:-}
       YANDEX_AGENT_ENDPOINT: ${YANDEX_AGENT_ENDPOINT:-}
       JWT_SECRET: ${JWT_SECRET:-local-container-dev-only}
       LOG_LEVEL: ${LOG_LEVEL:-INFO}
+    volumes:
+      - huggingface-cache:/root/.cache/huggingface
     depends_on:
       postgres:
         condition: service_healthy
@@ -349,5 +361,6 @@ volumes:
   kafkadata:
   ollama_data:
   miniodata:
+  huggingface-cache:
   prometheusdata:
   grafanadata:

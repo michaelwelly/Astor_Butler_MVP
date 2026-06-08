@@ -4,6 +4,8 @@ import museon_online.astor_butler.domain.telegram.TelegramIntakeService;
 import museon_online.astor_butler.fsm.core.BotState;
 import museon_online.astor_butler.fsm.scenario.FirstTouchScenario;
 import museon_online.astor_butler.fsm.scenario.MainMenuScenario;
+import museon_online.astor_butler.fsm.scenario.MenuAssetsScenario;
+import museon_online.astor_butler.fsm.scenario.QuietGuideScenario;
 import museon_online.astor_butler.fsm.scenario.TableBookingScenario;
 import museon_online.astor_butler.fsm.storage.FSMStorage;
 import museon_online.astor_butler.kafka.UserEventProducer;
@@ -42,6 +44,12 @@ class MessageGatewayServiceTest {
     private MainMenuScenario mainMenuScenario;
 
     @Mock
+    private MenuAssetsScenario menuAssetsScenario;
+
+    @Mock
+    private QuietGuideScenario quietGuideScenario;
+
+    @Mock
     private TableBookingScenario tableBookingScenario;
 
     @Mock
@@ -49,6 +57,9 @@ class MessageGatewayServiceTest {
 
     @Mock
     private LlmScenarioPromptCatalog llmScenarioPromptCatalog;
+
+    @Mock
+    private VoiceTranscriptionRetryService voiceTranscriptionRetryService;
 
     private MessageGatewayService service;
 
@@ -60,9 +71,12 @@ class MessageGatewayServiceTest {
                 telegramIntakeService,
                 firstTouchScenario,
                 mainMenuScenario,
+                menuAssetsScenario,
+                quietGuideScenario,
                 tableBookingScenario,
                 userEventProducer,
-                llmScenarioPromptCatalog
+                llmScenarioPromptCatalog,
+                voiceTranscriptionRetryService
         );
         ReflectionTestUtils.setField(service, "adminChatId", "100500");
         ReflectionTestUtils.setField(service, "analyticsChatId", "100501");
@@ -76,9 +90,13 @@ class MessageGatewayServiceTest {
         when(llmScenarioPromptCatalog.tableBookingContract()).thenReturn("table booking contract");
         when(firstTouchScenario.supports(eq(incoming), eq(BotState.READY_FOR_DIALOG), eq("Check админки")))
                 .thenReturn(false);
-        when(mainMenuScenario.supports(eq(incoming), eq(BotState.READY_FOR_DIALOG), eq("Check админки")))
-                .thenReturn(false);
         when(tableBookingScenario.supports(eq(incoming), eq(BotState.READY_FOR_DIALOG), eq("Check админки")))
+                .thenReturn(false);
+        when(menuAssetsScenario.supports(eq(incoming), eq(BotState.READY_FOR_DIALOG), eq("Check админки")))
+                .thenReturn(false);
+        when(quietGuideScenario.supports(eq(incoming), eq(BotState.READY_FOR_DIALOG), eq("Check админки")))
+                .thenReturn(false);
+        when(mainMenuScenario.supports(eq(incoming), eq(BotState.READY_FOR_DIALOG), eq("Check админки")))
                 .thenReturn(false);
         when(ollamaClient.ask(any())).thenThrow(new ResourceAccessException("Read timed out"));
 
@@ -112,8 +130,6 @@ class MessageGatewayServiceTest {
         when(fsmStorage.getState(incoming.chatId())).thenReturn(BotState.READY_FOR_DIALOG);
         when(firstTouchScenario.supports(eq(incoming), eq(BotState.READY_FOR_DIALOG), eq(incoming.text())))
                 .thenReturn(false);
-        when(mainMenuScenario.supports(eq(incoming), eq(BotState.READY_FOR_DIALOG), eq(incoming.text())))
-                .thenReturn(false);
         when(tableBookingScenario.supports(eq(incoming), eq(BotState.READY_FOR_DIALOG), eq(incoming.text())))
                 .thenReturn(true);
         when(tableBookingScenario.handle(eq(incoming), eq(BotState.READY_FOR_DIALOG), eq(incoming.text())))
@@ -145,6 +161,12 @@ class MessageGatewayServiceTest {
         when(fsmStorage.getState(incoming.chatId())).thenReturn(BotState.READY_FOR_DIALOG);
         when(firstTouchScenario.supports(eq(incoming), eq(BotState.READY_FOR_DIALOG), eq(incoming.text())))
                 .thenReturn(false);
+        when(tableBookingScenario.supports(eq(incoming), eq(BotState.READY_FOR_DIALOG), eq(incoming.text())))
+                .thenReturn(false);
+        when(menuAssetsScenario.supports(eq(incoming), eq(BotState.READY_FOR_DIALOG), eq(incoming.text())))
+                .thenReturn(false);
+        when(quietGuideScenario.supports(eq(incoming), eq(BotState.READY_FOR_DIALOG), eq(incoming.text())))
+                .thenReturn(false);
         when(mainMenuScenario.supports(eq(incoming), eq(BotState.READY_FOR_DIALOG), eq(incoming.text())))
                 .thenReturn(true);
         when(mainMenuScenario.handle(eq(incoming), eq(BotState.READY_FOR_DIALOG), eq(incoming.text())))
@@ -155,7 +177,43 @@ class MessageGatewayServiceTest {
         assertThat(outgoing.nextState()).isEqualTo(BotState.TIP_CONFIRMATION.name());
         assertThat(outgoing.actions()).containsExactly("SMART_TIP", "TIP_CONFIRMATION");
         verify(ollamaClient, never()).ask(any());
-        verify(tableBookingScenario, never()).supports(any(), any(), any());
+        verify(tableBookingScenario).supports(eq(incoming), eq(BotState.READY_FOR_DIALOG), eq(incoming.text()));
+        verify(userEventProducer).publishIncomingMessage(incoming, BotState.READY_FOR_DIALOG, outgoing);
+    }
+
+    @Test
+    void asksToRecordVoiceAgainAfterFirstFailedTranscription() {
+        IncomingMessage incoming = telegramVoice("");
+        when(fsmStorage.getState(incoming.chatId())).thenReturn(BotState.READY_FOR_DIALOG);
+        when(firstTouchScenario.supports(eq(incoming), eq(BotState.READY_FOR_DIALOG), eq(""))).thenReturn(false);
+        when(tableBookingScenario.supports(eq(incoming), eq(BotState.READY_FOR_DIALOG), eq(""))).thenReturn(false);
+        when(menuAssetsScenario.supports(eq(incoming), eq(BotState.READY_FOR_DIALOG), eq(""))).thenReturn(false);
+        when(quietGuideScenario.supports(eq(incoming), eq(BotState.READY_FOR_DIALOG), eq(""))).thenReturn(false);
+        when(mainMenuScenario.supports(eq(incoming), eq(BotState.READY_FOR_DIALOG), eq(""))).thenReturn(false);
+        when(voiceTranscriptionRetryService.recordFailure(incoming.chatId())).thenReturn(1L);
+
+        OutgoingMessage outgoing = service.handle(incoming);
+
+        assertThat(outgoing.actions()).containsExactly("VOICE_RECEIVED", "TRANSCRIPTION_RETRY_REQUESTED");
+        assertThat(outgoing.text()).contains("еще раз");
+        verify(userEventProducer).publishIncomingMessage(incoming, BotState.READY_FOR_DIALOG, outgoing);
+    }
+
+    @Test
+    void asksForTextAfterSecondFailedVoiceTranscription() {
+        IncomingMessage incoming = telegramVoice("");
+        when(fsmStorage.getState(incoming.chatId())).thenReturn(BotState.READY_FOR_DIALOG);
+        when(firstTouchScenario.supports(eq(incoming), eq(BotState.READY_FOR_DIALOG), eq(""))).thenReturn(false);
+        when(tableBookingScenario.supports(eq(incoming), eq(BotState.READY_FOR_DIALOG), eq(""))).thenReturn(false);
+        when(menuAssetsScenario.supports(eq(incoming), eq(BotState.READY_FOR_DIALOG), eq(""))).thenReturn(false);
+        when(quietGuideScenario.supports(eq(incoming), eq(BotState.READY_FOR_DIALOG), eq(""))).thenReturn(false);
+        when(mainMenuScenario.supports(eq(incoming), eq(BotState.READY_FOR_DIALOG), eq(""))).thenReturn(false);
+        when(voiceTranscriptionRetryService.recordFailure(incoming.chatId())).thenReturn(2L);
+
+        OutgoingMessage outgoing = service.handle(incoming);
+
+        assertThat(outgoing.actions()).containsExactly("VOICE_RECEIVED", "TRANSCRIPTION_FAILED_TWICE", "ASK_TEXT_INPUT");
+        assertThat(outgoing.text()).contains("дважды", "текстом");
         verify(userEventProducer).publishIncomingMessage(incoming, BotState.READY_FOR_DIALOG, outgoing);
     }
 
@@ -173,6 +231,28 @@ class MessageGatewayServiceTest {
                 "ru",
                 false,
                 "284069875"
+        );
+    }
+
+    private IncomingMessage telegramVoice(String text) {
+        return IncomingMessage.telegram(
+                1773317437L,
+                1773317437L,
+                351,
+                284069875,
+                text,
+                null,
+                "Наталья",
+                "Поединенко",
+                "Poedinenko",
+                "ru",
+                false,
+                "284069875",
+                java.util.Map.of(
+                        "mediaKind", "VOICE",
+                        "transcriptionStatus", "FAILED",
+                        "transcriptionReason", "STT command returned blank text"
+                )
         );
     }
 }

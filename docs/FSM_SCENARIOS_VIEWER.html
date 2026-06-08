@@ -114,6 +114,10 @@
       height: auto !important;
     }
 
+    .wide svg {
+      min-width: 1380px;
+    }
+
     .compact svg {
       min-width: 760px;
     }
@@ -175,10 +179,30 @@
       header {
         align-items: flex-start;
         flex-direction: column;
+        gap: 10px;
+        padding: 12px 14px 10px;
       }
 
       h1 {
+        font-size: 20px;
         white-space: normal;
+      }
+
+      nav {
+        width: 100%;
+        flex-wrap: nowrap;
+        gap: 4px;
+        overflow-x: auto;
+        padding-bottom: 2px;
+        font-size: 11px;
+        scrollbar-width: thin;
+      }
+
+      nav a {
+        flex: 0 0 auto;
+        padding: 3px 6px;
+        border-radius: 5px;
+        white-space: nowrap;
       }
 
       main {
@@ -205,6 +229,7 @@
     <a href="#table-booking">Стол</a>
     <a href="#event-booking">Мероприятие</a>
     <a href="#menu-assets">Меню</a>
+    <a href="#quiet-guide">Quiet Guide</a>
     <a href="#smart-tip">Чаевые</a>
     <a href="#hidden-heart">Донаты</a>
     <a href="#art-auction">Аукцион</a>
@@ -221,10 +246,10 @@
   <section id="system">
     <h2>0. Общая карта системы</h2>
     <p>Карта верхнего уровня: кто с кем связан и где проходят границы ответственности. Ниже каждый крупный блок раскрыт отдельной диаграммой.</p>
-    <div class="diagram mermaid">
+    <div class="diagram mermaid wide">
 flowchart TD
     Guest["Гость<br/>Telegram / future web chat"]
-    Transport["Transport adapters<br/>TelegramRouter / REST"]
+    Transport["Transport adapters<br/>TelegramRouter / REST<br/>voice -> transcript"]
     Gateway["MessageGatewayService<br/>единая точка входа"]
     Intake["Intake layer<br/>profile + message + consent evidence"]
     EventTrail["Outbox + Kafka<br/>astor.user.events"]
@@ -236,13 +261,13 @@ flowchart TD
 
     TableBooking["TableBookingScenario<br/>посадка за стол"]
     EventBooking["EventBookingScenario<br/>банкеты / события"]
-    MenuAssets["MenuAssetsScenario<br/>меню / карта бара"]
+    MenuAssets["MenuAssetsScenario<br/>меню / карта бара / RAG"]
     ManagerHelp["ManagerHelpScenario<br/>подключить команду"]
     ChangeCancel["ChangeCancelScenario<br/>изменить / отменить"]
     SmartTip["SmartTipScenario<br/>чаевые / благодарность"]
     HiddenHeart["HiddenHeartScenario<br/>донаты / социальный вклад"]
     ArtAuction["ArtAuctionScenario<br/>картины / аукцион"]
-    QuietGuide["QuietGuideScenario<br/>афиши / справки"]
+    QuietGuide["QuietGuideScenario<br/>афиши / справки / видео-тур / концепция"]
     SafePlay["SafePlayScenario<br/>мини-сценарии"]
     Impact["ImpactMeterScenario<br/>культурный вклад"]
     Recovery["RecoveryScenario<br/>непонятно / сбой"]
@@ -250,7 +275,8 @@ flowchart TD
     Domain["Domain services<br/>booking / media / consent / notifications"]
     Redis["Redis<br/>FSM state + runtime drafts"]
     Postgres["PostgreSQL<br/>durable facts"]
-    Minio["MinIO / resources<br/>PDF / media"]
+    Resources["Project resources + MinIO<br/>PDF / media / video"]
+    Rag["Menu RAG index<br/>chunks / metadata / embeddings later"]
     Hostess["Hostess chat<br/>Да / Нет"]
     Manager["Manager/Admin<br/>ручная работа"]
     LLM["LLM Adapter<br/>intent / entities / phrasing"]
@@ -275,13 +301,15 @@ flowchart TD
 
     TableBooking --> Domain --> Hostess
     EventBooking --> Domain --> Manager
-    MenuAssets --> Minio
+    MenuAssets --> Resources
+    MenuAssets --> Rag
     ManagerHelp --> Manager
     ChangeCancel --> Domain
     SmartTip --> Domain
     HiddenHeart --> Domain
     ArtAuction --> Domain
     QuietGuide --> Domain
+    QuietGuide --> Resources
     SafePlay --> Domain
     Impact --> Domain
     Recovery --> Manager
@@ -314,7 +342,7 @@ flowchart TD
     class Gateway,Domain core;
     class FirstTouch,MainMenu,TableBooking,EventBooking,MenuAssets,ManagerHelp,ChangeCancel,SmartTip,HiddenHeart,ArtAuction,QuietGuide,SafePlay,Impact,Recovery scenario;
     class Transport,LLM adapter;
-    class Redis,Postgres,EventTrail,Minio,Intake storage;
+    class Redis,Postgres,EventTrail,Resources,Rag,Intake storage;
     class Guest,Hostess,Admin,Manager human;
     </div>
     <div class="hint">Браузерный zoom: <code>Cmd +</code> / <code>Cmd -</code>. Диаграммы внутри блоков можно прокручивать горизонтально.</div>
@@ -333,12 +361,12 @@ flowchart TD
       </tr>
       </thead>
       <tbody>
-      <tr><td><code>FirstTouchScenario</code></td><td><code>/start</code>, новый гость, нет контакта</td><td>contact + consent</td><td><code>READY_FOR_DIALOG</code></td></tr>
+      <tr><td><code>FirstTouchScenario</code></td><td><code>/start</code>, новый гость, повторный старт</td><td>safe restart + persistent preview + contact/consent routing</td><td><code>CONSENT_REQUIRED</code> или <code>READY_FOR_DIALOG</code></td></tr>
       <tr><td><code>MainMenuScenario</code></td><td>гость уже в системе</td><td>выбор сценария</td><td><code>READY_FOR_DIALOG</code></td></tr>
       <tr><td><code>TableBookingScenario</code></td><td>стол, посадка, на двоих</td><td>заявка хостес / подтверждение</td><td><code>READY_FOR_DIALOG</code></td></tr>
       <tr><td><code>EventBookingScenario</code></td><td>банкет, день рождения, корпоратив</td><td>structured request менеджеру</td><td><code>READY_FOR_DIALOG</code></td></tr>
-      <tr><td><code>MenuAssetsScenario</code></td><td>меню, карта бара, банкетное меню</td><td>релевантный файл/раздел</td><td><code>READY_FOR_DIALOG</code></td></tr>
-      <tr><td><code>QuietGuideScenario</code></td><td>афиша, что сегодня, справка</td><td>контент без спама</td><td><code>READY_FOR_DIALOG</code></td></tr>
+      <tr><td><code>MenuAssetsScenario</code></td><td>меню, карта бара, вино, коктейли, voice/text</td><td>LLM/RAG уточнение + 1-4 актуальных PDF</td><td><code>READY_FOR_DIALOG</code></td></tr>
+      <tr><td><code>QuietGuideScenario</code></td><td>афиша, справка, видео-тур, концепция AERIS</td><td>контент/видео/approved copy без спама</td><td><code>READY_FOR_DIALOG</code></td></tr>
       <tr><td><code>SmartTipScenario</code></td><td>чаевые, благодарность</td><td>tip intent до payment boundary</td><td><code>READY_FOR_DIALOG</code></td></tr>
       <tr><td><code>HiddenHeartScenario</code></td><td>донат, благотворительность</td><td>анонимный donation draft</td><td><code>READY_FOR_DIALOG</code></td></tr>
       <tr><td><code>ArtAuctionScenario</code></td><td>картина, аукцион, ставка</td><td>bid flow с подтверждением</td><td><code>READY_FOR_DIALOG</code></td></tr>
@@ -437,16 +465,24 @@ flowchart LR
 
   <section id="first-touch">
     <h2>5. Первое касание</h2>
-    <p>До контакта и согласия система не ведет бизнес-сценарии и не собирает детали брони.</p>
+    <p><code>/start</code> - безопасный рестарт: сбрасывает активный runtime-сценарий, заново показывает/pin preview и ведет гостя либо к контакту, либо в главное меню.</p>
     <div class="diagram mermaid compact">
 flowchart TD
     Unknown["UNKNOWN"]
+    Start{"/start или первое касание?"}
+    Reset["Reset active guest runtime<br/>FSM state + drafts + current exchange"]
+    Preview["Send / refresh / pin<br/>persistent AERIS preview"]
+    Known{"Есть contact + consent?"}
     Consent["CONSENT_REQUIRED<br/>contact + policy"]
     Nudge["Nudge<br/>вернуть к кнопке"]
     Save["Сохранить contact<br/>и consent evidence"]
-    Ready["READY_FOR_DIALOG"]
+    Ready["READY_FOR_DIALOG<br/>MainMenuScenario"]
 
-    Unknown -- "/start" --> Consent
+    Unknown --> Start
+    Start -- "/start" --> Reset --> Preview --> Known
+    Start -- "первое касание без /start" --> Preview
+    Known -- "да" --> Ready
+    Known -- "нет" --> Consent
     Consent -- "текст без контакта" --> Nudge --> Consent
     Consent -- "Telegram contact" --> Save --> Ready
     </div>
@@ -557,29 +593,86 @@ flowchart TD
 
   <section id="menu-assets">
     <h2>9. Меню и материалы</h2>
-    <p>Сценарий выдачи релевантных материалов: не валить все файлы сразу, а понять, что нужно гостю.</p>
-    <div class="diagram mermaid compact">
+    <p>Quiet Guide ветка для меню: гость текстом или голосом просит меню, карту бара, вино или коктейли. Astor уточняет только при необходимости, отправляет актуальные PDF и пишет событие в наблюдаемость.</p>
+    <table>
+      <thead><tr><th>Asset</th><th>Runtime target</th><th>Когда отправлять</th></tr></thead>
+      <tbody>
+      <tr><td>Кухня / основное меню</td><td><code>classpath:menu/aeris/MENU AERIS A4 2026 DIGITAL.pdf</code></td><td>меню, еда, кухня, что поесть</td></tr>
+      <tr><td>Бар</td><td><code>classpath:menu/aeris/BAR CARD.pdf</code></td><td>бар, напитки, крепкое, барная карта</td></tr>
+      <tr><td>Коктейли / Elements</td><td><code>classpath:menu/aeris/ELEMENTS CARD.pdf</code></td><td>коктейли, elements, авторские коктейли</td></tr>
+      <tr><td>Вино</td><td><code>classpath:menu/aeris/WINE MENU 2026 FINAL.pdf</code></td><td>вино, винная карта, шампанское</td></tr>
+      </tbody>
+    </table>
+    <div class="diagram mermaid wide">
 flowchart TD
-    Start["Intent: меню / бар / еда"]
-    Which{"Что нужно?"}
-    Food["Основное меню"]
-    Bar["Карта бара"]
-    Banquet["Банкетные материалы"]
-    Clarify["Уточнить: еда / бар / банкет"]
-    Offer["Предложить бронь стола<br/>или менеджера"]
+    Start["Text или voice intent:<br/>меню / бар / вино / коктейли / еда"]
+    Transport["Transport normalized input<br/>voice -> transcript"]
+    Classify["LLM/RAG intent extraction<br/>menu categories + confidence"]
+    NeedClarify{"Понятно, какие карты нужны?"}
+    Clarify["MENU_ASSETS_CLARIFY<br/>Спросить: кухня, бар, коктейли, вино или все?"]
+    Select{"Категории"}
+    Food["Attach kitchen PDF"]
+    Bar["Attach BAR CARD.pdf"]
+    Elements["Attach ELEMENTS CARD.pdf"]
+    Wine["Attach WINE MENU.pdf"]
+    All["Attach 4 PDFs<br/>calm order"]
+    Reply["Стильный короткий ответ<br/>+ файлы"]
+    Log["Kafka/admin event<br/>MENU_ASSETS_DELIVERED"]
+    Offer["Могу помочь с бронью стола<br/>или позвать менеджера"]
     Home["READY_FOR_DIALOG"]
 
-    Start --> Which
-    Which -- "еда" --> Food --> Offer
-    Which -- "бар" --> Bar --> Offer
-    Which -- "банкет" --> Banquet --> Offer
-    Which -- "непонятно" --> Clarify --> Which
-    Offer --> Home
+    Start --> Transport --> Classify --> NeedClarify
+    NeedClarify -- "нет" --> Clarify --> Classify
+    NeedClarify -- "да" --> Select
+    Select -- "кухня" --> Food --> Reply
+    Select -- "бар" --> Bar --> Reply
+    Select -- "коктейли" --> Elements --> Reply
+    Select -- "вино" --> Wine --> Reply
+    Select -- "все меню" --> All --> Reply
+    Reply --> Log --> Offer --> Home
+    </div>
+    <div class="grid">
+      <div class="card"><strong>RAG</strong><span>PDF - source of truth. Индекс меню общий для всех локальных LLM-инстансов через shared retrieval, а не внутри каждой модели.</span></div>
+      <div class="card"><strong>Voice</strong><span>Telegram voice/audio сначала транскрибируется в transport/intake, затем идет тот же путь, что и текст.</span></div>
+      <div class="card"><strong>Guardrail</strong><span>LLM не выдумывает позиции, цены и наличие. Если отвечает по блюдам, опирается на RAG/menu source.</span></div>
+    </div>
+  </section>
+
+  <section id="quiet-guide">
+    <h2>10. Quiet Guide / справки, видео-тур и концепция</h2>
+    <p>Quiet Guide отвечает только на запрос гостя: афиша, справка, интерьер, концепция AERIS. Это не рассылка и не маркетинговый шум.</p>
+    <div class="diagram mermaid wide">
+flowchart TD
+    Start["Text или voice intent:<br/>афиша / справка / видео-тур / концепция"]
+    Transport["Transport normalized input<br/>voice -> transcript"]
+    Type{"Что ищем?"}
+    Poster["Афиша / события<br/>content items"]
+    Help["Короткая справка<br/>rules / info"]
+    Video["QUIET_GUIDE_DELIVERED<br/>INTERIOR.mp4 из MinIO/cache"]
+    Concept["Approved concept copy<br/>Георгий Матвеев / 21 страна / философия"]
+    Clarify["QUIET_GUIDE_CLARIFY<br/>афиша / меню / видео-тур / концепция / менеджер"]
+    Reply["Короткий красивый ответ<br/>+ релевантный материал"]
+    Log["Kafka/admin event<br/>QUIET_GUIDE_DELIVERED"]
+    Offer["Предложить следующий шаг<br/>без давления"]
+    Home["READY_FOR_DIALOG"]
+
+    Start --> Transport --> Type
+    Type -- "афиша / события" --> Poster --> Reply
+    Type -- "правила / справка" --> Help --> Reply
+    Type -- "интерьер / зал / видео" --> Video --> Reply
+    Type -- "концепция / шеф / кухня" --> Concept --> Reply
+    Type -- "непонятно" --> Clarify --> Home
+    Reply --> Log --> Offer --> Home
+    </div>
+    <div class="grid">
+      <div class="card"><strong>Видео</strong><span><code>INTERIOR.mp4</code> весит около 46 MB, поэтому целевой runtime - MinIO object <code>content/aeris/interior/INTERIOR.mp4</code>, не git/jar.</span></div>
+      <div class="card"><strong>Концепция</strong><span>Ответ строится на approved copy: гастрономическая экспедиция Георгия Матвеева, 21 страна Средиземноморья, чистота вкуса и продукт.</span></div>
+      <div class="card"><strong>Fallback</strong><span>Если media storage недоступен, Astor спокойно извиняется, дает концепт-текст и отправляет admin event без технических деталей гостю.</span></div>
     </div>
   </section>
 
   <section id="smart-tip">
-    <h2>10. Smart Tip / благодарность</h2>
+    <h2>11. Smart Tip / благодарность</h2>
     <p>Сценарий благодарности из Legacy <code>tip/*</code>. Пока нет платежной интеграции, FSM создает только подтвержденное намерение и не обещает оплату.</p>
     <div class="diagram mermaid">
 flowchart TD
@@ -607,7 +700,7 @@ flowchart TD
   </section>
 
   <section id="hidden-heart">
-    <h2>11. Hidden Heart / донаты</h2>
+    <h2>12. Hidden Heart / донаты</h2>
     <p>Социальный вклад из Legacy <code>charity/*</code>: анонимный донат или поддержка инициативы. Никакого давления, публичного сравнения и лишних персональных данных.</p>
     <div class="diagram mermaid">
 flowchart TD
@@ -640,7 +733,7 @@ flowchart TD
   </section>
 
   <section id="art-auction">
-    <h2>12. Art Auction / картины на событии</h2>
+    <h2>13. Art Auction / картины на событии</h2>
     <p>Аукцион на мероприятии - это стык Hidden Heart, Safe Play, Impact Meter и EventBooking. Он не запускается случайной фразой: нужен активный event/lot.</p>
     <div class="diagram mermaid">
 flowchart TD
@@ -671,7 +764,7 @@ flowchart TD
   </section>
 
   <section id="impact">
-    <h2>13. Impact Meter / культурный вклад</h2>
+    <h2>14. Impact Meter / культурный вклад</h2>
     <p>Extension point для отчетности: донаты, аукционы, чаевые и события превращаются в агрегированные KPI без раскрытия приватных платежных данных.</p>
     <div class="diagram mermaid compact">
 flowchart TD
@@ -692,7 +785,7 @@ flowchart TD
   </section>
 
   <section id="manager-help">
-    <h2>14. Менеджер / ручная помощь</h2>
+    <h2>15. Менеджер / ручная помощь</h2>
     <p>Ручное подключение команды должно быть явным сценарием, а не побочным эффектом любой непонятной фразы.</p>
     <div class="diagram mermaid compact">
 flowchart TD
@@ -708,7 +801,7 @@ flowchart TD
   </section>
 
   <section id="change-cancel">
-    <h2>15. Изменить или отменить</h2>
+    <h2>16. Изменить или отменить</h2>
     <p>Отмена и изменение должны искать активную бронь, освобождать holds и при изменении заново проходить подтверждение.</p>
     <div class="diagram mermaid">
 flowchart TD
@@ -731,7 +824,7 @@ flowchart TD
   </section>
 
   <section id="recovery">
-    <h2>16. Recovery / fallback</h2>
+    <h2>17. Recovery / fallback</h2>
     <p>Recovery сначала уточняет, и только потом эскалирует. Это должен быть редкий safety-net.</p>
     <div class="diagram mermaid compact">
 flowchart TD
@@ -748,7 +841,7 @@ flowchart TD
   </section>
 
   <section id="llm">
-    <h2>17. Контракт LLM</h2>
+    <h2>18. Контракт LLM</h2>
     <p>LLM - адаптер языка. Он помогает понять и красиво сказать, но не владеет бизнес-решениями.</p>
     <div class="grid">
       <div class="card"><strong>LLM может</strong><span>Классифицировать intent, извлекать дату/время/гостей/зону/сумму/лот, задавать одно уточнение, помогать с тоном.</span></div>
@@ -758,14 +851,16 @@ flowchart TD
   </section>
 
   <section id="tests">
-    <h2>18. Предкодовый тест-план</h2>
+    <h2>19. Предкодовый тест-план</h2>
     <p>Перед кодом проверяем эту карту глазами, затем переносим ее в unit/integration тесты.</p>
     <table>
       <thead>
       <tr><th>Блок</th><th>Сценарий</th><th>Ожидаемый результат</th></tr>
       </thead>
       <tbody>
-      <tr><td>First Touch</td><td><code>UNKNOWN</code> + <code>/start</code></td><td><code>CONSENT_REQUIRED</code>, кнопка контакта</td></tr>
+      <tr><td>First Touch</td><td><code>UNKNOWN</code> + <code>/start</code></td><td>persistent preview sent/pinned, <code>CONSENT_REQUIRED</code>, кнопка контакта</td></tr>
+      <tr><td>First Touch</td><td>known contact + consent + <code>/start</code></td><td>active runtime scenario reset, preview sent/pinned, <code>READY_FOR_DIALOG</code></td></tr>
+      <tr><td>First Touch</td><td>active booking/menu/guide + <code>/start</code></td><td>scenario draft cleared, durable facts kept, safe start</td></tr>
       <tr><td>First Touch</td><td><code>CONSENT_REQUIRED</code> + contact</td><td>consent saved, <code>READY_FOR_DIALOG</code></td></tr>
       <tr><td>Main Menu</td><td>"хочу столик завтра"</td><td>route <code>TABLE_BOOKING</code></td></tr>
       <tr><td>Main Menu</td><td>"скинь меню"</td><td>route <code>MENU_ASSETS</code></td></tr>
@@ -777,6 +872,12 @@ flowchart TD
       <tr><td>Impact Meter</td><td>"сколько собрали?"</td><td>aggregated report only</td></tr>
       <tr><td>Table Booking</td><td>"столик завтра в 20:00 на двоих"</td><td>send plan, wait table</td></tr>
       <tr><td>Table Booking</td><td><code>TABLE_BOOKING_WAIT_TABLE_SELECTION</code> + "17"</td><td>create order/hold, send hostess card</td></tr>
+      <tr><td>Menu Assets</td><td>"скинь все меню"</td><td>send 4 PDFs: кухня, бар, elements, вино; admin event</td></tr>
+      <tr><td>Menu Assets</td><td>"что у вас по вину?"</td><td>send wine PDF only + calm answer</td></tr>
+      <tr><td>Menu Assets</td><td>voice "покажи коктейли"</td><td>transport transcript, route <code>MENU_ASSETS</code>, send elements/bar by classification</td></tr>
+      <tr><td>Quiet Guide</td><td>"покажи ресторан внутри"</td><td>send <code>INTERIOR.mp4</code> from MinIO/cache + event</td></tr>
+      <tr><td>Quiet Guide</td><td>"какая у вас концепция?"</td><td>approved concept answer, offer menu/table</td></tr>
+      <tr><td>Quiet Guide</td><td>video unavailable</td><td>polite guest fallback + admin event, no technical dump</td></tr>
       <tr><td>Safe Exit</td><td>любой активный сценарий + "стоп"</td><td>return <code>READY_FOR_DIALOG</code></td></tr>
       <tr><td>Observability</td><td>admin chat message</td><td>stored + projection, guest FSM skipped</td></tr>
       </tbody>

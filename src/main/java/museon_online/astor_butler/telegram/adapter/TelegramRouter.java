@@ -8,6 +8,7 @@ import museon_online.astor_butler.domain.booking.HostessReservationApprovalServi
 import museon_online.astor_butler.service.message.IncomingMessage;
 import museon_online.astor_butler.service.message.MessageGatewayService;
 import museon_online.astor_butler.service.message.OutgoingMessage;
+import museon_online.astor_butler.storage.ObjectStorageService;
 import museon_online.astor_butler.telegram.exeption.TelegramExceptionHandler;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
@@ -18,6 +19,8 @@ import org.telegram.telegrambots.meta.api.methods.AnswerCallbackQuery;
 import org.telegram.telegrambots.meta.api.methods.send.SendDocument;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.methods.send.SendPhoto;
+import org.telegram.telegrambots.meta.api.methods.send.SendVideo;
+import org.telegram.telegrambots.meta.api.methods.pinnedmessages.PinChatMessage;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.DeleteMessage;
 import org.telegram.telegrambots.meta.api.objects.Audio;
 import org.telegram.telegrambots.meta.api.objects.CallbackQuery;
@@ -35,9 +38,9 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.Keyboard
 import org.telegram.telegrambots.meta.bots.AbsSender;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiRequestException;
 
-import java.io.File;
 import java.io.InputStream;
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -55,6 +58,7 @@ public class TelegramRouter {
     private final TelegramVoiceTranscriptionService voiceTranscriptionService;
     private final HostessReservationApprovalService hostessReservationApprovalService;
     private final ResourceLoader resourceLoader;
+    private final ObjectStorageService objectStorageService;
 
     @Value("${telegram.ui.preview-enabled:true}")
     private boolean previewEnabled;
@@ -95,9 +99,10 @@ public class TelegramRouter {
             }
 
             OutgoingMessage outgoing = messageGatewayService.handle(incoming);
-            ensurePreview(incoming, sender);
+            ensurePreview(incoming, sender, isStartCommand(incoming));
             cleanupPreviousExchangeIfSafe(incoming, outgoing, sender);
             sendDocumentIfPresent(outgoing, sender);
+            sendVideoIfPresent(outgoing, sender);
             send(incoming, outgoing, sender);
             trackCurrentUserMessage(incoming);
             sendAdminAlert(outgoing, sender);
@@ -236,23 +241,101 @@ public class TelegramRouter {
         if (outgoing == null || outgoing.chatId() == null || outgoing.metadata() == null) {
             return;
         }
+        for (Map<String, Object> document : documentMetadata(outgoing)) {
+            sendDocument(outgoing.chatId(), document, sender);
+        }
+
         Object location = outgoing.metadata().get("documentResource");
         if (location == null || location.toString().isBlank()) {
             return;
         }
+        sendDocument(outgoing.chatId(), Map.of(
+                "resource", location.toString(),
+                "filename", text(outgoing.metadata().get("documentFilename"), ""),
+                "caption", text(outgoing.metadata().get("documentCaption"), "")
+        ), sender);
+    }
+
+    private void sendDocument(Long chatId, Map<String, Object> metadata, AbsSender sender) {
+        Object location = metadata.get("resource");
+        if (chatId == null || location == null || location.toString().isBlank()) {
+            return;
+        }
         try {
             Resource resource = resourceLoader.getResource(location.toString());
-            String filename = text(outgoing.metadata().get("documentFilename"), resource.getFilename() == null ? "document.pdf" : resource.getFilename());
+            String filename = text(metadata.get("filename"), resource.getFilename() == null ? "document.pdf" : resource.getFilename());
             try (InputStream inputStream = resource.getInputStream()) {
                 execute(sender, SendDocument.builder()
-                        .chatId(outgoing.chatId().toString())
+                        .chatId(chatId.toString())
                         .document(new InputFile(inputStream, filename))
-                        .caption(text(outgoing.metadata().get("documentCaption"), ""))
+                        .caption(text(metadata.get("caption"), ""))
                         .build());
-                log.info("Telegram document sent: chatId={}, resource={}", outgoing.chatId(), location);
+                log.info("Telegram document sent: chatId={}, resource={}", chatId, location);
             }
         } catch (Exception e) {
             log.warn("Telegram document was not sent: {}", e.getMessage());
+        }
+    }
+
+    private List<Map<String, Object>> documentMetadata(OutgoingMessage outgoing) {
+        Object value = outgoing.metadata().get("documents");
+        if (!(value instanceof List<?> rawDocuments)) {
+            return List.of();
+        }
+        List<Map<String, Object>> documents = new ArrayList<>();
+        for (Object rawDocument : rawDocuments) {
+            if (rawDocument instanceof Map<?, ?> rawMap) {
+                Map<String, Object> document = new LinkedHashMap<>();
+                rawMap.forEach((key, documentValue) -> {
+                    if (key != null) {
+                        document.put(key.toString(), documentValue);
+                    }
+                });
+                documents.add(document);
+            }
+        }
+        return List.copyOf(documents);
+    }
+
+    private void sendVideoIfPresent(OutgoingMessage outgoing, AbsSender sender) {
+        if (outgoing == null || outgoing.chatId() == null || outgoing.metadata() == null) {
+            return;
+        }
+        Object objectKey = outgoing.metadata().get("videoObjectKey");
+        if (objectKey == null || objectKey.toString().isBlank()) {
+            return;
+        }
+        String filename = text(outgoing.metadata().get("videoFilename"), "video.mp4");
+        String caption = text(outgoing.metadata().get("videoCaption"), "");
+        if ("DOCUMENT".equalsIgnoreCase(text(outgoing.metadata().get("videoSendMode"), ""))) {
+            sendMediaObjectAsDocument(outgoing.chatId(), objectKey.toString(), filename, caption, sender);
+            return;
+        }
+        try (InputStream inputStream = objectStorageService.openMediaObject(objectKey.toString())) {
+            execute(sender, SendVideo.builder()
+                    .chatId(outgoing.chatId().toString())
+                    .video(new InputFile(inputStream, filename))
+                    .caption(caption)
+                    .build());
+            log.info("Telegram video sent: chatId={}, objectKey={}", outgoing.chatId(), objectKey);
+        } catch (Exception e) {
+            log.warn("Telegram video was not sent: {}", e.getMessage());
+        }
+    }
+
+    private void sendMediaObjectAsDocument(Long chatId, String objectKey, String filename, String caption, AbsSender sender) {
+        if (chatId == null || objectKey == null || objectKey.isBlank()) {
+            return;
+        }
+        try (InputStream inputStream = objectStorageService.openMediaObject(objectKey)) {
+            execute(sender, SendDocument.builder()
+                    .chatId(chatId.toString())
+                    .document(new InputFile(inputStream, filename == null || filename.isBlank() ? "media.bin" : filename))
+                    .caption(caption == null ? "" : caption)
+                    .build());
+            log.info("Telegram media object sent as document: chatId={}, objectKey={}", chatId, objectKey);
+        } catch (Exception e) {
+            log.warn("Telegram media object document was not sent: {}", e.getMessage());
         }
     }
 
@@ -273,30 +356,46 @@ public class TelegramRouter {
                 .build();
     }
 
-    private void ensurePreview(IncomingMessage incoming, AbsSender sender) {
+    private void ensurePreview(IncomingMessage incoming, AbsSender sender, boolean force) {
         if (!previewEnabled
                 || incoming == null
                 || incoming.chatId() == null
                 || incoming.telegramUserId() == null
                 || incoming.chatId() < 0
-                || chatViewService.findPreviewMessageId(incoming.telegramUserId(), previewVersion) != null) {
+                || (!force && chatViewService.findPreviewMessageId(incoming.telegramUserId(), previewVersion) != null)) {
             return;
         }
 
-        try {
-            File avatar = previewAvatar.getFile();
+        String filename = previewAvatar.getFilename() == null ? "aeris-butler-preview.png" : previewAvatar.getFilename();
+        try (InputStream inputStream = previewAvatar.getInputStream()) {
             Message preview = sender.execute(SendPhoto.builder()
                     .chatId(incoming.chatId().toString())
-                    .photo(new InputFile(avatar))
+                    .photo(new InputFile(inputStream, filename))
                     .caption(previewText())
                     .parseMode("HTML")
                     .build());
 
             if (preview != null) {
                 chatViewService.savePreviewMessageId(incoming.telegramUserId(), preview.getMessageId(), previewVersion);
+                pinPreview(incoming, preview, sender);
             }
         } catch (Exception e) {
             log.warn("Telegram preview was not sent: {}", e.getMessage());
+        }
+    }
+
+    private void pinPreview(IncomingMessage incoming, Message preview, AbsSender sender) {
+        if (incoming == null || preview == null || incoming.chatId() == null || preview.getMessageId() == null) {
+            return;
+        }
+        try {
+            execute(sender, PinChatMessage.builder()
+                    .chatId(incoming.chatId().toString())
+                    .messageId(preview.getMessageId())
+                    .disableNotification(true)
+                    .build());
+        } catch (Exception e) {
+            log.debug("Telegram preview pin skipped: {}", e.getMessage());
         }
     }
 
@@ -347,6 +446,10 @@ public class TelegramRouter {
                 && !outgoing.adminAlert().required();
     }
 
+    private boolean isStartCommand(IncomingMessage incoming) {
+        return incoming != null && incoming.text() != null && "/start".equalsIgnoreCase(incoming.text().trim());
+    }
+
     private Map<String, Object> mediaPayload(Message message) {
         if (message == null) {
             return Map.of();
@@ -372,12 +475,16 @@ public class TelegramRouter {
 
     private String previewText() {
         return """
-                <b><a href="https://aeris.bar/">AERIS gastro bar</a></b>
+                <b><a href="https://aeris.bar/">AERIS</a> · Astor Butler</b>
 
-                Я Astor Butler. В AERIS я отвечаю за маленькие удобства: меню, бронь, события и быстрый контакт с командой.
+                Я на связи: помогу с меню, бронью, видео-туром, событиями и быстрым контактом с командой.
 
-                Пишите свободно: <i>хочу забронировать</i>, <i>покажи меню</i>, <i>есть ли события?</i>
-                Голосовые тоже можно — дворецкие умеют слушать.
+                Можно писать или говорить голосом:
+                <i>хочу стол на завтра в 20:00</i>
+                <i>покажи меню и винную карту</i>
+                <i>расскажи про AERIS</i>
+
+                <a href="https://michaelwelly.github.io/Astor_Butler_MVP/docs/guest-guide.html">Короткая инструкция гостя</a>
                 """;
     }
 
@@ -409,6 +516,15 @@ public class TelegramRouter {
     }
 
     private Message execute(AbsSender sender, SendDocument method) {
+        try {
+            return sender.execute(method);
+        } catch (Exception e) {
+            log.error("Telegram API call failed: {}", method.getMethod(), e);
+            return null;
+        }
+    }
+
+    private Message execute(AbsSender sender, SendVideo method) {
         try {
             return sender.execute(method);
         } catch (Exception e) {
