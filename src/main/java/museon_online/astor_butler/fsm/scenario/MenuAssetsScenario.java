@@ -1,6 +1,8 @@
 package museon_online.astor_butler.fsm.scenario;
 
 import lombok.RequiredArgsConstructor;
+import museon_online.astor_butler.domain.media.AerisMediaCatalog;
+import museon_online.astor_butler.domain.media.MediaAsset;
 import museon_online.astor_butler.fsm.core.BotState;
 import museon_online.astor_butler.fsm.storage.FSMStorage;
 import museon_online.astor_butler.service.message.AdminAlert;
@@ -18,28 +20,8 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class MenuAssetsScenario {
 
-    private static final MenuDocument KITCHEN = new MenuDocument(
-            "Кухня / основное меню",
-            "classpath:menu/aeris/MENU AERIS A4 2026 DIGITAL.pdf",
-            "MENU AERIS A4 2026 DIGITAL.pdf"
-    );
-    private static final MenuDocument BAR = new MenuDocument(
-            "Барная карта",
-            "classpath:menu/aeris/BAR CARD.pdf",
-            "BAR CARD.pdf"
-    );
-    private static final MenuDocument ELEMENTS = new MenuDocument(
-            "Коктейли / Elements",
-            "classpath:menu/aeris/ELEMENTS CARD.pdf",
-            "ELEMENTS CARD.pdf"
-    );
-    private static final MenuDocument WINE = new MenuDocument(
-            "Винная карта",
-            "classpath:menu/aeris/WINE MENU 2026 FINAL.pdf",
-            "WINE MENU 2026 FINAL.pdf"
-    );
-
     private final FSMStorage fsmStorage;
+    private final AerisMediaCatalog mediaCatalog;
 
     public boolean supports(IncomingMessage incoming, BotState currentState, String text) {
         BotState state = currentState == null ? BotState.UNKNOWN : currentState.canonical();
@@ -53,7 +35,7 @@ public class MenuAssetsScenario {
     }
 
     public OutgoingMessage handle(IncomingMessage incoming, BotState currentState, String text) {
-        List<MenuDocument> documents = classify(normalize(text));
+        List<MediaAsset> documents = classify(normalize(text));
         if (documents.isEmpty()) {
             fsmStorage.setState(incoming.chatId(), BotState.MENU_ASSETS_CLARIFY);
             return OutgoingMessage.of(
@@ -82,13 +64,13 @@ public class MenuAssetsScenario {
                 AdminAlert.none(),
                 List.of("MENU_ASSETS", "MENU_ASSETS_DELIVERED", "RETURN_MAIN_MENU")
         ).withMetadata(Map.of(
-                "documents", documents.stream().map(MenuDocument::metadata).toList(),
-                "ragSource", "classpath:menu/aeris/menu-rag-index.md",
+                "documents", documents.stream().map(this::metadata).toList(),
+                "ragSource", mediaCatalog.menuRagSource(),
                 "scenario", "MenuAssetsScenario"
         ));
     }
 
-    private List<MenuDocument> classify(String text) {
+    private List<MediaAsset> classify(String text) {
         if (text.isBlank()) {
             return List.of();
         }
@@ -99,29 +81,29 @@ public class MenuAssetsScenario {
         boolean wantsWine = containsAny(text, "вино", "вину", "вин", "шампан", "игрист");
 
         if (wantsAll && !wantsWine && !wantsElements && !wantsBar && !wantsKitchen) {
-            return List.of(KITCHEN, BAR, ELEMENTS, WINE);
+            return mediaCatalog.allMenus();
         }
 
-        List<MenuDocument> documents = new ArrayList<>();
+        List<MediaAsset> documents = new ArrayList<>();
         if (wantsKitchen) {
-            documents.add(KITCHEN);
+            documents.add(mediaCatalog.kitchenMenu());
         }
         if (wantsBar) {
-            documents.add(BAR);
+            documents.add(mediaCatalog.barMenu());
         }
         if (wantsElements) {
-            documents.add(ELEMENTS);
+            documents.add(mediaCatalog.elementsMenu());
         }
         if (wantsWine) {
-            documents.add(WINE);
+            documents.add(mediaCatalog.wineMenu());
         }
         if (documents.isEmpty() && wantsAll) {
-            return List.of(KITCHEN, BAR, ELEMENTS, WINE);
+            return mediaCatalog.allMenus();
         }
         return List.copyOf(documents);
     }
 
-    private String responseFor(List<MenuDocument> documents) {
+    private String responseFor(List<MediaAsset> documents) {
         if (documents.size() == 4) {
             return """
                     Конечно. Отправляю актуальные карты AERIS: кухню, бар, коктейли Elements и винную карту.
@@ -129,7 +111,7 @@ public class MenuAssetsScenario {
                     Если захотите, я помогу выбрать стол или позову менеджера.
                     """;
         }
-        String names = String.join(", ", documents.stream().map(MenuDocument::title).toList());
+        String names = String.join(", ", documents.stream().map(MediaAsset::title).toList());
         return """
                 Да, отправляю: %s.
 
@@ -170,13 +152,13 @@ public class MenuAssetsScenario {
         return text == null ? "" : text.trim().toLowerCase(Locale.ROOT);
     }
 
-    private record MenuDocument(String title, String resource, String filename) {
-        private Map<String, String> metadata() {
-            Map<String, String> metadata = new LinkedHashMap<>();
-            metadata.put("resource", resource);
-            metadata.put("filename", filename);
-            metadata.put("caption", title);
-            return metadata;
-        }
+    private Map<String, String> metadata(MediaAsset asset) {
+        Map<String, String> metadata = new LinkedHashMap<>();
+        metadata.put("assetCode", asset.assetCode());
+        metadata.put("objectKey", asset.objectKey());
+        metadata.put("filename", asset.filename());
+        metadata.put("caption", asset.title());
+        metadata.put("contentType", asset.contentType());
+        return metadata;
     }
 }

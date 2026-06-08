@@ -87,7 +87,8 @@ end note
 
 note right of TABLE_BOOKING_WAIT_TABLE_SELECTION
   Здесь гость уже получил PDF:
-  classpath:booking/aeris-plan.pdf
+  AERIS_FLOOR_PLAN ->
+  content/aeris/floor-plan/AERIS_PLAN.pdf
 
   Runtime draft лежит в Redis:
   astor:booking:table:draft:telegram:{chatId}

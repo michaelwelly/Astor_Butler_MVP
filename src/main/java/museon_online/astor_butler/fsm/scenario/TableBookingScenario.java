@@ -3,6 +3,8 @@ package museon_online.astor_butler.fsm.scenario;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import museon_online.astor_butler.api.common.ApiException;
+import museon_online.astor_butler.domain.media.AerisMediaCatalog;
+import museon_online.astor_butler.domain.media.MediaAsset;
 import museon_online.astor_butler.domain.booking.TableReservationCommand;
 import museon_online.astor_butler.domain.booking.TableReservationOrder;
 import museon_online.astor_butler.domain.booking.TableReservationService;
@@ -38,9 +40,10 @@ public class TableBookingScenario {
     private final FSMStorage fsmStorage;
     private final TableBookingDraftStorage draftStorage;
     private final TableReservationService tableReservationService;
+    private final AerisMediaCatalog mediaCatalog;
 
-    @Value("${telegram.booking.plan-pdf-path:classpath:booking/aeris-plan.pdf}")
-    private String planPdfPath;
+    @Value("${telegram.booking.plan-pdf-asset-code:AERIS_FLOOR_PLAN}")
+    private String planPdfAssetCode;
 
     @Value("${astor.booking.default-venue-code:AERIS}")
     private String defaultVenueCode;
@@ -84,6 +87,7 @@ public class TableBookingScenario {
     }
 
     private OutgoingMessage sendHallPlan(IncomingMessage incoming) {
+        MediaAsset floorPlan = mediaCatalog.floorPlan();
         fsmStorage.setState(incoming.chatId(), BotState.TABLE_BOOKING_WAIT_TABLE_SELECTION);
         return message(
                 incoming,
@@ -92,9 +96,10 @@ public class TableBookingScenario {
                 "SEND_HALL_PLAN",
                 "ASK_TABLE_SELECTION"
         ).withMetadata(Map.of(
-                "documentResource", planPdfPath,
-                "documentFilename", "AERIS PLAN.pdf",
-                "documentCaption", "План зала AERIS"
+                "documentAssetCode", planPdfAssetCode,
+                "documentObjectKey", floorPlan.objectKey(),
+                "documentFilename", floorPlan.filename(),
+                "documentCaption", floorPlan.title()
         ));
     }
 

@@ -61,13 +61,17 @@ Before asking the guest to choose a table, Astor must send the AERIS hall plan.
 Current resource asset:
 
 ```text
-src/main/resources/booking/aeris-plan.pdf
+MinIO/S3 object:
+
+```text
+content/aeris/floor-plan/AERIS_PLAN.pdf
+```
 ```
 
 Runtime configuration:
 
 ```text
-TELEGRAM_BOOKING_PLAN_PDF_PATH=classpath:booking/aeris-plan.pdf
+TELEGRAM_BOOKING_PLAN_PDF_ASSET_CODE=AERIS_FLOOR_PLAN
 ```
 
 The next implementation step for `TableBookingScenario` must attach this PDF in

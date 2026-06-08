@@ -16,6 +16,15 @@ astor:
     outbox-enabled: ${KAFKA_OUTBOX_ENABLED:true}
   media:
     menu-dir: ${ASTOR_MEDIA_MENU_DIR:./media/menu/}
+    aeris:
+      menu:
+        kitchen-object-key: ${AERIS_MENU_KITCHEN_OBJECT_KEY:content/aeris/menu/kitchen/MENU_AERIS_A4_2026_DIGITAL.pdf}
+        bar-object-key: ${AERIS_MENU_BAR_OBJECT_KEY:content/aeris/menu/bar/BAR_CARD.pdf}
+        elements-object-key: ${AERIS_MENU_ELEMENTS_OBJECT_KEY:content/aeris/menu/elements/ELEMENTS_CARD.pdf}
+        wine-object-key: ${AERIS_MENU_WINE_OBJECT_KEY:content/aeris/menu/wine/WINE_MENU_2026_FINAL.pdf}
+        rag-source: ${AERIS_MENU_RAG_SOURCE:media_assets:AERIS_MENU_*}
+      floor-plan-object-key: ${AERIS_FLOOR_PLAN_OBJECT_KEY:content/aeris/floor-plan/AERIS_PLAN.pdf}
+      interior-video-object-key: ${AERIS_INTERIOR_VIDEO_OBJECT_KEY:content/aeris/interior/INTERIOR.mp4}
   storage:
     s3:
       endpoint: ${S3_ENDPOINT:http://localhost:9000}
@@ -93,9 +102,9 @@ telegram:
     notifications-enabled: ${TELEGRAM_BOOKING_NOTIFICATIONS_ENABLED:true}
     manager-chat-id: ${TELEGRAM_BOOKING_MANAGER_CHAT_ID:876857557}
     hostess-chat-id: ${TELEGRAM_HOSTESS_CHAT_ID:}
-    plan-pdf-path: ${TELEGRAM_BOOKING_PLAN_PDF_PATH:classpath:booking/aeris-plan.pdf}
+    plan-pdf-asset-code: ${TELEGRAM_BOOKING_PLAN_PDF_ASSET_CODE:AERIS_FLOOR_PLAN}
   quiet-guide:
-    interior-video-object-key: ${TELEGRAM_QUIET_GUIDE_INTERIOR_VIDEO_OBJECT_KEY:content/aeris/interior/INTERIOR.mp4}
+    interior-video-asset-code: ${TELEGRAM_QUIET_GUIDE_INTERIOR_VIDEO_ASSET_CODE:AERIS_INTERIOR_TOUR}
   oauth:
     client-id: ${TELEGRAM_CLIENT_ID:}
     redirect-uri: ${TELEGRAM_REDIRECT_URI:http://localhost:8080/auth/telegram/callback}

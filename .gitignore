@@ -28,3 +28,7 @@ frontend/out/
 graphify-out/cache/
 graphify-out/manifest.json
 graphify-out/.graphify_root
+
+# Runtime media binaries belong to MinIO/S3 + media_assets, not the app jar.
+src/main/resources/menu/aeris/*.pdf
+src/main/resources/booking/*.pdf

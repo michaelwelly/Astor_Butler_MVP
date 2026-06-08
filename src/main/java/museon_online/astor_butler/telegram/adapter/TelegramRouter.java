@@ -245,6 +245,16 @@ public class TelegramRouter {
             sendDocument(outgoing.chatId(), document, sender);
         }
 
+        Object objectKey = outgoing.metadata().get("documentObjectKey");
+        if (objectKey != null && !objectKey.toString().isBlank()) {
+            sendDocument(outgoing.chatId(), Map.of(
+                    "objectKey", objectKey.toString(),
+                    "filename", text(outgoing.metadata().get("documentFilename"), "document.pdf"),
+                    "caption", text(outgoing.metadata().get("documentCaption"), "")
+            ), sender);
+            return;
+        }
+
         Object location = outgoing.metadata().get("documentResource");
         if (location == null || location.toString().isBlank()) {
             return;
@@ -257,6 +267,18 @@ public class TelegramRouter {
     }
 
     private void sendDocument(Long chatId, Map<String, Object> metadata, AbsSender sender) {
+        Object objectKey = metadata.get("objectKey");
+        if (objectKey != null && !objectKey.toString().isBlank()) {
+            sendMediaObjectAsDocument(
+                    chatId,
+                    objectKey.toString(),
+                    text(metadata.get("filename"), "document.pdf"),
+                    text(metadata.get("caption"), ""),
+                    sender
+            );
+            return;
+        }
+
         Object location = metadata.get("resource");
         if (chatId == null || location == null || location.toString().isBlank()) {
             return;

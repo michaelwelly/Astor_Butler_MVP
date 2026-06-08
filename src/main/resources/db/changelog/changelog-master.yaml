@@ -17,3 +17,5 @@ databaseChangeLog:
       file: db/changelog/2026-06-05-telegram-current-exchange.yaml
   - include:
       file: db/changelog/2026-06-05-table-booking-foundation.yaml
+  - include:
+      file: db/changelog/2026-06-08-media-assets.yaml

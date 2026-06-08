@@ -19,10 +19,11 @@ docker compose up -d \
   grafana
 
 if [[ -d "$AERIS_MENU_SOURCE_DIR" ]]; then
+  scripts/ingest_aeris_runtime_assets.sh "$AERIS_MENU_SOURCE_DIR"
   scripts/ingest_aeris_menu_assets.sh "$AERIS_MENU_SOURCE_DIR"
 else
   echo "AERIS menu folder not found, content ingest skipped: $AERIS_MENU_SOURCE_DIR" >&2
-  echo "Set AERIS_MENU_SOURCE_DIR=/path/to/AERISMENU and rerun scripts/ingest_aeris_menu_assets.sh if needed." >&2
+  echo "Set AERIS_MENU_SOURCE_DIR=/path/to/AERISMENU and rerun scripts/ingest_aeris_runtime_assets.sh if needed." >&2
 fi
 
 echo "Local infrastructure is ready."

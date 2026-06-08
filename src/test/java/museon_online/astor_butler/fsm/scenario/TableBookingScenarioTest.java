@@ -6,6 +6,8 @@ import museon_online.astor_butler.domain.booking.TableReservationCommand;
 import museon_online.astor_butler.domain.booking.TableReservationOrder;
 import museon_online.astor_butler.domain.booking.TableReservationService;
 import museon_online.astor_butler.domain.booking.TableReservationStatus;
+import museon_online.astor_butler.domain.media.AerisMediaCatalog;
+import museon_online.astor_butler.domain.media.MediaAsset;
 import museon_online.astor_butler.service.message.IncomingMessage;
 import museon_online.astor_butler.service.message.OutgoingMessage;
 import org.junit.jupiter.api.BeforeEach;
@@ -27,6 +29,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -42,12 +45,27 @@ class TableBookingScenarioTest {
     @Mock
     private TableReservationService tableReservationService;
 
+    @Mock
+    private AerisMediaCatalog mediaCatalog;
+
     private TableBookingScenario scenario;
 
     @BeforeEach
     void setUp() {
-        scenario = new TableBookingScenario(fsmStorage, draftStorage, tableReservationService);
-        ReflectionTestUtils.setField(scenario, "planPdfPath", "classpath:booking/aeris-plan.pdf");
+        scenario = new TableBookingScenario(fsmStorage, draftStorage, tableReservationService, mediaCatalog);
+        lenient().when(mediaCatalog.floorPlan()).thenReturn(new MediaAsset(
+                "AERIS_FLOOR_PLAN",
+                "AERIS",
+                "TABLE_BOOKING",
+                "FLOOR_PLAN",
+                "План зала AERIS",
+                "astor-media",
+                "content/aeris/floor-plan/AERIS_PLAN.pdf",
+                "AERIS PLAN.pdf",
+                "application/pdf",
+                true
+        ));
+        ReflectionTestUtils.setField(scenario, "planPdfAssetCode", "AERIS_FLOOR_PLAN");
         ReflectionTestUtils.setField(scenario, "defaultVenueCode", "AERIS");
         ReflectionTestUtils.setField(scenario, "managerTelegramId", 876857557L);
         ReflectionTestUtils.setField(scenario, "hostessChatId", "-1004291419562");
@@ -61,7 +79,7 @@ class TableBookingScenarioTest {
 
         assertThat(outgoing.nextState()).isEqualTo(BotState.TABLE_BOOKING_WAIT_TABLE_SELECTION.name());
         assertThat(outgoing.actions()).contains("SEND_HALL_PLAN", "ASK_TABLE_SELECTION");
-        assertThat(outgoing.metadata()).containsEntry("documentResource", "classpath:booking/aeris-plan.pdf");
+        assertThat(outgoing.metadata()).containsEntry("documentObjectKey", "content/aeris/floor-plan/AERIS_PLAN.pdf");
         verify(fsmStorage).setState(incoming.chatId(), BotState.TABLE_BOOKING_WAIT_TABLE_SELECTION);
         verify(draftStorage).save(any(), any());
     }
@@ -74,7 +92,7 @@ class TableBookingScenarioTest {
 
         assertThat(outgoing.nextState()).isEqualTo(BotState.TABLE_BOOKING_WAIT_TABLE_SELECTION.name());
         assertThat(outgoing.actions()).contains("SEND_HALL_PLAN", "ASK_TABLE_SELECTION");
-        assertThat(outgoing.metadata()).containsEntry("documentResource", "classpath:booking/aeris-plan.pdf");
+        assertThat(outgoing.metadata()).containsEntry("documentObjectKey", "content/aeris/floor-plan/AERIS_PLAN.pdf");
     }
 
     @Test

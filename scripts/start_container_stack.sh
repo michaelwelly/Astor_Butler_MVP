@@ -52,11 +52,13 @@ docker compose --profile app --profile ai up -d --build \
   api-gateway
 
 if [[ -d "$AERIS_MENU_SOURCE_DIR" ]]; then
+  scripts/ingest_aeris_runtime_assets.sh "$AERIS_MENU_SOURCE_DIR" \
+    || echo "AERIS runtime asset ingest failed; container stack remains running. Check MinIO/Postgres credentials before retrying." >&2
   scripts/ingest_aeris_menu_assets.sh "$AERIS_MENU_SOURCE_DIR" \
-    || echo "AERIS menu ingest failed; container stack remains running. Check MinIO credentials before retrying." >&2
+    || echo "AERIS inventory ingest failed; runtime assets may still be ready. Check Mongo credentials before retrying." >&2
 else
   echo "AERIS menu folder not found, content ingest skipped: $AERIS_MENU_SOURCE_DIR" >&2
-  echo "Set AERIS_MENU_SOURCE_DIR=/path/to/AERISMENU and rerun scripts/ingest_aeris_menu_assets.sh if needed." >&2
+  echo "Set AERIS_MENU_SOURCE_DIR=/path/to/AERISMENU and rerun scripts/ingest_aeris_runtime_assets.sh if needed." >&2
 fi
 
 echo "Container stack is ready."

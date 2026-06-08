@@ -1,0 +1,9 @@
+databaseChangeLog:
+  - changeSet:
+      id: 2026-06-08-media-assets
+      author: codex
+      changes:
+        - sqlFile:
+            path: db/changelog/2026-06-08-media-assets.sql
+            splitStatements: false
+            stripComments: false

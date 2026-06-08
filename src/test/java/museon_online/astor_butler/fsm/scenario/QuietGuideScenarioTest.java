@@ -1,5 +1,7 @@
 package museon_online.astor_butler.fsm.scenario;
 
+import museon_online.astor_butler.domain.media.AerisMediaCatalog;
+import museon_online.astor_butler.domain.media.MediaAsset;
 import museon_online.astor_butler.fsm.core.BotState;
 import museon_online.astor_butler.fsm.storage.FSMStorage;
 import museon_online.astor_butler.service.message.IncomingMessage;
@@ -12,6 +14,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class)
@@ -20,12 +23,27 @@ class QuietGuideScenarioTest {
     @Mock
     private FSMStorage fsmStorage;
 
+    @Mock
+    private AerisMediaCatalog mediaCatalog;
+
     private QuietGuideScenario scenario;
 
     @BeforeEach
     void setUp() {
-        scenario = new QuietGuideScenario(fsmStorage);
-        ReflectionTestUtils.setField(scenario, "interiorVideoObjectKey", "content/aeris/interior/INTERIOR.mp4");
+        scenario = new QuietGuideScenario(fsmStorage, mediaCatalog);
+        lenient().when(mediaCatalog.interiorTour()).thenReturn(new MediaAsset(
+                "AERIS_INTERIOR_TOUR",
+                "AERIS",
+                "QUIET_GUIDE",
+                "VIDEO_TOUR",
+                "AERIS interior tour",
+                "astor-media",
+                "content/aeris/interior/INTERIOR.mp4",
+                "INTERIOR.mp4",
+                "video/mp4",
+                true
+        ));
+        ReflectionTestUtils.setField(scenario, "interiorVideoAssetCode", "AERIS_INTERIOR_TOUR");
     }
 
     @Test

@@ -179,7 +179,37 @@ TELEGRAM_UI_DELETE_USER_MESSAGES_ENABLED=true
 
 Правило: Postgres хранит смысл и аудит, MinIO/S3 хранит тяжелый временный бинарник.
 
-## AERIS Menu Assets
+## AERIS Runtime Assets
+
+Runtime assets used by Telegram scenarios are stored outside the application jar.
+
+```text
+Git: code, docs, manifests, ingestion scripts
+PostgreSQL: media_assets active runtime index
+MinIO/S3: PDF/video binaries
+MongoDB: optional inventory/document metadata for search and RAG workflows
+```
+
+Canonical runtime object keys:
+
+```text
+content/aeris/menu/kitchen/MENU_AERIS_A4_2026_DIGITAL.pdf
+content/aeris/menu/bar/BAR_CARD.pdf
+content/aeris/menu/elements/ELEMENTS_CARD.pdf
+content/aeris/menu/wine/WINE_MENU_2026_FINAL.pdf
+content/aeris/floor-plan/AERIS_PLAN.pdf
+content/aeris/interior/INTERIOR.mp4
+```
+
+Local runtime ingest:
+
+```bash
+scripts/ingest_aeris_runtime_assets.sh "/Users/michaelwelly/Desktop/AERISMENU"
+```
+
+The script uploads canonical objects to MinIO and upserts `media_assets` rows in PostgreSQL. It is the runtime path for `MenuAssetsScenario`, `TableBookingScenario` and `QuietGuideScenario`.
+
+## AERIS Menu Inventory
 
 Current local source:
 
@@ -192,8 +222,8 @@ This folder contains current AERIS menu PDFs, images, an interior video and even
 Storage decision:
 
 - original files live on local disk or Yandex Disk as source of truth;
-- local runtime copy lives in MinIO bucket `astor-media`;
-- object prefix for AERIS menu: `content/aeris-menu`;
+- broad inventory copy lives in MinIO bucket `astor-media`;
+- inventory object prefix for AERIS menu: `content/aeris-menu`;
 - MongoDB database: `aether`;
 - MongoDB collection: `menu_assets`;
 - Redis should cache only the active menu index / selected URLs, not binary files.
@@ -202,6 +232,7 @@ Run local bootstrap after Docker infrastructure is up:
 
 ```bash
 docker compose up -d minio minio-init mongo
+scripts/ingest_aeris_runtime_assets.sh "/Users/michaelwelly/Desktop/AERISMENU"
 scripts/ingest_aeris_menu_assets.sh "/Users/michaelwelly/Desktop/AERISMENU"
 ```
 

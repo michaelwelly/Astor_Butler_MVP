@@ -1,6 +1,8 @@
 package museon_online.astor_butler.fsm.scenario;
 
 import lombok.RequiredArgsConstructor;
+import museon_online.astor_butler.domain.media.AerisMediaCatalog;
+import museon_online.astor_butler.domain.media.MediaAsset;
 import museon_online.astor_butler.fsm.core.BotState;
 import museon_online.astor_butler.fsm.storage.FSMStorage;
 import museon_online.astor_butler.service.message.AdminAlert;
@@ -18,9 +20,10 @@ import java.util.Map;
 public class QuietGuideScenario {
 
     private final FSMStorage fsmStorage;
+    private final AerisMediaCatalog mediaCatalog;
 
-    @Value("${telegram.quiet-guide.interior-video-object-key:content/aeris/interior/INTERIOR.mp4}")
-    private String interiorVideoObjectKey;
+    @Value("${telegram.quiet-guide.interior-video-asset-code:AERIS_INTERIOR_TOUR}")
+    private String interiorVideoAssetCode;
 
     public boolean supports(IncomingMessage incoming, BotState currentState, String text) {
         BotState state = currentState == null ? BotState.UNKNOWN : currentState.canonical();
@@ -68,6 +71,7 @@ public class QuietGuideScenario {
     }
 
     private OutgoingMessage videoTour(IncomingMessage incoming) {
+        MediaAsset video = mediaCatalog.interiorTour();
         return ready(
                 incoming,
                 """
@@ -78,9 +82,10 @@ public class QuietGuideScenario {
                 List.of("QUIET_GUIDE", "INTERIOR_VIDEO", "QUIET_GUIDE_DELIVERED", "RETURN_MAIN_MENU"),
                 Map.of(
                         "scenario", "QuietGuideScenario",
-                        "videoObjectKey", interiorVideoObjectKey,
-                        "videoFilename", "INTERIOR.mp4",
-                        "videoCaption", "AERIS interior tour",
+                        "videoAssetCode", interiorVideoAssetCode,
+                        "videoObjectKey", video.objectKey(),
+                        "videoFilename", video.filename(),
+                        "videoCaption", video.title(),
                         "videoSendMode", "DOCUMENT"
                 )
         );

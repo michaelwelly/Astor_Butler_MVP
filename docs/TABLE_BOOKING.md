@@ -5,7 +5,11 @@
 Current resource asset:
 
 ```text
-src/main/resources/booking/aeris-plan.pdf
+MinIO/S3 object:
+
+```text
+content/aeris/floor-plan/AERIS_PLAN.pdf
+```
 ```
 
 The PDF has three pages. Page 1 is a cover, pages 2 and 3 contain the venue
@@ -15,7 +19,7 @@ the guest as a Telegram document before asking for table choice.
 Runtime path:
 
 ```text
-TELEGRAM_BOOKING_PLAN_PDF_PATH=classpath:booking/aeris-plan.pdf
+TELEGRAM_BOOKING_PLAN_PDF_ASSET_CODE=AERIS_FLOOR_PLAN
 ```
 
 ## AERIS Seating Model

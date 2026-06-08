@@ -66,18 +66,14 @@ public class FirstTouchScenario {
             fsmStorage.setState(incoming.chatId(), BotState.READY_FOR_DIALOG);
             return OutgoingMessage.of(
                     incoming,
-                    """
-                    Я обновил начало диалога и оставил вас в главном меню.
-
-                    Напишите свободно: забронировать стол, показать меню, показать ресторан внутри, рассказать о концепции или позвать менеджера.
-                    """,
+                    "",
                     BotState.READY_FOR_DIALOG.name(),
                     false,
                     false,
                     true,
                     false,
                     AdminAlert.none(),
-                    List.of("SAFE_RESTART", "OPEN_MENU")
+                    List.of("SAFE_RESTART", "PREVIEW_REFRESHED", "OPEN_MENU")
             );
         }
 

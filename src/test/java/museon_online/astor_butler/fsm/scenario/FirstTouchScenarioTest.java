@@ -68,8 +68,8 @@ class FirstTouchScenarioTest {
 
         assertThat(outgoing.nextState()).isEqualTo(BotState.READY_FOR_DIALOG.name());
         assertThat(outgoing.removeKeyboard()).isTrue();
-        assertThat(outgoing.text()).contains("обновил начало диалога", "главном меню");
-        assertThat(outgoing.actions()).containsExactly("SAFE_RESTART", "OPEN_MENU");
+        assertThat(outgoing.text()).isBlank();
+        assertThat(outgoing.actions()).containsExactly("SAFE_RESTART", "PREVIEW_REFRESHED", "OPEN_MENU");
         verify(tableBookingDraftStorage).clear(incoming.chatId());
         verify(fsmStorage).setState(incoming.chatId(), BotState.READY_FOR_DIALOG);
     }

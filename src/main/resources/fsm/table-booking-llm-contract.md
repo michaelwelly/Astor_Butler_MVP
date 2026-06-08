@@ -50,8 +50,9 @@ Optional slots:
 - `TABLE_BOOKING_COLLECT_PARTY_SIZE`: ask for number of guests only.
 - `TABLE_BOOKING_SHOW_PLAN`: the application must send the AERIS hall plan PDF
   before asking for table choice. The default asset is
-  `classpath:booking/aeris-plan.pdf`. Tell the guest that the plan is attached/sent
-  and ask them to choose table/zone or let Astor choose.
+  `AERIS_FLOOR_PLAN` from `media_assets` / MinIO object
+  `content/aeris/floor-plan/AERIS_PLAN.pdf`. Tell the guest that the plan is
+  attached/sent and ask them to choose table/zone or let Astor choose.
 - `TABLE_BOOKING_WAIT_TABLE_SELECTION`: ask for table number/zone or permission
   to choose the best available option.
 - `TABLE_BOOKING_WAIT_HOSTESS_CONFIRMATION`: tell the guest the request was sent

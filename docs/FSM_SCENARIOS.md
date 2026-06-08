@@ -65,7 +65,7 @@ flowchart TD
     Domain["Domain services<br/>booking / media / consent / notifications"]
     Redis["Redis<br/>FSM state + runtime drafts"]
     Postgres["PostgreSQL<br/>durable facts"]
-    Resources["Project resources + MinIO<br/>PDF / media / video"]
+    Resources["Media catalog + MinIO<br/>PDF / media / video"]
     Rag["Menu RAG index<br/>chunks / metadata / embeddings later"]
     Hostess["Hostess chat<br/>Да / Нет"]
     Manager["Manager/Admin<br/>ручная работа"]
@@ -396,20 +396,20 @@ flowchart TD
 
 Целевой сценарий в домене **Инфо-поддержка / Quiet Guide**: гость текстом или голосом просит меню, карту бара, вино, коктейли или "что у вас есть". Astor должен спокойно понять запрос, при необходимости задать одно уточнение, отправить актуальные PDF-файлы и вернуться в открытый диалог.
 
-Актуальные PDF-файлы должны жить в ресурсах проекта, чтобы не зависеть от Desktop/Yandex Disk:
+Актуальные PDF-файлы не живут в `src/main/resources`: git хранит код, docs и manifest/metadata, PostgreSQL `media_assets` хранит активный runtime index, MinIO/S3 хранит бинарники. Desktop/Yandex Disk остаются только исходным местом для ingest.
 
-| Asset | Исходник сейчас | Runtime resource target | Когда отправлять |
+| Asset | Runtime asset code | Object key | Когда отправлять |
 | --- | --- | --- | --- |
-| Кухня / основное меню | `/Users/michaelwelly/Desktop/AERISMENU/Карты бара - обновления /MENU AERIS A4 2026 DIGITAL.pdf` | `classpath:menu/aeris/MENU AERIS A4 2026 DIGITAL.pdf` | "меню", "еда", "кухня", "что поесть" |
-| Бар | `/Users/michaelwelly/Desktop/AERISMENU/Карты бара - обновления /BAR CARD.pdf` | `classpath:menu/aeris/BAR CARD.pdf` | "бар", "напитки", "крепкое", "барная карта" |
-| Коктейли / Elements | `/Users/michaelwelly/Desktop/AERISMENU/Карты бара - обновления /ELEMENTS CARD.pdf` | `classpath:menu/aeris/ELEMENTS CARD.pdf` | "коктейли", "elements", "авторские коктейли" |
-| Вино | `/Users/michaelwelly/Desktop/AERISMENU/Карты бара - обновления /WINE MENU 2026 FINAL.pdf` | `classpath:menu/aeris/WINE MENU 2026 FINAL.pdf` | "вино", "винная карта", "шампанское" |
+| Кухня / основное меню | `AERIS_MENU_KITCHEN` | `content/aeris/menu/kitchen/MENU_AERIS_A4_2026_DIGITAL.pdf` | "меню", "еда", "кухня", "что поесть" |
+| Бар | `AERIS_MENU_BAR` | `content/aeris/menu/bar/BAR_CARD.pdf` | "бар", "напитки", "крепкое", "барная карта" |
+| Коктейли / Elements | `AERIS_MENU_ELEMENTS` | `content/aeris/menu/elements/ELEMENTS_CARD.pdf` | "коктейли", "elements", "авторские коктейли" |
+| Вино | `AERIS_MENU_WINE` | `content/aeris/menu/wine/WINE_MENU_2026_FINAL.pdf` | "вино", "винная карта", "шампанское" |
 
 RAG-направление:
 
-- PDF assets копируются в `src/main/resources/menu/aeris/`;
+- PDF assets загружаются через `scripts/ingest_aeris_runtime_assets.sh`;
 - текст/структура меню извлекается в menu knowledge index;
-- в MVP index может быть JSON/Markdown chunks в ресурсах или Mongo metadata;
+- в MVP index может быть JSON/Markdown chunks в docs/manifest или Mongo metadata;
 - позже embeddings/vector store подключаются к LLM adapter;
 - если локально запущено несколько LLM-инстансов, RAG не хранится внутри них: все инстансы получают одинаковый контекст через общий retrieval service / shared index;
 - LLM отвечает по RAG только справочно и всегда может приложить исходный PDF.
@@ -819,7 +819,7 @@ LLM не может:
 3. Вынести voice/audio normalization на уровень transport/intake adapter: Telegram voice -> transcript -> canonical incoming message.
 4. Обновить `MessageGatewayService`: first touch -> active scenario -> main menu -> recovery.
 5. Реализовать `/start` как safe restart: clear runtime drafts, keep durable facts, send/pin preview, route by consent.
-6. Скопировать PDF menu assets в resources и описать media manifest.
+6. Загрузить PDF menu assets и план зала через `scripts/ingest_aeris_runtime_assets.sh`, в git хранить только code/docs/manifest.
 7. Загрузить `INTERIOR.mp4` в MinIO prefix `content/aeris/interior/`, в git хранить только manifest/metadata.
 8. Добавить shared RAG/index service для меню, не привязанный к конкретному LLM instance.
 9. Добавить тесты Main Menu routing, MenuAssets, QuietGuide, `/start` preview reset и voice-normalized path.

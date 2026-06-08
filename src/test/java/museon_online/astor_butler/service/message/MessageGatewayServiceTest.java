@@ -125,7 +125,7 @@ class MessageGatewayServiceTest {
                 false,
                 AdminAlert.none(),
                 java.util.List.of("TABLE_BOOKING_SHOW_PLAN", "SEND_HALL_PLAN")
-        ).withMetadata(java.util.Map.of("documentResource", "classpath:booking/aeris-plan.pdf"));
+        ).withMetadata(java.util.Map.of("documentObjectKey", "content/aeris/floor-plan/AERIS_PLAN.pdf"));
 
         when(fsmStorage.getState(incoming.chatId())).thenReturn(BotState.READY_FOR_DIALOG);
         when(firstTouchScenario.supports(eq(incoming), eq(BotState.READY_FOR_DIALOG), eq(incoming.text())))
@@ -138,7 +138,7 @@ class MessageGatewayServiceTest {
         OutgoingMessage outgoing = service.handle(incoming);
 
         assertThat(outgoing.nextState()).isEqualTo(BotState.TABLE_BOOKING_WAIT_TABLE_SELECTION.name());
-        assertThat(outgoing.metadata()).containsEntry("documentResource", "classpath:booking/aeris-plan.pdf");
+        assertThat(outgoing.metadata()).containsEntry("documentObjectKey", "content/aeris/floor-plan/AERIS_PLAN.pdf");
         verify(ollamaClient, never()).ask(any());
         verify(userEventProducer).publishIncomingMessage(incoming, BotState.READY_FOR_DIALOG, outgoing);
     }
