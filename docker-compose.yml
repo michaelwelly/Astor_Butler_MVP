@@ -5,7 +5,7 @@ services:
     ports:
       - "${API_GATEWAY_PORT:-8080}:8080"
     environment:
-      ASTOR_BACKEND_UPSTREAM: ${ASTOR_BACKEND_UPSTREAM:-host.docker.internal:8088}
+      ASTOR_BACKEND_UPSTREAM: ${ASTOR_BACKEND_UPSTREAM:-app:8088}
     volumes:
       - ./docker/nginx/nginx.conf.template:/etc/nginx/nginx.conf.template:ro
     command: >
@@ -19,7 +19,7 @@ services:
       - "host.docker.internal:host-gateway"
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:8080/gateway/health >/dev/null 2>&1"]
-      interval: 10s
+      interval: 30s
       timeout: 5s
       retries: 10
 
@@ -73,6 +73,15 @@ services:
       ASTOR_STT_LANGUAGE: ${ASTOR_STT_LANGUAGE:-ru}
       ASTOR_STT_DEVICE: ${ASTOR_STT_DEVICE:-cpu}
       ASTOR_STT_COMPUTE_TYPE: ${ASTOR_STT_COMPUTE_TYPE:-int8}
+      ASTOR_TIMELINE_SCYLLA_ENABLED: ${ASTOR_TIMELINE_SCYLLA_ENABLED:-true}
+      ASTOR_TIMELINE_SCYLLA_HOST: scylla
+      ASTOR_TIMELINE_SCYLLA_PORT: 9042
+      ASTOR_TIMELINE_SCYLLA_DATACENTER: ${ASTOR_TIMELINE_SCYLLA_DATACENTER:-datacenter1}
+      ASTOR_TIMELINE_SCYLLA_KEYSPACE: ${ASTOR_TIMELINE_SCYLLA_KEYSPACE:-astor_timeline}
+      ASTOR_GRAPH_NEO4J_ENABLED: ${ASTOR_GRAPH_NEO4J_ENABLED:-true}
+      ASTOR_GRAPH_NEO4J_URI: bolt://neo4j:7687
+      ASTOR_GRAPH_NEO4J_USERNAME: ${NEO4J_USER:-neo4j}
+      ASTOR_GRAPH_NEO4J_PASSWORD: ${NEO4J_PASSWORD:-astor_graph_password}
       HF_HOME: /root/.cache/huggingface
       YANDEX_FOLDER_ID: ${YANDEX_FOLDER_ID:-}
       YANDEX_IAM_TOKEN: ${YANDEX_IAM_TOKEN:-}
@@ -92,16 +101,22 @@ services:
         condition: service_healthy
       minio:
         condition: service_healthy
+      scylla:
+        condition: service_healthy
+      neo4j:
+        condition: service_healthy
     healthcheck:
       test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:8088/actuator/health >/dev/null"]
-      interval: 15s
+      interval: 45s
       timeout: 5s
       retries: 20
       start_period: 60s
 
   postgres:
-    image: postgres:16
+    image: pgvector/pgvector:pg16
     container_name: astor_postgres_test
+    mem_limit: ${POSTGRES_MEMORY_LIMIT:-768m}
+    cpus: ${POSTGRES_CPUS:-0.75}
     command:
       - postgres
       - -c
@@ -120,9 +135,57 @@ services:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
-      interval: 10s
+      interval: 30s
       timeout: 5s
       retries: 10
+
+  scylla:
+    image: scylladb/scylla:6.2
+    container_name: astor_scylla_timeline
+    mem_limit: ${SCYLLA_MEMORY_LIMIT:-1g}
+    cpus: ${SCYLLA_CPUS:-1.0}
+    command:
+      - --smp
+      - "1"
+      - --memory
+      - ${SCYLLA_ENGINE_MEMORY:-384M}
+      - --overprovisioned
+      - "1"
+      - --developer-mode
+      - "1"
+    ports:
+      - "${SCYLLA_CQL_PORT:-9042}:9042"
+    volumes:
+      - scylladata:/var/lib/scylla
+    healthcheck:
+      test: ["CMD-SHELL", "cqlsh $$(hostname -i | cut -d' ' -f1) 9042 -e 'DESCRIBE KEYSPACES' >/dev/null 2>&1"]
+      interval: 60s
+      timeout: 10s
+      retries: 20
+      start_period: 60s
+
+  neo4j:
+    image: neo4j:5.22-community
+    container_name: astor_neo4j_graph
+    mem_limit: ${NEO4J_MEMORY_LIMIT:-1g}
+    cpus: ${NEO4J_CPUS:-1.0}
+    ports:
+      - "${NEO4J_HTTP_PORT:-7474}:7474"
+      - "${NEO4J_BOLT_PORT:-7687}:7687"
+    environment:
+      NEO4J_AUTH: ${NEO4J_USER:-neo4j}/${NEO4J_PASSWORD:-astor_graph_password}
+      NEO4J_server_memory_heap_initial__size: ${NEO4J_HEAP_INITIAL:-256m}
+      NEO4J_server_memory_heap_max__size: ${NEO4J_HEAP_MAX:-512m}
+      NEO4J_server_memory_pagecache_size: ${NEO4J_PAGECACHE:-256m}
+    volumes:
+      - neo4jdata:/data
+      - neo4jlogs:/logs
+    healthcheck:
+      test: ["CMD-SHELL", "cypher-shell -u $${NEO4J_AUTH%/*} -p $${NEO4J_AUTH#*/} 'RETURN 1' >/dev/null 2>&1"]
+      interval: 60s
+      timeout: 10s
+      retries: 20
+      start_period: 45s
 
   redis:
     image: redis:7.2
@@ -137,14 +200,16 @@ services:
       REDIS_PASSWORD: ${REDIS_PASSWORD:-}
     healthcheck:
       test: ["CMD-SHELL", "if [ -n \"$${REDIS_PASSWORD}\" ]; then redis-cli -a \"$${REDIS_PASSWORD}\" ping; else redis-cli ping; fi"]
-      interval: 10s
+      interval: 30s
       timeout: 5s
       retries: 10
 
   mongo:
     image: mongo:7
     container_name: astor_mongo_test
-    command: ["mongod", "--auth", "--bind_ip_all"]
+    command: ["mongod", "--quiet", "--auth", "--bind_ip_all", "--wiredTigerCacheSizeGB", "${MONGO_WIREDTIGER_CACHE_GB:-0.5}"]
+    mem_limit: ${MONGO_MEMORY_LIMIT:-1g}
+    cpus: ${MONGO_CPUS:-1.0}
     ports:
       - "${MONGO_PORT:-27017}:27017"
     environment:
@@ -154,10 +219,11 @@ services:
     volumes:
       - mongodata:/data/db
     healthcheck:
-      test: ["CMD-SHELL", "mongosh --quiet -u \"$${MONGO_INITDB_ROOT_USERNAME}\" -p \"$${MONGO_INITDB_ROOT_PASSWORD}\" --authenticationDatabase admin --eval 'db.adminCommand({ ping: 1 }).ok'"]
-      interval: 10s
-      timeout: 5s
-      retries: 10
+      test: ["CMD-SHELL", "pgrep -x mongod >/dev/null"]
+      interval: 120s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
 
   kafka:
     image: docker.redpanda.com/redpandadata/redpanda:v24.1.7
@@ -186,7 +252,7 @@ services:
       - kafkadata:/var/lib/redpanda/data
     healthcheck:
       test: ["CMD-SHELL", "rpk cluster health >/dev/null 2>&1"]
-      interval: 15s
+      interval: 45s
       timeout: 10s
       retries: 10
 
@@ -237,8 +303,8 @@ services:
       ollama-3:
         condition: service_healthy
     healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:11434/api/tags >/dev/null 2>&1"]
-      interval: 10s
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:11434/llm/health >/dev/null 2>&1"]
+      interval: 60s
       timeout: 5s
       retries: 10
     restart: unless-stopped
@@ -254,7 +320,7 @@ services:
       - ollama_data:/root/.ollama
     healthcheck:
       test: ["CMD", "ollama", "list"]
-      interval: 30s
+      interval: 120s
       timeout: 10s
       retries: 5
     restart: unless-stopped
@@ -270,7 +336,7 @@ services:
       - ollama_data:/root/.ollama
     healthcheck:
       test: ["CMD", "ollama", "list"]
-      interval: 30s
+      interval: 120s
       timeout: 10s
       retries: 5
     restart: unless-stopped
@@ -286,7 +352,7 @@ services:
       - ollama_data:/root/.ollama
     healthcheck:
       test: ["CMD", "ollama", "list"]
-      interval: 30s
+      interval: 120s
       timeout: 10s
       retries: 5
     restart: unless-stopped
@@ -305,7 +371,7 @@ services:
       - miniodata:/data
     healthcheck:
       test: ["CMD", "mc", "ready", "local"]
-      interval: 10s
+      interval: 30s
       timeout: 5s
       retries: 10
 
@@ -364,3 +430,6 @@ volumes:
   huggingface-cache:
   prometheusdata:
   grafanadata:
+  scylladata:
+  neo4jdata:
+  neo4jlogs:

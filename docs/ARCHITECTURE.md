@@ -37,9 +37,11 @@ flowchart LR
     Notify["Notifications Domain"]
     Capability["Capability Extensions<br/>Memory / Preference / Tips / Guide / Play / Safety"]
 
-    Pg["PostgreSQL<br/>JDBC / Liquibase"]
+    Pg["PostgreSQL + pgvector<br/>JDBC / Liquibase / semantic memory"]
     Mongo["MongoDB<br/>internal documents / flexible metadata"]
     Redis["Redis<br/>FSM hot context / idempotency / cache / short queues"]
+    Scylla["ScyllaDB / Cassandra API<br/>append-only FSM timeline"]
+    Neo4j["Neo4j<br/>scenario graph / preference graph"]
     S3["S3-compatible Object Storage<br/>video / photo / docs / menu / media"]
     Kafka["Kafka / RabbitMQ / Artemis<br/>events / audit / analytics / notifications"]
     Search["Elasticsearch / OpenSearch<br/>future full-text search"]
@@ -84,10 +86,14 @@ flowchart LR
     Content --> Mongo
 
     FSM --> Redis
+    FSM --> Scylla
+    FSM --> Neo4j
     User --> Redis
     Content --> Redis
     Booking --> Kafka
     Timeline --> Kafka
+    Timeline --> Scylla
+    Capability --> Neo4j
     Notify --> Kafka
     Capability --> Redis
     Capability --> Kafka
@@ -97,6 +103,8 @@ flowchart LR
     Kafka --> Obs
     Pg --> Obs
     Redis --> Obs
+    Scylla --> Obs
+    Neo4j --> Obs
     S3 --> Obs
     CICD --> Rest
 ```
@@ -275,6 +283,26 @@ flowchart TD
 - активный runtime-state остается один, но рядом хранится `Guest Context Snapshot`: последние intent, открытые drafts, preference facts, recent failures;
 - если confidence низкий, сценарий задает один человеческий уточняющий вопрос, а не сразу падает в admin fallback.
 
+### Semantic Data Stack
+
+Astor Butler uses three different memory layers because they answer different questions:
+
+| Layer | Technology | Question | Source of truth |
+| --- | --- | --- | --- |
+| Semantic memory | PostgreSQL + `pgvector` | "What does this guest probably mean, and which content should the LLM read?" | durable RAG sources/chunks/embeddings |
+| Hot runtime state | Redis | "Where is the guest right now?" | short-lived operational state, recoverable |
+| FSM timeline | ScyllaDB/Cassandra API | "How did the guest get here, what happened before, what may happen next?" | append-only transition history |
+| Scenario graph | Neo4j | "Which states, scenarios, capabilities and transitions are connected?" | graph projection of FSM/spec, not OLTP facts |
+
+Rules:
+
+- LLM never writes business state directly.
+- `SemanticRouter` may read pgvector/Neo4j/timeline context and produce `SemanticDecision`.
+- FSM validates transitions and writes the current state to Redis.
+- Every handled guest message is appended to Kafka and, when enabled, Scylla timeline.
+- Neo4j starts with the static scenario graph; guest-specific preference graph is a later extension.
+- PostgreSQL stays the transactional source for users, bookings, media catalog and guides.
+
 ## Domain Modules
 
 - `Auth` - authorization language, permissions, JWT claims mapping, access decisions. Auth is separate from User.
@@ -380,6 +408,7 @@ PostgreSQL - основная СУБД для:
 - лидов;
 - SEO metadata;
 - связей между сущностями.
+- semantic/RAG source registry and chunks through `pgvector`.
 
 Persistence strategy: JDBC without JPA/Hibernate. Причина: явный контроль SQL, транзакций, индексов и performance-critical запросов. Миграции схемы - Liquibase.
 
@@ -397,6 +426,25 @@ PostgreSQL design rules:
 - индексы создаются по селективным полям и реальным query patterns;
 - аналитические запросы не должны ломать OLTP-контур;
 - схема мигрируется через Liquibase changesets.
+
+#### pgvector Semantic Memory
+
+`pgvector` is the first production-ready semantic layer for Astor Butler. It keeps retrieval close to existing PostgreSQL data and avoids adding a separate vector database before the RAG workflow is proven.
+
+Tables:
+
+- `semantic_sources` - durable source registry: menu PDFs, guides, FSM docs, future knowledge files.
+- `semantic_chunks` - normalized chunks ready for retrieval.
+- `semantic_embeddings` - vector embeddings for chunks.
+
+First use cases:
+
+- Quiet Guide menu search;
+- guest/staff instruction retrieval;
+- FSM/spec-aware semantic routing;
+- future "why did the bot route this request here?" diagnostics.
+
+Dedicated vector databases such as Qdrant, Weaviate, Milvus or Pinecone remain future options. The migration path is straightforward because scenario code must depend on a `SemanticMemoryRepository` port, not on raw SQL.
 
 ### MongoDB
 
@@ -431,6 +479,47 @@ Redis используется для:
 - future rate limit keys - секунды/минуты.
 
 Redis не является единственным источником правды. Важные факты пишутся в PostgreSQL и Kafka: user/profile/consent/messages, timeline/domain events and LLM responses. Если Redis потерян или ключ истек, backend должен восстановить safe state из PostgreSQL/timeline и продолжить сценарий без привязки к конкретному Java instance.
+
+### ScyllaDB / Cassandra-Compatible Timeline
+
+ScyllaDB is used locally as a Cassandra-compatible wide-column store for append-only FSM/user timelines.
+
+Purpose:
+
+- store every guest transition by guest/time;
+- keep high-write history separate from Redis hot keys;
+- support weekend analytics and future prediction features;
+- make "where was this guest before fallback?" answerable without scanning Kafka manually.
+
+Current table:
+
+- keyspace: `astor_timeline`;
+- table: `guest_fsm_timeline_by_guest`;
+- partition: `guest_id`;
+- clustering: `occurred_at DESC`, `event_id`.
+
+Important boundary: Scylla/Cassandra does not replace PostgreSQL for relational facts, bookings, users or media. It is optimized for one primary query pattern: "show me this guest's timeline".
+
+### Neo4j Scenario Graph
+
+Neo4j stores the graph projection of Astor Butler's scenario model.
+
+First graph:
+
+- `(:FsmState)` nodes for every `BotState`;
+- `(:Scenario)` nodes such as `FIRST_TOUCH`, `MAIN_MENU`, `MENU_ASSETS`, `QUIET_GUIDE`, `TABLE_BOOKING`;
+- `(:Capability)` nodes such as `Quiet Guide`, `Slot Keeper`, `Hidden Heart`;
+- `(:Scenario)-[:OWNS_STATE]->(:FsmState)`;
+- `(:FsmState)-[:CAN_TRANSITION_TO]->(:FsmState)`.
+
+Why this is useful:
+
+- visual thinking for FSM design;
+- scenario impact analysis before code changes;
+- later preference graph: guest -> interests -> content -> reservation -> feedback;
+- recommendations and explanations ("I suggested wine card because guest asked for Mediterranean dinner and wine").
+
+Neo4j is a graph read/projection layer. It must not become the only source of operational truth.
 
 ### S3-Compatible Object Storage
 

@@ -47,10 +47,35 @@ astor:
     timeout-seconds: ${ASTOR_STT_TIMEOUT_SECONDS:30}
     retry-ttl-seconds: ${ASTOR_STT_RETRY_TTL_SECONDS:1800}
     keep-local-files: ${ASTOR_STT_KEEP_LOCAL_FILES:false}
+  semantic-memory:
+    pgvector:
+      enabled: ${ASTOR_SEMANTIC_PGVECTOR_ENABLED:true}
+      embedding-dimension: ${ASTOR_SEMANTIC_EMBEDDING_DIMENSION:1536}
+      default-model: ${ASTOR_SEMANTIC_EMBEDDING_MODEL:text-embedding-3-small}
+  timeline:
+    scylla:
+      enabled: ${ASTOR_TIMELINE_SCYLLA_ENABLED:false}
+      host: ${ASTOR_TIMELINE_SCYLLA_HOST:localhost}
+      port: ${ASTOR_TIMELINE_SCYLLA_PORT:9042}
+      datacenter: ${ASTOR_TIMELINE_SCYLLA_DATACENTER:datacenter1}
+      keyspace: ${ASTOR_TIMELINE_SCYLLA_KEYSPACE:astor_timeline}
+      table: ${ASTOR_TIMELINE_SCYLLA_TABLE:guest_fsm_timeline_by_guest}
+      schema-timeout-seconds: ${ASTOR_TIMELINE_SCYLLA_SCHEMA_TIMEOUT_SECONDS:30}
+  graph-memory:
+    neo4j:
+      enabled: ${ASTOR_GRAPH_NEO4J_ENABLED:false}
+      uri: ${ASTOR_GRAPH_NEO4J_URI:bolt://localhost:7687}
+      username: ${ASTOR_GRAPH_NEO4J_USERNAME:neo4j}
+      password: ${ASTOR_GRAPH_NEO4J_PASSWORD:astor_graph_password}
 
 spring:
   application:
     name: astor-butler
+
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.autoconfigure.cassandra.CassandraAutoConfiguration
+      - org.springframework.boot.autoconfigure.neo4j.Neo4jAutoConfiguration
 
   data:
     redis:
@@ -138,6 +163,11 @@ management:
       probes:
         enabled: true
       show-details: always
+  health:
+    cassandra:
+      enabled: false
+    neo4j:
+      enabled: false
   metrics:
     tags:
       application: ${spring.application.name}

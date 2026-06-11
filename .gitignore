@@ -1,5 +1,6 @@
 .env
 .env.*
+config/env/
 .DS_Store
 target/
 frontend/node_modules/

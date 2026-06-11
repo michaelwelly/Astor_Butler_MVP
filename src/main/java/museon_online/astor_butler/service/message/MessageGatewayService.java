@@ -2,6 +2,8 @@ package museon_online.astor_butler.service.message;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import museon_online.astor_butler.domain.timeline.FsmTimelineEvent;
+import museon_online.astor_butler.domain.timeline.FsmTimelineWriter;
 import museon_online.astor_butler.domain.telegram.TelegramIntakeService;
 import museon_online.astor_butler.fsm.core.BotState;
 import museon_online.astor_butler.fsm.scenario.FirstTouchScenario;
@@ -33,6 +35,7 @@ public class MessageGatewayService {
     private final UserEventProducer userEventProducer;
     private final LlmScenarioPromptCatalog llmScenarioPromptCatalog;
     private final VoiceTranscriptionRetryService voiceTranscriptionRetryService;
+    private final FsmTimelineWriter fsmTimelineWriter;
 
     @Value("${telegram.admin.chat-id:}")
     private String adminChatId;
@@ -212,6 +215,7 @@ public class MessageGatewayService {
 
     private OutgoingMessage finish(IncomingMessage incoming, BotState previousState, OutgoingMessage outgoing) {
         userEventProducer.publishIncomingMessage(incoming, previousState, outgoing);
+        fsmTimelineWriter.append(FsmTimelineEvent.from(incoming, previousState, outgoing));
         return outgoing;
     }
 

@@ -1,0 +1,10 @@
+databaseChangeLog:
+  - changeSet:
+      id: 2026-06-11-semantic-memory-pgvector
+      author: codex
+      dbms: postgresql
+      changes:
+        - sqlFile:
+            path: db/changelog/2026-06-11-semantic-memory-pgvector.sql
+            splitStatements: false
+            stripComments: false

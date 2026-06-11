@@ -20,6 +20,8 @@
         <redis.version>3.0.6</redis.version>
         <kafka.version>3.1.2</kafka.version>
         <minio.version>8.5.12</minio.version>
+        <cassandra-driver.version>4.17.0</cassandra-driver.version>
+        <neo4j-driver.version>5.20.0</neo4j-driver.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
     </properties>
@@ -68,6 +70,18 @@
             <groupId>io.minio</groupId>
             <artifactId>minio</artifactId>
             <version>${minio.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.datastax.oss</groupId>
+            <artifactId>java-driver-core</artifactId>
+            <version>${cassandra-driver.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.neo4j.driver</groupId>
+            <artifactId>neo4j-java-driver</artifactId>
+            <version>${neo4j-driver.version}</version>
         </dependency>
 
         <dependency>

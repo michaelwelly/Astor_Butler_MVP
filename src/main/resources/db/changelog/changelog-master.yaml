@@ -19,3 +19,5 @@ databaseChangeLog:
       file: db/changelog/2026-06-05-table-booking-foundation.yaml
   - include:
       file: db/changelog/2026-06-08-media-assets.yaml
+  - include:
+      file: db/changelog/2026-06-11-semantic-memory-pgvector.yaml

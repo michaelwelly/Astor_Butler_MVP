@@ -1,6 +1,8 @@
 package museon_online.astor_butler.service.message;
 
 import museon_online.astor_butler.domain.telegram.TelegramIntakeService;
+import museon_online.astor_butler.domain.timeline.FsmTimelineEvent;
+import museon_online.astor_butler.domain.timeline.FsmTimelineWriter;
 import museon_online.astor_butler.fsm.core.BotState;
 import museon_online.astor_butler.fsm.scenario.FirstTouchScenario;
 import museon_online.astor_butler.fsm.scenario.MainMenuScenario;
@@ -61,6 +63,9 @@ class MessageGatewayServiceTest {
     @Mock
     private VoiceTranscriptionRetryService voiceTranscriptionRetryService;
 
+    @Mock
+    private FsmTimelineWriter fsmTimelineWriter;
+
     private MessageGatewayService service;
 
     @BeforeEach
@@ -76,7 +81,8 @@ class MessageGatewayServiceTest {
                 tableBookingScenario,
                 userEventProducer,
                 llmScenarioPromptCatalog,
-                voiceTranscriptionRetryService
+                voiceTranscriptionRetryService,
+                fsmTimelineWriter
         );
         ReflectionTestUtils.setField(service, "adminChatId", "100500");
         ReflectionTestUtils.setField(service, "analyticsChatId", "100501");
@@ -110,6 +116,7 @@ class MessageGatewayServiceTest {
         assertThat(outgoing.actions()).containsExactly("FALLBACK", "ADMIN_ALERT");
         verify(fsmStorage).setState(incoming.chatId(), BotState.AI_FALLBACK);
         verify(userEventProducer).publishIncomingMessage(incoming, BotState.READY_FOR_DIALOG, outgoing);
+        verify(fsmTimelineWriter).append(any(FsmTimelineEvent.class));
     }
 
     @Test
@@ -141,6 +148,7 @@ class MessageGatewayServiceTest {
         assertThat(outgoing.metadata()).containsEntry("documentObjectKey", "content/aeris/floor-plan/AERIS_PLAN.pdf");
         verify(ollamaClient, never()).ask(any());
         verify(userEventProducer).publishIncomingMessage(incoming, BotState.READY_FOR_DIALOG, outgoing);
+        verify(fsmTimelineWriter).append(any(FsmTimelineEvent.class));
     }
 
     @Test
