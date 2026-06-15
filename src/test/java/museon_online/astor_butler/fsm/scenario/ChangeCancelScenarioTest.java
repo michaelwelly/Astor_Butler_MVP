@@ -1,5 +1,8 @@
 package museon_online.astor_butler.fsm.scenario;
 
+import museon_online.astor_butler.domain.booking.TableReservationOrder;
+import museon_online.astor_butler.domain.booking.TableReservationService;
+import museon_online.astor_butler.domain.booking.TableReservationStatus;
 import museon_online.astor_butler.fsm.core.BotState;
 import museon_online.astor_butler.fsm.storage.FSMStorage;
 import museon_online.astor_butler.service.message.IncomingMessage;
@@ -11,8 +14,12 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import java.time.Instant;
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class ChangeCancelScenarioTest {
@@ -20,17 +27,21 @@ class ChangeCancelScenarioTest {
     @Mock
     private FSMStorage fsmStorage;
 
+    @Mock
+    private TableReservationService tableReservationService;
+
     private ChangeCancelScenario scenario;
 
     @BeforeEach
     void setUp() {
-        scenario = new ChangeCancelScenario(fsmStorage);
+        scenario = new ChangeCancelScenario(fsmStorage, tableReservationService);
         ReflectionTestUtils.setField(scenario, "adminChatId", "100500");
     }
 
     @Test
     void asksForReferenceBeforeChangingBooking() {
         IncomingMessage incoming = telegram("отменить бронь");
+        when(tableReservationService.listActiveReservationsByChatId(incoming.chatId())).thenReturn(List.of());
 
         OutgoingMessage outgoing = scenario.handle(incoming, BotState.READY_FOR_DIALOG, incoming.text());
 
@@ -38,6 +49,26 @@ class ChangeCancelScenarioTest {
         assertThat(outgoing.adminAlert().required()).isFalse();
         assertThat(outgoing.actions()).containsExactly("CHANGE_CANCEL", "ASK_ACTIVE_ORDER_REFERENCE");
         assertThat(outgoing.text()).contains("дату", "время", "номер заявки");
+        verify(fsmStorage).setState(incoming.chatId(), BotState.TABLE_BOOKING_CHANGE_REQUESTED);
+    }
+
+    @Test
+    void showsActiveReservationsBeforeAskingReference() {
+        IncomingMessage incoming = telegram("отменить бронь");
+        when(tableReservationService.listActiveReservationsByChatId(incoming.chatId()))
+                .thenReturn(List.of(activeReservation()));
+
+        OutgoingMessage outgoing = scenario.handle(incoming, BotState.READY_FOR_DIALOG, incoming.text());
+
+        assertThat(outgoing.nextState()).isEqualTo(BotState.TABLE_BOOKING_CHANGE_REQUESTED.name());
+        assertThat(outgoing.adminAlert().required()).isFalse();
+        assertThat(outgoing.actions()).containsExactly(
+                "CHANGE_CANCEL",
+                "ACTIVE_RESERVATIONS_FOUND",
+                "ASK_ACTIVE_ORDER_REFERENCE"
+        );
+        assertThat(outgoing.text()).contains("#44", "Окно у бара (A7)", "18.06 20:00", "Я не сниму бронь");
+        assertThat(outgoing.metadata()).containsEntry("activeReservationIds", List.of(44L));
         verify(fsmStorage).setState(incoming.chatId(), BotState.TABLE_BOOKING_CHANGE_REQUESTED);
     }
 
@@ -78,6 +109,32 @@ class ChangeCancelScenarioTest {
                 "ru",
                 false,
                 "284069875"
+        );
+    }
+
+    private TableReservationOrder activeReservation() {
+        return new TableReservationOrder(
+                44L,
+                1773317437L,
+                1773317437L,
+                777L,
+                7L,
+                "A7",
+                "Окно у бара",
+                TableReservationStatus.CONFIRMED,
+                "TELEGRAM",
+                Instant.parse("2026-06-18T15:00:00Z"),
+                Instant.parse("2026-06-18T17:00:00Z"),
+                2,
+                "Наталья Поединенко",
+                null,
+                null,
+                876857557L,
+                null,
+                "-1004291419562",
+                null,
+                Instant.parse("2026-06-15T10:00:00Z"),
+                Instant.parse("2026-06-15T10:00:00Z")
         );
     }
 }

@@ -1,6 +1,8 @@
 package museon_online.astor_butler.fsm.scenario;
 
 import lombok.RequiredArgsConstructor;
+import museon_online.astor_butler.domain.booking.TableReservationOrder;
+import museon_online.astor_butler.domain.booking.TableReservationService;
 import museon_online.astor_butler.fsm.core.BotState;
 import museon_online.astor_butler.fsm.storage.FSMStorage;
 import museon_online.astor_butler.service.message.AdminAlert;
@@ -9,6 +11,8 @@ import museon_online.astor_butler.service.message.OutgoingMessage;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -17,7 +21,11 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class ChangeCancelScenario implements FsmScenario {
 
+    private static final DateTimeFormatter DATE_TIME = DateTimeFormatter.ofPattern("dd.MM HH:mm")
+            .withZone(ZoneId.of("Asia/Yekaterinburg"));
+
     private final FSMStorage fsmStorage;
+    private final TableReservationService tableReservationService;
 
     @Value("${telegram.admin.chat-id:}")
     private String adminChatId;
@@ -50,7 +58,30 @@ public class ChangeCancelScenario implements FsmScenario {
             return sendChangeCancelRequest(incoming, currentState, text);
         }
 
+        List<TableReservationOrder> activeReservations = tableReservationService.listActiveReservationsByChatId(incoming.chatId());
         fsmStorage.setState(incoming.chatId(), BotState.TABLE_BOOKING_CHANGE_REQUESTED);
+        if (!activeReservations.isEmpty()) {
+            return OutgoingMessage.of(
+                    incoming,
+                    """
+                            Нашел активные брони по вашему диалогу:
+
+                            %s
+
+                            Напишите номер заявки и что сделать: отменить, перенести время или изменить количество гостей. Я не сниму бронь без явного подтверждения.
+                            """.formatted(activeReservationsText(activeReservations)),
+                    BotState.TABLE_BOOKING_CHANGE_REQUESTED.name(),
+                    false,
+                    false,
+                    true,
+                    false,
+                    AdminAlert.none(),
+                    List.of("CHANGE_CANCEL", "ACTIVE_RESERVATIONS_FOUND", "ASK_ACTIVE_ORDER_REFERENCE")
+            ).withMetadata(Map.of(
+                    "scenario", id(),
+                    "activeReservationIds", activeReservations.stream().map(TableReservationOrder::id).toList()
+            ));
+        }
         return OutgoingMessage.of(
                 incoming,
                 "Понял, нужно изменить или отменить бронь. Напишите, пожалуйста, дату, время или номер заявки — я передам команде точный запрос и не сниму бронь без подтверждения.",
@@ -62,6 +93,34 @@ public class ChangeCancelScenario implements FsmScenario {
                 AdminAlert.none(),
                 List.of("CHANGE_CANCEL", "ASK_ACTIVE_ORDER_REFERENCE")
         ).withMetadata(Map.of("scenario", id()));
+    }
+
+    private String activeReservationsText(List<TableReservationOrder> reservations) {
+        return reservations.stream()
+                .limit(5)
+                .map(this::activeReservationText)
+                .reduce((left, right) -> left + "\n" + right)
+                .orElse("активных броней не найдено");
+    }
+
+    private String activeReservationText(TableReservationOrder order) {
+        return "- #%s: %s, %s, гостей: %s, статус: %s".formatted(
+                order.id(),
+                tableName(order),
+                order.requestedStartAt() == null ? "время не указано" : DATE_TIME.format(order.requestedStartAt()),
+                order.partySize() == null ? "не указано" : order.partySize(),
+                order.status()
+        );
+    }
+
+    private String tableName(TableReservationOrder order) {
+        if (order.tableCode() == null || order.tableCode().isBlank()) {
+            return "стол не выбран";
+        }
+        if (order.tableDisplayName() == null || order.tableDisplayName().isBlank()) {
+            return "стол " + order.tableCode();
+        }
+        return order.tableDisplayName() + " (" + order.tableCode() + ")";
     }
 
     @Override
