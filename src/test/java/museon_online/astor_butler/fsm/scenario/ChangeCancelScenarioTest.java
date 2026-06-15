@@ -1,5 +1,8 @@
 package museon_online.astor_butler.fsm.scenario;
 
+import museon_online.astor_butler.domain.booking.EventBookingOrder;
+import museon_online.astor_butler.domain.booking.EventBookingService;
+import museon_online.astor_butler.domain.booking.EventBookingStatus;
 import museon_online.astor_butler.domain.booking.TableReservationOrder;
 import museon_online.astor_butler.domain.booking.TableReservationService;
 import museon_online.astor_butler.domain.booking.TableReservationStatus;
@@ -15,6 +18,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.time.Instant;
+import java.time.LocalDate;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -30,11 +34,14 @@ class ChangeCancelScenarioTest {
     @Mock
     private TableReservationService tableReservationService;
 
+    @Mock
+    private EventBookingService eventBookingService;
+
     private ChangeCancelScenario scenario;
 
     @BeforeEach
     void setUp() {
-        scenario = new ChangeCancelScenario(fsmStorage, tableReservationService);
+        scenario = new ChangeCancelScenario(fsmStorage, tableReservationService, eventBookingService);
         ReflectionTestUtils.setField(scenario, "adminChatId", "100500");
     }
 
@@ -42,6 +49,7 @@ class ChangeCancelScenarioTest {
     void asksForReferenceBeforeChangingBooking() {
         IncomingMessage incoming = telegram("отменить бронь");
         when(tableReservationService.listActiveReservationsByChatId(incoming.chatId())).thenReturn(List.of());
+        when(eventBookingService.listActiveOrdersByChatId(incoming.chatId())).thenReturn(List.of());
 
         OutgoingMessage outgoing = scenario.handle(incoming, BotState.READY_FOR_DIALOG, incoming.text());
 
@@ -57,6 +65,7 @@ class ChangeCancelScenarioTest {
         IncomingMessage incoming = telegram("отменить бронь");
         when(tableReservationService.listActiveReservationsByChatId(incoming.chatId()))
                 .thenReturn(List.of(activeReservation()));
+        when(eventBookingService.listActiveOrdersByChatId(incoming.chatId())).thenReturn(List.of());
 
         OutgoingMessage outgoing = scenario.handle(incoming, BotState.READY_FOR_DIALOG, incoming.text());
 
@@ -67,8 +76,29 @@ class ChangeCancelScenarioTest {
                 "ACTIVE_RESERVATIONS_FOUND",
                 "ASK_ACTIVE_ORDER_REFERENCE"
         );
-        assertThat(outgoing.text()).contains("#44", "Окно у бара (A7)", "18.06 20:00", "Я не сниму бронь");
+        assertThat(outgoing.text()).contains("стол #44", "Окно у бара (A7)", "18.06 20:00", "Я не сниму бронь");
         assertThat(outgoing.metadata()).containsEntry("activeReservationIds", List.of(44L));
+        verify(fsmStorage).setState(incoming.chatId(), BotState.TABLE_BOOKING_CHANGE_REQUESTED);
+    }
+
+    @Test
+    void showsActiveEventOrdersBeforeAskingReference() {
+        IncomingMessage incoming = telegram("перенести мероприятие");
+        when(tableReservationService.listActiveReservationsByChatId(incoming.chatId())).thenReturn(List.of());
+        when(eventBookingService.listActiveOrdersByChatId(incoming.chatId()))
+                .thenReturn(List.of(activeEvent()));
+
+        OutgoingMessage outgoing = scenario.handle(incoming, BotState.READY_FOR_DIALOG, incoming.text());
+
+        assertThat(outgoing.nextState()).isEqualTo(BotState.TABLE_BOOKING_CHANGE_REQUESTED.name());
+        assertThat(outgoing.adminAlert().required()).isFalse();
+        assertThat(outgoing.actions()).containsExactly(
+                "CHANGE_CANCEL",
+                "ACTIVE_RESERVATIONS_FOUND",
+                "ASK_ACTIVE_ORDER_REFERENCE"
+        );
+        assertThat(outgoing.text()).contains("мероприятие #88", "CORPORATE", "2026-06-21", "brief мероприятия");
+        assertThat(outgoing.metadata()).containsEntry("activeEventOrderIds", List.of(88L));
         verify(fsmStorage).setState(incoming.chatId(), BotState.TABLE_BOOKING_CHANGE_REQUESTED);
     }
 
@@ -132,6 +162,35 @@ class ChangeCancelScenarioTest {
                 876857557L,
                 null,
                 "-1004291419562",
+                null,
+                Instant.parse("2026-06-15T10:00:00Z"),
+                Instant.parse("2026-06-15T10:00:00Z")
+        );
+    }
+
+    private EventBookingOrder activeEvent() {
+        return new EventBookingOrder(
+                88L,
+                1773317437L,
+                1773317437L,
+                null,
+                "AERIS",
+                EventBookingStatus.AWAITING_MANAGER_REVIEW,
+                "TELEGRAM",
+                "CORPORATE",
+                LocalDate.parse("2026-06-21"),
+                "19:00",
+                30,
+                null,
+                null,
+                null,
+                null,
+                "Наталья Поединенко",
+                null,
+                "корпоратив на 30 гостей",
+                876857557L,
+                null,
+                "100500",
                 null,
                 Instant.parse("2026-06-15T10:00:00Z"),
                 Instant.parse("2026-06-15T10:00:00Z")

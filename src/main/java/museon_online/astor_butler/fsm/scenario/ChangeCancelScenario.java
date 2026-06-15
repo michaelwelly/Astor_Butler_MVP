@@ -1,6 +1,8 @@
 package museon_online.astor_butler.fsm.scenario;
 
 import lombok.RequiredArgsConstructor;
+import museon_online.astor_butler.domain.booking.EventBookingOrder;
+import museon_online.astor_butler.domain.booking.EventBookingService;
 import museon_online.astor_butler.domain.booking.TableReservationOrder;
 import museon_online.astor_butler.domain.booking.TableReservationService;
 import museon_online.astor_butler.fsm.core.BotState;
@@ -26,6 +28,7 @@ public class ChangeCancelScenario implements FsmScenario {
 
     private final FSMStorage fsmStorage;
     private final TableReservationService tableReservationService;
+    private final EventBookingService eventBookingService;
 
     @Value("${telegram.admin.chat-id:}")
     private String adminChatId;
@@ -59,17 +62,18 @@ public class ChangeCancelScenario implements FsmScenario {
         }
 
         List<TableReservationOrder> activeReservations = tableReservationService.listActiveReservationsByChatId(incoming.chatId());
+        List<EventBookingOrder> activeEvents = eventBookingService.listActiveOrdersByChatId(incoming.chatId());
         fsmStorage.setState(incoming.chatId(), BotState.TABLE_BOOKING_CHANGE_REQUESTED);
-        if (!activeReservations.isEmpty()) {
+        if (!activeReservations.isEmpty() || !activeEvents.isEmpty()) {
             return OutgoingMessage.of(
                     incoming,
                     """
-                            Нашел активные брони по вашему диалогу:
+                            Нашел активные заявки по вашему диалогу:
 
                             %s
 
-                            Напишите номер заявки и что сделать: отменить, перенести время или изменить количество гостей. Я не сниму бронь без явного подтверждения.
-                            """.formatted(activeReservationsText(activeReservations)),
+                            Напишите номер заявки и что сделать: отменить, перенести время, изменить количество гостей или brief мероприятия. Я не сниму бронь без явного подтверждения.
+                            """.formatted(activeRequestsText(activeReservations, activeEvents)),
                     BotState.TABLE_BOOKING_CHANGE_REQUESTED.name(),
                     false,
                     false,
@@ -79,7 +83,8 @@ public class ChangeCancelScenario implements FsmScenario {
                     List.of("CHANGE_CANCEL", "ACTIVE_RESERVATIONS_FOUND", "ASK_ACTIVE_ORDER_REFERENCE")
             ).withMetadata(Map.of(
                     "scenario", id(),
-                    "activeReservationIds", activeReservations.stream().map(TableReservationOrder::id).toList()
+                    "activeReservationIds", activeReservations.stream().map(TableReservationOrder::id).toList(),
+                    "activeEventOrderIds", activeEvents.stream().map(EventBookingOrder::id).toList()
             ));
         }
         return OutgoingMessage.of(
@@ -95,20 +100,38 @@ public class ChangeCancelScenario implements FsmScenario {
         ).withMetadata(Map.of("scenario", id()));
     }
 
-    private String activeReservationsText(List<TableReservationOrder> reservations) {
-        return reservations.stream()
+    private String activeRequestsText(List<TableReservationOrder> reservations, List<EventBookingOrder> events) {
+        List<String> lines = new java.util.ArrayList<>();
+        reservations.stream()
                 .limit(5)
                 .map(this::activeReservationText)
-                .reduce((left, right) -> left + "\n" + right)
-                .orElse("активных броней не найдено");
+                .forEach(lines::add);
+        events.stream()
+                .limit(5)
+                .map(this::activeEventText)
+                .forEach(lines::add);
+        if (lines.isEmpty()) {
+            return "активных заявок не найдено";
+        }
+        return String.join("\n", lines);
     }
 
     private String activeReservationText(TableReservationOrder order) {
-        return "- #%s: %s, %s, гостей: %s, статус: %s".formatted(
+        return "- стол #%s: %s, %s, гостей: %s, статус: %s".formatted(
                 order.id(),
                 tableName(order),
                 order.requestedStartAt() == null ? "время не указано" : DATE_TIME.format(order.requestedStartAt()),
                 order.partySize() == null ? "не указано" : order.partySize(),
+                order.status()
+        );
+    }
+
+    private String activeEventText(EventBookingOrder order) {
+        return "- мероприятие #%s: %s, %s, гостей: %s, статус: %s".formatted(
+                order.id(),
+                order.eventType() == null || order.eventType().isBlank() ? "формат уточняется" : order.eventType(),
+                order.requestedDate() == null ? "дата уточняется" : order.requestedDate(),
+                order.guestCount() == null ? "не указано" : order.guestCount(),
                 order.status()
         );
     }

@@ -1902,7 +1902,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "dto_agentrequest",
-      "community": 216,
+      "community": 204,
       "norm_label": "agentrequest.java"
     },
     {
@@ -1912,7 +1912,7 @@
       "source_location": "L9",
       "_origin": "ast",
       "id": "dto_agentrequest_fromusertext",
-      "community": 216,
+      "community": 204,
       "norm_label": "fromusertext()"
     },
     {
@@ -1922,7 +1922,7 @@
       "source_location": "L9",
       "_origin": "ast",
       "id": "src_main_java_museon_online_astor_butler_alisa_dto_agentrequest_java_string",
-      "community": 216,
+      "community": 204,
       "norm_label": "string"
     },
     {
@@ -1932,7 +1932,7 @@
       "source_location": "L9",
       "_origin": "ast",
       "id": "agentrequest",
-      "community": 216,
+      "community": 204,
       "norm_label": "agentrequest"
     },
     {
@@ -1952,7 +1952,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "exception_alisaclientexception",
-      "community": 33,
+      "community": 9,
       "norm_label": "alisaclientexception.java"
     },
     {
@@ -1962,7 +1962,7 @@
       "source_location": "L3",
       "_origin": "ast",
       "id": "exception_alisaclientexception_alisaclientexception",
-      "community": 33,
+      "community": 9,
       "norm_label": "alisaclientexception"
     },
     {
@@ -1972,7 +1972,7 @@
       "source_location": "",
       "_origin": "ast",
       "id": "runtimeexception",
-      "community": 33,
+      "community": 9,
       "norm_label": "runtimeexception"
     },
     {
@@ -1982,7 +1982,7 @@
       "source_location": "L4",
       "_origin": "ast",
       "id": "exception_alisaclientexception_alisaclientexception_alisaclientexception",
-      "community": 33,
+      "community": 9,
       "norm_label": ".alisaclientexception()"
     },
     {
@@ -1992,7 +1992,7 @@
       "source_location": "L4",
       "_origin": "ast",
       "id": "src_main_java_museon_online_astor_butler_alisa_exception_alisaclientexception_java_string",
-      "community": 33,
+      "community": 9,
       "norm_label": "string"
     },
     {
@@ -2312,7 +2312,7 @@
       "source_location": "L201",
       "_origin": "ast",
       "id": "analytics_kafkaadmineventformatter_kafkaadmineventformatter_parse",
-      "community": 20,
+      "community": 1,
       "norm_label": ".parse()"
     },
     {
@@ -2372,7 +2372,7 @@
       "source_location": "L264",
       "_origin": "ast",
       "id": "analytics_kafkaadmineventformatter_kafkaadmineventformatter_actions",
-      "community": 29,
+      "community": 43,
       "norm_label": ".actions()"
     },
     {
@@ -3262,7 +3262,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "common_apiexception",
-      "community": 33,
+      "community": 9,
       "norm_label": "apiexception.java"
     },
     {
@@ -3272,7 +3272,7 @@
       "source_location": "L7",
       "_origin": "ast",
       "id": "common_apiexception_apiexception",
-      "community": 33,
+      "community": 9,
       "norm_label": "apiexception"
     },
     {
@@ -3282,7 +3282,7 @@
       "source_location": "L13",
       "_origin": "ast",
       "id": "common_apiexception_apiexception_apiexception",
-      "community": 33,
+      "community": 9,
       "norm_label": ".apiexception()"
     },
     {
@@ -3292,7 +3292,7 @@
       "source_location": "L13",
       "_origin": "ast",
       "id": "httpstatus",
-      "community": 33,
+      "community": 9,
       "norm_label": "httpstatus"
     },
     {
@@ -3302,7 +3302,7 @@
       "source_location": "L13",
       "_origin": "ast",
       "id": "src_main_java_museon_online_astor_butler_api_common_apiexception_java_errorcode",
-      "community": 33,
+      "community": 9,
       "norm_label": "errorcode"
     },
     {
@@ -3312,7 +3312,7 @@
       "source_location": "L13",
       "_origin": "ast",
       "id": "src_main_java_museon_online_astor_butler_api_common_apiexception_java_string",
-      "community": 33,
+      "community": 9,
       "norm_label": "string"
     },
     {
@@ -3322,7 +3322,7 @@
       "source_location": "L17",
       "_origin": "ast",
       "id": "src_main_java_museon_online_astor_butler_api_common_apiexception_java_map",
-      "community": 33,
+      "community": 9,
       "norm_label": "map"
     },
     {
@@ -3332,7 +3332,7 @@
       "source_location": "L17",
       "_origin": "ast",
       "id": "src_main_java_museon_online_astor_butler_api_common_apiexception_java_object",
-      "community": 33,
+      "community": 9,
       "norm_label": "object"
     },
     {
@@ -3352,7 +3352,7 @@
       "source_location": "L28",
       "_origin": "ast",
       "id": "common_apiexception_apiexception_code",
-      "community": 33,
+      "community": 9,
       "norm_label": ".code()"
     },
     {
@@ -3362,7 +3362,7 @@
       "source_location": "L32",
       "_origin": "ast",
       "id": "common_apiexception_apiexception_details",
-      "community": 33,
+      "community": 9,
       "norm_label": ".details()"
     },
     {
@@ -3382,7 +3382,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "common_globalapiexceptionhandler",
-      "community": 33,
+      "community": 9,
       "norm_label": "globalapiexceptionhandler.java"
     },
     {
@@ -3392,7 +3392,7 @@
       "source_location": "L17",
       "_origin": "ast",
       "id": "common_globalapiexceptionhandler_globalapiexceptionhandler",
-      "community": 33,
+      "community": 9,
       "norm_label": "globalapiexceptionhandler"
     },
     {
@@ -3402,7 +3402,7 @@
       "source_location": "L20",
       "_origin": "ast",
       "id": "common_globalapiexceptionhandler_globalapiexceptionhandler_handleapiexception",
-      "community": 33,
+      "community": 9,
       "norm_label": ".handleapiexception()"
     },
     {
@@ -3412,7 +3412,7 @@
       "source_location": "L20",
       "_origin": "ast",
       "id": "src_main_java_museon_online_astor_butler_api_common_globalapiexceptionhandler_java_apiexception",
-      "community": 33,
+      "community": 9,
       "norm_label": "apiexception"
     },
     {
@@ -3422,7 +3422,7 @@
       "source_location": "L20",
       "_origin": "ast",
       "id": "httpservletrequest",
-      "community": 33,
+      "community": 9,
       "norm_label": "httpservletrequest"
     },
     {
@@ -3432,7 +3432,7 @@
       "source_location": "L20",
       "_origin": "ast",
       "id": "src_main_java_museon_online_astor_butler_api_common_globalapiexceptionhandler_java_responseentity",
-      "community": 33,
+      "community": 9,
       "norm_label": "responseentity"
     },
     {
@@ -3442,7 +3442,7 @@
       "source_location": "L20",
       "_origin": "ast",
       "id": "apierrorresponse",
-      "community": 33,
+      "community": 9,
       "norm_label": "apierrorresponse"
     },
     {
@@ -3452,7 +3452,7 @@
       "source_location": "L20",
       "_origin": "ast",
       "id": "exceptionhandler",
-      "community": 33,
+      "community": 9,
       "norm_label": "exceptionhandler"
     },
     {
@@ -3462,7 +3462,7 @@
       "source_location": "L30",
       "_origin": "ast",
       "id": "common_globalapiexceptionhandler_globalapiexceptionhandler_handlebadrequest",
-      "community": 33,
+      "community": 9,
       "norm_label": ".handlebadrequest()"
     },
     {
@@ -3472,7 +3472,7 @@
       "source_location": "L30",
       "_origin": "ast",
       "id": "src_main_java_museon_online_astor_butler_api_common_globalapiexceptionhandler_java_exception",
-      "community": 33,
+      "community": 9,
       "norm_label": "exception"
     },
     {
@@ -3482,7 +3482,7 @@
       "source_location": "L44",
       "_origin": "ast",
       "id": "common_globalapiexceptionhandler_globalapiexceptionhandler_handlevalidation",
-      "community": 33,
+      "community": 9,
       "norm_label": ".handlevalidation()"
     },
     {
@@ -3492,7 +3492,7 @@
       "source_location": "L44",
       "_origin": "ast",
       "id": "methodargumentnotvalidexception",
-      "community": 33,
+      "community": 9,
       "norm_label": "methodargumentnotvalidexception"
     },
     {
@@ -3502,7 +3502,7 @@
       "source_location": "L54",
       "_origin": "ast",
       "id": "common_globalapiexceptionhandler_globalapiexceptionhandler_handleunexpected",
-      "community": 33,
+      "community": 9,
       "norm_label": ".handleunexpected()"
     },
     {
@@ -3512,7 +3512,7 @@
       "source_location": "L64",
       "_origin": "ast",
       "id": "common_globalapiexceptionhandler_globalapiexceptionhandler_error",
-      "community": 33,
+      "community": 9,
       "norm_label": ".error()"
     },
     {
@@ -3522,7 +3522,7 @@
       "source_location": "L64",
       "_origin": "ast",
       "id": "src_main_java_museon_online_astor_butler_api_common_globalapiexceptionhandler_java_errorcode",
-      "community": 33,
+      "community": 9,
       "norm_label": "errorcode"
     },
     {
@@ -3532,7 +3532,7 @@
       "source_location": "L64",
       "_origin": "ast",
       "id": "src_main_java_museon_online_astor_butler_api_common_globalapiexceptionhandler_java_string",
-      "community": 33,
+      "community": 9,
       "norm_label": "string"
     },
     {
@@ -3542,7 +3542,7 @@
       "source_location": "L64",
       "_origin": "ast",
       "id": "src_main_java_museon_online_astor_butler_api_common_globalapiexceptionhandler_java_map",
-      "community": 33,
+      "community": 9,
       "norm_label": "map"
     },
     {
@@ -3552,7 +3552,7 @@
       "source_location": "L64",
       "_origin": "ast",
       "id": "src_main_java_museon_online_astor_butler_api_common_globalapiexceptionhandler_java_object",
-      "community": 33,
+      "community": 9,
       "norm_label": "object"
     },
     {
@@ -3572,7 +3572,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "common_pageresponse",
-      "community": 216,
+      "community": 206,
       "norm_label": "pageresponse.java"
     },
     {
@@ -3582,7 +3582,7 @@
       "source_location": "L14",
       "_origin": "ast",
       "id": "common_pageresponse_empty",
-      "community": 216,
+      "community": 206,
       "norm_label": "empty()"
     },
     {
@@ -3592,7 +3592,7 @@
       "source_location": "L14",
       "_origin": "ast",
       "id": "src_main_java_museon_online_astor_butler_api_common_pageresponse_java_pageresponse",
-      "community": 216,
+      "community": 206,
       "norm_label": "pageresponse"
     },
     {
@@ -3602,7 +3602,7 @@
       "source_location": "L14",
       "_origin": "ast",
       "id": "src_main_java_museon_online_astor_butler_api_common_pageresponse_java_t",
-      "community": 216,
+      "community": 206,
       "norm_label": "t"
     },
     {
@@ -5222,7 +5222,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "message_messagecontroller",
-      "community": 23,
+      "community": 15,
       "norm_label": "messagecontroller.java"
     },
     {
@@ -5232,7 +5232,7 @@
       "source_location": "L23",
       "_origin": "ast",
       "id": "message_messagecontroller_messagecontroller",
-      "community": 23,
+      "community": 15,
       "norm_label": "messagecontroller"
     },
     {
@@ -5242,7 +5242,7 @@
       "source_location": "L30",
       "_origin": "ast",
       "id": "message_messagecontroller_messagecontroller_messagecontroller",
-      "community": 23,
+      "community": 15,
       "norm_label": ".messagecontroller()"
     },
     {
@@ -5252,7 +5252,7 @@
       "source_location": "L30",
       "_origin": "ast",
       "id": "messagegatewayservice",
-      "community": 23,
+      "community": 15,
       "norm_label": "messagegatewayservice"
     },
     {
@@ -5262,7 +5262,7 @@
       "source_location": "L34",
       "_origin": "ast",
       "id": "message_messagecontroller_messagecontroller_process",
-      "community": 23,
+      "community": 15,
       "norm_label": ".process()"
     },
     {
@@ -5272,7 +5272,7 @@
       "source_location": "L34",
       "_origin": "ast",
       "id": "messagerequest",
-      "community": 23,
+      "community": 15,
       "norm_label": "messagerequest"
     },
     {
@@ -5282,7 +5282,7 @@
       "source_location": "L34",
       "_origin": "ast",
       "id": "src_main_java_museon_online_astor_butler_api_message_messagecontroller_java_responseentity",
-      "community": 23,
+      "community": 15,
       "norm_label": "responseentity"
     },
     {
@@ -5292,7 +5292,7 @@
       "source_location": "L34",
       "_origin": "ast",
       "id": "messageresponse",
-      "community": 23,
+      "community": 15,
       "norm_label": "messageresponse"
     },
     {
@@ -5302,7 +5302,7 @@
       "source_location": "L34",
       "_origin": "ast",
       "id": "src_main_java_museon_online_astor_butler_api_message_messagecontroller_java_postmapping",
-      "community": 23,
+      "community": 15,
       "norm_label": "postmapping"
     },
     {
@@ -5312,7 +5312,7 @@
       "source_location": "L34",
       "_origin": "ast",
       "id": "src_main_java_museon_online_astor_butler_api_message_messagecontroller_java_operation",
-      "community": 23,
+      "community": 15,
       "norm_label": "operation"
     },
     {
@@ -5322,7 +5322,7 @@
       "source_location": "L90",
       "_origin": "ast",
       "id": "message_messagecontroller_messagecontroller_channel",
-      "community": 23,
+      "community": 15,
       "norm_label": ".channel()"
     },
     {
@@ -5332,7 +5332,7 @@
       "source_location": "L90",
       "_origin": "ast",
       "id": "src_main_java_museon_online_astor_butler_api_message_messagecontroller_java_string",
-      "community": 23,
+      "community": 15,
       "norm_label": "string"
     },
     {
@@ -5342,7 +5342,7 @@
       "source_location": "L90",
       "_origin": "ast",
       "id": "messagechannel",
-      "community": 23,
+      "community": 15,
       "norm_label": "messagechannel"
     },
     {
@@ -5352,7 +5352,7 @@
       "source_location": "L106",
       "_origin": "ast",
       "id": "message_messagecontroller_messagecontroller_telegramuserid",
-      "community": 23,
+      "community": 15,
       "norm_label": ".telegramuserid()"
     },
     {
@@ -5362,7 +5362,7 @@
       "source_location": "L106",
       "_origin": "ast",
       "id": "src_main_java_museon_online_astor_butler_api_message_messagecontroller_java_long",
-      "community": 23,
+      "community": 15,
       "norm_label": "long"
     },
     {
@@ -5372,7 +5372,7 @@
       "source_location": "L150",
       "_origin": "ast",
       "id": "message_messagecontroller_from",
-      "community": 23,
+      "community": 15,
       "norm_label": "from()"
     },
     {
@@ -5382,7 +5382,7 @@
       "source_location": "L150",
       "_origin": "ast",
       "id": "src_main_java_museon_online_astor_butler_api_message_messagecontroller_java_outgoingmessage",
-      "community": 23,
+      "community": 15,
       "norm_label": "outgoingmessage"
     },
     {
@@ -6852,7 +6852,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "config_telegrambotconfig",
-      "community": 214,
+      "community": 8,
       "norm_label": "telegrambotconfig.java"
     },
     {
@@ -6862,7 +6862,7 @@
       "source_location": "L14",
       "_origin": "ast",
       "id": "config_telegrambotconfig_telegrambotconfig",
-      "community": 214,
+      "community": 8,
       "norm_label": "telegrambotconfig"
     },
     {
@@ -6872,7 +6872,7 @@
       "source_location": "L21",
       "_origin": "ast",
       "id": "config_telegrambotconfig_telegrambotconfig_telegrambotsapi",
-      "community": 214,
+      "community": 8,
       "norm_label": ".telegrambotsapi()"
     },
     {
@@ -6882,7 +6882,7 @@
       "source_location": "L21",
       "_origin": "ast",
       "id": "src_main_java_museon_online_astor_butler_config_telegrambotconfig_java_telegrambot",
-      "community": 214,
+      "community": 8,
       "norm_label": "telegrambot"
     },
     {
@@ -6892,7 +6892,7 @@
       "source_location": "L21",
       "_origin": "ast",
       "id": "telegrambotsapi",
-      "community": 214,
+      "community": 8,
       "norm_label": "telegrambotsapi"
     },
     {
@@ -6902,7 +6902,7 @@
       "source_location": "L21",
       "_origin": "ast",
       "id": "src_main_java_museon_online_astor_butler_config_telegrambotconfig_java_bean",
-      "community": 214,
+      "community": 8,
       "norm_label": "bean"
     },
     {
@@ -6912,7 +6912,7 @@
       "source_location": "L21",
       "_origin": "ast",
       "id": "conditionalonproperty",
-      "community": 214,
+      "community": 8,
       "norm_label": "conditionalonproperty"
     },
     {
@@ -6922,7 +6922,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "auth_telegramloginverifier",
-      "community": 8,
+      "community": 14,
       "norm_label": "telegramloginverifier.java"
     },
     {
@@ -6932,7 +6932,7 @@
       "source_location": "L17",
       "_origin": "ast",
       "id": "auth_telegramloginverifier_telegramloginverifier",
-      "community": 8,
+      "community": 14,
       "norm_label": "telegramloginverifier"
     },
     {
@@ -6942,7 +6942,7 @@
       "source_location": "L27",
       "_origin": "ast",
       "id": "auth_telegramloginverifier_telegramloginverifier_telegramloginverifier",
-      "community": 8,
+      "community": 14,
       "norm_label": ".telegramloginverifier()"
     },
     {
@@ -6952,7 +6952,7 @@
       "source_location": "L31",
       "_origin": "ast",
       "id": "clock",
-      "community": 8,
+      "community": 14,
       "norm_label": "clock"
     },
     {
@@ -6962,7 +6962,7 @@
       "source_location": "L35",
       "_origin": "ast",
       "id": "auth_telegramloginverifier_telegramloginverifier_isvalid",
-      "community": 8,
+      "community": 14,
       "norm_label": ".isvalid()"
     },
     {
@@ -6972,7 +6972,7 @@
       "source_location": "L35",
       "_origin": "ast",
       "id": "src_main_java_museon_online_astor_butler_domain_auth_telegramloginverifier_java_map",
-      "community": 8,
+      "community": 14,
       "norm_label": "map"
     },
     {
@@ -6982,7 +6982,7 @@
       "source_location": "L35",
       "_origin": "ast",
       "id": "src_main_java_museon_online_astor_butler_domain_auth_telegramloginverifier_java_string",
-      "community": 8,
+      "community": 14,
       "norm_label": "string"
     },
     {
@@ -6992,7 +6992,7 @@
       "source_location": "L39",
       "_origin": "ast",
       "id": "src_main_java_museon_online_astor_butler_domain_auth_telegramloginverifier_java_duration",
-      "community": 8,
+      "community": 14,
       "norm_label": "duration"
     },
     {
@@ -7002,7 +7002,7 @@
       "source_location": "L56",
       "_origin": "ast",
       "id": "auth_telegramloginverifier_telegramloginverifier_isfresh",
-      "community": 8,
+      "community": 14,
       "norm_label": ".isfresh()"
     },
     {
@@ -7012,7 +7012,7 @@
       "source_location": "L67",
       "_origin": "ast",
       "id": "auth_telegramloginverifier_telegramloginverifier_calculatehash",
-      "community": 8,
+      "community": 14,
       "norm_label": ".calculatehash()"
     },
     {
@@ -7022,7 +7022,7 @@
       "source_location": "L79",
       "_origin": "ast",
       "id": "auth_telegramloginverifier_telegramloginverifier_datacheckstring",
-      "community": 8,
+      "community": 14,
       "norm_label": ".datacheckstring()"
     },
     {
@@ -7032,7 +7032,7 @@
       "source_location": "L88",
       "_origin": "ast",
       "id": "auth_telegramloginverifier_telegramloginverifier_isblank",
-      "community": 50,
+      "community": 5,
       "norm_label": ".isblank()"
     },
     {
@@ -7622,7 +7622,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "booking_tableavailability",
-      "community": 253,
+      "community": 56,
       "norm_label": "tableavailability.java"
     },
     {
@@ -7632,7 +7632,7 @@
       "source_location": "L8",
       "_origin": "ast",
       "id": "booking_tableavailability_available",
-      "community": 253,
+      "community": 56,
       "norm_label": "available()"
     },
     {
@@ -7642,7 +7642,7 @@
       "source_location": "L8",
       "_origin": "ast",
       "id": "src_main_java_museon_online_astor_butler_domain_booking_tableavailability_java_venuetable",
-      "community": 253,
+      "community": 56,
       "norm_label": "venuetable"
     },
     {
@@ -7652,7 +7652,7 @@
       "source_location": "L8",
       "_origin": "ast",
       "id": "src_main_java_museon_online_astor_butler_domain_booking_tableavailability_java_tableavailability",
-      "community": 253,
+      "community": 56,
       "norm_label": "tableavailability"
     },
     {
@@ -7662,7 +7662,7 @@
       "source_location": "L12",
       "_origin": "ast",
       "id": "booking_tableavailability_unavailable",
-      "community": 253,
+      "community": 56,
       "norm_label": "unavailable()"
     },
     {
@@ -7672,7 +7672,7 @@
       "source_location": "L12",
       "_origin": "ast",
       "id": "src_main_java_museon_online_astor_butler_domain_booking_tableavailability_java_string",
-      "community": 253,
+      "community": 56,
       "norm_label": "string"
     },
     {
@@ -8082,7 +8082,7 @@
       "source_location": "L34",
       "_origin": "ast",
       "id": "booking_tablereservationpendingintentservice_tablereservationpendingintentservice_deliverafterconfirmation",
-      "community": 207,
+      "community": 63,
       "norm_label": ".deliverafterconfirmation()"
     },
     {
@@ -8092,7 +8092,7 @@
       "source_location": "L34",
       "_origin": "ast",
       "id": "src_main_java_museon_online_astor_butler_domain_booking_tablereservationpendingintentservice_java_tablereservationorder",
-      "community": 207,
+      "community": 63,
       "norm_label": "tablereservationorder"
     },
     {
@@ -8902,7 +8902,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "consent_consentvaultservice",
-      "community": 203,
+      "community": 202,
       "norm_label": "consentvaultservice.java"
     },
     {
@@ -8912,7 +8912,7 @@
       "source_location": "L19",
       "_origin": "ast",
       "id": "consent_consentvaultservice_consentvaultservice",
-      "community": 203,
+      "community": 202,
       "norm_label": "consentvaultservice"
     },
     {
@@ -8922,7 +8922,7 @@
       "source_location": "L30",
       "_origin": "ast",
       "id": "consent_consentvaultservice_consentvaultservice_grantprivacypolicyfromtelegramcontact",
-      "community": 203,
+      "community": 202,
       "norm_label": ".grantprivacypolicyfromtelegramcontact()"
     },
     {
@@ -8932,7 +8932,7 @@
       "source_location": "L30",
       "_origin": "ast",
       "id": "src_main_java_museon_online_astor_butler_domain_consent_consentvaultservice_java_incomingmessage",
-      "community": 203,
+      "community": 202,
       "norm_label": "incomingmessage"
     },
     {
@@ -8942,7 +8942,7 @@
       "source_location": "L83",
       "_origin": "ast",
       "id": "consent_consentvaultservice_consentvaultservice_hasgrantedprivacypolicy",
-      "community": 203,
+      "community": 202,
       "norm_label": ".hasgrantedprivacypolicy()"
     },
     {
@@ -8952,7 +8952,7 @@
       "source_location": "L83",
       "_origin": "ast",
       "id": "src_main_java_museon_online_astor_butler_domain_consent_consentvaultservice_java_long",
-      "community": 203,
+      "community": 202,
       "norm_label": "long"
     },
     {
@@ -8962,7 +8962,7 @@
       "source_location": "L106",
       "_origin": "ast",
       "id": "consent_consentvaultservice_consentvaultservice_finduseridbytelegramuserid",
-      "community": 203,
+      "community": 202,
       "norm_label": ".finduseridbytelegramuserid()"
     },
     {
@@ -8972,7 +8972,7 @@
       "source_location": "L117",
       "_origin": "ast",
       "id": "consent_consentvaultservice_consentvaultservice_jsonb",
-      "community": 203,
+      "community": 202,
       "norm_label": ".jsonb()"
     },
     {
@@ -8982,7 +8982,7 @@
       "source_location": "L117",
       "_origin": "ast",
       "id": "src_main_java_museon_online_astor_butler_domain_consent_consentvaultservice_java_map",
-      "community": 203,
+      "community": 202,
       "norm_label": "map"
     },
     {
@@ -8992,7 +8992,7 @@
       "source_location": "L117",
       "_origin": "ast",
       "id": "src_main_java_museon_online_astor_butler_domain_consent_consentvaultservice_java_string",
-      "community": 203,
+      "community": 202,
       "norm_label": "string"
     },
     {
@@ -9002,7 +9002,7 @@
       "source_location": "L117",
       "_origin": "ast",
       "id": "src_main_java_museon_online_astor_butler_domain_consent_consentvaultservice_java_object",
-      "community": 203,
+      "community": 202,
       "norm_label": "object"
     },
     {
@@ -9012,7 +9012,7 @@
       "source_location": "L117",
       "_origin": "ast",
       "id": "src_main_java_museon_online_astor_butler_domain_consent_consentvaultservice_java_pgobject",
-      "community": 203,
+      "community": 202,
       "norm_label": "pgobject"
     },
     {
@@ -9022,7 +9022,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "content_aeriscontentreadservice",
-      "community": 108,
+      "community": 30,
       "norm_label": "aeriscontentreadservice.java"
     },
     {
@@ -9032,7 +9032,7 @@
       "source_location": "L13",
       "_origin": "ast",
       "id": "content_aeriscontentreadservice_aeriscontentreadservice",
-      "community": 108,
+      "community": 30,
       "norm_label": "aeriscontentreadservice"
     },
     {
@@ -9062,7 +9062,7 @@
       "source_location": "L32",
       "_origin": "ast",
       "id": "content_aeriscontentreadservice_aeriscontentreadservice_quietguide",
-      "community": 108,
+      "community": 30,
       "norm_label": ".quietguide()"
     },
     {
@@ -9072,7 +9072,7 @@
       "source_location": "L32",
       "_origin": "ast",
       "id": "src_main_java_museon_online_astor_butler_domain_content_aeriscontentreadservice_java_string",
-      "community": 108,
+      "community": 30,
       "norm_label": "string"
     },
     {
@@ -9082,7 +9082,7 @@
       "source_location": "L32",
       "_origin": "ast",
       "id": "src_main_java_museon_online_astor_butler_domain_content_aeriscontentreadservice_java_quietguideview",
-      "community": 108,
+      "community": 30,
       "norm_label": "quietguideview"
     },
     {
@@ -9092,7 +9092,7 @@
       "source_location": "L45",
       "_origin": "ast",
       "id": "content_aeriscontentreadservice_aeriscontentreadservice_postview",
-      "community": 108,
+      "community": 34,
       "norm_label": ".postview()"
     },
     {
@@ -9102,7 +9102,7 @@
       "source_location": "L45",
       "_origin": "ast",
       "id": "src_main_java_museon_online_astor_butler_domain_content_aeriscontentreadservice_java_venuecontentpost",
-      "community": 108,
+      "community": 34,
       "norm_label": "venuecontentpost"
     },
     {
@@ -9112,7 +9112,7 @@
       "source_location": "L45",
       "_origin": "ast",
       "id": "venuecontentpostview",
-      "community": 108,
+      "community": 34,
       "norm_label": "venuecontentpostview"
     },
     {
@@ -9122,7 +9122,7 @@
       "source_location": "L62",
       "_origin": "ast",
       "id": "content_aeriscontentreadservice_aeriscontentreadservice_assetview",
-      "community": 108,
+      "community": 30,
       "norm_label": ".assetview()"
     },
     {
@@ -9132,7 +9132,7 @@
       "source_location": "L62",
       "_origin": "ast",
       "id": "src_main_java_museon_online_astor_butler_domain_content_aeriscontentreadservice_java_mediaasset",
-      "community": 108,
+      "community": 30,
       "norm_label": "mediaasset"
     },
     {
@@ -9142,7 +9142,7 @@
       "source_location": "L62",
       "_origin": "ast",
       "id": "src_main_java_museon_online_astor_butler_domain_content_aeriscontentreadservice_java_mediaassetview",
-      "community": 108,
+      "community": 30,
       "norm_label": "mediaassetview"
     },
     {
@@ -9152,7 +9152,7 @@
       "source_location": "L78",
       "_origin": "ast",
       "id": "content_aeriscontentreadservice_aeriscontentreadservice_contentassetview",
-      "community": 108,
+      "community": 30,
       "norm_label": ".contentassetview()"
     },
     {
@@ -9162,7 +9162,7 @@
       "source_location": "L78",
       "_origin": "ast",
       "id": "src_main_java_museon_online_astor_butler_domain_content_aeriscontentreadservice_java_venuecontentasset",
-      "community": 108,
+      "community": 30,
       "norm_label": "venuecontentasset"
     },
     {
@@ -9172,7 +9172,7 @@
       "source_location": "L78",
       "_origin": "ast",
       "id": "venuecontentassetview",
-      "community": 108,
+      "community": 30,
       "norm_label": "venuecontentassetview"
     },
     {
@@ -9182,7 +9182,7 @@
       "source_location": "L91",
       "_origin": "ast",
       "id": "content_aeriscontentreadservice_aeriscontentreadservice_conceptview",
-      "community": 108,
+      "community": 30,
       "norm_label": ".conceptview()"
     },
     {
@@ -9192,7 +9192,7 @@
       "source_location": "L91",
       "_origin": "ast",
       "id": "conceptview",
-      "community": 108,
+      "community": 30,
       "norm_label": "conceptview"
     },
     {
@@ -9202,7 +9202,7 @@
       "source_location": "L98",
       "_origin": "ast",
       "id": "content_aeriscontentreadservice_aeriscontentreadservice_publicurl",
-      "community": 108,
+      "community": 30,
       "norm_label": ".publicurl()"
     },
     {
@@ -9232,7 +9232,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "content_publictelegramhtmlsource",
-      "community": 50,
+      "community": 34,
       "norm_label": "publictelegramhtmlsource.java"
     },
     {
@@ -9242,7 +9242,7 @@
       "source_location": "L21",
       "_origin": "ast",
       "id": "content_publictelegramhtmlsource_publictelegramhtmlsource",
-      "community": 50,
+      "community": 34,
       "norm_label": "publictelegramhtmlsource"
     },
     {
@@ -9252,7 +9252,7 @@
       "source_location": "L65",
       "_origin": "ast",
       "id": "content_publictelegramhtmlsource_publictelegramhtmlsource_enabled",
-      "community": 50,
+      "community": 34,
       "norm_label": ".enabled()"
     },
     {
@@ -9262,7 +9262,7 @@
       "source_location": "L65",
       "_origin": "ast",
       "id": "src_main_java_museon_online_astor_butler_domain_content_publictelegramhtmlsource_java_override",
-      "community": 50,
+      "community": 34,
       "norm_label": "override"
     },
     {
@@ -9272,7 +9272,7 @@
       "source_location": "L70",
       "_origin": "ast",
       "id": "content_publictelegramhtmlsource_publictelegramhtmlsource_fetchrecent",
-      "community": 50,
+      "community": 34,
       "norm_label": ".fetchrecent()"
     },
     {
@@ -9282,7 +9282,7 @@
       "source_location": "L70",
       "_origin": "ast",
       "id": "src_main_java_museon_online_astor_butler_domain_content_publictelegramhtmlsource_java_list",
-      "community": 50,
+      "community": 34,
       "norm_label": "list"
     },
     {
@@ -9292,7 +9292,7 @@
       "source_location": "L70",
       "_origin": "ast",
       "id": "src_main_java_museon_online_astor_butler_domain_content_publictelegramhtmlsource_java_normalizedvenuecontentpost",
-      "community": 50,
+      "community": 34,
       "norm_label": "normalizedvenuecontentpost"
     },
     {
@@ -9302,7 +9302,7 @@
       "source_location": "L93",
       "_origin": "ast",
       "id": "content_publictelegramhtmlsource_publictelegramhtmlsource_parse",
-      "community": 50,
+      "community": 34,
       "norm_label": ".parse()"
     },
     {
@@ -9312,7 +9312,7 @@
       "source_location": "L93",
       "_origin": "ast",
       "id": "src_main_java_museon_online_astor_butler_domain_content_publictelegramhtmlsource_java_string",
-      "community": 50,
+      "community": 34,
       "norm_label": "string"
     },
     {
@@ -9322,7 +9322,7 @@
       "source_location": "L117",
       "_origin": "ast",
       "id": "content_publictelegramhtmlsource_publictelegramhtmlsource_topost",
-      "community": 50,
+      "community": 34,
       "norm_label": ".topost()"
     },
     {
@@ -9332,7 +9332,7 @@
       "source_location": "L143",
       "_origin": "ast",
       "id": "content_publictelegramhtmlsource_publictelegramhtmlsource_messagetext",
-      "community": 50,
+      "community": 34,
       "norm_label": ".messagetext()"
     },
     {
@@ -9342,7 +9342,7 @@
       "source_location": "L151",
       "_origin": "ast",
       "id": "content_publictelegramhtmlsource_publictelegramhtmlsource_publishedat",
-      "community": 50,
+      "community": 34,
       "norm_label": ".publishedat()"
     },
     {
@@ -9352,7 +9352,7 @@
       "source_location": "L151",
       "_origin": "ast",
       "id": "src_main_java_museon_online_astor_butler_domain_content_publictelegramhtmlsource_java_instant",
-      "community": 50,
+      "community": 34,
       "norm_label": "instant"
     },
     {
@@ -9362,7 +9362,7 @@
       "source_location": "L163",
       "_origin": "ast",
       "id": "content_publictelegramhtmlsource_publictelegramhtmlsource_assets",
-      "community": 50,
+      "community": 34,
       "norm_label": ".assets()"
     },
     {
@@ -9372,7 +9372,7 @@
       "source_location": "L163",
       "_origin": "ast",
       "id": "src_main_java_museon_online_astor_butler_domain_content_publictelegramhtmlsource_java_venuecontentasset",
-      "community": 50,
+      "community": 34,
       "norm_label": "venuecontentasset"
     },
     {
@@ -9382,7 +9382,7 @@
       "source_location": "L191",
       "_origin": "ast",
       "id": "content_publictelegramhtmlsource_publictelegramhtmlsource_cleanuphtml",
-      "community": 50,
+      "community": 34,
       "norm_label": ".cleanuphtml()"
     },
     {
@@ -9392,7 +9392,7 @@
       "source_location": "L206",
       "_origin": "ast",
       "id": "content_publictelegramhtmlsource_publictelegramhtmlsource_sourcemessageid",
-      "community": 50,
+      "community": 34,
       "norm_label": ".sourcemessageid()"
     },
     {
@@ -9402,7 +9402,7 @@
       "source_location": "L214",
       "_origin": "ast",
       "id": "content_publictelegramhtmlsource_publictelegramhtmlsource_sha256",
-      "community": 50,
+      "community": 34,
       "norm_label": ".sha256()"
     },
     {
@@ -9412,7 +9412,7 @@
       "source_location": "L223",
       "_origin": "ast",
       "id": "content_publictelegramhtmlsource_publictelegramhtmlsource_escapejson",
-      "community": 50,
+      "community": 34,
       "norm_label": ".escapejson()"
     },
     {
@@ -9422,7 +9422,7 @@
       "source_location": "L227",
       "_origin": "ast",
       "id": "content_publictelegramhtmlsource_publictelegramhtmlsource_normalizevenue",
-      "community": 50,
+      "community": 34,
       "norm_label": ".normalizevenue()"
     },
     {
@@ -9442,7 +9442,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "content_venuecontentassetstorageservice",
-      "community": 56,
+      "community": 34,
       "norm_label": "venuecontentassetstorageservice.java"
     },
     {
@@ -9452,7 +9452,7 @@
       "source_location": "L21",
       "_origin": "ast",
       "id": "content_venuecontentassetstorageservice_venuecontentassetstorageservice",
-      "community": 213,
+      "community": 34,
       "norm_label": "venuecontentassetstorageservice"
     },
     {
@@ -9462,7 +9462,7 @@
       "source_location": "L43",
       "_origin": "ast",
       "id": "content_venuecontentassetstorageservice_venuecontentassetstorageservice_mirrorassets",
-      "community": 213,
+      "community": 34,
       "norm_label": ".mirrorassets()"
     },
     {
@@ -9472,7 +9472,7 @@
       "source_location": "L43",
       "_origin": "ast",
       "id": "src_main_java_museon_online_astor_butler_domain_content_venuecontentassetstorageservice_java_normalizedvenuecontentpost",
-      "community": 213,
+      "community": 34,
       "norm_label": "normalizedvenuecontentpost"
     },
     {
@@ -9482,7 +9482,7 @@
       "source_location": "L67",
       "_origin": "ast",
       "id": "content_venuecontentassetstorageservice_venuecontentassetstorageservice_mirrorasset",
-      "community": 213,
+      "community": 34,
       "norm_label": ".mirrorasset()"
     },
     {
@@ -9492,7 +9492,7 @@
       "source_location": "L67",
       "_origin": "ast",
       "id": "src_main_java_museon_online_astor_butler_domain_content_venuecontentassetstorageservice_java_venuecontentasset",
-      "community": 213,
+      "community": 34,
       "norm_label": "venuecontentasset"
     },
     {
@@ -9502,7 +9502,7 @@
       "source_location": "L102",
       "_origin": "ast",
       "id": "content_venuecontentassetstorageservice_venuecontentassetstorageservice_objectkey",
-      "community": 213,
+      "community": 34,
       "norm_label": ".objectkey()"
     },
     {
@@ -9512,7 +9512,7 @@
       "source_location": "L102",
       "_origin": "ast",
       "id": "src_main_java_museon_online_astor_butler_domain_content_venuecontentassetstorageservice_java_string",
-      "community": 213,
+      "community": 34,
       "norm_label": "string"
     },
     {
@@ -9522,7 +9522,7 @@
       "source_location": "L113",
       "_origin": "ast",
       "id": "content_venuecontentassetstorageservice_venuecontentassetstorageservice_extension",
-      "community": 213,
+      "community": 34,
       "norm_label": ".extension()"
     },
     {
@@ -9532,7 +9532,7 @@
       "source_location": "L133",
       "_origin": "ast",
       "id": "content_venuecontentassetstorageservice_venuecontentassetstorageservice_safe",
-      "community": 213,
+      "community": 34,
       "norm_label": ".safe()"
     },
     {
@@ -9542,7 +9542,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "content_venuecontentclassifier",
-      "community": 108,
+      "community": 64,
       "norm_label": "venuecontentclassifier.java"
     },
     {
@@ -9552,7 +9552,7 @@
       "source_location": "L9",
       "_origin": "ast",
       "id": "content_venuecontentclassifier_venuecontentclassifier",
-      "community": 108,
+      "community": 64,
       "norm_label": "venuecontentclassifier"
     },
     {
@@ -9562,7 +9562,7 @@
       "source_location": "L12",
       "_origin": "ast",
       "id": "content_venuecontentclassifier_venuecontentclassifier_classify",
-      "community": 108,
+      "community": 64,
       "norm_label": ".classify()"
     },
     {
@@ -9572,7 +9572,7 @@
       "source_location": "L12",
       "_origin": "ast",
       "id": "src_main_java_museon_online_astor_butler_domain_content_venuecontentclassifier_java_normalizedvenuecontentpost",
-      "community": 108,
+      "community": 64,
       "norm_label": "normalizedvenuecontentpost"
     },
     {
@@ -9582,7 +9582,7 @@
       "source_location": "L12",
       "_origin": "ast",
       "id": "src_main_java_museon_online_astor_butler_domain_content_venuecontentclassifier_java_classifiedvenuecontentpost",
-      "community": 108,
+      "community": 64,
       "norm_label": "classifiedvenuecontentpost"
     },
     {
@@ -9592,7 +9592,7 @@
       "source_location": "L33",
       "_origin": "ast",
       "id": "content_venuecontentclassifier_venuecontentclassifier_type",
-      "community": 108,
+      "community": 64,
       "norm_label": ".type()"
     },
     {
@@ -9602,7 +9602,7 @@
       "source_location": "L33",
       "_origin": "ast",
       "id": "src_main_java_museon_online_astor_butler_domain_content_venuecontentclassifier_java_string",
-      "community": 108,
+      "community": 64,
       "norm_label": "string"
     },
     {
@@ -9612,7 +9612,7 @@
       "source_location": "L33",
       "_origin": "ast",
       "id": "venuecontenttype",
-      "community": 108,
+      "community": 64,
       "norm_label": "venuecontenttype"
     },
     {
@@ -9622,7 +9622,7 @@
       "source_location": "L52",
       "_origin": "ast",
       "id": "content_venuecontentclassifier_venuecontentclassifier_confidence",
-      "community": 108,
+      "community": 64,
       "norm_label": ".confidence()"
     },
     {
@@ -9632,7 +9632,7 @@
       "source_location": "L65",
       "_origin": "ast",
       "id": "content_venuecontentclassifier_venuecontentclassifier_activeuntil",
-      "community": 108,
+      "community": 64,
       "norm_label": ".activeuntil()"
     },
     {
@@ -9642,7 +9642,7 @@
       "source_location": "L65",
       "_origin": "ast",
       "id": "src_main_java_museon_online_astor_butler_domain_content_venuecontentclassifier_java_instant",
-      "community": 108,
+      "community": 64,
       "norm_label": "instant"
     },
     {
@@ -9652,7 +9652,7 @@
       "source_location": "L75",
       "_origin": "ast",
       "id": "content_venuecontentclassifier_venuecontentclassifier_title",
-      "community": 108,
+      "community": 64,
       "norm_label": ".title()"
     },
     {
@@ -9662,7 +9662,7 @@
       "source_location": "L92",
       "_origin": "ast",
       "id": "content_venuecontentclassifier_venuecontentclassifier_trimbody",
-      "community": 108,
+      "community": 64,
       "norm_label": ".trimbody()"
     },
     {
@@ -9672,7 +9672,7 @@
       "source_location": "L100",
       "_origin": "ast",
       "id": "content_venuecontentclassifier_venuecontentclassifier_containsany",
-      "community": 108,
+      "community": 64,
       "norm_label": ".containsany()"
     },
     {
@@ -9682,7 +9682,7 @@
       "source_location": "L109",
       "_origin": "ast",
       "id": "content_venuecontentclassifier_venuecontentclassifier_normalize",
-      "community": 108,
+      "community": 64,
       "norm_label": ".normalize()"
     },
     {
@@ -9692,7 +9692,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "content_venuecontentingestservice",
-      "community": 218,
+      "community": 34,
       "norm_label": "venuecontentingestservice.java"
     },
     {
@@ -9702,7 +9702,7 @@
       "source_location": "L11",
       "_origin": "ast",
       "id": "content_venuecontentingestservice_venuecontentingestservice",
-      "community": 218,
+      "community": 34,
       "norm_label": "venuecontentingestservice"
     },
     {
@@ -9712,7 +9712,7 @@
       "source_location": "L27",
       "_origin": "ast",
       "id": "content_venuecontentingestservice_venuecontentingestservice_ingestaerischannel",
-      "community": 218,
+      "community": 34,
       "norm_label": ".ingestaerischannel()"
     },
     {
@@ -9722,7 +9722,7 @@
       "source_location": "L27",
       "_origin": "ast",
       "id": "src_main_java_museon_online_astor_butler_domain_content_venuecontentingestservice_java_venuecontentingestsummary",
-      "community": 218,
+      "community": 34,
       "norm_label": "venuecontentingestsummary"
     },
     {
@@ -9732,7 +9732,7 @@
       "source_location": "L52",
       "_origin": "ast",
       "id": "content_venuecontentingestservice_venuecontentingestservice_scheduledingest",
-      "community": 218,
+      "community": 34,
       "norm_label": ".scheduledingest()"
     },
     {
@@ -9742,7 +9742,7 @@
       "source_location": "L52",
       "_origin": "ast",
       "id": "scheduled",
-      "community": 218,
+      "community": 34,
       "norm_label": "scheduled"
     },
     {
@@ -9752,7 +9752,7 @@
       "source_location": "L59",
       "_origin": "ast",
       "id": "content_venuecontentingestservice_venuecontentingestservice_normalizevenue",
-      "community": 218,
+      "community": 34,
       "norm_label": ".normalizevenue()"
     },
     {
@@ -9762,7 +9762,7 @@
       "source_location": "L59",
       "_origin": "ast",
       "id": "src_main_java_museon_online_astor_butler_domain_content_venuecontentingestservice_java_string",
-      "community": 218,
+      "community": 34,
       "norm_label": "string"
     },
     {
@@ -9792,7 +9792,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "content_venuecontentqueryservice",
-      "community": 28,
+      "community": 242,
       "norm_label": "venuecontentqueryservice.java"
     },
     {
@@ -9802,7 +9802,7 @@
       "source_location": "L10",
       "_origin": "ast",
       "id": "content_venuecontentqueryservice_venuecontentqueryservice",
-      "community": 28,
+      "community": 242,
       "norm_label": "venuecontentqueryservice"
     },
     {
@@ -9812,7 +9812,7 @@
       "source_location": "L16",
       "_origin": "ast",
       "id": "content_venuecontentqueryservice_venuecontentqueryservice_activequietguideposts",
-      "community": 28,
+      "community": 242,
       "norm_label": ".activequietguideposts()"
     },
     {
@@ -9822,7 +9822,7 @@
       "source_location": "L16",
       "_origin": "ast",
       "id": "src_main_java_museon_online_astor_butler_domain_content_venuecontentqueryservice_java_string",
-      "community": 28,
+      "community": 242,
       "norm_label": "string"
     },
     {
@@ -9832,7 +9832,7 @@
       "source_location": "L16",
       "_origin": "ast",
       "id": "src_main_java_museon_online_astor_butler_domain_content_venuecontentqueryservice_java_list",
-      "community": 28,
+      "community": 242,
       "norm_label": "list"
     },
     {
@@ -9842,7 +9842,7 @@
       "source_location": "L16",
       "_origin": "ast",
       "id": "src_main_java_museon_online_astor_butler_domain_content_venuecontentqueryservice_java_venuecontentpost",
-      "community": 28,
+      "community": 242,
       "norm_label": "venuecontentpost"
     },
     {
@@ -10072,7 +10072,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "content_venuecontentsource",
-      "community": 232,
+      "community": 34,
       "norm_label": "venuecontentsource.java"
     },
     {
@@ -10082,7 +10082,7 @@
       "source_location": "L5",
       "_origin": "ast",
       "id": "content_venuecontentsource_venuecontentsource",
-      "community": 232,
+      "community": 34,
       "norm_label": "venuecontentsource"
     },
     {
@@ -10092,7 +10092,7 @@
       "source_location": "L7",
       "_origin": "ast",
       "id": "content_venuecontentsource_venuecontentsource_enabled",
-      "community": 232,
+      "community": 34,
       "norm_label": ".enabled()"
     },
     {
@@ -10102,7 +10102,7 @@
       "source_location": "L9",
       "_origin": "ast",
       "id": "content_venuecontentsource_venuecontentsource_fetchrecent",
-      "community": 232,
+      "community": 34,
       "norm_label": ".fetchrecent()"
     },
     {
@@ -10112,7 +10112,7 @@
       "source_location": "L9",
       "_origin": "ast",
       "id": "src_main_java_museon_online_astor_butler_domain_content_venuecontentsource_java_list",
-      "community": 232,
+      "community": 34,
       "norm_label": "list"
     },
     {
@@ -10122,7 +10122,7 @@
       "source_location": "L9",
       "_origin": "ast",
       "id": "src_main_java_museon_online_astor_butler_domain_content_venuecontentsource_java_normalizedvenuecontentpost",
-      "community": 232,
+      "community": 34,
       "norm_label": "normalizedvenuecontentpost"
     },
     {
@@ -10582,7 +10582,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "identity_identityservice",
-      "community": 206,
+      "community": 15,
       "norm_label": "identityservice.java"
     },
     {
@@ -10592,7 +10592,7 @@
       "source_location": "L11",
       "_origin": "ast",
       "id": "identity_identityservice_identityservice",
-      "community": 206,
+      "community": 15,
       "norm_label": "identityservice"
     },
     {
@@ -10602,7 +10602,7 @@
       "source_location": "L17",
       "_origin": "ast",
       "id": "identity_identityservice_identityservice_identifytelegram",
-      "community": 206,
+      "community": 15,
       "norm_label": ".identifytelegram()"
     },
     {
@@ -10612,7 +10612,7 @@
       "source_location": "L17",
       "_origin": "ast",
       "id": "src_main_java_museon_online_astor_butler_domain_identity_identityservice_java_incomingmessage",
-      "community": 206,
+      "community": 15,
       "norm_label": "incomingmessage"
     },
     {
@@ -10622,7 +10622,7 @@
       "source_location": "L17",
       "_origin": "ast",
       "id": "identityrecord",
-      "community": 201,
+      "community": 15,
       "norm_label": "identityrecord"
     },
     {
@@ -10632,7 +10632,7 @@
       "source_location": "L28",
       "_origin": "ast",
       "id": "identity_identityservice_identityservice_upsertuser",
-      "community": 206,
+      "community": 15,
       "norm_label": ".upsertuser()"
     },
     {
@@ -10642,7 +10642,7 @@
       "source_location": "L28",
       "_origin": "ast",
       "id": "src_main_java_museon_online_astor_butler_domain_identity_identityservice_java_long",
-      "community": 206,
+      "community": 15,
       "norm_label": "long"
     },
     {
@@ -10652,7 +10652,7 @@
       "source_location": "L50",
       "_origin": "ast",
       "id": "identity_identityservice_identityservice_upserttelegramprofile",
-      "community": 206,
+      "community": 15,
       "norm_label": ".upserttelegramprofile()"
     },
     {
@@ -10662,7 +10662,7 @@
       "source_location": "L84",
       "_origin": "ast",
       "id": "identity_identityservice_identityservice_upsertphonecontact",
-      "community": 206,
+      "community": 15,
       "norm_label": ".upsertphonecontact()"
     },
     {
@@ -10672,7 +10672,7 @@
       "source_location": "L107",
       "_origin": "ast",
       "id": "identity_identityservice_identityservice_displayname",
-      "community": 206,
+      "community": 15,
       "norm_label": ".displayname()"
     },
     {
@@ -10682,7 +10682,7 @@
       "source_location": "L107",
       "_origin": "ast",
       "id": "src_main_java_museon_online_astor_butler_domain_identity_identityservice_java_string",
-      "community": 206,
+      "community": 15,
       "norm_label": "string"
     },
     {
@@ -10692,7 +10692,7 @@
       "source_location": "L121",
       "_origin": "ast",
       "id": "identity_identityservice_identityservice_nulltoblank",
-      "community": 206,
+      "community": 15,
       "norm_label": ".nulltoblank()"
     },
     {
@@ -10972,7 +10972,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "telegram_telegramintakeservice",
-      "community": 201,
+      "community": 15,
       "norm_label": "telegramintakeservice.java"
     },
     {
@@ -10982,7 +10982,7 @@
       "source_location": "L21",
       "_origin": "ast",
       "id": "telegram_telegramintakeservice_telegramintakeservice",
-      "community": 201,
+      "community": 15,
       "norm_label": "telegramintakeservice"
     },
     {
@@ -10992,7 +10992,7 @@
       "source_location": "L30",
       "_origin": "ast",
       "id": "telegram_telegramintakeservice_telegramintakeservice_capture",
-      "community": 201,
+      "community": 15,
       "norm_label": ".capture()"
     },
     {
@@ -11002,7 +11002,7 @@
       "source_location": "L30",
       "_origin": "ast",
       "id": "src_main_java_museon_online_astor_butler_domain_telegram_telegramintakeservice_java_incomingmessage",
-      "community": 201,
+      "community": 15,
       "norm_label": "incomingmessage"
     },
     {
@@ -11012,7 +11012,7 @@
       "source_location": "L39",
       "_origin": "ast",
       "id": "telegram_telegramintakeservice_telegramintakeservice_savemessage",
-      "community": 201,
+      "community": 15,
       "norm_label": ".savemessage()"
     },
     {
@@ -11022,7 +11022,7 @@
       "source_location": "L39",
       "_origin": "ast",
       "id": "src_main_java_museon_online_astor_butler_domain_telegram_telegramintakeservice_java_long",
-      "community": 201,
+      "community": 15,
       "norm_label": "long"
     },
     {
@@ -11032,7 +11032,7 @@
       "source_location": "L71",
       "_origin": "ast",
       "id": "telegram_telegramintakeservice_telegramintakeservice_messagekind",
-      "community": 201,
+      "community": 15,
       "norm_label": ".messagekind()"
     },
     {
@@ -11042,7 +11042,7 @@
       "source_location": "L71",
       "_origin": "ast",
       "id": "src_main_java_museon_online_astor_butler_domain_telegram_telegramintakeservice_java_string",
-      "community": 201,
+      "community": 15,
       "norm_label": "string"
     },
     {
@@ -11052,7 +11052,7 @@
       "source_location": "L89",
       "_origin": "ast",
       "id": "telegram_telegramintakeservice_telegramintakeservice_rawpayload",
-      "community": 201,
+      "community": 15,
       "norm_label": ".rawpayload()"
     },
     {
@@ -11062,7 +11062,7 @@
       "source_location": "L89",
       "_origin": "ast",
       "id": "src_main_java_museon_online_astor_butler_domain_telegram_telegramintakeservice_java_map",
-      "community": 201,
+      "community": 15,
       "norm_label": "map"
     },
     {
@@ -11072,7 +11072,7 @@
       "source_location": "L89",
       "_origin": "ast",
       "id": "src_main_java_museon_online_astor_butler_domain_telegram_telegramintakeservice_java_object",
-      "community": 201,
+      "community": 15,
       "norm_label": "object"
     },
     {
@@ -11082,7 +11082,7 @@
       "source_location": "L106",
       "_origin": "ast",
       "id": "telegram_telegramintakeservice_telegramintakeservice_jsonb",
-      "community": 201,
+      "community": 15,
       "norm_label": ".jsonb()"
     },
     {
@@ -11092,7 +11092,7 @@
       "source_location": "L106",
       "_origin": "ast",
       "id": "src_main_java_museon_online_astor_butler_domain_telegram_telegramintakeservice_java_pgobject",
-      "community": 201,
+      "community": 15,
       "norm_label": "pgobject"
     },
     {
@@ -11112,7 +11112,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "timeline_fsmtimelineevent",
-      "community": 246,
+      "community": 15,
       "norm_label": "fsmtimelineevent.java"
     },
     {
@@ -11122,7 +11122,7 @@
       "source_location": "L28",
       "_origin": "ast",
       "id": "timeline_fsmtimelineevent_from",
-      "community": 246,
+      "community": 15,
       "norm_label": "from()"
     },
     {
@@ -11132,7 +11132,7 @@
       "source_location": "L28",
       "_origin": "ast",
       "id": "src_main_java_museon_online_astor_butler_domain_timeline_fsmtimelineevent_java_incomingmessage",
-      "community": 246,
+      "community": 15,
       "norm_label": "incomingmessage"
     },
     {
@@ -11142,7 +11142,7 @@
       "source_location": "L28",
       "_origin": "ast",
       "id": "src_main_java_museon_online_astor_butler_domain_timeline_fsmtimelineevent_java_botstate",
-      "community": 246,
+      "community": 15,
       "norm_label": "botstate"
     },
     {
@@ -11152,7 +11152,7 @@
       "source_location": "L28",
       "_origin": "ast",
       "id": "src_main_java_museon_online_astor_butler_domain_timeline_fsmtimelineevent_java_outgoingmessage",
-      "community": 246,
+      "community": 15,
       "norm_label": "outgoingmessage"
     },
     {
@@ -11162,7 +11162,7 @@
       "source_location": "L28",
       "_origin": "ast",
       "id": "src_main_java_museon_online_astor_butler_domain_timeline_fsmtimelineevent_java_fsmtimelineevent",
-      "community": 246,
+      "community": 15,
       "norm_label": "fsmtimelineevent"
     },
     {
@@ -11262,7 +11262,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "timeline_scyllafsmtimelinewriter",
-      "community": 99,
+      "community": 8,
       "norm_label": "scyllafsmtimelinewriter.java"
     },
     {
@@ -11272,7 +11272,7 @@
       "source_location": "L21",
       "_origin": "ast",
       "id": "timeline_scyllafsmtimelinewriter_scyllafsmtimelinewriter",
-      "community": 99,
+      "community": 8,
       "norm_label": "scyllafsmtimelinewriter"
     },
     {
@@ -11282,7 +11282,7 @@
       "source_location": "L30",
       "_origin": "ast",
       "id": "timeline_scyllafsmtimelinewriter_scyllafsmtimelinewriter_scyllafsmtimelinewriter",
-      "community": 99,
+      "community": 8,
       "norm_label": ".scyllafsmtimelinewriter()"
     },
     {
@@ -11292,7 +11292,7 @@
       "source_location": "L30",
       "_origin": "ast",
       "id": "objectmapper",
-      "community": 201,
+      "community": 8,
       "norm_label": "objectmapper"
     },
     {
@@ -11302,7 +11302,7 @@
       "source_location": "L30",
       "_origin": "ast",
       "id": "src_main_java_museon_online_astor_butler_domain_timeline_scyllafsmtimelinewriter_java_string",
-      "community": 99,
+      "community": 8,
       "norm_label": "string"
     },
     {
@@ -11312,7 +11312,7 @@
       "source_location": "L47",
       "_origin": "ast",
       "id": "timeline_scyllafsmtimelinewriter_scyllafsmtimelinewriter_append",
-      "community": 99,
+      "community": 8,
       "norm_label": ".append()"
     },
     {
@@ -11322,7 +11322,7 @@
       "source_location": "L47",
       "_origin": "ast",
       "id": "src_main_java_museon_online_astor_butler_domain_timeline_scyllafsmtimelinewriter_java_fsmtimelineevent",
-      "community": 99,
+      "community": 8,
       "norm_label": "fsmtimelineevent"
     },
     {
@@ -11332,7 +11332,7 @@
       "source_location": "L47",
       "_origin": "ast",
       "id": "src_main_java_museon_online_astor_butler_domain_timeline_scyllafsmtimelinewriter_java_override",
-      "community": 99,
+      "community": 8,
       "norm_label": "override"
     },
     {
@@ -11342,7 +11342,7 @@
       "source_location": "L87",
       "_origin": "ast",
       "id": "timeline_scyllafsmtimelinewriter_scyllafsmtimelinewriter_close",
-      "community": 99,
+      "community": 8,
       "norm_label": ".close()"
     },
     {
@@ -11352,7 +11352,7 @@
       "source_location": "L87",
       "_origin": "ast",
       "id": "src_main_java_museon_online_astor_butler_domain_timeline_scyllafsmtimelinewriter_java_predestroy",
-      "community": 99,
+      "community": 8,
       "norm_label": "predestroy"
     },
     {
@@ -11362,7 +11362,7 @@
       "source_location": "L92",
       "_origin": "ast",
       "id": "timeline_scyllafsmtimelinewriter_scyllafsmtimelinewriter_initialize",
-      "community": 99,
+      "community": 8,
       "norm_label": ".initialize()"
     },
     {
@@ -11372,7 +11372,7 @@
       "source_location": "L92",
       "_origin": "ast",
       "id": "src_main_java_museon_online_astor_butler_domain_timeline_scyllafsmtimelinewriter_java_duration",
-      "community": 99,
+      "community": 8,
       "norm_label": "duration"
     },
     {
@@ -11382,7 +11382,7 @@
       "source_location": "L92",
       "_origin": "ast",
       "id": "preparedstatement",
-      "community": 99,
+      "community": 8,
       "norm_label": "preparedstatement"
     },
     {
@@ -11392,7 +11392,7 @@
       "source_location": "L124",
       "_origin": "ast",
       "id": "timeline_scyllafsmtimelinewriter_scyllafsmtimelinewriter_ensureschema",
-      "community": 99,
+      "community": 8,
       "norm_label": ".ensureschema()"
     },
     {
@@ -11402,7 +11402,7 @@
       "source_location": "L155",
       "_origin": "ast",
       "id": "timeline_scyllafsmtimelinewriter_scyllafsmtimelinewriter_metadatajson",
-      "community": 99,
+      "community": 8,
       "norm_label": ".metadatajson()"
     },
     {
@@ -11412,7 +11412,7 @@
       "source_location": "L155",
       "_origin": "ast",
       "id": "src_main_java_museon_online_astor_butler_domain_timeline_scyllafsmtimelinewriter_java_map",
-      "community": 99,
+      "community": 8,
       "norm_label": "map"
     },
     {
@@ -11422,7 +11422,7 @@
       "source_location": "L155",
       "_origin": "ast",
       "id": "src_main_java_museon_online_astor_butler_domain_timeline_scyllafsmtimelinewriter_java_object",
-      "community": 99,
+      "community": 8,
       "norm_label": "object"
     },
     {
@@ -12152,7 +12152,7 @@
       "source_location": "L58",
       "_origin": "ast",
       "id": "event_inboundevent_inboundevent_getchatid",
-      "community": 0,
+      "community": 200,
       "norm_label": ".getchatid()"
     },
     {
@@ -12332,7 +12332,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "idempotency_idempotencyservice",
-      "community": 247,
+      "community": 5,
       "norm_label": "idempotencyservice.java"
     },
     {
@@ -12342,7 +12342,7 @@
       "source_location": "L11",
       "_origin": "ast",
       "id": "idempotency_idempotencyservice_idempotencyservice",
-      "community": 247,
+      "community": 5,
       "norm_label": "idempotencyservice"
     },
     {
@@ -12352,7 +12352,7 @@
       "source_location": "L27",
       "_origin": "ast",
       "id": "idempotency_idempotencyservice_idempotencyservice_accept",
-      "community": 247,
+      "community": 5,
       "norm_label": ".accept()"
     },
     {
@@ -12362,7 +12362,7 @@
       "source_location": "L27",
       "_origin": "ast",
       "id": "src_main_java_museon_online_astor_butler_fsm_core_idempotency_idempotencyservice_java_string",
-      "community": 247,
+      "community": 5,
       "norm_label": "string"
     },
     {
@@ -12372,7 +12372,7 @@
       "source_location": "L40",
       "_origin": "ast",
       "id": "idempotency_idempotencyservice_idempotencyservice_idempotencykey",
-      "community": 247,
+      "community": 5,
       "norm_label": ".idempotencykey()"
     },
     {
@@ -12402,7 +12402,7 @@
       "source_location": "",
       "_origin": "ast",
       "id": "fsmhandler",
-      "community": 244,
+      "community": 200,
       "norm_label": "fsmhandler"
     },
     {
@@ -12752,7 +12752,7 @@
       "source_location": "",
       "_origin": "ast",
       "id": "fsmscenario",
-      "community": 46,
+      "community": 51,
       "norm_label": "fsmscenario"
     },
     {
@@ -12952,307 +12952,327 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "scenario_changecancelscenario",
-      "community": 14,
+      "community": 5,
       "norm_label": "changecancelscenario.java"
     },
     {
       "label": "ChangeCancelScenario",
       "file_type": "code",
       "source_file": "src/main/java/museon_online/astor_butler/fsm/scenario/ChangeCancelScenario.java",
-      "source_location": "L20",
+      "source_location": "L22",
       "_origin": "ast",
       "id": "scenario_changecancelscenario_changecancelscenario",
-      "community": 14,
+      "community": 5,
       "norm_label": "changecancelscenario"
     },
     {
       "label": ".id()",
       "file_type": "code",
       "source_file": "src/main/java/museon_online/astor_butler/fsm/scenario/ChangeCancelScenario.java",
-      "source_location": "L33",
+      "source_location": "L36",
       "_origin": "ast",
       "id": "scenario_changecancelscenario_changecancelscenario_id",
-      "community": 14,
+      "community": 5,
       "norm_label": ".id()"
     },
     {
       "label": "String",
       "file_type": "code",
       "source_file": "src/main/java/museon_online/astor_butler/fsm/scenario/ChangeCancelScenario.java",
-      "source_location": "L33",
+      "source_location": "L36",
       "_origin": "ast",
       "id": "src_main_java_museon_online_astor_butler_fsm_scenario_changecancelscenario_java_string",
-      "community": 14,
+      "community": 5,
       "norm_label": "string"
     },
     {
       "label": "Override",
       "file_type": "code",
       "source_file": "src/main/java/museon_online/astor_butler/fsm/scenario/ChangeCancelScenario.java",
-      "source_location": "L33",
+      "source_location": "L36",
       "_origin": "ast",
       "id": "src_main_java_museon_online_astor_butler_fsm_scenario_changecancelscenario_java_override",
-      "community": 14,
+      "community": 5,
       "norm_label": "override"
     },
     {
       "label": ".priority()",
       "file_type": "code",
       "source_file": "src/main/java/museon_online/astor_butler/fsm/scenario/ChangeCancelScenario.java",
-      "source_location": "L38",
+      "source_location": "L41",
       "_origin": "ast",
       "id": "scenario_changecancelscenario_changecancelscenario_priority",
-      "community": 14,
+      "community": 5,
       "norm_label": ".priority()"
     },
     {
       "label": ".supports()",
       "file_type": "code",
       "source_file": "src/main/java/museon_online/astor_butler/fsm/scenario/ChangeCancelScenario.java",
-      "source_location": "L43",
+      "source_location": "L46",
       "_origin": "ast",
       "id": "scenario_changecancelscenario_changecancelscenario_supports",
-      "community": 14,
+      "community": 5,
       "norm_label": ".supports()"
     },
     {
       "label": "IncomingMessage",
       "file_type": "code",
       "source_file": "src/main/java/museon_online/astor_butler/fsm/scenario/ChangeCancelScenario.java",
-      "source_location": "L43",
+      "source_location": "L46",
       "_origin": "ast",
       "id": "src_main_java_museon_online_astor_butler_fsm_scenario_changecancelscenario_java_incomingmessage",
-      "community": 14,
+      "community": 5,
       "norm_label": "incomingmessage"
     },
     {
       "label": "BotState",
       "file_type": "code",
       "source_file": "src/main/java/museon_online/astor_butler/fsm/scenario/ChangeCancelScenario.java",
-      "source_location": "L43",
+      "source_location": "L46",
       "_origin": "ast",
       "id": "src_main_java_museon_online_astor_butler_fsm_scenario_changecancelscenario_java_botstate",
-      "community": 14,
+      "community": 5,
       "norm_label": "botstate"
     },
     {
       "label": ".handle()",
       "file_type": "code",
       "source_file": "src/main/java/museon_online/astor_butler/fsm/scenario/ChangeCancelScenario.java",
-      "source_location": "L53",
+      "source_location": "L56",
       "_origin": "ast",
       "id": "scenario_changecancelscenario_changecancelscenario_handle",
-      "community": 14,
+      "community": 5,
       "norm_label": ".handle()"
     },
     {
       "label": "OutgoingMessage",
       "file_type": "code",
       "source_file": "src/main/java/museon_online/astor_butler/fsm/scenario/ChangeCancelScenario.java",
-      "source_location": "L53",
+      "source_location": "L56",
       "_origin": "ast",
       "id": "src_main_java_museon_online_astor_butler_fsm_scenario_changecancelscenario_java_outgoingmessage",
-      "community": 14,
+      "community": 5,
       "norm_label": "outgoingmessage"
     },
     {
-      "label": ".activeReservationsText()",
+      "label": ".activeRequestsText()",
       "file_type": "code",
       "source_file": "src/main/java/museon_online/astor_butler/fsm/scenario/ChangeCancelScenario.java",
-      "source_location": "L98",
+      "source_location": "L103",
       "_origin": "ast",
-      "id": "scenario_changecancelscenario_changecancelscenario_activereservationstext",
-      "community": 14,
-      "norm_label": ".activereservationstext()"
+      "id": "scenario_changecancelscenario_changecancelscenario_activerequeststext",
+      "community": 5,
+      "norm_label": ".activerequeststext()"
     },
     {
       "label": "List",
       "file_type": "code",
       "source_file": "src/main/java/museon_online/astor_butler/fsm/scenario/ChangeCancelScenario.java",
-      "source_location": "L98",
+      "source_location": "L103",
       "_origin": "ast",
       "id": "src_main_java_museon_online_astor_butler_fsm_scenario_changecancelscenario_java_list",
-      "community": 14,
+      "community": 5,
       "norm_label": "list"
     },
     {
       "label": "TableReservationOrder",
       "file_type": "code",
       "source_file": "src/main/java/museon_online/astor_butler/fsm/scenario/ChangeCancelScenario.java",
-      "source_location": "L98",
+      "source_location": "L103",
       "_origin": "ast",
       "id": "src_main_java_museon_online_astor_butler_fsm_scenario_changecancelscenario_java_tablereservationorder",
-      "community": 14,
+      "community": 5,
       "norm_label": "tablereservationorder"
+    },
+    {
+      "label": "EventBookingOrder",
+      "file_type": "code",
+      "source_file": "src/main/java/museon_online/astor_butler/fsm/scenario/ChangeCancelScenario.java",
+      "source_location": "L103",
+      "_origin": "ast",
+      "id": "src_main_java_museon_online_astor_butler_fsm_scenario_changecancelscenario_java_eventbookingorder",
+      "community": 5,
+      "norm_label": "eventbookingorder"
     },
     {
       "label": ".activeReservationText()",
       "file_type": "code",
       "source_file": "src/main/java/museon_online/astor_butler/fsm/scenario/ChangeCancelScenario.java",
-      "source_location": "L106",
+      "source_location": "L119",
       "_origin": "ast",
       "id": "scenario_changecancelscenario_changecancelscenario_activereservationtext",
-      "community": 14,
+      "community": 5,
       "norm_label": ".activereservationtext()"
+    },
+    {
+      "label": ".activeEventText()",
+      "file_type": "code",
+      "source_file": "src/main/java/museon_online/astor_butler/fsm/scenario/ChangeCancelScenario.java",
+      "source_location": "L129",
+      "_origin": "ast",
+      "id": "scenario_changecancelscenario_changecancelscenario_activeeventtext",
+      "community": 5,
+      "norm_label": ".activeeventtext()"
     },
     {
       "label": ".tableName()",
       "file_type": "code",
       "source_file": "src/main/java/museon_online/astor_butler/fsm/scenario/ChangeCancelScenario.java",
-      "source_location": "L116",
+      "source_location": "L139",
       "_origin": "ast",
       "id": "scenario_changecancelscenario_changecancelscenario_tablename",
-      "community": 14,
+      "community": 5,
       "norm_label": ".tablename()"
     },
     {
       "label": ".owns()",
       "file_type": "code",
       "source_file": "src/main/java/museon_online/astor_butler/fsm/scenario/ChangeCancelScenario.java",
-      "source_location": "L126",
+      "source_location": "L149",
       "_origin": "ast",
       "id": "scenario_changecancelscenario_changecancelscenario_owns",
-      "community": 14,
+      "community": 5,
       "norm_label": ".owns()"
     },
     {
       "label": ".sideEffecting()",
       "file_type": "code",
       "source_file": "src/main/java/museon_online/astor_butler/fsm/scenario/ChangeCancelScenario.java",
-      "source_location": "L132",
+      "source_location": "L155",
       "_origin": "ast",
       "id": "scenario_changecancelscenario_changecancelscenario_sideeffecting",
-      "community": 14,
+      "community": 5,
       "norm_label": ".sideeffecting()"
     },
     {
       "label": ".sendChangeCancelRequest()",
       "file_type": "code",
       "source_file": "src/main/java/museon_online/astor_butler/fsm/scenario/ChangeCancelScenario.java",
-      "source_location": "L137",
+      "source_location": "L160",
       "_origin": "ast",
       "id": "scenario_changecancelscenario_changecancelscenario_sendchangecancelrequest",
-      "community": 14,
+      "community": 5,
       "norm_label": ".sendchangecancelrequest()"
     },
     {
       "label": ".adminAlert()",
       "file_type": "code",
       "source_file": "src/main/java/museon_online/astor_butler/fsm/scenario/ChangeCancelScenario.java",
-      "source_location": "L155",
+      "source_location": "L178",
       "_origin": "ast",
       "id": "scenario_changecancelscenario_changecancelscenario_adminalert",
-      "community": 14,
+      "community": 5,
       "norm_label": ".adminalert()"
     },
     {
       "label": "AdminAlert",
       "file_type": "code",
       "source_file": "src/main/java/museon_online/astor_butler/fsm/scenario/ChangeCancelScenario.java",
-      "source_location": "L155",
+      "source_location": "L178",
       "_origin": "ast",
       "id": "src_main_java_museon_online_astor_butler_fsm_scenario_changecancelscenario_java_adminalert",
-      "community": 14,
+      "community": 5,
       "norm_label": "adminalert"
     },
     {
       "label": ".isChangeCancelIntent()",
       "file_type": "code",
       "source_file": "src/main/java/museon_online/astor_butler/fsm/scenario/ChangeCancelScenario.java",
-      "source_location": "L192",
+      "source_location": "L215",
       "_origin": "ast",
       "id": "scenario_changecancelscenario_changecancelscenario_ischangecancelintent",
-      "community": 14,
+      "community": 5,
       "norm_label": ".ischangecancelintent()"
     },
     {
       "label": ".containsReference()",
       "file_type": "code",
       "source_file": "src/main/java/museon_online/astor_butler/fsm/scenario/ChangeCancelScenario.java",
-      "source_location": "L213",
+      "source_location": "L236",
       "_origin": "ast",
       "id": "scenario_changecancelscenario_changecancelscenario_containsreference",
-      "community": 14,
+      "community": 5,
       "norm_label": ".containsreference()"
     },
     {
       "label": ".containsAny()",
       "file_type": "code",
       "source_file": "src/main/java/museon_online/astor_butler/fsm/scenario/ChangeCancelScenario.java",
-      "source_location": "L220",
+      "source_location": "L243",
       "_origin": "ast",
       "id": "scenario_changecancelscenario_changecancelscenario_containsany",
-      "community": 14,
+      "community": 5,
       "norm_label": ".containsany()"
     },
     {
       "label": ".displayName()",
       "file_type": "code",
       "source_file": "src/main/java/museon_online/astor_butler/fsm/scenario/ChangeCancelScenario.java",
-      "source_location": "L229",
+      "source_location": "L252",
       "_origin": "ast",
       "id": "scenario_changecancelscenario_changecancelscenario_displayname",
-      "community": 14,
+      "community": 5,
       "norm_label": ".displayname()"
     },
     {
       "label": ".normalize()",
       "file_type": "code",
       "source_file": "src/main/java/museon_online/astor_butler/fsm/scenario/ChangeCancelScenario.java",
-      "source_location": "L243",
+      "source_location": "L266",
       "_origin": "ast",
       "id": "scenario_changecancelscenario_changecancelscenario_normalize",
-      "community": 14,
+      "community": 5,
       "norm_label": ".normalize()"
     },
     {
       "label": ".normalizeDisplay()",
       "file_type": "code",
       "source_file": "src/main/java/museon_online/astor_butler/fsm/scenario/ChangeCancelScenario.java",
-      "source_location": "L247",
+      "source_location": "L270",
       "_origin": "ast",
       "id": "scenario_changecancelscenario_changecancelscenario_normalizedisplay",
-      "community": 14,
+      "community": 5,
       "norm_label": ".normalizedisplay()"
     },
     {
       "label": ".text()",
       "file_type": "code",
       "source_file": "src/main/java/museon_online/astor_butler/fsm/scenario/ChangeCancelScenario.java",
-      "source_location": "L251",
+      "source_location": "L274",
       "_origin": "ast",
       "id": "scenario_changecancelscenario_changecancelscenario_text",
-      "community": 14,
+      "community": 5,
       "norm_label": ".text()"
     },
     {
       "label": "Object",
       "file_type": "code",
       "source_file": "src/main/java/museon_online/astor_butler/fsm/scenario/ChangeCancelScenario.java",
-      "source_location": "L251",
+      "source_location": "L274",
       "_origin": "ast",
       "id": "src_main_java_museon_online_astor_butler_fsm_scenario_changecancelscenario_java_object",
-      "community": 14,
+      "community": 5,
       "norm_label": "object"
     },
     {
       "label": ".blankAsEmptyLabel()",
       "file_type": "code",
       "source_file": "src/main/java/museon_online/astor_butler/fsm/scenario/ChangeCancelScenario.java",
-      "source_location": "L255",
+      "source_location": "L278",
       "_origin": "ast",
       "id": "scenario_changecancelscenario_changecancelscenario_blankasemptylabel",
-      "community": 14,
+      "community": 5,
       "norm_label": ".blankasemptylabel()"
     },
     {
       "label": ".html()",
       "file_type": "code",
       "source_file": "src/main/java/museon_online/astor_butler/fsm/scenario/ChangeCancelScenario.java",
-      "source_location": "L260",
+      "source_location": "L283",
       "_origin": "ast",
       "id": "scenario_changecancelscenario_changecancelscenario_html",
-      "community": 14,
+      "community": 5,
       "norm_label": ".html()"
     },
     {
@@ -13632,7 +13652,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "scenario_feedbackscenario",
-      "community": 204,
+      "community": 51,
       "norm_label": "feedbackscenario.java"
     },
     {
@@ -13642,7 +13662,7 @@
       "source_location": "L16",
       "_origin": "ast",
       "id": "scenario_feedbackscenario_feedbackscenario",
-      "community": 204,
+      "community": 51,
       "norm_label": "feedbackscenario"
     },
     {
@@ -13652,7 +13672,7 @@
       "source_location": "L25",
       "_origin": "ast",
       "id": "scenario_feedbackscenario_feedbackscenario_id",
-      "community": 204,
+      "community": 51,
       "norm_label": ".id()"
     },
     {
@@ -13662,7 +13682,7 @@
       "source_location": "L25",
       "_origin": "ast",
       "id": "src_main_java_museon_online_astor_butler_fsm_scenario_feedbackscenario_java_string",
-      "community": 204,
+      "community": 51,
       "norm_label": "string"
     },
     {
@@ -13672,7 +13692,7 @@
       "source_location": "L25",
       "_origin": "ast",
       "id": "src_main_java_museon_online_astor_butler_fsm_scenario_feedbackscenario_java_override",
-      "community": 204,
+      "community": 51,
       "norm_label": "override"
     },
     {
@@ -13682,7 +13702,7 @@
       "source_location": "L30",
       "_origin": "ast",
       "id": "scenario_feedbackscenario_feedbackscenario_priority",
-      "community": 204,
+      "community": 51,
       "norm_label": ".priority()"
     },
     {
@@ -13692,7 +13712,7 @@
       "source_location": "L35",
       "_origin": "ast",
       "id": "scenario_feedbackscenario_feedbackscenario_supports",
-      "community": 204,
+      "community": 51,
       "norm_label": ".supports()"
     },
     {
@@ -13702,7 +13722,7 @@
       "source_location": "L35",
       "_origin": "ast",
       "id": "src_main_java_museon_online_astor_butler_fsm_scenario_feedbackscenario_java_incomingmessage",
-      "community": 204,
+      "community": 51,
       "norm_label": "incomingmessage"
     },
     {
@@ -13712,7 +13732,7 @@
       "source_location": "L35",
       "_origin": "ast",
       "id": "src_main_java_museon_online_astor_butler_fsm_scenario_feedbackscenario_java_botstate",
-      "community": 204,
+      "community": 51,
       "norm_label": "botstate"
     },
     {
@@ -13722,7 +13742,7 @@
       "source_location": "L45",
       "_origin": "ast",
       "id": "scenario_feedbackscenario_feedbackscenario_handle",
-      "community": 204,
+      "community": 51,
       "norm_label": ".handle()"
     },
     {
@@ -13732,7 +13752,7 @@
       "source_location": "L45",
       "_origin": "ast",
       "id": "src_main_java_museon_online_astor_butler_fsm_scenario_feedbackscenario_java_outgoingmessage",
-      "community": 204,
+      "community": 51,
       "norm_label": "outgoingmessage"
     },
     {
@@ -13742,7 +13762,7 @@
       "source_location": "L69",
       "_origin": "ast",
       "id": "scenario_feedbackscenario_feedbackscenario_owns",
-      "community": 204,
+      "community": 51,
       "norm_label": ".owns()"
     },
     {
@@ -13752,7 +13772,7 @@
       "source_location": "L75",
       "_origin": "ast",
       "id": "scenario_feedbackscenario_feedbackscenario_sideeffecting",
-      "community": 204,
+      "community": 51,
       "norm_label": ".sideeffecting()"
     },
     {
@@ -13762,7 +13782,7 @@
       "source_location": "L80",
       "_origin": "ast",
       "id": "scenario_feedbackscenario_feedbackscenario_sendfeedback",
-      "community": 204,
+      "community": 51,
       "norm_label": ".sendfeedback()"
     },
     {
@@ -13772,7 +13792,7 @@
       "source_location": "L103",
       "_origin": "ast",
       "id": "scenario_feedbackscenario_feedbackscenario_adminalert",
-      "community": 204,
+      "community": 51,
       "norm_label": ".adminalert()"
     },
     {
@@ -13782,7 +13802,7 @@
       "source_location": "L103",
       "_origin": "ast",
       "id": "src_main_java_museon_online_astor_butler_fsm_scenario_feedbackscenario_java_adminalert",
-      "community": 204,
+      "community": 51,
       "norm_label": "adminalert"
     },
     {
@@ -13792,7 +13812,7 @@
       "source_location": "L147",
       "_origin": "ast",
       "id": "scenario_feedbackscenario_feedbackscenario_isfeedbackintent",
-      "community": 204,
+      "community": 51,
       "norm_label": ".isfeedbackintent()"
     },
     {
@@ -13802,7 +13822,7 @@
       "source_location": "L151",
       "_origin": "ast",
       "id": "scenario_feedbackscenario_feedbackscenario_isshortfeedbackcall",
-      "community": 204,
+      "community": 51,
       "norm_label": ".isshortfeedbackcall()"
     },
     {
@@ -13812,7 +13832,7 @@
       "source_location": "L159",
       "_origin": "ast",
       "id": "scenario_feedbackscenario_feedbackscenario_containsany",
-      "community": 204,
+      "community": 51,
       "norm_label": ".containsany()"
     },
     {
@@ -13822,7 +13842,7 @@
       "source_location": "L168",
       "_origin": "ast",
       "id": "scenario_feedbackscenario_feedbackscenario_displayname",
-      "community": 204,
+      "community": 51,
       "norm_label": ".displayname()"
     },
     {
@@ -13832,7 +13852,7 @@
       "source_location": "L182",
       "_origin": "ast",
       "id": "scenario_feedbackscenario_feedbackscenario_normalize",
-      "community": 204,
+      "community": 51,
       "norm_label": ".normalize()"
     },
     {
@@ -13842,7 +13862,7 @@
       "source_location": "L186",
       "_origin": "ast",
       "id": "scenario_feedbackscenario_feedbackscenario_normalizedisplay",
-      "community": 204,
+      "community": 51,
       "norm_label": ".normalizedisplay()"
     },
     {
@@ -13852,7 +13872,7 @@
       "source_location": "L190",
       "_origin": "ast",
       "id": "scenario_feedbackscenario_feedbackscenario_text",
-      "community": 204,
+      "community": 51,
       "norm_label": ".text()"
     },
     {
@@ -13862,7 +13882,7 @@
       "source_location": "L190",
       "_origin": "ast",
       "id": "src_main_java_museon_online_astor_butler_fsm_scenario_feedbackscenario_java_object",
-      "community": 204,
+      "community": 51,
       "norm_label": "object"
     },
     {
@@ -13872,7 +13892,7 @@
       "source_location": "L194",
       "_origin": "ast",
       "id": "scenario_feedbackscenario_feedbackscenario_blankasemptylabel",
-      "community": 204,
+      "community": 51,
       "norm_label": ".blankasemptylabel()"
     },
     {
@@ -13882,7 +13902,7 @@
       "source_location": "L199",
       "_origin": "ast",
       "id": "scenario_feedbackscenario_feedbackscenario_html",
-      "community": 204,
+      "community": 51,
       "norm_label": ".html()"
     },
     {
@@ -14222,7 +14242,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "scenario_hiddenheartscenario",
-      "community": 51,
+      "community": 23,
       "norm_label": "hiddenheartscenario.java"
     },
     {
@@ -14232,7 +14252,7 @@
       "source_location": "L16",
       "_origin": "ast",
       "id": "scenario_hiddenheartscenario_hiddenheartscenario",
-      "community": 51,
+      "community": 23,
       "norm_label": "hiddenheartscenario"
     },
     {
@@ -14242,7 +14262,7 @@
       "source_location": "L24",
       "_origin": "ast",
       "id": "scenario_hiddenheartscenario_hiddenheartscenario_id",
-      "community": 51,
+      "community": 23,
       "norm_label": ".id()"
     },
     {
@@ -14252,7 +14272,7 @@
       "source_location": "L24",
       "_origin": "ast",
       "id": "src_main_java_museon_online_astor_butler_fsm_scenario_hiddenheartscenario_java_string",
-      "community": 51,
+      "community": 23,
       "norm_label": "string"
     },
     {
@@ -14262,7 +14282,7 @@
       "source_location": "L24",
       "_origin": "ast",
       "id": "src_main_java_museon_online_astor_butler_fsm_scenario_hiddenheartscenario_java_override",
-      "community": 51,
+      "community": 23,
       "norm_label": "override"
     },
     {
@@ -14272,7 +14292,7 @@
       "source_location": "L29",
       "_origin": "ast",
       "id": "scenario_hiddenheartscenario_hiddenheartscenario_priority",
-      "community": 51,
+      "community": 23,
       "norm_label": ".priority()"
     },
     {
@@ -14282,7 +14302,7 @@
       "source_location": "L34",
       "_origin": "ast",
       "id": "scenario_hiddenheartscenario_hiddenheartscenario_supports",
-      "community": 51,
+      "community": 23,
       "norm_label": ".supports()"
     },
     {
@@ -14292,7 +14312,7 @@
       "source_location": "L34",
       "_origin": "ast",
       "id": "src_main_java_museon_online_astor_butler_fsm_scenario_hiddenheartscenario_java_incomingmessage",
-      "community": 51,
+      "community": 23,
       "norm_label": "incomingmessage"
     },
     {
@@ -14302,7 +14322,7 @@
       "source_location": "L34",
       "_origin": "ast",
       "id": "src_main_java_museon_online_astor_butler_fsm_scenario_hiddenheartscenario_java_botstate",
-      "community": 51,
+      "community": 23,
       "norm_label": "botstate"
     },
     {
@@ -14312,7 +14332,7 @@
       "source_location": "L44",
       "_origin": "ast",
       "id": "scenario_hiddenheartscenario_hiddenheartscenario_handle",
-      "community": 51,
+      "community": 23,
       "norm_label": ".handle()"
     },
     {
@@ -14322,7 +14342,7 @@
       "source_location": "L44",
       "_origin": "ast",
       "id": "src_main_java_museon_online_astor_butler_fsm_scenario_hiddenheartscenario_java_outgoingmessage",
-      "community": 51,
+      "community": 23,
       "norm_label": "outgoingmessage"
     },
     {
@@ -14332,7 +14352,7 @@
       "source_location": "L54",
       "_origin": "ast",
       "id": "scenario_hiddenheartscenario_hiddenheartscenario_owns",
-      "community": 51,
+      "community": 23,
       "norm_label": ".owns()"
     },
     {
@@ -14342,7 +14362,7 @@
       "source_location": "L60",
       "_origin": "ast",
       "id": "scenario_hiddenheartscenario_hiddenheartscenario_sideeffecting",
-      "community": 51,
+      "community": 23,
       "norm_label": ".sideeffecting()"
     },
     {
@@ -14352,7 +14372,7 @@
       "source_location": "L65",
       "_origin": "ast",
       "id": "scenario_hiddenheartscenario_hiddenheartscenario_collectamount",
-      "community": 51,
+      "community": 23,
       "norm_label": ".collectamount()"
     },
     {
@@ -14362,7 +14382,7 @@
       "source_location": "L99",
       "_origin": "ast",
       "id": "scenario_hiddenheartscenario_hiddenheartscenario_confirmdonation",
-      "community": 51,
+      "community": 23,
       "norm_label": ".confirmdonation()"
     },
     {
@@ -14372,7 +14392,7 @@
       "source_location": "L142",
       "_origin": "ast",
       "id": "scenario_hiddenheartscenario_hiddenheartscenario_isdonationintent",
-      "community": 51,
+      "community": 23,
       "norm_label": ".isdonationintent()"
     },
     {
@@ -14382,7 +14402,7 @@
       "source_location": "L146",
       "_origin": "ast",
       "id": "scenario_hiddenheartscenario_hiddenheartscenario_hasmoney",
-      "community": 51,
+      "community": 23,
       "norm_label": ".hasmoney()"
     },
     {
@@ -14392,7 +14412,7 @@
       "source_location": "L153",
       "_origin": "ast",
       "id": "scenario_hiddenheartscenario_hiddenheartscenario_isconfirmintent",
-      "community": 51,
+      "community": 23,
       "norm_label": ".isconfirmintent()"
     },
     {
@@ -14402,7 +14422,7 @@
       "source_location": "L164",
       "_origin": "ast",
       "id": "scenario_hiddenheartscenario_hiddenheartscenario_isrejectintent",
-      "community": 51,
+      "community": 23,
       "norm_label": ".isrejectintent()"
     },
     {
@@ -14412,7 +14432,7 @@
       "source_location": "L172",
       "_origin": "ast",
       "id": "scenario_hiddenheartscenario_hiddenheartscenario_containsany",
-      "community": 51,
+      "community": 23,
       "norm_label": ".containsany()"
     },
     {
@@ -14422,7 +14442,7 @@
       "source_location": "L181",
       "_origin": "ast",
       "id": "scenario_hiddenheartscenario_hiddenheartscenario_normalize",
-      "community": 51,
+      "community": 23,
       "norm_label": ".normalize()"
     },
     {
@@ -14432,7 +14452,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "scenario_impactmeterscenario",
-      "community": 46,
+      "community": 51,
       "norm_label": "impactmeterscenario.java"
     },
     {
@@ -14442,7 +14462,7 @@
       "source_location": "L15",
       "_origin": "ast",
       "id": "scenario_impactmeterscenario_impactmeterscenario",
-      "community": 46,
+      "community": 51,
       "norm_label": "impactmeterscenario"
     },
     {
@@ -14452,7 +14472,7 @@
       "source_location": "L21",
       "_origin": "ast",
       "id": "scenario_impactmeterscenario_impactmeterscenario_id",
-      "community": 46,
+      "community": 51,
       "norm_label": ".id()"
     },
     {
@@ -14462,7 +14482,7 @@
       "source_location": "L21",
       "_origin": "ast",
       "id": "src_main_java_museon_online_astor_butler_fsm_scenario_impactmeterscenario_java_string",
-      "community": 46,
+      "community": 51,
       "norm_label": "string"
     },
     {
@@ -14472,7 +14492,7 @@
       "source_location": "L21",
       "_origin": "ast",
       "id": "src_main_java_museon_online_astor_butler_fsm_scenario_impactmeterscenario_java_override",
-      "community": 46,
+      "community": 51,
       "norm_label": "override"
     },
     {
@@ -14482,7 +14502,7 @@
       "source_location": "L26",
       "_origin": "ast",
       "id": "scenario_impactmeterscenario_impactmeterscenario_priority",
-      "community": 46,
+      "community": 51,
       "norm_label": ".priority()"
     },
     {
@@ -14492,7 +14512,7 @@
       "source_location": "L31",
       "_origin": "ast",
       "id": "scenario_impactmeterscenario_impactmeterscenario_supports",
-      "community": 46,
+      "community": 51,
       "norm_label": ".supports()"
     },
     {
@@ -14502,7 +14522,7 @@
       "source_location": "L31",
       "_origin": "ast",
       "id": "src_main_java_museon_online_astor_butler_fsm_scenario_impactmeterscenario_java_incomingmessage",
-      "community": 46,
+      "community": 51,
       "norm_label": "incomingmessage"
     },
     {
@@ -14512,7 +14532,7 @@
       "source_location": "L31",
       "_origin": "ast",
       "id": "src_main_java_museon_online_astor_butler_fsm_scenario_impactmeterscenario_java_botstate",
-      "community": 46,
+      "community": 51,
       "norm_label": "botstate"
     },
     {
@@ -14522,7 +14542,7 @@
       "source_location": "L39",
       "_origin": "ast",
       "id": "scenario_impactmeterscenario_impactmeterscenario_handle",
-      "community": 46,
+      "community": 51,
       "norm_label": ".handle()"
     },
     {
@@ -14532,7 +14552,7 @@
       "source_location": "L39",
       "_origin": "ast",
       "id": "src_main_java_museon_online_astor_butler_fsm_scenario_impactmeterscenario_java_outgoingmessage",
-      "community": 46,
+      "community": 51,
       "norm_label": "outgoingmessage"
     },
     {
@@ -14542,7 +14562,7 @@
       "source_location": "L59",
       "_origin": "ast",
       "id": "scenario_impactmeterscenario_impactmeterscenario_canruninparallel",
-      "community": 46,
+      "community": 51,
       "norm_label": ".canruninparallel()"
     },
     {
@@ -14552,7 +14572,7 @@
       "source_location": "L64",
       "_origin": "ast",
       "id": "scenario_impactmeterscenario_impactmeterscenario_isimpactintent",
-      "community": 46,
+      "community": 51,
       "norm_label": ".isimpactintent()"
     },
     {
@@ -14562,7 +14582,7 @@
       "source_location": "L68",
       "_origin": "ast",
       "id": "scenario_impactmeterscenario_impactmeterscenario_containsany",
-      "community": 46,
+      "community": 51,
       "norm_label": ".containsany()"
     },
     {
@@ -14572,7 +14592,7 @@
       "source_location": "L77",
       "_origin": "ast",
       "id": "scenario_impactmeterscenario_impactmeterscenario_normalize",
-      "community": 46,
+      "community": 51,
       "norm_label": ".normalize()"
     },
     {
@@ -17562,7 +17582,7 @@
       "source_location": "",
       "_origin": "ast",
       "id": "fsmstorage",
-      "community": 63,
+      "community": 50,
       "norm_label": "fsmstorage"
     },
     {
@@ -17792,7 +17812,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "kafka_usereventfactory",
-      "community": 95,
+      "community": 8,
       "norm_label": "usereventfactory.java"
     },
     {
@@ -17802,7 +17822,7 @@
       "source_location": "L13",
       "_origin": "ast",
       "id": "kafka_usereventfactory_usereventfactory",
-      "community": 95,
+      "community": 8,
       "norm_label": "usereventfactory"
     },
     {
@@ -17812,7 +17832,7 @@
       "source_location": "L19",
       "_origin": "ast",
       "id": "kafka_usereventfactory_usereventfactory_partitionkey",
-      "community": 95,
+      "community": 8,
       "norm_label": ".partitionkey()"
     },
     {
@@ -17822,7 +17842,7 @@
       "source_location": "L19",
       "_origin": "ast",
       "id": "src_main_java_museon_online_astor_butler_kafka_usereventfactory_java_incomingmessage",
-      "community": 95,
+      "community": 8,
       "norm_label": "incomingmessage"
     },
     {
@@ -17832,7 +17852,7 @@
       "source_location": "L19",
       "_origin": "ast",
       "id": "src_main_java_museon_online_astor_butler_kafka_usereventfactory_java_string",
-      "community": 95,
+      "community": 8,
       "norm_label": "string"
     },
     {
@@ -17842,7 +17862,7 @@
       "source_location": "L29",
       "_origin": "ast",
       "id": "kafka_usereventfactory_usereventfactory_eventid",
-      "community": 95,
+      "community": 8,
       "norm_label": ".eventid()"
     },
     {
@@ -17852,7 +17872,7 @@
       "source_location": "L39",
       "_origin": "ast",
       "id": "kafka_usereventfactory_usereventfactory_llmeventid",
-      "community": 95,
+      "community": 8,
       "norm_label": ".llmeventid()"
     },
     {
@@ -17862,7 +17882,7 @@
       "source_location": "L43",
       "_origin": "ast",
       "id": "kafka_usereventfactory_usereventfactory_usermessagereceived",
-      "community": 95,
+      "community": 8,
       "norm_label": ".usermessagereceived()"
     },
     {
@@ -17872,7 +17892,7 @@
       "source_location": "L43",
       "_origin": "ast",
       "id": "src_main_java_museon_online_astor_butler_kafka_usereventfactory_java_botstate",
-      "community": 95,
+      "community": 8,
       "norm_label": "botstate"
     },
     {
@@ -17882,7 +17902,7 @@
       "source_location": "L43",
       "_origin": "ast",
       "id": "src_main_java_museon_online_astor_butler_kafka_usereventfactory_java_outgoingmessage",
-      "community": 95,
+      "community": 8,
       "norm_label": "outgoingmessage"
     },
     {
@@ -17892,7 +17912,7 @@
       "source_location": "L43",
       "_origin": "ast",
       "id": "src_main_java_museon_online_astor_butler_kafka_usereventfactory_java_map",
-      "community": 95,
+      "community": 8,
       "norm_label": "map"
     },
     {
@@ -17902,7 +17922,7 @@
       "source_location": "L43",
       "_origin": "ast",
       "id": "src_main_java_museon_online_astor_butler_kafka_usereventfactory_java_object",
-      "community": 95,
+      "community": 8,
       "norm_label": "object"
     },
     {
@@ -17912,7 +17932,7 @@
       "source_location": "L54",
       "_origin": "ast",
       "id": "kafka_usereventfactory_usereventfactory_llmresponsegenerated",
-      "community": 95,
+      "community": 8,
       "norm_label": ".llmresponsegenerated()"
     },
     {
@@ -17922,7 +17942,7 @@
       "source_location": "L69",
       "_origin": "ast",
       "id": "kafka_usereventfactory_usereventfactory_envelope",
-      "community": 95,
+      "community": 8,
       "norm_label": ".envelope()"
     },
     {
@@ -17932,7 +17952,7 @@
       "source_location": "L82",
       "_origin": "ast",
       "id": "kafka_usereventfactory_usereventfactory_actor",
-      "community": 95,
+      "community": 8,
       "norm_label": ".actor()"
     },
     {
@@ -17942,7 +17962,7 @@
       "source_location": "L92",
       "_origin": "ast",
       "id": "kafka_usereventfactory_usereventfactory_usermessagepayload",
-      "community": 95,
+      "community": 8,
       "norm_label": ".usermessagepayload()"
     },
     {
@@ -17952,7 +17972,7 @@
       "source_location": "L115",
       "_origin": "ast",
       "id": "kafka_usereventfactory_usereventfactory_llmpayload",
-      "community": 95,
+      "community": 8,
       "norm_label": ".llmpayload()"
     },
     {
@@ -17962,7 +17982,7 @@
       "source_location": "L137",
       "_origin": "ast",
       "id": "kafka_usereventfactory_usereventfactory_normalizestage",
-      "community": 95,
+      "community": 8,
       "norm_label": ".normalizestage()"
     },
     {
@@ -17972,7 +17992,7 @@
       "source_location": "L144",
       "_origin": "ast",
       "id": "kafka_usereventfactory_usereventfactory_payloadvalue",
-      "community": 95,
+      "community": 8,
       "norm_label": ".payloadvalue()"
     },
     {
@@ -18272,7 +18292,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "message_incomingmessage",
-      "community": 249,
+      "community": 56,
       "norm_label": "incomingmessage.java"
     },
     {
@@ -18282,7 +18302,7 @@
       "source_location": "L25",
       "_origin": "ast",
       "id": "message_incomingmessage_telegram",
-      "community": 249,
+      "community": 56,
       "norm_label": "telegram()"
     },
     {
@@ -18292,7 +18312,7 @@
       "source_location": "L25",
       "_origin": "ast",
       "id": "src_main_java_museon_online_astor_butler_service_message_incomingmessage_java_long",
-      "community": 249,
+      "community": 56,
       "norm_label": "long"
     },
     {
@@ -18302,7 +18322,7 @@
       "source_location": "L25",
       "_origin": "ast",
       "id": "src_main_java_museon_online_astor_butler_service_message_incomingmessage_java_integer",
-      "community": 249,
+      "community": 56,
       "norm_label": "integer"
     },
     {
@@ -18312,7 +18332,7 @@
       "source_location": "L25",
       "_origin": "ast",
       "id": "src_main_java_museon_online_astor_butler_service_message_incomingmessage_java_string",
-      "community": 249,
+      "community": 56,
       "norm_label": "string"
     },
     {
@@ -18322,7 +18342,7 @@
       "source_location": "L25",
       "_origin": "ast",
       "id": "boolean",
-      "community": 249,
+      "community": 56,
       "norm_label": "boolean"
     },
     {
@@ -18332,7 +18352,7 @@
       "source_location": "L25",
       "_origin": "ast",
       "id": "src_main_java_museon_online_astor_butler_service_message_incomingmessage_java_incomingmessage",
-      "community": 249,
+      "community": 56,
       "norm_label": "incomingmessage"
     },
     {
@@ -18342,7 +18362,7 @@
       "source_location": "L56",
       "_origin": "ast",
       "id": "src_main_java_museon_online_astor_butler_service_message_incomingmessage_java_map",
-      "community": 249,
+      "community": 56,
       "norm_label": "map"
     },
     {
@@ -18352,7 +18372,7 @@
       "source_location": "L56",
       "_origin": "ast",
       "id": "src_main_java_museon_online_astor_butler_service_message_incomingmessage_java_object",
-      "community": 249,
+      "community": 56,
       "norm_label": "object"
     },
     {
@@ -18362,7 +18382,7 @@
       "source_location": "L92",
       "_origin": "ast",
       "id": "message_incomingmessage_withtextandpayload",
-      "community": 249,
+      "community": 56,
       "norm_label": "withtextandpayload()"
     },
     {
@@ -18372,7 +18392,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "message_llmscenariopromptcatalog",
-      "community": 5,
+      "community": 99,
       "norm_label": "llmscenariopromptcatalog.java"
     },
     {
@@ -18382,7 +18402,7 @@
       "source_location": "L11",
       "_origin": "ast",
       "id": "message_llmscenariopromptcatalog_llmscenariopromptcatalog",
-      "community": 5,
+      "community": 99,
       "norm_label": "llmscenariopromptcatalog"
     },
     {
@@ -18392,7 +18412,7 @@
       "source_location": "L17",
       "_origin": "ast",
       "id": "message_llmscenariopromptcatalog_llmscenariopromptcatalog_llmscenariopromptcatalog",
-      "community": 5,
+      "community": 99,
       "norm_label": ".llmscenariopromptcatalog()"
     },
     {
@@ -18402,7 +18422,7 @@
       "source_location": "L17",
       "_origin": "ast",
       "id": "resource",
-      "community": 5,
+      "community": 99,
       "norm_label": "resource"
     },
     {
@@ -18412,7 +18432,7 @@
       "source_location": "L21",
       "_origin": "ast",
       "id": "message_llmscenariopromptcatalog_llmscenariopromptcatalog_tablebookingcontract",
-      "community": 5,
+      "community": 99,
       "norm_label": ".tablebookingcontract()"
     },
     {
@@ -18422,7 +18442,7 @@
       "source_location": "L21",
       "_origin": "ast",
       "id": "src_main_java_museon_online_astor_butler_service_message_llmscenariopromptcatalog_java_string",
-      "community": 5,
+      "community": 99,
       "norm_label": "string"
     },
     {
@@ -18432,7 +18452,7 @@
       "source_location": "L25",
       "_origin": "ast",
       "id": "message_llmscenariopromptcatalog_llmscenariopromptcatalog_read",
-      "community": 5,
+      "community": 99,
       "norm_label": ".read()"
     },
     {
@@ -18702,7 +18722,7 @@
       "source_location": "L22",
       "_origin": "ast",
       "id": "message_outgoingmessage_of",
-      "community": 216,
+      "community": 29,
       "norm_label": "of()"
     },
     {
@@ -18712,7 +18732,7 @@
       "source_location": "L22",
       "_origin": "ast",
       "id": "src_main_java_museon_online_astor_butler_service_message_outgoingmessage_java_incomingmessage",
-      "community": 216,
+      "community": 29,
       "norm_label": "incomingmessage"
     },
     {
@@ -18732,7 +18752,7 @@
       "source_location": "L22",
       "_origin": "ast",
       "id": "src_main_java_museon_online_astor_butler_service_message_outgoingmessage_java_adminalert",
-      "community": 216,
+      "community": 29,
       "norm_label": "adminalert"
     },
     {
@@ -18792,7 +18812,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "message_voicetranscriptionretryservice",
-      "community": 5,
+      "community": 201,
       "norm_label": "voicetranscriptionretryservice.java"
     },
     {
@@ -18802,7 +18822,7 @@
       "source_location": "L10",
       "_origin": "ast",
       "id": "message_voicetranscriptionretryservice_voicetranscriptionretryservice",
-      "community": 5,
+      "community": 201,
       "norm_label": "voicetranscriptionretryservice"
     },
     {
@@ -18812,7 +18832,7 @@
       "source_location": "L22",
       "_origin": "ast",
       "id": "message_voicetranscriptionretryservice_voicetranscriptionretryservice_recordfailure",
-      "community": 5,
+      "community": 201,
       "norm_label": ".recordfailure()"
     },
     {
@@ -18822,7 +18842,7 @@
       "source_location": "L22",
       "_origin": "ast",
       "id": "src_main_java_museon_online_astor_butler_service_message_voicetranscriptionretryservice_java_long",
-      "community": 5,
+      "community": 201,
       "norm_label": "long"
     },
     {
@@ -18832,7 +18852,7 @@
       "source_location": "L31",
       "_origin": "ast",
       "id": "message_voicetranscriptionretryservice_voicetranscriptionretryservice_reset",
-      "community": 5,
+      "community": 201,
       "norm_label": ".reset()"
     },
     {
@@ -18842,7 +18862,7 @@
       "source_location": "L37",
       "_origin": "ast",
       "id": "message_voicetranscriptionretryservice_voicetranscriptionretryservice_key",
-      "community": 5,
+      "community": 201,
       "norm_label": ".key()"
     },
     {
@@ -18852,7 +18872,7 @@
       "source_location": "L37",
       "_origin": "ast",
       "id": "src_main_java_museon_online_astor_butler_service_message_voicetranscriptionretryservice_java_string",
-      "community": 5,
+      "community": 201,
       "norm_label": "string"
     },
     {
@@ -18872,7 +18892,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "speech_externalcommandspeechtotextservice",
-      "community": 223,
+      "community": 5,
       "norm_label": "externalcommandspeechtotextservice.java"
     },
     {
@@ -18882,7 +18902,7 @@
       "source_location": "L16",
       "_origin": "ast",
       "id": "speech_externalcommandspeechtotextservice_externalcommandspeechtotextservice",
-      "community": 223,
+      "community": 5,
       "norm_label": "externalcommandspeechtotextservice"
     },
     {
@@ -18892,7 +18912,7 @@
       "source_location": "L29",
       "_origin": "ast",
       "id": "speech_externalcommandspeechtotextservice_externalcommandspeechtotextservice_transcribe",
-      "community": 223,
+      "community": 5,
       "norm_label": ".transcribe()"
     },
     {
@@ -18902,7 +18922,7 @@
       "source_location": "L29",
       "_origin": "ast",
       "id": "src_main_java_museon_online_astor_butler_speech_externalcommandspeechtotextservice_java_path",
-      "community": 223,
+      "community": 5,
       "norm_label": "path"
     },
     {
@@ -18912,7 +18932,7 @@
       "source_location": "L29",
       "_origin": "ast",
       "id": "src_main_java_museon_online_astor_butler_speech_externalcommandspeechtotextservice_java_map",
-      "community": 223,
+      "community": 5,
       "norm_label": "map"
     },
     {
@@ -18922,7 +18942,7 @@
       "source_location": "L29",
       "_origin": "ast",
       "id": "src_main_java_museon_online_astor_butler_speech_externalcommandspeechtotextservice_java_string",
-      "community": 223,
+      "community": 5,
       "norm_label": "string"
     },
     {
@@ -18932,7 +18952,7 @@
       "source_location": "L29",
       "_origin": "ast",
       "id": "src_main_java_museon_online_astor_butler_speech_externalcommandspeechtotextservice_java_object",
-      "community": 223,
+      "community": 5,
       "norm_label": "object"
     },
     {
@@ -18942,7 +18962,7 @@
       "source_location": "L29",
       "_origin": "ast",
       "id": "src_main_java_museon_online_astor_butler_speech_externalcommandspeechtotextservice_java_speechtotextresult",
-      "community": 223,
+      "community": 5,
       "norm_label": "speechtotextresult"
     },
     {
@@ -18952,7 +18972,7 @@
       "source_location": "L29",
       "_origin": "ast",
       "id": "src_main_java_museon_online_astor_butler_speech_externalcommandspeechtotextservice_java_override",
-      "community": 223,
+      "community": 5,
       "norm_label": "override"
     },
     {
@@ -18962,7 +18982,7 @@
       "source_location": "L79",
       "_origin": "ast",
       "id": "speech_externalcommandspeechtotextservice_externalcommandspeechtotextservice_commandline",
-      "community": 223,
+      "community": 5,
       "norm_label": ".commandline()"
     },
     {
@@ -18972,7 +18992,7 @@
       "source_location": "L79",
       "_origin": "ast",
       "id": "src_main_java_museon_online_astor_butler_speech_externalcommandspeechtotextservice_java_list",
-      "community": 223,
+      "community": 5,
       "norm_label": "list"
     },
     {
@@ -18982,7 +19002,7 @@
       "source_location": "L91",
       "_origin": "ast",
       "id": "speech_externalcommandspeechtotextservice_externalcommandspeechtotextservice_metadata",
-      "community": 223,
+      "community": 5,
       "norm_label": ".metadata()"
     },
     {
@@ -18992,7 +19012,7 @@
       "source_location": "L91",
       "_origin": "ast",
       "id": "src_main_java_museon_online_astor_butler_speech_externalcommandspeechtotextservice_java_integer",
-      "community": 223,
+      "community": 5,
       "norm_label": "integer"
     },
     {
@@ -19002,7 +19022,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "speech_speechtotextresult",
-      "community": 224,
+      "community": 56,
       "norm_label": "speechtotextresult.java"
     },
     {
@@ -19012,7 +19032,7 @@
       "source_location": "L12",
       "_origin": "ast",
       "id": "speech_speechtotextresult_unavailable",
-      "community": 224,
+      "community": 56,
       "norm_label": "unavailable()"
     },
     {
@@ -19022,7 +19042,7 @@
       "source_location": "L12",
       "_origin": "ast",
       "id": "src_main_java_museon_online_astor_butler_speech_speechtotextresult_java_string",
-      "community": 224,
+      "community": 56,
       "norm_label": "string"
     },
     {
@@ -19032,7 +19052,7 @@
       "source_location": "L12",
       "_origin": "ast",
       "id": "src_main_java_museon_online_astor_butler_speech_speechtotextresult_java_speechtotextresult",
-      "community": 224,
+      "community": 56,
       "norm_label": "speechtotextresult"
     },
     {
@@ -19042,7 +19062,7 @@
       "source_location": "L16",
       "_origin": "ast",
       "id": "speech_speechtotextresult_failed",
-      "community": 224,
+      "community": 56,
       "norm_label": "failed()"
     },
     {
@@ -19052,7 +19072,7 @@
       "source_location": "L16",
       "_origin": "ast",
       "id": "src_main_java_museon_online_astor_butler_speech_speechtotextresult_java_map",
-      "community": 224,
+      "community": 56,
       "norm_label": "map"
     },
     {
@@ -19062,7 +19082,7 @@
       "source_location": "L16",
       "_origin": "ast",
       "id": "src_main_java_museon_online_astor_butler_speech_speechtotextresult_java_object",
-      "community": 224,
+      "community": 56,
       "norm_label": "object"
     },
     {
@@ -19072,7 +19092,7 @@
       "source_location": "L20",
       "_origin": "ast",
       "id": "speech_speechtotextresult_transcribed",
-      "community": 224,
+      "community": 56,
       "norm_label": "transcribed()"
     },
     {
@@ -19082,7 +19102,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "speech_speechtotextservice",
-      "community": 223,
+      "community": 56,
       "norm_label": "speechtotextservice.java"
     },
     {
@@ -19092,7 +19112,7 @@
       "source_location": "L6",
       "_origin": "ast",
       "id": "speech_speechtotextservice_speechtotextservice",
-      "community": 223,
+      "community": 56,
       "norm_label": "speechtotextservice"
     },
     {
@@ -19102,7 +19122,7 @@
       "source_location": "L8",
       "_origin": "ast",
       "id": "speech_speechtotextservice_speechtotextservice_transcribe",
-      "community": 223,
+      "community": 56,
       "norm_label": ".transcribe()"
     },
     {
@@ -19112,7 +19132,7 @@
       "source_location": "L8",
       "_origin": "ast",
       "id": "src_main_java_museon_online_astor_butler_speech_speechtotextservice_java_path",
-      "community": 223,
+      "community": 56,
       "norm_label": "path"
     },
     {
@@ -19122,7 +19142,7 @@
       "source_location": "L8",
       "_origin": "ast",
       "id": "src_main_java_museon_online_astor_butler_speech_speechtotextservice_java_map",
-      "community": 223,
+      "community": 56,
       "norm_label": "map"
     },
     {
@@ -19132,7 +19152,7 @@
       "source_location": "L8",
       "_origin": "ast",
       "id": "src_main_java_museon_online_astor_butler_speech_speechtotextservice_java_string",
-      "community": 223,
+      "community": 56,
       "norm_label": "string"
     },
     {
@@ -19142,7 +19162,7 @@
       "source_location": "L8",
       "_origin": "ast",
       "id": "src_main_java_museon_online_astor_butler_speech_speechtotextservice_java_object",
-      "community": 223,
+      "community": 56,
       "norm_label": "object"
     },
     {
@@ -19152,7 +19172,7 @@
       "source_location": "L8",
       "_origin": "ast",
       "id": "src_main_java_museon_online_astor_butler_speech_speechtotextservice_java_speechtotextresult",
-      "community": 223,
+      "community": 56,
       "norm_label": "speechtotextresult"
     },
     {
@@ -19912,7 +19932,7 @@
       "source_location": "L157",
       "_origin": "ast",
       "id": "adapter_telegramrouter_telegramrouter_toincomingmessage",
-      "community": 0,
+      "community": 200,
       "norm_label": ".toincomingmessage()"
     },
     {
@@ -20132,7 +20152,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "adapter_telegramvoicetranscriptionservice",
-      "community": 30,
+      "community": 56,
       "norm_label": "telegramvoicetranscriptionservice.java"
     },
     {
@@ -20142,7 +20162,7 @@
       "source_location": "L22",
       "_origin": "ast",
       "id": "adapter_telegramvoicetranscriptionservice_telegramvoicetranscriptionservice",
-      "community": 30,
+      "community": 56,
       "norm_label": "telegramvoicetranscriptionservice"
     },
     {
@@ -20152,7 +20172,7 @@
       "source_location": "L42",
       "_origin": "ast",
       "id": "adapter_telegramvoicetranscriptionservice_telegramvoicetranscriptionservice_enrich",
-      "community": 30,
+      "community": 56,
       "norm_label": ".enrich()"
     },
     {
@@ -20162,7 +20182,7 @@
       "source_location": "L42",
       "_origin": "ast",
       "id": "src_main_java_museon_online_astor_butler_telegram_adapter_telegramvoicetranscriptionservice_java_incomingmessage",
-      "community": 30,
+      "community": 56,
       "norm_label": "incomingmessage"
     },
     {
@@ -20172,7 +20192,7 @@
       "source_location": "L42",
       "_origin": "ast",
       "id": "src_main_java_museon_online_astor_butler_telegram_adapter_telegramvoicetranscriptionservice_java_abssender",
-      "community": 30,
+      "community": 56,
       "norm_label": "abssender"
     },
     {
@@ -20182,7 +20202,7 @@
       "source_location": "L92",
       "_origin": "ast",
       "id": "adapter_telegramvoicetranscriptionservice_telegramvoicetranscriptionservice_withtranscriptionstatus",
-      "community": 30,
+      "community": 56,
       "norm_label": ".withtranscriptionstatus()"
     },
     {
@@ -20192,7 +20212,7 @@
       "source_location": "L92",
       "_origin": "ast",
       "id": "src_main_java_museon_online_astor_butler_telegram_adapter_telegramvoicetranscriptionservice_java_speechtotextresult",
-      "community": 30,
+      "community": 56,
       "norm_label": "speechtotextresult"
     },
     {
@@ -20202,7 +20222,7 @@
       "source_location": "L100",
       "_origin": "ast",
       "id": "adapter_telegramvoicetranscriptionservice_telegramvoicetranscriptionservice_transcriptionstatus",
-      "community": 30,
+      "community": 56,
       "norm_label": ".transcriptionstatus()"
     },
     {
@@ -20212,7 +20232,7 @@
       "source_location": "L100",
       "_origin": "ast",
       "id": "src_main_java_museon_online_astor_butler_telegram_adapter_telegramvoicetranscriptionservice_java_string",
-      "community": 30,
+      "community": 56,
       "norm_label": "string"
     },
     {
@@ -20222,7 +20242,7 @@
       "source_location": "L110",
       "_origin": "ast",
       "id": "adapter_telegramvoicetranscriptionservice_telegramvoicetranscriptionservice_download",
-      "community": 30,
+      "community": 56,
       "norm_label": ".download()"
     },
     {
@@ -20232,7 +20252,7 @@
       "source_location": "L110",
       "_origin": "ast",
       "id": "src_main_java_museon_online_astor_butler_telegram_adapter_telegramvoicetranscriptionservice_java_path",
-      "community": 30,
+      "community": 56,
       "norm_label": "path"
     },
     {
@@ -20242,7 +20262,7 @@
       "source_location": "L136",
       "_origin": "ast",
       "id": "adapter_telegramvoicetranscriptionservice_telegramvoicetranscriptionservice_suffix",
-      "community": 30,
+      "community": 56,
       "norm_label": ".suffix()"
     },
     {
@@ -20252,7 +20272,7 @@
       "source_location": "L136",
       "_origin": "ast",
       "id": "src_main_java_museon_online_astor_butler_telegram_adapter_telegramvoicetranscriptionservice_java_map",
-      "community": 30,
+      "community": 56,
       "norm_label": "map"
     },
     {
@@ -20262,7 +20282,7 @@
       "source_location": "L136",
       "_origin": "ast",
       "id": "src_main_java_museon_online_astor_butler_telegram_adapter_telegramvoicetranscriptionservice_java_object",
-      "community": 30,
+      "community": 56,
       "norm_label": "object"
     },
     {
@@ -20272,7 +20292,7 @@
       "source_location": "L150",
       "_origin": "ast",
       "id": "adapter_telegramvoicetranscriptionservice_telegramvoicetranscriptionservice_cleanuplocalfile",
-      "community": 30,
+      "community": 56,
       "norm_label": ".cleanuplocalfile()"
     },
     {
@@ -20282,7 +20302,7 @@
       "source_location": "L161",
       "_origin": "ast",
       "id": "adapter_telegramvoicetranscriptionservice_telegramvoicetranscriptionservice_string",
-      "community": 30,
+      "community": 56,
       "norm_label": ".string()"
     },
     {
@@ -21402,7 +21422,7 @@
       "source_location": "L65",
       "_origin": "ast",
       "id": "inlinekeyboardbutton",
-      "community": 69,
+      "community": 70,
       "norm_label": "inlinekeyboardbutton"
     },
     {
@@ -21982,7 +22002,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "analytics_kafkaadmineventformattertest",
-      "community": 212,
+      "community": 8,
       "norm_label": "kafkaadmineventformattertest.java"
     },
     {
@@ -21992,7 +22012,7 @@
       "source_location": "L17",
       "_origin": "ast",
       "id": "analytics_kafkaadmineventformattertest_kafkaadmineventformattertest",
-      "community": 212,
+      "community": 8,
       "norm_label": "kafkaadmineventformattertest"
     },
     {
@@ -22002,7 +22022,7 @@
       "source_location": "L22",
       "_origin": "ast",
       "id": "analytics_kafkaadmineventformattertest_kafkaadmineventformattertest_formatsusermessageeventforhumans",
-      "community": 212,
+      "community": 8,
       "norm_label": ".formatsusermessageeventforhumans()"
     },
     {
@@ -22012,7 +22032,7 @@
       "source_location": "L22",
       "_origin": "ast",
       "id": "src_test_java_museon_online_astor_butler_analytics_kafkaadmineventformattertest_java_test",
-      "community": 212,
+      "community": 8,
       "norm_label": "test"
     },
     {
@@ -22022,7 +22042,7 @@
       "source_location": "L58",
       "_origin": "ast",
       "id": "analytics_kafkaadmineventformattertest_kafkaadmineventformattertest_fallsbackforunparseablepayload",
-      "community": 212,
+      "community": 8,
       "norm_label": ".fallsbackforunparseablepayload()"
     },
     {
@@ -22032,7 +22052,7 @@
       "source_location": "L74",
       "_origin": "ast",
       "id": "analytics_kafkaadmineventformattertest_kafkaadmineventformattertest_formatsjsonusermessageeventforhumans",
-      "community": 212,
+      "community": 8,
       "norm_label": ".formatsjsonusermessageeventforhumans()"
     },
     {
@@ -22042,7 +22062,7 @@
       "source_location": "L120",
       "_origin": "ast",
       "id": "analytics_kafkaadmineventformattertest_kafkaadmineventformattertest_formatsjsonvoicetranscriptforadminchat",
-      "community": 212,
+      "community": 8,
       "norm_label": ".formatsjsonvoicetranscriptforadminchat()"
     },
     {
@@ -22152,7 +22172,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "content_aeriscontentcontrollertest",
-      "community": 216,
+      "community": 203,
       "norm_label": "aeriscontentcontrollertest.java"
     },
     {
@@ -22162,7 +22182,7 @@
       "source_location": "L13",
       "_origin": "ast",
       "id": "content_aeriscontentcontrollertest_aeriscontentcontrollertest",
-      "community": 216,
+      "community": 203,
       "norm_label": "aeriscontentcontrollertest"
     },
     {
@@ -22172,7 +22192,7 @@
       "source_location": "L18",
       "_origin": "ast",
       "id": "content_aeriscontentcontrollertest_aeriscontentcontrollertest_returnsmenuassetsview",
-      "community": 216,
+      "community": 203,
       "norm_label": ".returnsmenuassetsview()"
     },
     {
@@ -22182,7 +22202,7 @@
       "source_location": "L18",
       "_origin": "ast",
       "id": "src_test_java_museon_online_astor_butler_api_content_aeriscontentcontrollertest_java_test",
-      "community": 216,
+      "community": 203,
       "norm_label": "test"
     },
     {
@@ -22192,7 +22212,7 @@
       "source_location": "L33",
       "_origin": "ast",
       "id": "content_aeriscontentcontrollertest_aeriscontentcontrollertest_returnsquietguideviewforprompt",
-      "community": 216,
+      "community": 203,
       "norm_label": ".returnsquietguideviewforprompt()"
     },
     {
@@ -22302,7 +22322,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "message_messagecontrollertest",
-      "community": 23,
+      "community": 15,
       "norm_label": "messagecontrollertest.java"
     },
     {
@@ -22312,7 +22332,7 @@
       "source_location": "L18",
       "_origin": "ast",
       "id": "message_messagecontrollertest_messagecontrollertest",
-      "community": 23,
+      "community": 15,
       "norm_label": "messagecontrollertest"
     },
     {
@@ -22322,7 +22342,7 @@
       "source_location": "L23",
       "_origin": "ast",
       "id": "message_messagecontrollertest_messagecontrollertest_mapstelegramexternaluseridtotelegramuseridforfsmsimulation",
-      "community": 23,
+      "community": 15,
       "norm_label": ".mapstelegramexternaluseridtotelegramuseridforfsmsimulation()"
     },
     {
@@ -22332,7 +22352,7 @@
       "source_location": "L23",
       "_origin": "ast",
       "id": "src_test_java_museon_online_astor_butler_api_message_messagecontrollertest_java_test",
-      "community": 23,
+      "community": 15,
       "norm_label": "test"
     },
     {
@@ -22342,7 +22362,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "auth_telegramloginverifiertest",
-      "community": 8,
+      "community": 14,
       "norm_label": "telegramloginverifiertest.java"
     },
     {
@@ -22352,7 +22372,7 @@
       "source_location": "L20",
       "_origin": "ast",
       "id": "auth_telegramloginverifiertest_telegramloginverifiertest",
-      "community": 8,
+      "community": 14,
       "norm_label": "telegramloginverifiertest"
     },
     {
@@ -22362,7 +22382,7 @@
       "source_location": "L27",
       "_origin": "ast",
       "id": "auth_telegramloginverifiertest_telegramloginverifiertest_acceptsvalidtelegramloginpayload",
-      "community": 8,
+      "community": 14,
       "norm_label": ".acceptsvalidtelegramloginpayload()"
     },
     {
@@ -22372,7 +22392,7 @@
       "source_location": "L27",
       "_origin": "ast",
       "id": "src_test_java_museon_online_astor_butler_domain_auth_telegramloginverifiertest_java_test",
-      "community": 8,
+      "community": 14,
       "norm_label": "test"
     },
     {
@@ -22382,7 +22402,7 @@
       "source_location": "L34",
       "_origin": "ast",
       "id": "auth_telegramloginverifiertest_telegramloginverifiertest_rejectstamperedpayload",
-      "community": 8,
+      "community": 14,
       "norm_label": ".rejectstamperedpayload()"
     },
     {
@@ -22392,7 +22412,7 @@
       "source_location": "L42",
       "_origin": "ast",
       "id": "auth_telegramloginverifiertest_telegramloginverifiertest_rejectsexpiredpayload",
-      "community": 8,
+      "community": 14,
       "norm_label": ".rejectsexpiredpayload()"
     },
     {
@@ -22402,7 +22422,7 @@
       "source_location": "L50",
       "_origin": "ast",
       "id": "auth_telegramloginverifiertest_telegramloginverifiertest_validpayload",
-      "community": 8,
+      "community": 14,
       "norm_label": ".validpayload()"
     },
     {
@@ -22412,7 +22432,7 @@
       "source_location": "L50",
       "_origin": "ast",
       "id": "src_test_java_museon_online_astor_butler_domain_auth_telegramloginverifiertest_java_map",
-      "community": 8,
+      "community": 14,
       "norm_label": "map"
     },
     {
@@ -22422,7 +22442,7 @@
       "source_location": "L50",
       "_origin": "ast",
       "id": "src_test_java_museon_online_astor_butler_domain_auth_telegramloginverifiertest_java_string",
-      "community": 8,
+      "community": 14,
       "norm_label": "string"
     },
     {
@@ -22432,7 +22452,7 @@
       "source_location": "L60",
       "_origin": "ast",
       "id": "auth_telegramloginverifiertest_telegramloginverifiertest_calculatehash",
-      "community": 8,
+      "community": 14,
       "norm_label": ".calculatehash()"
     },
     {
@@ -23032,7 +23052,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "content_publictelegramhtmlsourcetest",
-      "community": 258,
+      "community": 34,
       "norm_label": "publictelegramhtmlsourcetest.java"
     },
     {
@@ -23042,7 +23062,7 @@
       "source_location": "L10",
       "_origin": "ast",
       "id": "content_publictelegramhtmlsourcetest_publictelegramhtmlsourcetest",
-      "community": 258,
+      "community": 34,
       "norm_label": "publictelegramhtmlsourcetest"
     },
     {
@@ -23052,7 +23072,7 @@
       "source_location": "L12",
       "_origin": "ast",
       "id": "content_publictelegramhtmlsourcetest_publictelegramhtmlsourcetest_parsestelegrampublichtmlmessage",
-      "community": 258,
+      "community": 34,
       "norm_label": ".parsestelegrampublichtmlmessage()"
     },
     {
@@ -23062,7 +23082,7 @@
       "source_location": "L12",
       "_origin": "ast",
       "id": "src_test_java_museon_online_astor_butler_domain_content_publictelegramhtmlsourcetest_java_test",
-      "community": 258,
+      "community": 34,
       "norm_label": "test"
     },
     {
@@ -23072,7 +23092,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "content_venuecontentassetstorageservicetest",
-      "community": 227,
+      "community": 34,
       "norm_label": "venuecontentassetstorageservicetest.java"
     },
     {
@@ -23082,7 +23102,7 @@
       "source_location": "L16",
       "_origin": "ast",
       "id": "content_venuecontentassetstorageservicetest_venuecontentassetstorageservicetest",
-      "community": 227,
+      "community": 34,
       "norm_label": "venuecontentassetstorageservicetest"
     },
     {
@@ -23092,7 +23112,7 @@
       "source_location": "L21",
       "_origin": "ast",
       "id": "content_venuecontentassetstorageservicetest_venuecontentassetstorageservicetest_keepssourceassetwhenmirroringdisabled",
-      "community": 227,
+      "community": 34,
       "norm_label": ".keepssourceassetwhenmirroringdisabled()"
     },
     {
@@ -23102,7 +23122,7 @@
       "source_location": "L21",
       "_origin": "ast",
       "id": "src_test_java_museon_online_astor_butler_domain_content_venuecontentassetstorageservicetest_java_test",
-      "community": 227,
+      "community": 34,
       "norm_label": "test"
     },
     {
@@ -23112,7 +23132,7 @@
       "source_location": "L42",
       "_origin": "ast",
       "id": "content_venuecontentassetstorageservicetest_venuecontentassetstorageservicetest_post",
-      "community": 227,
+      "community": 34,
       "norm_label": ".post()"
     },
     {
@@ -23122,7 +23142,7 @@
       "source_location": "L42",
       "_origin": "ast",
       "id": "src_test_java_museon_online_astor_butler_domain_content_venuecontentassetstorageservicetest_java_venuecontentasset",
-      "community": 227,
+      "community": 34,
       "norm_label": "venuecontentasset"
     },
     {
@@ -23132,7 +23152,7 @@
       "source_location": "L42",
       "_origin": "ast",
       "id": "src_test_java_museon_online_astor_butler_domain_content_venuecontentassetstorageservicetest_java_normalizedvenuecontentpost",
-      "community": 227,
+      "community": 34,
       "norm_label": "normalizedvenuecontentpost"
     },
     {
@@ -23142,7 +23162,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "content_venuecontentclassifiertest",
-      "community": 108,
+      "community": 64,
       "norm_label": "venuecontentclassifiertest.java"
     },
     {
@@ -23152,7 +23172,7 @@
       "source_location": "L10",
       "_origin": "ast",
       "id": "content_venuecontentclassifiertest_venuecontentclassifiertest",
-      "community": 108,
+      "community": 64,
       "norm_label": "venuecontentclassifiertest"
     },
     {
@@ -23162,7 +23182,7 @@
       "source_location": "L14",
       "_origin": "ast",
       "id": "content_venuecontentclassifiertest_venuecontentclassifiertest_classifiesafishaevent",
-      "community": 108,
+      "community": 64,
       "norm_label": ".classifiesafishaevent()"
     },
     {
@@ -23172,7 +23192,7 @@
       "source_location": "L14",
       "_origin": "ast",
       "id": "src_test_java_museon_online_astor_butler_domain_content_venuecontentclassifiertest_java_test",
-      "community": 108,
+      "community": 64,
       "norm_label": "test"
     },
     {
@@ -23369,7 +23389,7 @@
       "label": "ChangeCancelScenarioTest",
       "file_type": "code",
       "source_file": "src/test/java/museon_online/astor_butler/fsm/scenario/ChangeCancelScenarioTest.java",
-      "source_location": "L24",
+      "source_location": "L28",
       "_origin": "ast",
       "id": "scenario_changecancelscenariotest_changecancelscenariotest",
       "community": 229,
@@ -23379,7 +23399,7 @@
       "label": ".setUp()",
       "file_type": "code",
       "source_file": "src/test/java/museon_online/astor_butler/fsm/scenario/ChangeCancelScenarioTest.java",
-      "source_location": "L35",
+      "source_location": "L42",
       "_origin": "ast",
       "id": "scenario_changecancelscenariotest_changecancelscenariotest_setup",
       "community": 229,
@@ -23389,7 +23409,7 @@
       "label": "BeforeEach",
       "file_type": "code",
       "source_file": "src/test/java/museon_online/astor_butler/fsm/scenario/ChangeCancelScenarioTest.java",
-      "source_location": "L35",
+      "source_location": "L42",
       "_origin": "ast",
       "id": "src_test_java_museon_online_astor_butler_fsm_scenario_changecancelscenariotest_java_beforeeach",
       "community": 229,
@@ -23399,7 +23419,7 @@
       "label": ".asksForReferenceBeforeChangingBooking()",
       "file_type": "code",
       "source_file": "src/test/java/museon_online/astor_butler/fsm/scenario/ChangeCancelScenarioTest.java",
-      "source_location": "L41",
+      "source_location": "L48",
       "_origin": "ast",
       "id": "scenario_changecancelscenariotest_changecancelscenariotest_asksforreferencebeforechangingbooking",
       "community": 229,
@@ -23409,7 +23429,7 @@
       "label": "Test",
       "file_type": "code",
       "source_file": "src/test/java/museon_online/astor_butler/fsm/scenario/ChangeCancelScenarioTest.java",
-      "source_location": "L41",
+      "source_location": "L48",
       "_origin": "ast",
       "id": "src_test_java_museon_online_astor_butler_fsm_scenario_changecancelscenariotest_java_test",
       "community": 229,
@@ -23419,17 +23439,27 @@
       "label": ".showsActiveReservationsBeforeAskingReference()",
       "file_type": "code",
       "source_file": "src/test/java/museon_online/astor_butler/fsm/scenario/ChangeCancelScenarioTest.java",
-      "source_location": "L55",
+      "source_location": "L63",
       "_origin": "ast",
       "id": "scenario_changecancelscenariotest_changecancelscenariotest_showsactivereservationsbeforeaskingreference",
       "community": 229,
       "norm_label": ".showsactivereservationsbeforeaskingreference()"
     },
     {
+      "label": ".showsActiveEventOrdersBeforeAskingReference()",
+      "file_type": "code",
+      "source_file": "src/test/java/museon_online/astor_butler/fsm/scenario/ChangeCancelScenarioTest.java",
+      "source_location": "L84",
+      "_origin": "ast",
+      "id": "scenario_changecancelscenariotest_changecancelscenariotest_showsactiveeventordersbeforeaskingreference",
+      "community": 229,
+      "norm_label": ".showsactiveeventordersbeforeaskingreference()"
+    },
+    {
       "label": ".sendsAdminAlertWhenReferenceIsProvided()",
       "file_type": "code",
       "source_file": "src/test/java/museon_online/astor_butler/fsm/scenario/ChangeCancelScenarioTest.java",
-      "source_location": "L75",
+      "source_location": "L105",
       "_origin": "ast",
       "id": "scenario_changecancelscenariotest_changecancelscenariotest_sendsadminalertwhenreferenceisprovided",
       "community": 229,
@@ -23439,7 +23469,7 @@
       "label": ".supportsChangeCancelIntentAndContinuation()",
       "file_type": "code",
       "source_file": "src/test/java/museon_online/astor_butler/fsm/scenario/ChangeCancelScenarioTest.java",
-      "source_location": "L89",
+      "source_location": "L119",
       "_origin": "ast",
       "id": "scenario_changecancelscenariotest_changecancelscenariotest_supportschangecancelintentandcontinuation",
       "community": 229,
@@ -23449,7 +23479,7 @@
       "label": ".telegram()",
       "file_type": "code",
       "source_file": "src/test/java/museon_online/astor_butler/fsm/scenario/ChangeCancelScenarioTest.java",
-      "source_location": "L98",
+      "source_location": "L128",
       "_origin": "ast",
       "id": "scenario_changecancelscenariotest_changecancelscenariotest_telegram",
       "community": 229,
@@ -23459,7 +23489,7 @@
       "label": "String",
       "file_type": "code",
       "source_file": "src/test/java/museon_online/astor_butler/fsm/scenario/ChangeCancelScenarioTest.java",
-      "source_location": "L98",
+      "source_location": "L128",
       "_origin": "ast",
       "id": "src_test_java_museon_online_astor_butler_fsm_scenario_changecancelscenariotest_java_string",
       "community": 229,
@@ -23469,7 +23499,7 @@
       "label": "IncomingMessage",
       "file_type": "code",
       "source_file": "src/test/java/museon_online/astor_butler/fsm/scenario/ChangeCancelScenarioTest.java",
-      "source_location": "L98",
+      "source_location": "L128",
       "_origin": "ast",
       "id": "src_test_java_museon_online_astor_butler_fsm_scenario_changecancelscenariotest_java_incomingmessage",
       "community": 229,
@@ -23479,7 +23509,7 @@
       "label": ".activeReservation()",
       "file_type": "code",
       "source_file": "src/test/java/museon_online/astor_butler/fsm/scenario/ChangeCancelScenarioTest.java",
-      "source_location": "L115",
+      "source_location": "L145",
       "_origin": "ast",
       "id": "scenario_changecancelscenariotest_changecancelscenariotest_activereservation",
       "community": 229,
@@ -23489,11 +23519,31 @@
       "label": "TableReservationOrder",
       "file_type": "code",
       "source_file": "src/test/java/museon_online/astor_butler/fsm/scenario/ChangeCancelScenarioTest.java",
-      "source_location": "L115",
+      "source_location": "L145",
       "_origin": "ast",
       "id": "src_test_java_museon_online_astor_butler_fsm_scenario_changecancelscenariotest_java_tablereservationorder",
       "community": 229,
       "norm_label": "tablereservationorder"
+    },
+    {
+      "label": ".activeEvent()",
+      "file_type": "code",
+      "source_file": "src/test/java/museon_online/astor_butler/fsm/scenario/ChangeCancelScenarioTest.java",
+      "source_location": "L171",
+      "_origin": "ast",
+      "id": "scenario_changecancelscenariotest_changecancelscenariotest_activeevent",
+      "community": 229,
+      "norm_label": ".activeevent()"
+    },
+    {
+      "label": "EventBookingOrder",
+      "file_type": "code",
+      "source_file": "src/test/java/museon_online/astor_butler/fsm/scenario/ChangeCancelScenarioTest.java",
+      "source_location": "L171",
+      "_origin": "ast",
+      "id": "src_test_java_museon_online_astor_butler_fsm_scenario_changecancelscenariotest_java_eventbookingorder",
+      "community": 229,
+      "norm_label": "eventbookingorder"
     },
     {
       "label": "EventBookingScenarioTest.java",
@@ -24622,7 +24672,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "scenario_quietguidescenariotest",
-      "community": 28,
+      "community": 50,
       "norm_label": "quietguidescenariotest.java"
     },
     {
@@ -24632,7 +24682,7 @@
       "source_location": "L29",
       "_origin": "ast",
       "id": "scenario_quietguidescenariotest_quietguidescenariotest",
-      "community": 28,
+      "community": 50,
       "norm_label": "quietguidescenariotest"
     },
     {
@@ -24642,7 +24692,7 @@
       "source_location": "L43",
       "_origin": "ast",
       "id": "scenario_quietguidescenariotest_quietguidescenariotest_setup",
-      "community": 28,
+      "community": 50,
       "norm_label": ".setup()"
     },
     {
@@ -24652,7 +24702,7 @@
       "source_location": "L43",
       "_origin": "ast",
       "id": "src_test_java_museon_online_astor_butler_fsm_scenario_quietguidescenariotest_java_beforeeach",
-      "community": 28,
+      "community": 50,
       "norm_label": "beforeeach"
     },
     {
@@ -24662,7 +24712,7 @@
       "source_location": "L61",
       "_origin": "ast",
       "id": "scenario_quietguidescenariotest_quietguidescenariotest_sendsinteriorvideometadata",
-      "community": 28,
+      "community": 50,
       "norm_label": ".sendsinteriorvideometadata()"
     },
     {
@@ -24672,7 +24722,7 @@
       "source_location": "L61",
       "_origin": "ast",
       "id": "src_test_java_museon_online_astor_butler_fsm_scenario_quietguidescenariotest_java_test",
-      "community": 28,
+      "community": 50,
       "norm_label": "test"
     },
     {
@@ -24682,7 +24732,7 @@
       "source_location": "L75",
       "_origin": "ast",
       "id": "scenario_quietguidescenariotest_quietguidescenariotest_answersconceptwithapprovedcopy",
-      "community": 28,
+      "community": 50,
       "norm_label": ".answersconceptwithapprovedcopy()"
     },
     {
@@ -24692,7 +24742,7 @@
       "source_location": "L87",
       "_origin": "ast",
       "id": "scenario_quietguidescenariotest_quietguidescenariotest_answersposterrequestfromingestedchannelcontent",
-      "community": 28,
+      "community": 50,
       "norm_label": ".answersposterrequestfromingestedchannelcontent()"
     },
     {
@@ -24702,7 +24752,7 @@
       "source_location": "L122",
       "_origin": "ast",
       "id": "scenario_quietguidescenariotest_quietguidescenariotest_telegram",
-      "community": 28,
+      "community": 50,
       "norm_label": ".telegram()"
     },
     {
@@ -24712,7 +24762,7 @@
       "source_location": "L122",
       "_origin": "ast",
       "id": "src_test_java_museon_online_astor_butler_fsm_scenario_quietguidescenariotest_java_string",
-      "community": 28,
+      "community": 50,
       "norm_label": "string"
     },
     {
@@ -24722,7 +24772,7 @@
       "source_location": "L122",
       "_origin": "ast",
       "id": "src_test_java_museon_online_astor_butler_fsm_scenario_quietguidescenariotest_java_incomingmessage",
-      "community": 28,
+      "community": 50,
       "norm_label": "incomingmessage"
     },
     {
@@ -24952,7 +25002,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "scenario_smarttipscenariotest",
-      "community": 210,
+      "community": 95,
       "norm_label": "smarttipscenariotest.java"
     },
     {
@@ -24962,7 +25012,7 @@
       "source_location": "L16",
       "_origin": "ast",
       "id": "scenario_smarttipscenariotest_smarttipscenariotest",
-      "community": 210,
+      "community": 95,
       "norm_label": "smarttipscenariotest"
     },
     {
@@ -24972,7 +25022,7 @@
       "source_location": "L24",
       "_origin": "ast",
       "id": "scenario_smarttipscenariotest_smarttipscenariotest_setup",
-      "community": 210,
+      "community": 95,
       "norm_label": ".setup()"
     },
     {
@@ -24982,7 +25032,7 @@
       "source_location": "L24",
       "_origin": "ast",
       "id": "src_test_java_museon_online_astor_butler_fsm_scenario_smarttipscenariotest_java_beforeeach",
-      "community": 210,
+      "community": 95,
       "norm_label": "beforeeach"
     },
     {
@@ -24992,7 +25042,7 @@
       "source_location": "L29",
       "_origin": "ast",
       "id": "scenario_smarttipscenariotest_smarttipscenariotest_asksforamountwhentipintenthasnomoney",
-      "community": 210,
+      "community": 95,
       "norm_label": ".asksforamountwhentipintenthasnomoney()"
     },
     {
@@ -25002,7 +25052,7 @@
       "source_location": "L29",
       "_origin": "ast",
       "id": "src_test_java_museon_online_astor_butler_fsm_scenario_smarttipscenariotest_java_test",
-      "community": 210,
+      "community": 95,
       "norm_label": "test"
     },
     {
@@ -25012,7 +25062,7 @@
       "source_location": "L41",
       "_origin": "ast",
       "id": "scenario_smarttipscenariotest_smarttipscenariotest_movestoconfirmationwhenamountispresent",
-      "community": 210,
+      "community": 95,
       "norm_label": ".movestoconfirmationwhenamountispresent()"
     },
     {
@@ -25022,7 +25072,7 @@
       "source_location": "L53",
       "_origin": "ast",
       "id": "scenario_smarttipscenariotest_smarttipscenariotest_confirmstipdraftandreturnstomainmenu",
-      "community": 210,
+      "community": 95,
       "norm_label": ".confirmstipdraftandreturnstomainmenu()"
     },
     {
@@ -25032,7 +25082,7 @@
       "source_location": "L64",
       "_origin": "ast",
       "id": "scenario_smarttipscenariotest_smarttipscenariotest_cancelstipdraftandreturnstomainmenu",
-      "community": 210,
+      "community": 95,
       "norm_label": ".cancelstipdraftandreturnstomainmenu()"
     },
     {
@@ -25042,7 +25092,7 @@
       "source_location": "L75",
       "_origin": "ast",
       "id": "scenario_smarttipscenariotest_smarttipscenariotest_telegram",
-      "community": 210,
+      "community": 95,
       "norm_label": ".telegram()"
     },
     {
@@ -25052,7 +25102,7 @@
       "source_location": "L75",
       "_origin": "ast",
       "id": "src_test_java_museon_online_astor_butler_fsm_scenario_smarttipscenariotest_java_string",
-      "community": 210,
+      "community": 95,
       "norm_label": "string"
     },
     {
@@ -25062,7 +25112,7 @@
       "source_location": "L75",
       "_origin": "ast",
       "id": "src_test_java_museon_online_astor_butler_fsm_scenario_smarttipscenariotest_java_incomingmessage",
-      "community": 210,
+      "community": 95,
       "norm_label": "incomingmessage"
     },
     {
@@ -25552,7 +25602,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "speech_externalcommandspeechtotextservicetest",
-      "community": 224,
+      "community": 56,
       "norm_label": "externalcommandspeechtotextservicetest.java"
     },
     {
@@ -25562,7 +25612,7 @@
       "source_location": "L13",
       "_origin": "ast",
       "id": "speech_externalcommandspeechtotextservicetest_externalcommandspeechtotextservicetest",
-      "community": 224,
+      "community": 56,
       "norm_label": "externalcommandspeechtotextservicetest"
     },
     {
@@ -25572,7 +25622,7 @@
       "source_location": "L18",
       "_origin": "ast",
       "id": "speech_externalcommandspeechtotextservicetest_externalcommandspeechtotextservicetest_keepscommanddiagnosticsoutoftranscript",
-      "community": 224,
+      "community": 56,
       "norm_label": ".keepscommanddiagnosticsoutoftranscript()"
     },
     {
@@ -25582,7 +25632,7 @@
       "source_location": "L18",
       "_origin": "ast",
       "id": "src_test_java_museon_online_astor_butler_speech_externalcommandspeechtotextservicetest_java_test",
-      "community": 224,
+      "community": 56,
       "norm_label": "test"
     },
     {
@@ -33451,6 +33501,17 @@
       "confidence": "INFERRED",
       "confidence_score": 0.8,
       "source_file": "src/test/java/museon_online/astor_butler/fsm/scenario/ChangeCancelScenarioTest.java",
+      "source_location": "L95",
+      "weight": 1.0,
+      "source": "scenario_changecancelscenariotest_changecancelscenariotest_showsactiveeventordersbeforeaskingreference",
+      "target": "analytics_kafkaadmineventformatter_kafkaadmineventformatter_actions"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "src/test/java/museon_online/astor_butler/fsm/scenario/ChangeCancelScenarioTest.java",
       "source_location": "L65",
       "weight": 1.0,
       "source": "scenario_changecancelscenariotest_changecancelscenariotest_showsactivereservationsbeforeaskingreference",
@@ -37324,6 +37385,17 @@
       "source_location": "L36",
       "weight": 1.0,
       "source": "notification_notificationcontroller_notificationcontroller_create",
+      "target": "common_apiexception_apiexception_status"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "src/main/java/museon_online/astor_butler/fsm/scenario/ChangeCancelScenario.java",
+      "source_location": "L135",
+      "weight": 1.0,
+      "source": "scenario_changecancelscenario_changecancelscenario_activeeventtext",
       "target": "common_apiexception_apiexception_status"
     },
     {
@@ -47185,6 +47257,17 @@
       "confidence": "INFERRED",
       "confidence_score": 0.8,
       "source_file": "src/main/java/museon_online/astor_butler/fsm/scenario/ChangeCancelScenario.java",
+      "source_location": "L132",
+      "weight": 1.0,
+      "source": "scenario_changecancelscenario_changecancelscenario_activeeventtext",
+      "target": "auth_telegramloginverifier_telegramloginverifier_isblank"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "src/main/java/museon_online/astor_butler/fsm/scenario/ChangeCancelScenario.java",
       "source_location": "L97",
       "weight": 1.0,
       "source": "scenario_changecancelscenario_changecancelscenario_adminalert",
@@ -48796,6 +48879,50 @@
       "confidence_score": 1.0,
       "source": "booking_eventbookingservice_eventbookingservice_listactiveordersbychatid",
       "target": "booking_eventbookingservice_eventbookingservice_badrequest"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "src/main/java/museon_online/astor_butler/fsm/scenario/ChangeCancelScenario.java",
+      "source_location": "L65",
+      "weight": 1.0,
+      "source": "scenario_changecancelscenario_changecancelscenario_handle",
+      "target": "booking_eventbookingservice_eventbookingservice_listactiveordersbychatid"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "src/test/java/museon_online/astor_butler/fsm/scenario/ChangeCancelScenarioTest.java",
+      "source_location": "L52",
+      "weight": 1.0,
+      "source": "scenario_changecancelscenariotest_changecancelscenariotest_asksforreferencebeforechangingbooking",
+      "target": "booking_eventbookingservice_eventbookingservice_listactiveordersbychatid"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "src/test/java/museon_online/astor_butler/fsm/scenario/ChangeCancelScenarioTest.java",
+      "source_location": "L88",
+      "weight": 1.0,
+      "source": "scenario_changecancelscenariotest_changecancelscenariotest_showsactiveeventordersbeforeaskingreference",
+      "target": "booking_eventbookingservice_eventbookingservice_listactiveordersbychatid"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "src/test/java/museon_online/astor_butler/fsm/scenario/ChangeCancelScenarioTest.java",
+      "source_location": "L68",
+      "weight": 1.0,
+      "source": "scenario_changecancelscenariotest_changecancelscenariotest_showsactivereservationsbeforeaskingreference",
+      "target": "booking_eventbookingservice_eventbookingservice_listactiveordersbychatid"
     },
     {
       "relation": "calls",
@@ -53425,6 +53552,17 @@
       "source_location": "L44",
       "weight": 1.0,
       "source": "scenario_changecancelscenariotest_changecancelscenariotest_asksforreferencebeforechangingbooking",
+      "target": "booking_tablereservationservice_tablereservationservice_listactivereservationsbychatid"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "src/test/java/museon_online/astor_butler/fsm/scenario/ChangeCancelScenarioTest.java",
+      "source_location": "L87",
+      "weight": 1.0,
+      "source": "scenario_changecancelscenariotest_changecancelscenariotest_showsactiveeventordersbeforeaskingreference",
       "target": "booking_tablereservationservice_tablereservationservice_listactivereservationsbychatid"
     },
     {
@@ -61591,6 +61729,17 @@
       "context": "call",
       "confidence": "INFERRED",
       "confidence_score": 0.8,
+      "source_file": "src/main/java/museon_online/astor_butler/fsm/scenario/ChangeCancelScenario.java",
+      "source_location": "L132",
+      "weight": 1.0,
+      "source": "scenario_changecancelscenario_changecancelscenario_activeeventtext",
+      "target": "eventtype"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
       "source_file": "src/main/java/museon_online/astor_butler/fsm/scenario/EventBookingScenario.java",
       "source_location": "L170",
       "weight": 1.0,
@@ -63509,6 +63658,17 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "src/main/java/museon_online/astor_butler/fsm/scenario/ChangeCancelScenario.java",
+      "source_location": "L4",
+      "weight": 1.0,
+      "source": "scenario_changecancelscenario",
+      "target": "src_main_java_museon_online_astor_butler_fsm_scenario_changecancelscenario_java_eventbookingorder",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/main/java/museon_online/astor_butler/fsm/scenario/ChangeCancelScenario.java",
       "source_location": "L7",
       "weight": 1.0,
       "confidence_score": 1.0,
@@ -63552,11 +63712,21 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "src/main/java/museon_online/astor_butler/fsm/scenario/ChangeCancelScenario.java",
-      "source_location": "L98",
+      "source_location": "L129",
       "weight": 1.0,
-      "confidence_score": 1.0,
       "source": "scenario_changecancelscenario_changecancelscenario",
-      "target": "scenario_changecancelscenario_changecancelscenario_activereservationstext"
+      "target": "scenario_changecancelscenario_changecancelscenario_activeeventtext",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "src/main/java/museon_online/astor_butler/fsm/scenario/ChangeCancelScenario.java",
+      "source_location": "L103",
+      "weight": 1.0,
+      "source": "scenario_changecancelscenario_changecancelscenario",
+      "target": "scenario_changecancelscenario_changecancelscenario_activerequeststext",
+      "confidence_score": 1.0
     },
     {
       "relation": "method",
@@ -63774,12 +63944,23 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "src/main/java/museon_online/astor_butler/fsm/scenario/ChangeCancelScenario.java",
-      "source_location": "L98",
+      "source_location": "L129",
       "weight": 1.0,
       "context": "return_type",
-      "confidence_score": 1.0,
-      "source": "scenario_changecancelscenario_changecancelscenario_activereservationstext",
-      "target": "src_main_java_museon_online_astor_butler_fsm_scenario_changecancelscenario_java_string"
+      "source": "scenario_changecancelscenario_changecancelscenario_activeeventtext",
+      "target": "src_main_java_museon_online_astor_butler_fsm_scenario_changecancelscenario_java_string",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "src/main/java/museon_online/astor_butler/fsm/scenario/ChangeCancelScenario.java",
+      "source_location": "L103",
+      "weight": 1.0,
+      "context": "return_type",
+      "source": "scenario_changecancelscenario_changecancelscenario_activerequeststext",
+      "target": "src_main_java_museon_online_astor_butler_fsm_scenario_changecancelscenario_java_string",
+      "confidence_score": 1.0
     },
     {
       "relation": "references",
@@ -64182,11 +64363,11 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/main/java/museon_online/astor_butler/fsm/scenario/ChangeCancelScenario.java",
-      "source_location": "L72",
+      "source_location": "L76",
       "weight": 1.0,
-      "confidence_score": 1.0,
       "source": "scenario_changecancelscenario_changecancelscenario_handle",
-      "target": "scenario_changecancelscenario_changecancelscenario_activereservationstext"
+      "target": "scenario_changecancelscenario_changecancelscenario_activerequeststext",
+      "confidence_score": 1.0
     },
     {
       "relation": "calls",
@@ -64247,23 +64428,34 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "src/main/java/museon_online/astor_butler/fsm/scenario/ChangeCancelScenario.java",
-      "source_location": "L98",
+      "source_location": "L103",
       "weight": 1.0,
-      "context": "parameter_type",
-      "confidence_score": 1.0,
-      "source": "scenario_changecancelscenario_changecancelscenario_activereservationstext",
-      "target": "src_main_java_museon_online_astor_butler_fsm_scenario_changecancelscenario_java_list"
+      "context": "generic_arg",
+      "source": "scenario_changecancelscenario_changecancelscenario_activerequeststext",
+      "target": "src_main_java_museon_online_astor_butler_fsm_scenario_changecancelscenario_java_eventbookingorder",
+      "confidence_score": 1.0
     },
     {
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "src/main/java/museon_online/astor_butler/fsm/scenario/ChangeCancelScenario.java",
-      "source_location": "L98",
+      "source_location": "L103",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "source": "scenario_changecancelscenario_changecancelscenario_activerequeststext",
+      "target": "src_main_java_museon_online_astor_butler_fsm_scenario_changecancelscenario_java_list",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "src/main/java/museon_online/astor_butler/fsm/scenario/ChangeCancelScenario.java",
+      "source_location": "L103",
       "weight": 1.0,
       "context": "generic_arg",
-      "confidence_score": 1.0,
-      "source": "scenario_changecancelscenario_changecancelscenario_activereservationstext",
-      "target": "src_main_java_museon_online_astor_butler_fsm_scenario_changecancelscenario_java_tablereservationorder"
+      "source": "scenario_changecancelscenario_changecancelscenario_activerequeststext",
+      "target": "src_main_java_museon_online_astor_butler_fsm_scenario_changecancelscenario_java_tablereservationorder",
+      "confidence_score": 1.0
     },
     {
       "relation": "references",
@@ -64286,6 +64478,17 @@
       "confidence_score": 1.0,
       "source": "scenario_changecancelscenario_changecancelscenario_tablename",
       "target": "src_main_java_museon_online_astor_butler_fsm_scenario_changecancelscenario_java_tablereservationorder"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "src/main/java/museon_online/astor_butler/fsm/scenario/ChangeCancelScenario.java",
+      "source_location": "L129",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "source": "scenario_changecancelscenario_changecancelscenario_activeeventtext",
+      "target": "src_main_java_museon_online_astor_butler_fsm_scenario_changecancelscenario_java_eventbookingorder",
+      "confidence_score": 1.0
     },
     {
       "relation": "calls",
@@ -64319,6 +64522,17 @@
       "weight": 1.0,
       "source": "scenario_changecancelscenario_changecancelscenario_activereservationtext",
       "target": "scenario_tablebookingscenario_tablebookingscenario_requestedstartat"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "src/main/java/museon_online/astor_butler/fsm/scenario/ChangeCancelScenario.java",
+      "source_location": "L133",
+      "weight": 1.0,
+      "source": "scenario_changecancelscenario_changecancelscenario_activeeventtext",
+      "target": "scenario_tablebookingscenario_tablebookingscenario_requesteddate"
     },
     {
       "relation": "calls",
@@ -64546,9 +64760,9 @@
       "source_file": "src/main/java/museon_online/astor_butler/fsm/scenario/EventBookingScenario.java",
       "source_location": "L4",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "scenario_eventbookingscenario",
-      "target": "src_main_java_museon_online_astor_butler_fsm_scenario_eventbookingscenario_java_eventbookingcommand",
-      "confidence_score": 1.0
+      "target": "src_main_java_museon_online_astor_butler_fsm_scenario_eventbookingscenario_java_eventbookingcommand"
     },
     {
       "relation": "imports",
@@ -64557,9 +64771,9 @@
       "source_file": "src/main/java/museon_online/astor_butler/fsm/scenario/EventBookingScenario.java",
       "source_location": "L5",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "scenario_eventbookingscenario",
-      "target": "src_main_java_museon_online_astor_butler_fsm_scenario_eventbookingscenario_java_eventbookingorder",
-      "confidence_score": 1.0
+      "target": "src_main_java_museon_online_astor_butler_fsm_scenario_eventbookingscenario_java_eventbookingorder"
     },
     {
       "relation": "imports",
@@ -64619,9 +64833,9 @@
       "source_file": "src/main/java/museon_online/astor_butler/fsm/scenario/EventBookingScenario.java",
       "source_location": "L266",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "scenario_eventbookingscenario_eventbookingscenario",
-      "target": "scenario_eventbookingscenario_eventbookingscenario_detectbudgettext",
-      "confidence_score": 1.0
+      "target": "scenario_eventbookingscenario_eventbookingscenario_detectbudgettext"
     },
     {
       "relation": "method",
@@ -64629,9 +64843,9 @@
       "source_file": "src/main/java/museon_online/astor_butler/fsm/scenario/EventBookingScenario.java",
       "source_location": "L214",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "scenario_eventbookingscenario_eventbookingscenario",
-      "target": "scenario_eventbookingscenario_eventbookingscenario_detecteventtype",
-      "confidence_score": 1.0
+      "target": "scenario_eventbookingscenario_eventbookingscenario_detecteventtype"
     },
     {
       "relation": "method",
@@ -64639,9 +64853,9 @@
       "source_file": "src/main/java/museon_online/astor_butler/fsm/scenario/EventBookingScenario.java",
       "source_location": "L239",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "scenario_eventbookingscenario_eventbookingscenario",
-      "target": "scenario_eventbookingscenario_eventbookingscenario_detectguestcount",
-      "confidence_score": 1.0
+      "target": "scenario_eventbookingscenario_eventbookingscenario_detectguestcount"
     },
     {
       "relation": "method",
@@ -64649,9 +64863,9 @@
       "source_file": "src/main/java/museon_online/astor_butler/fsm/scenario/EventBookingScenario.java",
       "source_location": "L254",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "scenario_eventbookingscenario_eventbookingscenario",
-      "target": "scenario_eventbookingscenario_eventbookingscenario_detecttimetext",
-      "confidence_score": 1.0
+      "target": "scenario_eventbookingscenario_eventbookingscenario_detecttimetext"
     },
     {
       "relation": "method",
@@ -64669,9 +64883,9 @@
       "source_file": "src/main/java/museon_online/astor_butler/fsm/scenario/EventBookingScenario.java",
       "source_location": "L111",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "scenario_eventbookingscenario_eventbookingscenario",
-      "target": "scenario_eventbookingscenario_eventbookingscenario_eventbookingcommand",
-      "confidence_score": 1.0
+      "target": "scenario_eventbookingscenario_eventbookingscenario_eventbookingcommand"
     },
     {
       "relation": "method",
@@ -64749,9 +64963,9 @@
       "source_file": "src/main/java/museon_online/astor_butler/fsm/scenario/EventBookingScenario.java",
       "source_location": "L273",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "scenario_eventbookingscenario_eventbookingscenario",
-      "target": "scenario_eventbookingscenario_eventbookingscenario_lastnumber",
-      "confidence_score": 1.0
+      "target": "scenario_eventbookingscenario_eventbookingscenario_lastnumber"
     },
     {
       "relation": "method",
@@ -64895,9 +65109,9 @@
       "source_location": "L266",
       "weight": 1.0,
       "context": "return_type",
+      "confidence_score": 1.0,
       "source": "scenario_eventbookingscenario_eventbookingscenario_detectbudgettext",
-      "target": "src_main_java_museon_online_astor_butler_fsm_scenario_eventbookingscenario_java_string",
-      "confidence_score": 1.0
+      "target": "src_main_java_museon_online_astor_butler_fsm_scenario_eventbookingscenario_java_string"
     },
     {
       "relation": "references",
@@ -64906,9 +65120,9 @@
       "source_location": "L214",
       "weight": 1.0,
       "context": "return_type",
+      "confidence_score": 1.0,
       "source": "scenario_eventbookingscenario_eventbookingscenario_detecteventtype",
-      "target": "src_main_java_museon_online_astor_butler_fsm_scenario_eventbookingscenario_java_string",
-      "confidence_score": 1.0
+      "target": "src_main_java_museon_online_astor_butler_fsm_scenario_eventbookingscenario_java_string"
     },
     {
       "relation": "references",
@@ -64917,9 +65131,9 @@
       "source_location": "L239",
       "weight": 1.0,
       "context": "parameter_type",
+      "confidence_score": 1.0,
       "source": "scenario_eventbookingscenario_eventbookingscenario_detectguestcount",
-      "target": "src_main_java_museon_online_astor_butler_fsm_scenario_eventbookingscenario_java_string",
-      "confidence_score": 1.0
+      "target": "src_main_java_museon_online_astor_butler_fsm_scenario_eventbookingscenario_java_string"
     },
     {
       "relation": "references",
@@ -64928,9 +65142,9 @@
       "source_location": "L254",
       "weight": 1.0,
       "context": "return_type",
+      "confidence_score": 1.0,
       "source": "scenario_eventbookingscenario_eventbookingscenario_detecttimetext",
-      "target": "src_main_java_museon_online_astor_butler_fsm_scenario_eventbookingscenario_java_string",
-      "confidence_score": 1.0
+      "target": "src_main_java_museon_online_astor_butler_fsm_scenario_eventbookingscenario_java_string"
     },
     {
       "relation": "references",
@@ -64950,9 +65164,9 @@
       "source_location": "L111",
       "weight": 1.0,
       "context": "parameter_type",
+      "confidence_score": 1.0,
       "source": "scenario_eventbookingscenario_eventbookingscenario_eventbookingcommand",
-      "target": "src_main_java_museon_online_astor_butler_fsm_scenario_eventbookingscenario_java_string",
-      "confidence_score": 1.0
+      "target": "src_main_java_museon_online_astor_butler_fsm_scenario_eventbookingscenario_java_string"
     },
     {
       "relation": "references",
@@ -65027,9 +65241,9 @@
       "source_location": "L273",
       "weight": 1.0,
       "context": "return_type",
+      "confidence_score": 1.0,
       "source": "scenario_eventbookingscenario_eventbookingscenario_lastnumber",
-      "target": "src_main_java_museon_online_astor_butler_fsm_scenario_eventbookingscenario_java_string",
-      "confidence_score": 1.0
+      "target": "src_main_java_museon_online_astor_butler_fsm_scenario_eventbookingscenario_java_string"
     },
     {
       "relation": "references",
@@ -65225,9 +65439,9 @@
       "source_location": "L111",
       "weight": 1.0,
       "context": "parameter_type",
+      "confidence_score": 1.0,
       "source": "scenario_eventbookingscenario_eventbookingscenario_eventbookingcommand",
-      "target": "src_main_java_museon_online_astor_butler_fsm_scenario_eventbookingscenario_java_incomingmessage",
-      "confidence_score": 1.0
+      "target": "src_main_java_museon_online_astor_butler_fsm_scenario_eventbookingscenario_java_incomingmessage"
     },
     {
       "relation": "references",
@@ -65434,9 +65648,9 @@
       "source_file": "src/main/java/museon_online/astor_butler/fsm/scenario/EventBookingScenario.java",
       "source_location": "L88",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "scenario_eventbookingscenario_eventbookingscenario_sendeventrequest",
-      "target": "scenario_eventbookingscenario_eventbookingscenario_eventbookingcommand",
-      "confidence_score": 1.0
+      "target": "scenario_eventbookingscenario_eventbookingscenario_eventbookingcommand"
     },
     {
       "relation": "calls",
@@ -65445,9 +65659,9 @@
       "source_file": "src/main/java/museon_online/astor_butler/fsm/scenario/EventBookingScenario.java",
       "source_location": "L122",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "scenario_eventbookingscenario_eventbookingscenario_eventbookingcommand",
-      "target": "scenario_eventbookingscenario_eventbookingscenario_detectbudgettext",
-      "confidence_score": 1.0
+      "target": "scenario_eventbookingscenario_eventbookingscenario_detectbudgettext"
     },
     {
       "relation": "calls",
@@ -65456,9 +65670,9 @@
       "source_file": "src/main/java/museon_online/astor_butler/fsm/scenario/EventBookingScenario.java",
       "source_location": "L118",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "scenario_eventbookingscenario_eventbookingscenario_eventbookingcommand",
-      "target": "scenario_eventbookingscenario_eventbookingscenario_detecteventtype",
-      "confidence_score": 1.0
+      "target": "scenario_eventbookingscenario_eventbookingscenario_detecteventtype"
     },
     {
       "relation": "calls",
@@ -65467,9 +65681,9 @@
       "source_file": "src/main/java/museon_online/astor_butler/fsm/scenario/EventBookingScenario.java",
       "source_location": "L121",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "scenario_eventbookingscenario_eventbookingscenario_eventbookingcommand",
-      "target": "scenario_eventbookingscenario_eventbookingscenario_detectguestcount",
-      "confidence_score": 1.0
+      "target": "scenario_eventbookingscenario_eventbookingscenario_detectguestcount"
     },
     {
       "relation": "calls",
@@ -65478,9 +65692,9 @@
       "source_file": "src/main/java/museon_online/astor_butler/fsm/scenario/EventBookingScenario.java",
       "source_location": "L120",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "scenario_eventbookingscenario_eventbookingscenario_eventbookingcommand",
-      "target": "scenario_eventbookingscenario_eventbookingscenario_detecttimetext",
-      "confidence_score": 1.0
+      "target": "scenario_eventbookingscenario_eventbookingscenario_detecttimetext"
     },
     {
       "relation": "calls",
@@ -65489,9 +65703,9 @@
       "source_file": "src/main/java/museon_online/astor_butler/fsm/scenario/EventBookingScenario.java",
       "source_location": "L126",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "scenario_eventbookingscenario_eventbookingscenario_eventbookingcommand",
-      "target": "scenario_eventbookingscenario_eventbookingscenario_displayname",
-      "confidence_score": 1.0
+      "target": "scenario_eventbookingscenario_eventbookingscenario_displayname"
     },
     {
       "relation": "calls",
@@ -65500,9 +65714,9 @@
       "source_file": "src/main/java/museon_online/astor_butler/fsm/scenario/EventBookingScenario.java",
       "source_location": "L112",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "scenario_eventbookingscenario_eventbookingscenario_eventbookingcommand",
-      "target": "scenario_eventbookingscenario_eventbookingscenario_normalize",
-      "confidence_score": 1.0
+      "target": "scenario_eventbookingscenario_eventbookingscenario_normalize"
     },
     {
       "relation": "references",
@@ -65511,9 +65725,9 @@
       "source_location": "L111",
       "weight": 1.0,
       "context": "return_type",
+      "confidence_score": 1.0,
       "source": "scenario_eventbookingscenario_eventbookingscenario_eventbookingcommand",
-      "target": "src_main_java_museon_online_astor_butler_fsm_scenario_eventbookingscenario_java_eventbookingcommand",
-      "confidence_score": 1.0
+      "target": "src_main_java_museon_online_astor_butler_fsm_scenario_eventbookingscenario_java_eventbookingcommand"
     },
     {
       "relation": "calls",
@@ -65588,9 +65802,9 @@
       "source_location": "L134",
       "weight": 1.0,
       "context": "parameter_type",
+      "confidence_score": 1.0,
       "source": "scenario_eventbookingscenario_eventbookingscenario_adminalert",
-      "target": "src_main_java_museon_online_astor_butler_fsm_scenario_eventbookingscenario_java_eventbookingorder",
-      "confidence_score": 1.0
+      "target": "src_main_java_museon_online_astor_butler_fsm_scenario_eventbookingscenario_java_eventbookingorder"
     },
     {
       "relation": "calls",
@@ -65632,9 +65846,9 @@
       "source_file": "src/main/java/museon_online/astor_butler/fsm/scenario/EventBookingScenario.java",
       "source_location": "L256",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "scenario_eventbookingscenario_eventbookingscenario_detecttimetext",
-      "target": "scenario_eventbookingscenario_eventbookingscenario_hasdatesignal",
-      "confidence_score": 1.0
+      "target": "scenario_eventbookingscenario_eventbookingscenario_hasdatesignal"
     },
     {
       "relation": "calls",
@@ -65665,9 +65879,9 @@
       "source_file": "src/main/java/museon_online/astor_butler/fsm/scenario/EventBookingScenario.java",
       "source_location": "L245",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "scenario_eventbookingscenario_eventbookingscenario_detectguestcount",
-      "target": "scenario_eventbookingscenario_eventbookingscenario_lastnumber",
-      "confidence_score": 1.0
+      "target": "scenario_eventbookingscenario_eventbookingscenario_lastnumber"
     },
     {
       "relation": "references",
@@ -65676,9 +65890,9 @@
       "source_location": "L239",
       "weight": 1.0,
       "context": "return_type",
+      "confidence_score": 1.0,
       "source": "scenario_eventbookingscenario_eventbookingscenario_detectguestcount",
-      "target": "src_main_java_museon_online_astor_butler_fsm_scenario_eventbookingscenario_java_integer",
-      "confidence_score": 1.0
+      "target": "src_main_java_museon_online_astor_butler_fsm_scenario_eventbookingscenario_java_integer"
     },
     {
       "relation": "calls",
@@ -65709,9 +65923,9 @@
       "source_file": "src/main/java/museon_online/astor_butler/fsm/scenario/EventBookingScenario.java",
       "source_location": "L267",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "scenario_eventbookingscenario_eventbookingscenario_detectbudgettext",
-      "target": "scenario_eventbookingscenario_eventbookingscenario_containsany",
-      "confidence_score": 1.0
+      "target": "scenario_eventbookingscenario_eventbookingscenario_containsany"
     },
     {
       "relation": "calls",
@@ -83060,6 +83274,17 @@
       "confidence": "INFERRED",
       "confidence_score": 0.8,
       "source_file": "src/test/java/museon_online/astor_butler/fsm/scenario/ChangeCancelScenarioTest.java",
+      "source_location": "L87",
+      "weight": 1.0,
+      "source": "scenario_changecancelscenariotest_changecancelscenariotest_showsactiveeventordersbeforeaskingreference",
+      "target": "message_outgoingmessage_of"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "src/test/java/museon_online/astor_butler/fsm/scenario/ChangeCancelScenarioTest.java",
       "source_location": "L59",
       "weight": 1.0,
       "source": "scenario_changecancelscenariotest_changecancelscenariotest_showsactivereservationsbeforeaskingreference",
@@ -92208,6 +92433,17 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "src/test/java/museon_online/astor_butler/fsm/scenario/ChangeCancelScenarioTest.java",
+      "source_location": "L3",
+      "weight": 1.0,
+      "source": "scenario_changecancelscenariotest",
+      "target": "src_test_java_museon_online_astor_butler_fsm_scenario_changecancelscenariotest_java_eventbookingorder",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/test/java/museon_online/astor_butler/fsm/scenario/ChangeCancelScenarioTest.java",
       "source_location": "L5",
       "weight": 1.0,
       "confidence_score": 1.0,
@@ -92235,6 +92471,16 @@
       "confidence_score": 1.0,
       "source": "scenario_changecancelscenariotest",
       "target": "src_test_java_museon_online_astor_butler_fsm_scenario_changecancelscenariotest_java_test"
+    },
+    {
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "src/test/java/museon_online/astor_butler/fsm/scenario/ChangeCancelScenarioTest.java",
+      "source_location": "L171",
+      "weight": 1.0,
+      "source": "scenario_changecancelscenariotest_changecancelscenariotest",
+      "target": "scenario_changecancelscenariotest_changecancelscenariotest_activeevent",
+      "confidence_score": 1.0
     },
     {
       "relation": "method",
@@ -92275,6 +92521,16 @@
       "confidence_score": 1.0,
       "source": "scenario_changecancelscenariotest_changecancelscenariotest",
       "target": "scenario_changecancelscenariotest_changecancelscenariotest_setup"
+    },
+    {
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "src/test/java/museon_online/astor_butler/fsm/scenario/ChangeCancelScenarioTest.java",
+      "source_location": "L84",
+      "weight": 1.0,
+      "source": "scenario_changecancelscenariotest_changecancelscenariotest",
+      "target": "scenario_changecancelscenariotest_changecancelscenariotest_showsactiveeventordersbeforeaskingreference",
+      "confidence_score": 1.0
     },
     {
       "relation": "method",
@@ -92354,6 +92610,17 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "src/test/java/museon_online/astor_butler/fsm/scenario/ChangeCancelScenarioTest.java",
+      "source_location": "L84",
+      "weight": 1.0,
+      "context": "attribute",
+      "source": "scenario_changecancelscenariotest_changecancelscenariotest_showsactiveeventordersbeforeaskingreference",
+      "target": "src_test_java_museon_online_astor_butler_fsm_scenario_changecancelscenariotest_java_test",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "src/test/java/museon_online/astor_butler/fsm/scenario/ChangeCancelScenarioTest.java",
       "source_location": "L55",
       "weight": 1.0,
       "context": "attribute",
@@ -92393,6 +92660,28 @@
       "confidence_score": 1.0,
       "source": "scenario_changecancelscenariotest_changecancelscenariotest_showsactivereservationsbeforeaskingreference",
       "target": "scenario_changecancelscenariotest_changecancelscenariotest_telegram"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/test/java/museon_online/astor_butler/fsm/scenario/ChangeCancelScenarioTest.java",
+      "source_location": "L89",
+      "weight": 1.0,
+      "source": "scenario_changecancelscenariotest_changecancelscenariotest_showsactiveeventordersbeforeaskingreference",
+      "target": "scenario_changecancelscenariotest_changecancelscenariotest_activeevent",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/test/java/museon_online/astor_butler/fsm/scenario/ChangeCancelScenarioTest.java",
+      "source_location": "L86",
+      "weight": 1.0,
+      "source": "scenario_changecancelscenariotest_changecancelscenariotest_showsactiveeventordersbeforeaskingreference",
+      "target": "scenario_changecancelscenariotest_changecancelscenariotest_telegram",
+      "confidence_score": 1.0
     },
     {
       "relation": "calls",
@@ -92450,6 +92739,17 @@
       "target": "src_test_java_museon_online_astor_butler_fsm_scenario_changecancelscenariotest_java_tablereservationorder"
     },
     {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "src/test/java/museon_online/astor_butler/fsm/scenario/ChangeCancelScenarioTest.java",
+      "source_location": "L171",
+      "weight": 1.0,
+      "context": "return_type",
+      "source": "scenario_changecancelscenariotest_changecancelscenariotest_activeevent",
+      "target": "src_test_java_museon_online_astor_butler_fsm_scenario_changecancelscenariotest_java_eventbookingorder",
+      "confidence_score": 1.0
+    },
+    {
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/test/java/museon_online/astor_butler/fsm/scenario/EventBookingScenarioTest.java",
@@ -92477,9 +92777,9 @@
       "source_file": "src/test/java/museon_online/astor_butler/fsm/scenario/EventBookingScenarioTest.java",
       "source_location": "L4",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "scenario_eventbookingscenariotest",
-      "target": "src_test_java_museon_online_astor_butler_fsm_scenario_eventbookingscenariotest_java_eventbookingorder",
-      "confidence_score": 1.0
+      "target": "src_test_java_museon_online_astor_butler_fsm_scenario_eventbookingscenariotest_java_eventbookingorder"
     },
     {
       "relation": "imports",
@@ -92529,9 +92829,9 @@
       "source_file": "src/test/java/museon_online/astor_butler/fsm/scenario/EventBookingScenarioTest.java",
       "source_location": "L101",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "scenario_eventbookingscenariotest_eventbookingscenariotest",
-      "target": "scenario_eventbookingscenariotest_eventbookingscenariotest_eventorder",
-      "confidence_score": 1.0
+      "target": "scenario_eventbookingscenariotest_eventbookingscenariotest_eventorder"
     },
     {
       "relation": "method",
@@ -92625,9 +92925,9 @@
       "source_file": "src/test/java/museon_online/astor_butler/fsm/scenario/EventBookingScenarioTest.java",
       "source_location": "L58",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "scenario_eventbookingscenariotest_eventbookingscenariotest_sendsstructuredeventrequesttoadminwhendetailsareenough",
-      "target": "scenario_eventbookingscenariotest_eventbookingscenariotest_eventorder",
-      "confidence_score": 1.0
+      "target": "scenario_eventbookingscenariotest_eventbookingscenariotest_eventorder"
     },
     {
       "relation": "calls",
@@ -92647,9 +92947,9 @@
       "source_file": "src/test/java/museon_online/astor_butler/fsm/scenario/EventBookingScenarioTest.java",
       "source_location": "L76",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "scenario_eventbookingscenariotest_eventbookingscenariotest_continuationalwayssendsrequestafterdetailsmessage",
-      "target": "scenario_eventbookingscenariotest_eventbookingscenariotest_eventorder",
-      "confidence_score": 1.0
+      "target": "scenario_eventbookingscenariotest_eventbookingscenariotest_eventorder"
     },
     {
       "relation": "calls",
@@ -92691,9 +92991,9 @@
       "source_location": "L101",
       "weight": 1.0,
       "context": "return_type",
+      "confidence_score": 1.0,
       "source": "scenario_eventbookingscenariotest_eventbookingscenariotest_eventorder",
-      "target": "src_test_java_museon_online_astor_butler_fsm_scenario_eventbookingscenariotest_java_eventbookingorder",
-      "confidence_score": 1.0
+      "target": "src_test_java_museon_online_astor_butler_fsm_scenario_eventbookingscenariotest_java_eventbookingorder"
     },
     {
       "relation": "contains",
@@ -100051,5 +100351,5 @@
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "c6bdc99951af7e1398a9aec2d7e4746462449874"
+  "built_at_commit": "100c0524204fb71548f421e2e2bc6b76c2b3e7e5"
 }
