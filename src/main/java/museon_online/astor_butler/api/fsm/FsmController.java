@@ -2,6 +2,8 @@ package museon_online.astor_butler.api.fsm;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import lombok.RequiredArgsConstructor;
+import museon_online.astor_butler.domain.fsm.FsmRuntimeStateService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -19,7 +21,10 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/api/fsm")
 @Tag(name = "FSM API", description = "FSM events, state read model and safe reset")
+@RequiredArgsConstructor
 public class FsmController {
+
+    private final FsmRuntimeStateService runtimeStateService;
 
     @PostMapping("/events")
     @Operation(summary = "Accept normalized inbound event")
@@ -31,6 +36,38 @@ public class FsmController {
                 "PENDING_ORCHESTRATION",
                 Instant.now()
         ));
+    }
+
+    @GetMapping("/telegram/{chatId}/state")
+    @Operation(summary = "Get live Telegram FSM state from PostgreSQL and Redis")
+    public ResponseEntity<FsmRuntimeStateService.TelegramFsmStateView> telegramState(
+            @PathVariable("chatId") Long chatId
+    ) {
+        return ResponseEntity.ok(runtimeStateService.getTelegramState(chatId));
+    }
+
+    @PostMapping("/telegram/{chatId}/reset")
+    @Operation(summary = "Reset Telegram FSM runtime to first-touch or main-menu state")
+    public ResponseEntity<FsmRuntimeStateService.TelegramFsmStateView> resetTelegramState(
+            @PathVariable("chatId") Long chatId
+    ) {
+        return ResponseEntity.accepted().body(runtimeStateService.resetTelegramState(chatId));
+    }
+
+    @PutMapping("/telegram/{chatId}/state")
+    @Operation(summary = "Replace Telegram FSM state for internal recovery tools")
+    public ResponseEntity<FsmRuntimeStateService.TelegramFsmStateView> replaceTelegramState(
+            @PathVariable("chatId") Long chatId,
+            @RequestBody FsmStateRequest request
+    ) {
+        return ResponseEntity.ok(runtimeStateService.replaceTelegramState(chatId, request.state()));
+    }
+
+    @DeleteMapping("/telegram/{chatId}/state")
+    @Operation(summary = "Delete Telegram FSM state, pending intents and booking draft")
+    public ResponseEntity<Void> deleteTelegramState(@PathVariable("chatId") Long chatId) {
+        runtimeStateService.deleteTelegramState(chatId);
+        return ResponseEntity.noContent().build();
     }
 
     @GetMapping("/users/{userId}/state")

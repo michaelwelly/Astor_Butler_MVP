@@ -103,6 +103,7 @@ public interface FsmScenario {
 - 2026-06-15: `ScenarioRouter` умеет исполнять сохраненный safe-content pending intent после успешного completion-action и очищать Redis pending key.
 - 2026-06-15: подтверждение брони через кнопку хостес теперь тоже доставляет сохраненные safe-content pending intents гостю (`MENU_ASSETS`, `QUIET_GUIDE`) и очищает Redis pending key после успешной отправки.
 - 2026-06-15: `AERIS Channel Ingest` получил MVP runtime: public `t.me/s/aeris_gastrobar` parser, rules classifier, MinIO media mirroring, PostgreSQL `venue_content_posts/assets`, manual endpoint `/api/content/ingest/aeris-channel`, scheduled toggle и read path в `QuietGuideScenario`.
+- 2026-06-15: начат DB-first vertical slice для `FirstTouch + MainMenu`: добавлен Telegram runtime read/reset API поверх PostgreSQL identity/consent/message facts, Redis FSM state/pending intents и Redis table-booking draft.
 - Следующий шаг: добавлять новые сценарии как отдельные `FsmScenario`-компоненты, а не расширять `MessageGatewayService`.
 
 ## 3. IntentPlan Contract
@@ -199,6 +200,15 @@ public interface FsmScenario {
 | MongoDB | flexible metadata, parsed documents, inventory/manifests where schema еще меняется. |
 | pgvector/PostgreSQL | semantic sources/chunks/embeddings for RAG and intent examples. |
 | Neo4j | scenario/capability/state graph projection, not source of truth. |
+
+First live API slice:
+
+| Endpoint | Storage touched | Purpose |
+| --- | --- | --- |
+| `GET /api/fsm/telegram/{chatId}/state` | PostgreSQL + Redis | Manual/runtime visibility for Natalia and service checks. |
+| `POST /api/fsm/telegram/{chatId}/reset` | Redis + PostgreSQL read | Safe `/start`-like reset without deleting durable identity facts. |
+| `PUT /api/fsm/telegram/{chatId}/state` | Redis | Internal recovery while scenarios are being filled. |
+| `DELETE /api/fsm/telegram/{chatId}/state` | Redis | Clear hot state/drafts without touching PostgreSQL history. |
 
 Правила:
 

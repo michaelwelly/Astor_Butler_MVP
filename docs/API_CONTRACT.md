@@ -164,6 +164,30 @@ Current backend persistence:
 
 The REST Consent Vault endpoints still preserve the frontend-facing route shape while the user/auth model is being finalized.
 
+## FSM Runtime Contract
+
+FSM API now exposes a real Telegram runtime read model for local/manual testing and internal recovery tools.
+
+Current Telegram runtime endpoints:
+
+- `GET /api/fsm/telegram/{chatId}/state` - reads current Redis FSM state and pending intents, PostgreSQL identity/profile/consent facts, message counters and booking draft presence.
+- `POST /api/fsm/telegram/{chatId}/reset` - clears Redis runtime state, pending intents and table booking draft, then returns the guest to `READY_FOR_DIALOG` if privacy consent exists, `CONSENT_REQUIRED` if the Telegram profile exists without consent, or `UNKNOWN` for an unseen chat.
+- `PUT /api/fsm/telegram/{chatId}/state` - internal recovery endpoint for explicitly replacing Redis FSM state with a valid `BotState`.
+- `DELETE /api/fsm/telegram/{chatId}/state` - clears Redis FSM state, pending intents and table booking draft without deleting durable PostgreSQL facts.
+
+Older `/api/fsm/users/{userId}/...` endpoints are still compatibility stubs while the public user identifier model is being finalized. Operational testing should use Telegram `chatId` endpoints until a stable external user ID is introduced.
+
+## AERIS Content Runtime Contract
+
+Menu Assets and Quiet Guide use PostgreSQL as the active runtime index and MinIO/S3 as the binary source.
+
+Current read endpoints:
+
+- `GET /api/content/aeris/menu-assets` - returns active AERIS menu PDF assets: kitchen, bar, Elements/cocktails and wine, including bucket/object key/public URL and current RAG source marker.
+- `GET /api/content/aeris/quiet-guide?prompt=...` - returns the active interior video asset, approved concept copy and current active AERIS channel posts with mirrored content assets where available.
+
+Telegram scenarios still send files through their own transport metadata, but these endpoints are the operator-facing contract for checking what the bot is about to use.
+
 ## Internal Event Contract
 
 Kafka is an internal backend boundary for audit, analytics and future notifications. It is not exposed to frontend clients.

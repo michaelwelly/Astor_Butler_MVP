@@ -104,6 +104,31 @@ public class VenueContentRepository {
         );
     }
 
+    public List<VenueContentAsset> findAssetsByPostId(UUID postId) {
+        if (postId == null) {
+            return List.of();
+        }
+        return jdbcTemplate.query("""
+                SELECT asset_kind,
+                       source_url,
+                       bucket,
+                       object_key,
+                       content_type
+                FROM venue_content_assets
+                WHERE post_id = ?
+                ORDER BY created_at, asset_kind
+                """,
+                (rs, rowNum) -> new VenueContentAsset(
+                        rs.getString("asset_kind"),
+                        rs.getString("source_url"),
+                        rs.getString("bucket"),
+                        rs.getString("object_key"),
+                        rs.getString("content_type")
+                ),
+                postId
+        );
+    }
+
     private java.util.Optional<VenueContentPost> findById(UUID id) {
         return jdbcTemplate.query("""
                 SELECT *
