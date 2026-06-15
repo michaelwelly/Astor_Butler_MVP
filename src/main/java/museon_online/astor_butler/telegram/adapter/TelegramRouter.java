@@ -313,7 +313,7 @@ public class TelegramRouter {
                 <i>покажи меню и винную карту</i>
                 <i>расскажи про AERIS</i>
 
-                <a href="https://michaelwelly.github.io/Astor_Butler_MVP/docs/guest-guide.html">Короткая инструкция гостя</a>
+                <a href="https://auspicious-kryptops-863.notion.site/Astor-Butler-Knowledge-Base-380a7c019f1980d78b68d8bc659c609b?source=copy_link">Короткая инструкция гостя</a>
                 """;
     }
 
