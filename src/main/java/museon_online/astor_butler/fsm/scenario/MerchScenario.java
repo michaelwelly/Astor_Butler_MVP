@@ -1,6 +1,9 @@
 package museon_online.astor_butler.fsm.scenario;
 
 import lombok.RequiredArgsConstructor;
+import museon_online.astor_butler.domain.merch.MerchOrder;
+import museon_online.astor_butler.domain.merch.MerchOrderCommand;
+import museon_online.astor_butler.domain.merch.MerchService;
 import museon_online.astor_butler.fsm.core.BotState;
 import museon_online.astor_butler.fsm.storage.FSMStorage;
 import museon_online.astor_butler.service.message.AdminAlert;
@@ -18,6 +21,7 @@ import java.util.Map;
 public class MerchScenario implements FsmScenario {
 
     private final FSMStorage fsmStorage;
+    private final MerchService merchService;
 
     @Value("${telegram.admin.chat-id:}")
     private String adminChatId;
@@ -83,10 +87,12 @@ public class MerchScenario implements FsmScenario {
             String text,
             String reasonAction
     ) {
+        MerchOrder order = merchService.createOrder(merchOrderCommand(incoming, text));
         fsmStorage.setState(incoming.chatId(), BotState.READY_FOR_DIALOG);
         return OutgoingMessage.of(
                 incoming,
-                "Передал запрос по мерчу команде. Пока это заявка без оплаты и без обещания наличия; менеджер подтвердит детали вручную.",
+                "Создал заявку по мерчу #%s и передал команде. Пока это заявка без оплаты и без обещания наличия; менеджер подтвердит детали вручную."
+                        .formatted(order.id()),
                 BotState.READY_FOR_DIALOG.name(),
                 false,
                 false,
@@ -96,8 +102,26 @@ public class MerchScenario implements FsmScenario {
                 List.of("MERCH", reasonAction, "ADMIN_ALERT", "RETURN_MAIN_MENU")
         ).withMetadata(Map.of(
                 "scenario", id(),
+                "merchOrderId", order.id(),
+                "itemId", order.itemId() == null ? "" : order.itemId(),
+                "itemTitle", order.itemTitle() == null ? "" : order.itemTitle(),
                 "orderBoundary", "MANUAL_CONFIRMATION_REQUIRED"
         ));
+    }
+
+    private MerchOrderCommand merchOrderCommand(IncomingMessage incoming, String text) {
+        return new MerchOrderCommand(
+                incoming.chatId(),
+                incoming.telegramUserId(),
+                null,
+                "AERIS",
+                null,
+                null,
+                1,
+                displayName(incoming),
+                text,
+                "TEAM_CONFIRMATION_REQUIRED"
+        );
     }
 
     private AdminAlert adminAlert(IncomingMessage incoming, BotState previousState, String text) {

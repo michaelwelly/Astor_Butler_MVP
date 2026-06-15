@@ -35,3 +35,5 @@ databaseChangeLog:
       file: db/changelog/2026-06-15-feedback-foundation.yaml
   - include:
       file: db/changelog/2026-06-15-telegram-stars-foundation.yaml
+  - include:
+      file: db/changelog/2026-06-15-merch-foundation.yaml
