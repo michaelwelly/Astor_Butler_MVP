@@ -25,6 +25,7 @@ public class ScenarioRouter {
     private final ManagerHelpScenario managerHelpScenario;
     private final FeedbackScenario feedbackScenario;
     private final PreferenceScenario preferenceScenario;
+    private final ConciergeScenario conciergeScenario;
     private final SafePlayScenario safePlayScenario;
     private final MerchScenario merchScenario;
     private final MenuAssetsScenario menuAssetsScenario;
@@ -62,6 +63,7 @@ public class ScenarioRouter {
                 managerHelpScenario,
                 feedbackScenario,
                 preferenceScenario,
+                conciergeScenario,
                 safePlayScenario,
                 merchScenario,
                 menuAssetsScenario,

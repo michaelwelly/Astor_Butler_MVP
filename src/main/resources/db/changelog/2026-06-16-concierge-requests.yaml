@@ -1,0 +1,7 @@
+databaseChangeLog:
+  - changeSet:
+      id: 2026-06-16-concierge-requests
+      author: codex
+      changes:
+        - sqlFile:
+            path: db/changelog/2026-06-16-concierge-requests.sql

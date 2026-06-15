@@ -39,3 +39,5 @@ databaseChangeLog:
       file: db/changelog/2026-06-15-merch-foundation.yaml
   - include:
       file: db/changelog/2026-06-16-guest-preferences.yaml
+  - include:
+      file: db/changelog/2026-06-16-concierge-requests.yaml
