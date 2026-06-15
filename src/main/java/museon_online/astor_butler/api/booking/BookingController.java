@@ -2,6 +2,10 @@ package museon_online.astor_butler.api.booking;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import museon_online.astor_butler.domain.booking.EventBookingCommand;
+import museon_online.astor_butler.domain.booking.EventBookingOrder;
+import museon_online.astor_butler.domain.booking.EventBookingService;
+import museon_online.astor_butler.domain.booking.EventBookingStatus;
 import museon_online.astor_butler.domain.booking.TableBookingRuntimeService;
 import museon_online.astor_butler.domain.booking.TableAvailability;
 import museon_online.astor_butler.domain.booking.TableReservationCommand;
@@ -37,6 +41,7 @@ public class BookingController {
 
     private final TableReservationService tableReservationService;
     private final TableBookingRuntimeService tableBookingRuntimeService;
+    private final EventBookingService eventBookingService;
 
     @PostMapping
     @Operation(summary = "Create booking request")
@@ -121,6 +126,40 @@ public class BookingController {
             @RequestParam(name = "venueCode", defaultValue = "AERIS") String venueCode
     ) {
         return ResponseEntity.ok(tableBookingRuntimeService.telegramRuntime(chatId, venueCode));
+    }
+
+    @PostMapping("/event-orders")
+    @Operation(summary = "Create event/private booking request for manager review")
+    public ResponseEntity<EventBookingResponse> createEventBooking(@RequestBody EventBookingCreateRequest request) {
+        EventBookingOrder order = eventBookingService.createOrder(request.toCommand());
+        return ResponseEntity.status(HttpStatus.CREATED).body(EventBookingResponse.from(order));
+    }
+
+    @GetMapping("/event-orders/{id}")
+    @Operation(summary = "Get event/private booking request")
+    public ResponseEntity<EventBookingResponse> getEventBooking(@PathVariable("id") Long id) {
+        return ResponseEntity.ok(EventBookingResponse.from(eventBookingService.getOrder(id)));
+    }
+
+    @GetMapping("/event-orders/telegram/{chatId}")
+    @Operation(summary = "List recent event/private booking requests for Telegram chat")
+    public ResponseEntity<List<EventBookingResponse>> listTelegramEventBookings(
+            @PathVariable("chatId") Long chatId,
+            @RequestParam(name = "limit", defaultValue = "10") Integer limit
+    ) {
+        return ResponseEntity.ok(eventBookingService.listOrdersByChatId(chatId, limit).stream()
+                .map(EventBookingResponse::from)
+                .toList());
+    }
+
+    @GetMapping("/event-orders/telegram/{chatId}/active")
+    @Operation(summary = "List active event/private booking requests for Telegram chat")
+    public ResponseEntity<List<EventBookingResponse>> listActiveTelegramEventBookings(
+            @PathVariable("chatId") Long chatId
+    ) {
+        return ResponseEntity.ok(eventBookingService.listActiveOrdersByChatId(chatId).stream()
+                .map(EventBookingResponse::from)
+                .toList());
     }
 
     @PostMapping("/table-reservations/{id}/confirm")
@@ -236,6 +275,48 @@ public class BookingController {
         }
     }
 
+    public record EventBookingCreateRequest(
+            Long chatId,
+            Long telegramUserId,
+            Long userId,
+            String venueCode,
+            String eventType,
+            LocalDate requestedDate,
+            String requestedTimeText,
+            Integer guestCount,
+            String budgetText,
+            String menuPreferences,
+            String technicalRequirements,
+            String contact,
+            String guestName,
+            String guestPhone,
+            String guestComment,
+            Long managerTelegramId,
+            String managerChatId
+    ) {
+        EventBookingCommand toCommand() {
+            return new EventBookingCommand(
+                    chatId,
+                    telegramUserId,
+                    userId,
+                    venueCode,
+                    eventType,
+                    requestedDate,
+                    requestedTimeText,
+                    guestCount,
+                    budgetText,
+                    menuPreferences,
+                    technicalRequirements,
+                    contact,
+                    guestName,
+                    guestPhone,
+                    guestComment,
+                    managerTelegramId,
+                    managerChatId
+            );
+        }
+    }
+
     public record VenueTableResponse(
             Long id,
             String venueCode,
@@ -324,6 +405,62 @@ public class BookingController {
                     order.managerTelegramId(),
                     order.hostessChatId(),
                     order.sbisExternalId(),
+                    order.createdAt(),
+                    order.updatedAt()
+            );
+        }
+    }
+
+    public record EventBookingResponse(
+            Long id,
+            Long chatId,
+            Long telegramUserId,
+            Long userId,
+            String venueCode,
+            EventBookingStatus status,
+            String source,
+            String eventType,
+            LocalDate requestedDate,
+            String requestedTimeText,
+            Integer guestCount,
+            String budgetText,
+            String menuPreferences,
+            String technicalRequirements,
+            String contact,
+            String guestName,
+            String guestPhone,
+            String guestComment,
+            Long managerTelegramId,
+            Long managerUserId,
+            String managerChatId,
+            String externalId,
+            Instant createdAt,
+            Instant updatedAt
+    ) {
+        static EventBookingResponse from(EventBookingOrder order) {
+            return new EventBookingResponse(
+                    order.id(),
+                    order.chatId(),
+                    order.telegramUserId(),
+                    order.userId(),
+                    order.venueCode(),
+                    order.status(),
+                    order.source(),
+                    order.eventType(),
+                    order.requestedDate(),
+                    order.requestedTimeText(),
+                    order.guestCount(),
+                    order.budgetText(),
+                    order.menuPreferences(),
+                    order.technicalRequirements(),
+                    order.contact(),
+                    order.guestName(),
+                    order.guestPhone(),
+                    order.guestComment(),
+                    order.managerTelegramId(),
+                    order.managerUserId(),
+                    order.managerChatId(),
+                    order.externalId(),
                     order.createdAt(),
                     order.updatedAt()
             );

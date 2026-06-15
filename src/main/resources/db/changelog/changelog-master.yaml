@@ -23,3 +23,5 @@ databaseChangeLog:
       file: db/changelog/2026-06-11-semantic-memory-pgvector.yaml
   - include:
       file: db/changelog/2026-06-15-venue-content.yaml
+  - include:
+      file: db/changelog/2026-06-15-event-booking-foundation.yaml
