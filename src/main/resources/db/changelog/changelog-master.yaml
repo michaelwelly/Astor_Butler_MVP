@@ -31,3 +31,5 @@ databaseChangeLog:
       file: db/changelog/2026-06-15-hidden-heart-foundation.yaml
   - include:
       file: db/changelog/2026-06-15-art-auction-foundation.yaml
+  - include:
+      file: db/changelog/2026-06-15-feedback-foundation.yaml

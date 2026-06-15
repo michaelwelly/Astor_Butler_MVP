@@ -1,5 +1,12 @@
 package museon_online.astor_butler.fsm.scenario;
 
+import museon_online.astor_butler.domain.feedback.FeedbackPriority;
+import museon_online.astor_butler.domain.feedback.FeedbackSentiment;
+import museon_online.astor_butler.domain.feedback.FeedbackService;
+import museon_online.astor_butler.domain.feedback.FeedbackStatus;
+import museon_online.astor_butler.domain.feedback.FeedbackType;
+import museon_online.astor_butler.domain.feedback.GuestFeedback;
+import museon_online.astor_butler.domain.feedback.GuestFeedbackCommand;
 import museon_online.astor_butler.fsm.core.BotState;
 import museon_online.astor_butler.fsm.storage.FSMStorage;
 import museon_online.astor_butler.service.message.IncomingMessage;
@@ -11,8 +18,12 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import java.time.Instant;
+
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class FeedbackScenarioTest {
@@ -20,11 +31,14 @@ class FeedbackScenarioTest {
     @Mock
     private FSMStorage fsmStorage;
 
+    @Mock
+    private FeedbackService feedbackService;
+
     private FeedbackScenario scenario;
 
     @BeforeEach
     void setUp() {
-        scenario = new FeedbackScenario(fsmStorage);
+        scenario = new FeedbackScenario(fsmStorage, feedbackService);
         ReflectionTestUtils.setField(scenario, "adminChatId", "100500");
     }
 
@@ -43,6 +57,7 @@ class FeedbackScenarioTest {
     @Test
     void sendsAdminAlertWhenFeedbackTextWasCollected() {
         IncomingMessage incoming = telegram("Очень понравился сервис и винная карта");
+        when(feedbackService.create(any(GuestFeedbackCommand.class))).thenReturn(feedback());
 
         OutgoingMessage outgoing = scenario.handle(incoming, BotState.FEEDBACK_COLLECT_TEXT, incoming.text());
 
@@ -50,6 +65,9 @@ class FeedbackScenarioTest {
         assertThat(outgoing.adminAlert().required()).isTrue();
         assertThat(outgoing.adminAlert().chatId()).isEqualTo("100500");
         assertThat(outgoing.adminAlert().text()).contains("Astor Butler / feedback", "Наталья Поединенко", "Очень понравился сервис");
+        assertThat(outgoing.metadata()).containsEntry("feedbackId", 88L);
+        assertThat(outgoing.metadata()).containsEntry("feedbackType", "PRAISE");
+        assertThat(outgoing.metadata()).containsEntry("sentiment", "POSITIVE");
         assertThat(outgoing.actions()).containsExactly("FEEDBACK", "FEEDBACK_TEXT_RECEIVED", "ADMIN_ALERT", "RETURN_MAIN_MENU");
         verify(fsmStorage).setState(incoming.chatId(), BotState.READY_FOR_DIALOG);
     }
@@ -57,6 +75,7 @@ class FeedbackScenarioTest {
     @Test
     void sendsDirectFeedbackToAdminChat() {
         IncomingMessage incoming = telegram("отзыв: интерьер красивый, но музыку хотелось тише");
+        when(feedbackService.create(any(GuestFeedbackCommand.class))).thenReturn(feedback());
 
         OutgoingMessage outgoing = scenario.handle(incoming, BotState.READY_FOR_DIALOG, incoming.text());
 
@@ -80,6 +99,30 @@ class FeedbackScenarioTest {
                 "ru",
                 false,
                 "284069875"
+        );
+    }
+
+    private GuestFeedback feedback() {
+        return new GuestFeedback(
+                88L,
+                1773317437L,
+                1773317437L,
+                null,
+                "AERIS",
+                FeedbackStatus.OPEN,
+                "TELEGRAM",
+                FeedbackType.PRAISE,
+                FeedbackSentiment.POSITIVE,
+                FeedbackPriority.NORMAL,
+                "Наталья Поединенко",
+                "Очень понравился сервис и винная карта",
+                BotState.FEEDBACK_COLLECT_TEXT.name(),
+                "284069875",
+                "100500",
+                null,
+                "{}",
+                Instant.parse("2026-06-15T10:00:00Z"),
+                Instant.parse("2026-06-15T10:00:00Z")
         );
     }
 }

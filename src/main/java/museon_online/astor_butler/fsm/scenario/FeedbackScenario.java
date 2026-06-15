@@ -1,6 +1,9 @@
 package museon_online.astor_butler.fsm.scenario;
 
 import lombok.RequiredArgsConstructor;
+import museon_online.astor_butler.domain.feedback.FeedbackService;
+import museon_online.astor_butler.domain.feedback.GuestFeedback;
+import museon_online.astor_butler.domain.feedback.GuestFeedbackCommand;
 import museon_online.astor_butler.fsm.core.BotState;
 import museon_online.astor_butler.fsm.storage.FSMStorage;
 import museon_online.astor_butler.service.message.AdminAlert;
@@ -18,6 +21,7 @@ import java.util.Map;
 public class FeedbackScenario implements FsmScenario {
 
     private final FSMStorage fsmStorage;
+    private final FeedbackService feedbackService;
 
     @Value("${telegram.admin.chat-id:}")
     private String adminChatId;
@@ -83,6 +87,7 @@ public class FeedbackScenario implements FsmScenario {
             String text,
             String reasonAction
     ) {
+        GuestFeedback feedback = feedbackService.create(feedbackCommand(incoming, previousState, text));
         fsmStorage.setState(incoming.chatId(), BotState.READY_FOR_DIALOG);
         return OutgoingMessage.of(
                 incoming,
@@ -96,8 +101,26 @@ public class FeedbackScenario implements FsmScenario {
                 List.of("FEEDBACK", reasonAction, "ADMIN_ALERT", "RETURN_MAIN_MENU")
         ).withMetadata(Map.of(
                 "scenario", id(),
+                "feedbackId", feedback.id(),
+                "feedbackType", feedback.feedbackType().name(),
+                "sentiment", feedback.sentiment().name(),
+                "priority", feedback.priority().name(),
                 "handoffReason", reasonAction
         ));
+    }
+
+    private GuestFeedbackCommand feedbackCommand(IncomingMessage incoming, BotState previousState, String text) {
+        return new GuestFeedbackCommand(
+                incoming.chatId(),
+                incoming.telegramUserId(),
+                null,
+                "AERIS",
+                displayName(incoming),
+                text,
+                previousState == null ? null : previousState.name(),
+                incoming.correlationId(),
+                adminChatId
+        );
     }
 
     private AdminAlert adminAlert(IncomingMessage incoming, BotState previousState, String text) {
