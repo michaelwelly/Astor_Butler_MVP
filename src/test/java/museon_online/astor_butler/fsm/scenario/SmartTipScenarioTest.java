@@ -1,5 +1,9 @@
 package museon_online.astor_butler.fsm.scenario;
 
+import museon_online.astor_butler.domain.tip.TipOrder;
+import museon_online.astor_butler.domain.tip.TipOrderCommand;
+import museon_online.astor_butler.domain.tip.TipOrderStatus;
+import museon_online.astor_butler.domain.tip.TipService;
 import museon_online.astor_butler.fsm.core.BotState;
 import museon_online.astor_butler.fsm.storage.FSMStorage;
 import museon_online.astor_butler.service.message.IncomingMessage;
@@ -10,8 +14,12 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.time.Instant;
+
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class SmartTipScenarioTest {
@@ -19,11 +27,14 @@ class SmartTipScenarioTest {
     @Mock
     private FSMStorage fsmStorage;
 
+    @Mock
+    private TipService tipService;
+
     private SmartTipScenario scenario;
 
     @BeforeEach
     void setUp() {
-        scenario = new SmartTipScenario(fsmStorage);
+        scenario = new SmartTipScenario(fsmStorage, tipService);
     }
 
     @Test
@@ -41,12 +52,15 @@ class SmartTipScenarioTest {
     @Test
     void movesToConfirmationWhenAmountIsPresent() {
         IncomingMessage incoming = telegram("оставить чаевые 1000 рублей");
+        when(tipService.createDraft(any(TipOrderCommand.class))).thenReturn(tipOrder());
 
         OutgoingMessage outgoing = scenario.handle(incoming, BotState.READY_FOR_DIALOG, incoming.text());
 
         assertThat(outgoing.nextState()).isEqualTo(BotState.TIP_CONFIRMATION.name());
         assertThat(outgoing.actions()).containsExactly("SMART_TIP", "TIP_CONFIRMATION");
         assertThat(outgoing.metadata()).containsEntry("paymentBoundary", "SBP_FUTURE_INTEGRATION");
+        assertThat(outgoing.metadata()).containsEntry("tipOrderId", 55L);
+        assertThat(outgoing.text()).contains("#55", "Команда AERIS", "1000 ₽");
         verify(fsmStorage).setState(incoming.chatId(), BotState.TIP_CONFIRMATION);
     }
 
@@ -86,6 +100,28 @@ class SmartTipScenarioTest {
                 "ru",
                 false,
                 "284069875"
+        );
+    }
+
+    private TipOrder tipOrder() {
+        return new TipOrder(
+                55L,
+                1773317437L,
+                1773317437L,
+                null,
+                "AERIS",
+                1L,
+                "Команда AERIS",
+                TipOrderStatus.AWAITING_GUEST_CONFIRMATION,
+                "TELEGRAM",
+                100_000L,
+                "RUB",
+                "Наталья Поединенко",
+                "оставить чаевые 1000 рублей",
+                null,
+                null,
+                Instant.parse("2026-06-15T10:00:00Z"),
+                Instant.parse("2026-06-15T10:00:00Z")
         );
     }
 }
