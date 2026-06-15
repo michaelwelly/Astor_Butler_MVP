@@ -1,5 +1,9 @@
 package museon_online.astor_butler.fsm.scenario;
 
+import museon_online.astor_butler.domain.donation.DonationOrder;
+import museon_online.astor_butler.domain.donation.DonationOrderCommand;
+import museon_online.astor_butler.domain.donation.DonationOrderStatus;
+import museon_online.astor_butler.domain.donation.DonationService;
 import museon_online.astor_butler.fsm.core.BotState;
 import museon_online.astor_butler.fsm.storage.FSMStorage;
 import museon_online.astor_butler.service.message.IncomingMessage;
@@ -10,8 +14,12 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.time.Instant;
+
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class HiddenHeartScenarioTest {
@@ -19,11 +27,14 @@ class HiddenHeartScenarioTest {
     @Mock
     private FSMStorage fsmStorage;
 
+    @Mock
+    private DonationService donationService;
+
     private HiddenHeartScenario scenario;
 
     @BeforeEach
     void setUp() {
-        scenario = new HiddenHeartScenario(fsmStorage);
+        scenario = new HiddenHeartScenario(fsmStorage, donationService);
     }
 
     @Test
@@ -41,11 +52,14 @@ class HiddenHeartScenarioTest {
     @Test
     void movesToConfirmationWhenAmountIsPresent() {
         IncomingMessage incoming = telegram("донат 1000 рублей");
+        when(donationService.createDraft(any(DonationOrderCommand.class))).thenReturn(donationOrder());
 
         OutgoingMessage outgoing = scenario.handle(incoming, BotState.READY_FOR_DIALOG, incoming.text());
 
         assertThat(outgoing.nextState()).isEqualTo(BotState.DONATION_CONFIRMATION.name());
         assertThat(outgoing.actions()).containsExactly("HIDDEN_HEART", "DONATION_CONFIRMATION", "IMPACT_EVENT_DRAFT");
+        assertThat(outgoing.text()).contains("#66", "Hidden Heart / общий фонд", "1000 ₽", "анонимно");
+        assertThat(outgoing.metadata()).containsEntry("donationOrderId", 66L);
         assertThat(outgoing.metadata()).containsEntry("privacy", "ANONYMOUS_BY_DEFAULT");
         assertThat(outgoing.metadata()).containsEntry("paymentBoundary", "SBP_FUTURE_INTEGRATION");
         verify(fsmStorage).setState(incoming.chatId(), BotState.DONATION_CONFIRMATION);
@@ -92,6 +106,29 @@ class HiddenHeartScenarioTest {
                 "ru",
                 false,
                 "284069875"
+        );
+    }
+
+    private DonationOrder donationOrder() {
+        return new DonationOrder(
+                66L,
+                1773317437L,
+                1773317437L,
+                null,
+                "AERIS",
+                1L,
+                "Hidden Heart / общий фонд",
+                DonationOrderStatus.AWAITING_GUEST_CONFIRMATION,
+                "TELEGRAM",
+                100_000L,
+                "RUB",
+                true,
+                "Наталья Поединенко",
+                "донат 1000 рублей",
+                null,
+                null,
+                Instant.parse("2026-06-15T10:00:00Z"),
+                Instant.parse("2026-06-15T10:00:00Z")
         );
     }
 }

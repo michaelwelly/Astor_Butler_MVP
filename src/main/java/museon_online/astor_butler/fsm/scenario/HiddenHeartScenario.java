@@ -1,6 +1,9 @@
 package museon_online.astor_butler.fsm.scenario;
 
 import lombok.RequiredArgsConstructor;
+import museon_online.astor_butler.domain.donation.DonationOrder;
+import museon_online.astor_butler.domain.donation.DonationOrderCommand;
+import museon_online.astor_butler.domain.donation.DonationService;
 import museon_online.astor_butler.fsm.core.BotState;
 import museon_online.astor_butler.fsm.storage.FSMStorage;
 import museon_online.astor_butler.service.message.AdminAlert;
@@ -20,6 +23,7 @@ public class HiddenHeartScenario implements FsmScenario {
     private static final Pattern MONEY = Pattern.compile(".*\\b\\d{2,7}\\b.*");
 
     private final FSMStorage fsmStorage;
+    private final DonationService donationService;
 
     @Override
     public String id() {
@@ -78,10 +82,19 @@ public class HiddenHeartScenario implements FsmScenario {
             ).withMetadata(Map.of("scenario", id()));
         }
 
+        DonationOrder order = donationService.createDraft(donationOrderCommand(incoming, text));
         fsmStorage.setState(incoming.chatId(), BotState.DONATION_CONFIRMATION);
         return OutgoingMessage.of(
                 incoming,
-                "Собрал donation draft: анонимный вклад, сумма из сообщения. Перед платежным контуром я покажу подтверждение и не раскрою личные данные в impact-отчете.",
+                """
+                Собрал donation draft #%s.
+
+                Инициатива: %s
+                Сумма: %s ₽
+                Приватность: анонимно по умолчанию.
+
+                Подтверждаете?
+                """.formatted(order.id(), initiativeTitle(order), rubles(order.amountMinor())),
                 BotState.DONATION_CONFIRMATION.name(),
                 false,
                 false,
@@ -91,6 +104,7 @@ public class HiddenHeartScenario implements FsmScenario {
                 List.of("HIDDEN_HEART", "DONATION_CONFIRMATION", "IMPACT_EVENT_DRAFT")
         ).withMetadata(Map.of(
                 "scenario", id(),
+                "donationOrderId", order.id(),
                 "privacy", "ANONYMOUS_BY_DEFAULT",
                 "paymentBoundary", "SBP_FUTURE_INTEGRATION"
         ));
@@ -148,6 +162,61 @@ public class HiddenHeartScenario implements FsmScenario {
                 || text.contains("тысяч")
                 || text.contains("тысячи")
                 || text.contains("руб");
+    }
+
+    private DonationOrderCommand donationOrderCommand(IncomingMessage incoming, String text) {
+        return new DonationOrderCommand(
+                incoming.chatId(),
+                incoming.telegramUserId(),
+                null,
+                "AERIS",
+                null,
+                null,
+                amountMinor(text),
+                "RUB",
+                true,
+                displayName(incoming),
+                text
+        );
+    }
+
+    private Long amountMinor(String text) {
+        java.util.regex.Matcher matcher = java.util.regex.Pattern.compile("\\d{2,7}").matcher(text);
+        if (matcher.find()) {
+            return Long.parseLong(matcher.group()) * 100L;
+        }
+        if (text.contains("тысяч") || text.contains("тысячи")) {
+            return 100_000L;
+        }
+        return null;
+    }
+
+    private String rubles(Long amountMinor) {
+        if (amountMinor == null) {
+            return "уточняется";
+        }
+        return String.valueOf(amountMinor / 100L);
+    }
+
+    private String initiativeTitle(DonationOrder order) {
+        if (order.initiativeTitle() == null || order.initiativeTitle().isBlank()) {
+            return "Hidden Heart";
+        }
+        return order.initiativeTitle();
+    }
+
+    private String displayName(IncomingMessage incoming) {
+        String firstName = incoming.firstName() == null ? "" : incoming.firstName().trim();
+        String lastName = incoming.lastName() == null ? "" : incoming.lastName().trim();
+        String username = incoming.username() == null ? "" : incoming.username().trim();
+        String fullName = (firstName + " " + lastName).trim();
+        if (!fullName.isBlank()) {
+            return fullName;
+        }
+        if (!username.isBlank()) {
+            return "@" + username;
+        }
+        return "unknown";
     }
 
     private boolean isConfirmIntent(String text) {
