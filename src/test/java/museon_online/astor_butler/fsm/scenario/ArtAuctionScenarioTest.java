@@ -1,5 +1,9 @@
 package museon_online.astor_butler.fsm.scenario;
 
+import museon_online.astor_butler.domain.auction.ArtAuctionBid;
+import museon_online.astor_butler.domain.auction.ArtAuctionBidCommand;
+import museon_online.astor_butler.domain.auction.ArtAuctionBidStatus;
+import museon_online.astor_butler.domain.auction.ArtAuctionService;
 import museon_online.astor_butler.fsm.core.BotState;
 import museon_online.astor_butler.fsm.storage.FSMStorage;
 import museon_online.astor_butler.service.message.IncomingMessage;
@@ -10,8 +14,12 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.time.Instant;
+
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class ArtAuctionScenarioTest {
@@ -19,11 +27,14 @@ class ArtAuctionScenarioTest {
     @Mock
     private FSMStorage fsmStorage;
 
+    @Mock
+    private ArtAuctionService artAuctionService;
+
     private ArtAuctionScenario scenario;
 
     @BeforeEach
     void setUp() {
-        scenario = new ArtAuctionScenario(fsmStorage);
+        scenario = new ArtAuctionScenario(fsmStorage, artAuctionService);
     }
 
     @Test
@@ -41,12 +52,16 @@ class ArtAuctionScenarioTest {
     @Test
     void validatesBidInsteadOfAcceptingItDirectly() {
         IncomingMessage incoming = telegram("ставлю 20000 за картину");
+        when(artAuctionService.createBidDraft(any(ArtAuctionBidCommand.class))).thenReturn(auctionBid());
 
         OutgoingMessage outgoing = scenario.handle(incoming, BotState.READY_FOR_DIALOG, incoming.text());
 
         assertThat(outgoing.nextState()).isEqualTo(BotState.AUCTION_WAIT_BID.name());
-        assertThat(outgoing.text()).contains("проверю активный лот", "LLM ставку сам не принимает");
+        assertThat(outgoing.text()).contains("заявку на ставку #77", "20000 ₽", "Лот: #12", "Подтверждаете");
         assertThat(outgoing.actions()).containsExactly("ART_AUCTION", "VALIDATE_AUCTION_BID", "ASK_EXPLICIT_CONFIRMATION");
+        assertThat(outgoing.metadata()).containsEntry("auctionBidId", 77L);
+        assertThat(outgoing.metadata()).containsEntry("lotId", 12L);
+        assertThat(outgoing.metadata()).containsEntry("amountMinor", 2_000_000L);
         assertThat(outgoing.metadata()).containsEntry("requiresManagerValidation", true);
         verify(fsmStorage).setState(incoming.chatId(), BotState.AUCTION_WAIT_BID);
     }
@@ -94,6 +109,25 @@ class ArtAuctionScenarioTest {
                 "ru",
                 false,
                 "284069875"
+        );
+    }
+
+    private ArtAuctionBid auctionBid() {
+        return new ArtAuctionBid(
+                77L,
+                12L,
+                1773317437L,
+                1773317437L,
+                null,
+                ArtAuctionBidStatus.AWAITING_MANAGER_VALIDATION,
+                "TELEGRAM",
+                2_000_000L,
+                "RUB",
+                "Наталья Поединенко",
+                "ставлю 20000 за картину",
+                null,
+                Instant.parse("2026-06-15T10:00:00Z"),
+                Instant.parse("2026-06-15T10:00:00Z")
         );
     }
 }

@@ -1,6 +1,9 @@
 package museon_online.astor_butler.fsm.scenario;
 
 import lombok.RequiredArgsConstructor;
+import museon_online.astor_butler.domain.auction.ArtAuctionBid;
+import museon_online.astor_butler.domain.auction.ArtAuctionBidCommand;
+import museon_online.astor_butler.domain.auction.ArtAuctionService;
 import museon_online.astor_butler.fsm.core.BotState;
 import museon_online.astor_butler.fsm.storage.FSMStorage;
 import museon_online.astor_butler.service.message.AdminAlert;
@@ -20,6 +23,7 @@ public class ArtAuctionScenario implements FsmScenario {
     private static final Pattern MONEY = Pattern.compile(".*\\b\\d{2,8}\\b.*");
 
     private final FSMStorage fsmStorage;
+    private final ArtAuctionService artAuctionService;
 
     @Override
     public String id() {
@@ -81,9 +85,18 @@ public class ArtAuctionScenario implements FsmScenario {
             ));
         }
 
+        ArtAuctionBid bid = artAuctionService.createBidDraft(auctionBidCommand(incoming, text));
+
         return OutgoingMessage.of(
                 incoming,
-                "Ставку вижу. Перед тем как принять ее, проверю активный лот и минимальный шаг, затем попрошу явное подтверждение. LLM ставку сам не принимает.",
+                """
+                Собрал заявку на ставку #%s.
+
+                Сумма: %s ₽
+                Лот: #%s
+
+                Перед финальным приемом ставку проверит event owner: активный лот, минимальный шаг и текущий top-5. Подтверждаете?
+                """.formatted(bid.id(), rubles(bid.amountMinor()), bid.lotId()),
                 BotState.AUCTION_WAIT_BID.name(),
                 false,
                 false,
@@ -93,6 +106,9 @@ public class ArtAuctionScenario implements FsmScenario {
                 List.of("ART_AUCTION", "VALIDATE_AUCTION_BID", "ASK_EXPLICIT_CONFIRMATION")
         ).withMetadata(Map.of(
                 "scenario", id(),
+                "auctionBidId", bid.id(),
+                "lotId", bid.lotId(),
+                "amountMinor", bid.amountMinor(),
                 "requiresActiveLot", true,
                 "requiresManagerValidation", true
         ));
@@ -139,6 +155,52 @@ public class ArtAuctionScenario implements FsmScenario {
                 || text.contains("тысяч")
                 || text.contains("тысячи")
                 || text.contains("руб");
+    }
+
+    private ArtAuctionBidCommand auctionBidCommand(IncomingMessage incoming, String text) {
+        return new ArtAuctionBidCommand(
+                incoming.chatId(),
+                incoming.telegramUserId(),
+                null,
+                "AERIS",
+                null,
+                amountMinor(text),
+                "RUB",
+                displayName(incoming),
+                text
+        );
+    }
+
+    private Long amountMinor(String text) {
+        java.util.regex.Matcher matcher = java.util.regex.Pattern.compile("\\d{2,8}").matcher(text);
+        if (matcher.find()) {
+            return Long.parseLong(matcher.group()) * 100L;
+        }
+        if (text.contains("тысяч") || text.contains("тысячи")) {
+            return 100_000L;
+        }
+        return null;
+    }
+
+    private String rubles(Long amountMinor) {
+        if (amountMinor == null) {
+            return "уточняется";
+        }
+        return String.valueOf(amountMinor / 100L);
+    }
+
+    private String displayName(IncomingMessage incoming) {
+        String firstName = incoming.firstName() == null ? "" : incoming.firstName().trim();
+        String lastName = incoming.lastName() == null ? "" : incoming.lastName().trim();
+        String username = incoming.username() == null ? "" : incoming.username().trim();
+        String fullName = (firstName + " " + lastName).trim();
+        if (!fullName.isBlank()) {
+            return fullName;
+        }
+        if (!username.isBlank()) {
+            return "@" + username;
+        }
+        return "unknown";
     }
 
     private boolean isConfirmIntent(String text) {
