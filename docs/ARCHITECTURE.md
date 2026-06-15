@@ -123,6 +123,8 @@ Telegram используется как первый guest-facing UI:
 
 Telegram adapter только нормализует входящие события в `InboundEvent` и отправляет ответы. Он не принимает бизнес-решений.
 
+Service chats внутри Telegram (`TELEGRAM_ADMIN_CHAT_ID`, `TELEGRAM_ANALYTICS_CHAT_ID`, `TELEGRAM_HOSTESS_CHAT_ID`, `TELEGRAM_SYSTEM_CHAT_ID=-5403153261`) относятся к control plane: сообщения сохраняются, попадают в audit/timeline/event trail и могут запускать служебные команды, но не запускают guest FSM. Runtime-удаление сообщений через Telegram `DeleteMessage` временно отключено; будущая UX-чистка проектируется как session policy поверх Redis/timeline.
+
 ### Manager Web App
 
 Manager/staff/admin web app нужен для операционной работы:

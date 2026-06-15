@@ -6,11 +6,7 @@ import museon_online.astor_butler.domain.timeline.FsmTimelineEvent;
 import museon_online.astor_butler.domain.timeline.FsmTimelineWriter;
 import museon_online.astor_butler.domain.telegram.TelegramIntakeService;
 import museon_online.astor_butler.fsm.core.BotState;
-import museon_online.astor_butler.fsm.scenario.FirstTouchScenario;
-import museon_online.astor_butler.fsm.scenario.MainMenuScenario;
-import museon_online.astor_butler.fsm.scenario.MenuAssetsScenario;
-import museon_online.astor_butler.fsm.scenario.QuietGuideScenario;
-import museon_online.astor_butler.fsm.scenario.TableBookingScenario;
+import museon_online.astor_butler.fsm.scenario.ScenarioRouter;
 import museon_online.astor_butler.fsm.storage.FSMStorage;
 import museon_online.astor_butler.kafka.UserEventProducer;
 import museon_online.astor_butler.llm.OllamaClient;
@@ -27,11 +23,7 @@ public class MessageGatewayService {
     private final FSMStorage fsmStorage;
     private final OllamaClient ollamaClient;
     private final TelegramIntakeService telegramIntakeService;
-    private final FirstTouchScenario firstTouchScenario;
-    private final MainMenuScenario mainMenuScenario;
-    private final MenuAssetsScenario menuAssetsScenario;
-    private final QuietGuideScenario quietGuideScenario;
-    private final TableBookingScenario tableBookingScenario;
+    private final ScenarioRouter scenarioRouter;
     private final UserEventProducer userEventProducer;
     private final LlmScenarioPromptCatalog llmScenarioPromptCatalog;
     private final VoiceTranscriptionRetryService voiceTranscriptionRetryService;
@@ -42,6 +34,9 @@ public class MessageGatewayService {
 
     @Value("${telegram.analytics.chat-id:}")
     private String analyticsChatId;
+
+    @Value("${telegram.system.chat-id:}")
+    private String systemChatId;
 
     @Value("${astor.message.log-conversations-enabled:true}")
     private boolean logConversationsEnabled;
@@ -72,17 +67,17 @@ public class MessageGatewayService {
             );
         }
 
-        if (isAdminChat(incoming.chatId())) {
+        if (isServiceChat(incoming.chatId())) {
             return finish(incoming, currentState, OutgoingMessage.of(
                     incoming,
-                    "Admin chat online. Я вижу этот чат как служебный канал Astor Butler: сообщения сохраняю, Kafka-события публикую, в гостевой FSM-сценарий этот чат не отправляю.",
+                    "Service chat online. Я вижу этот чат как служебный канал Astor Butler: сообщения сохраняю, Kafka-события публикую, в гостевой FSM-сценарий этот чат не отправляю.",
                     currentState.name(),
                     false,
                     false,
                     false,
                     false,
                     AdminAlert.none(),
-                    List.of("ADMIN_CHAT_CHECK", "SKIP_GUEST_FSM")
+                    List.of("SERVICE_CHAT_CHECK", "SKIP_GUEST_FSM")
             ));
         }
 
@@ -90,24 +85,9 @@ public class MessageGatewayService {
             voiceTranscriptionRetryService.reset(incoming.chatId());
         }
 
-        if (firstTouchScenario.supports(incoming, currentState, text)) {
-            return finish(incoming, currentState, firstTouchScenario.handle(incoming, currentState, text));
-        }
-
-        if (tableBookingScenario.supports(incoming, currentState, text)) {
-            return finish(incoming, currentState, tableBookingScenario.handle(incoming, currentState, text));
-        }
-
-        if (menuAssetsScenario.supports(incoming, currentState, text)) {
-            return finish(incoming, currentState, menuAssetsScenario.handle(incoming, currentState, text));
-        }
-
-        if (quietGuideScenario.supports(incoming, currentState, text)) {
-            return finish(incoming, currentState, quietGuideScenario.handle(incoming, currentState, text));
-        }
-
-        if (mainMenuScenario.supports(incoming, currentState, text)) {
-            return finish(incoming, currentState, mainMenuScenario.handle(incoming, currentState, text));
+        OutgoingMessage routed = scenarioRouter.route(incoming, currentState, text);
+        if (routed != null) {
+            return finish(incoming, currentState, routed);
         }
 
         if (isVoiceMessage(incoming) && text.isBlank()) {
@@ -302,12 +282,12 @@ public class MessageGatewayService {
         return "Я дважды не смог надежно разобрать голосовое. Чтобы не потерять ваш запрос, напишите, пожалуйста, коротко текстом — я сразу продолжу сценарий.";
     }
 
-    private boolean isAdminChat(Long chatId) {
+    private boolean isServiceChat(Long chatId) {
         if (chatId == null) {
             return false;
         }
         String value = chatId.toString();
-        return value.equals(adminChatId) || value.equals(analyticsChatId);
+        return value.equals(adminChatId) || value.equals(analyticsChatId) || value.equals(systemChatId);
     }
 
     private String normalize(String text) {

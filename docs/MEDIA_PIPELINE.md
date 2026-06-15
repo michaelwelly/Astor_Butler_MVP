@@ -174,10 +174,11 @@ S3_EPHEMERAL_PREFIX=transient
 S3_VOICE_PREFIX=telegram-voice
 S3_VOICE_TTL_DAYS=3
 ASTOR_STT_KEEP_LOCAL_FILES=false
-TELEGRAM_UI_DELETE_USER_MESSAGES_ENABLED=true
+TELEGRAM_UI_CLEANUP_ENABLED=false
+TELEGRAM_UI_DELETE_USER_MESSAGES_ENABLED=false
 ```
 
-Правило: Postgres хранит смысл и аудит, MinIO/S3 хранит тяжелый временный бинарник.
+Правило: Postgres хранит смысл и аудит, MinIO/S3 хранит тяжелый временный бинарник. Telegram runtime message deletion отключен; UX-чистка будет отдельной session policy, а не `DeleteMessage`.
 
 ## AERIS Runtime Assets
 
@@ -208,6 +209,36 @@ scripts/ingest_aeris_runtime_assets.sh "/Users/michaelwelly/Desktop/AERISMENU"
 ```
 
 The script uploads canonical objects to MinIO and upserts `media_assets` rows in PostgreSQL. It is the runtime path for `MenuAssetsScenario`, `TableBookingScenario` and `QuietGuideScenario`.
+
+## AERIS Channel Content
+
+Афиши, промо и свежий атмосферный контент берутся из официального Telegram-канала AERIS.
+
+Текущий MVP-источник:
+
+```text
+https://t.me/s/aeris_gastrobar
+```
+
+Целевой production-источник после доступа в заведении:
+
+```text
+Telegram channel_post / edited_channel_post, когда Astor Butler bot добавлен админом канала
+```
+
+Подробный план ingest, классификации, хранения в MinIO/PostgreSQL/pgvector и retention:
+
+```text
+docs/AERIS_CHANNEL_INGEST.md
+```
+
+MVP runtime status:
+
+- manual ingest endpoint: `POST /api/content/ingest/aeris-channel`;
+- source parser: public `https://t.me/s/aeris_gastrobar`;
+- durable store: PostgreSQL `venue_content_posts` and `venue_content_assets`;
+- guest read path: `QuietGuideScenario` uses active channel posts for афиша/акции/что сегодня;
+- channel media mirroring into MinIO is enabled by `ASTOR_AERIS_CHANNEL_ASSET_MIRRORING_ENABLED` and stores objects under `content/aeris/channel/YYYY/MM/...`; if a Telegram CDN URL cannot be downloaded, the source URL remains in `venue_content_assets` for review.
 
 ## AERIS Menu Inventory
 

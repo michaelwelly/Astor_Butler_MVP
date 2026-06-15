@@ -1,6 +1,8 @@
 package museon_online.astor_butler.fsm.scenario;
 
 import lombok.RequiredArgsConstructor;
+import museon_online.astor_butler.domain.content.VenueContentPost;
+import museon_online.astor_butler.domain.content.VenueContentQueryService;
 import museon_online.astor_butler.domain.media.AerisMediaCatalog;
 import museon_online.astor_butler.domain.media.MediaAsset;
 import museon_online.astor_butler.fsm.core.BotState;
@@ -17,13 +19,22 @@ import java.util.Map;
 
 @Component
 @RequiredArgsConstructor
-public class QuietGuideScenario {
+public class QuietGuideScenario implements FsmScenario {
 
     private final FSMStorage fsmStorage;
     private final AerisMediaCatalog mediaCatalog;
+    private final VenueContentQueryService venueContentQueryService;
 
     @Value("${telegram.quiet-guide.interior-video-asset-code:AERIS_INTERIOR_TOUR}")
     private String interiorVideoAssetCode;
+
+    public String id() {
+        return "QUIET_GUIDE";
+    }
+
+    public int priority() {
+        return 50;
+    }
 
     public boolean supports(IncomingMessage incoming, BotState currentState, String text) {
         BotState state = currentState == null ? BotState.UNKNOWN : currentState.canonical();
@@ -45,16 +56,7 @@ public class QuietGuideScenario {
             return concept(incoming);
         }
         if (isPosterIntent(normalized)) {
-            return ready(
-                    incoming,
-                    """
-                    Афишу держу как тихую справку: без рассылки и лишнего шума.
-
-                    Сейчас могу передать запрос менеджеру или помочь с бронью стола на нужный день.
-                    """,
-                    List.of("QUIET_GUIDE", "POSTER_LOOKUP", "RETURN_MAIN_MENU"),
-                    Map.of("scenario", "QuietGuideScenario", "contentKind", "POSTER")
-            );
+            return poster(incoming, text);
         }
         fsmStorage.setState(incoming.chatId(), BotState.QUIET_GUIDE_CLARIFY);
         return OutgoingMessage.of(
@@ -111,6 +113,57 @@ public class QuietGuideScenario {
         );
     }
 
+    private OutgoingMessage poster(IncomingMessage incoming, String prompt) {
+        List<VenueContentPost> posts = venueContentQueryService.activeQuietGuidePosts("AERIS", prompt);
+        if (posts.isEmpty()) {
+            return ready(
+                    incoming,
+                    """
+                    Афишу держу как тихую справку: без рассылки и лишнего шума.
+
+                    Сейчас не вижу свежей афиши в системе. Могу показать меню, видео-тур или позвать менеджера.
+                    """,
+                    List.of("QUIET_GUIDE", "POSTER_LOOKUP_EMPTY", "RETURN_MAIN_MENU"),
+                    Map.of("scenario", "QuietGuideScenario", "contentKind", "POSTER")
+            );
+        }
+
+        StringBuilder text = new StringBuilder("""
+                <b>Актуальное из AERIS</b>
+
+                """);
+        for (int i = 0; i < posts.size(); i++) {
+            VenueContentPost post = posts.get(i);
+            text.append(i + 1)
+                    .append(". <b>")
+                    .append(escapeHtml(post.title()))
+                    .append("</b>\n")
+                    .append(escapeHtml(shortBody(post.body())));
+            if (post.sourceUrl() != null && !post.sourceUrl().isBlank()) {
+                text.append("\n<a href=\"")
+                        .append(escapeHtml(post.sourceUrl()))
+                        .append("\">Открыть пост</a>");
+            }
+            if (i + 1 < posts.size()) {
+                text.append("\n\n");
+            }
+        }
+        text.append("\n\nМогу помочь забронировать стол под выбранный день.");
+
+        return ready(
+                incoming,
+                text.toString(),
+                true,
+                List.of("QUIET_GUIDE", "POSTER_LOOKUP", "CONTENT_POSTS_FOUND", "RETURN_MAIN_MENU"),
+                Map.of(
+                        "scenario", "QuietGuideScenario",
+                        "contentKind", "POSTER",
+                        "contentPostIds", posts.stream().map(post -> post.id().toString()).toList(),
+                        "sourceUrls", posts.stream().map(VenueContentPost::sourceUrl).toList()
+                )
+        );
+    }
+
     private OutgoingMessage ready(IncomingMessage incoming, String text, List<String> actions, Map<String, Object> metadata) {
         return ready(incoming, text, false, actions, metadata);
     }
@@ -158,7 +211,35 @@ public class QuietGuideScenario {
         return false;
     }
 
+    public boolean owns(BotState state) {
+        BotState canonical = state == null ? BotState.UNKNOWN : state.canonical();
+        return canonical == BotState.QUIET_GUIDE_CLARIFY || canonical == BotState.QUIET_GUIDE_DELIVERED;
+    }
+
+    public boolean canRunInParallel() {
+        return true;
+    }
+
     private String normalize(String text) {
         return text == null ? "" : text.trim().toLowerCase(Locale.ROOT);
+    }
+
+    private String shortBody(String value) {
+        if (value == null || value.isBlank()) {
+            return "";
+        }
+        String compact = value.replaceAll("\\s+", " ").trim();
+        return compact.length() > 260 ? compact.substring(0, 257) + "..." : compact;
+    }
+
+    private String escapeHtml(String value) {
+        if (value == null) {
+            return "";
+        }
+        return value
+                .replace("&", "&amp;")
+                .replace("<", "&lt;")
+                .replace(">", "&gt;")
+                .replace("\"", "&quot;");
     }
 }

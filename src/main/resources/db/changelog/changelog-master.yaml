@@ -21,3 +21,5 @@ databaseChangeLog:
       file: db/changelog/2026-06-08-media-assets.yaml
   - include:
       file: db/changelog/2026-06-11-semantic-memory-pgvector.yaml
+  - include:
+      file: db/changelog/2026-06-15-venue-content.yaml

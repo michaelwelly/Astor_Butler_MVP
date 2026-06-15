@@ -4,11 +4,13 @@ import io.minio.BucketExistsArgs;
 import io.minio.GetObjectArgs;
 import io.minio.MakeBucketArgs;
 import io.minio.MinioClient;
+import io.minio.PutObjectArgs;
 import io.minio.UploadObjectArgs;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.nio.file.Path;
 import java.time.LocalDate;
@@ -78,6 +80,30 @@ public class ObjectStorageService {
                     .build());
         } catch (Exception e) {
             throw new IllegalStateException("Cannot open media object " + objectKey, e);
+        }
+    }
+
+    public ObjectStorageResult uploadMediaObject(String objectKey, byte[] content, String contentType) {
+        if (objectKey == null || objectKey.isBlank()) {
+            throw new IllegalArgumentException("objectKey is required");
+        }
+        if (content == null || content.length == 0) {
+            throw new IllegalArgumentException("content is required");
+        }
+
+        ensureBucket(mediaBucket);
+        String cleanObjectKey = cleanObjectKey(objectKey);
+        try (ByteArrayInputStream inputStream = new ByteArrayInputStream(content)) {
+            minioClient.putObject(PutObjectArgs.builder()
+                    .bucket(mediaBucket)
+                    .object(cleanObjectKey)
+                    .stream(inputStream, content.length, -1)
+                    .contentType(contentType == null || contentType.isBlank() ? "application/octet-stream" : contentType)
+                    .build());
+            log.info("Media object uploaded to object storage: s3://{}/{}", mediaBucket, cleanObjectKey);
+            return new ObjectStorageResult(mediaBucket, cleanObjectKey, publicUrl(mediaBucket, cleanObjectKey), 0);
+        } catch (Exception e) {
+            throw new IllegalStateException("Cannot upload media object " + cleanObjectKey, e);
         }
     }
 

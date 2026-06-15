@@ -18,10 +18,18 @@ import java.util.Map;
 
 @Component
 @RequiredArgsConstructor
-public class MenuAssetsScenario {
+public class MenuAssetsScenario implements FsmScenario {
 
     private final FSMStorage fsmStorage;
     private final AerisMediaCatalog mediaCatalog;
+
+    public String id() {
+        return "MENU_ASSETS";
+    }
+
+    public int priority() {
+        return 40;
+    }
 
     public boolean supports(IncomingMessage incoming, BotState currentState, String text) {
         BotState state = currentState == null ? BotState.UNKNOWN : currentState.canonical();
@@ -146,6 +154,15 @@ public class MenuAssetsScenario {
             }
         }
         return false;
+    }
+
+    public boolean owns(BotState state) {
+        BotState canonical = state == null ? BotState.UNKNOWN : state.canonical();
+        return canonical == BotState.MENU_ASSETS_CLARIFY || canonical == BotState.MENU_ASSETS_DELIVERED;
+    }
+
+    public boolean canRunInParallel() {
+        return true;
     }
 
     private String normalize(String text) {

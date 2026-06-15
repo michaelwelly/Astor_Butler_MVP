@@ -29,7 +29,7 @@ import java.util.regex.Pattern;
 @Component
 @RequiredArgsConstructor
 @Slf4j
-public class TableBookingScenario {
+public class TableBookingScenario implements FsmScenario {
 
     private static final Pattern DATE = Pattern.compile("\\b(\\d{1,2})[./-](\\d{1,2})(?:[./-](\\d{2,4}))?\\b");
     private static final Pattern TIME = Pattern.compile("(?<![./-])\\b([01]?\\d|2[0-3])(?::([0-5]\\d)|\\s*(?:час(?:ов|а)?|ч))?\\b(?![./-])");
@@ -53,6 +53,14 @@ public class TableBookingScenario {
 
     @Value("${telegram.booking.hostess-chat-id:}")
     private String hostessChatId;
+
+    public String id() {
+        return "TABLE_BOOKING";
+    }
+
+    public int priority() {
+        return 30;
+    }
 
     public boolean supports(IncomingMessage incoming, BotState currentState, String text) {
         BotState state = currentState == null ? BotState.UNKNOWN : currentState.canonical();
@@ -227,6 +235,14 @@ public class TableBookingScenario {
                  TABLE_BOOKING_CHANGE_REQUESTED -> true;
             default -> false;
         };
+    }
+
+    public boolean owns(BotState state) {
+        return state != null && isTableBookingState(state.canonical());
+    }
+
+    public boolean sideEffecting() {
+        return true;
     }
 
     private boolean hasDate(String text) {

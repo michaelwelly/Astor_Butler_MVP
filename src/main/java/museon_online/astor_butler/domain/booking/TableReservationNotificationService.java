@@ -23,6 +23,7 @@ public class TableReservationNotificationService {
             .withZone(ZoneId.of("Asia/Yekaterinburg"));
 
     private final ObjectProvider<TelegramBot> telegramBotProvider;
+    private final TableReservationPendingIntentService pendingIntentService;
 
     @Value("${telegram.bot.enabled:false}")
     private boolean telegramEnabled;
@@ -62,6 +63,7 @@ public class TableReservationNotificationService {
             return;
         }
         send(order.chatId().toString(), guestConfirmedText(order), null, "guest-confirmed");
+        pendingIntentService.deliverAfterConfirmation(order);
     }
 
     public void notifyGuestRejected(TableReservationOrder order) {

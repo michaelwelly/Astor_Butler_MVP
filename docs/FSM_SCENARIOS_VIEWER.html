@@ -219,59 +219,70 @@
 <header>
   <h1>Astor Butler FSM Infrastructure</h1>
   <nav>
-    <a href="#system">Система</a>
-    <a href="#registry">Реестр</a>
-    <a href="#product-layer">8 осей</a>
-    <a href="#legacy">Legacy</a>
-    <a href="#intake">Вход</a>
-    <a href="#first-touch">Первое касание</a>
-    <a href="#main-menu">Главное меню</a>
-    <a href="#table-booking">Стол</a>
-    <a href="#event-booking">Мероприятие</a>
-    <a href="#menu-assets">Меню</a>
-    <a href="#quiet-guide">Quiet Guide</a>
-    <a href="#smart-tip">Чаевые</a>
-    <a href="#hidden-heart">Донаты</a>
-    <a href="#art-auction">Аукцион</a>
-    <a href="#impact">Impact</a>
-    <a href="#manager-help">Менеджер</a>
-    <a href="#change-cancel">Изменить</a>
-    <a href="#recovery">Recovery</a>
-    <a href="#llm">LLM</a>
-    <a href="#tests">Тест-план</a>
+    <a href="#system">0 Система</a>
+    <a href="#registry">1 Реестр</a>
+    <a href="#anti-fallback">1.1 Anti-Fallback</a>
+    <a href="#semantic-context">1.2 pgvector</a>
+    <a href="#composite-intent">1.3 Composite</a>
+    <a href="#intake-matrix">1.4 Intake Matrix</a>
+    <a href="#product-layer">2 8 осей</a>
+    <a href="#intake">3 Вход</a>
+    <a href="#first-touch">4 Первое касание</a>
+    <a href="#main-menu">5 Главное меню</a>
+    <a href="#table-booking">6 Стол</a>
+    <a href="#event-booking">7 Мероприятие</a>
+    <a href="#menu-assets">8 Меню</a>
+    <a href="#merch-order">9 Мерч</a>
+    <a href="#quiet-guide">10 Quiet Guide</a>
+    <a href="#aeris-channel-ingest">10.1 AERIS Channel</a>
+    <a href="#smart-tip">11 Чаевые</a>
+    <a href="#hidden-heart">12 Донаты</a>
+    <a href="#art-auction">13 Аукцион</a>
+    <a href="#impact">14 Impact</a>
+    <a href="#feedback">15 Отзыв</a>
+    <a href="#manager-help">16 Менеджер</a>
+    <a href="#change-cancel">17 Изменить</a>
+    <a href="#recovery">18 Recovery</a>
+    <a href="#llm">18.1 LLM</a>
+    <a href="#safe-play">18.2 Safe Play</a>
+    <a href="#tests">19 Тест-план</a>
   </nav>
 </header>
 
 <main>
   <section id="system">
     <h2>0. Общая карта системы</h2>
-    <p>Карта верхнего уровня: кто с кем связан и где проходят границы ответственности. Ниже каждый крупный блок раскрыт отдельной диаграммой.</p>
+    <p>Карта верхнего уровня: кто с кем связан и где проходят границы ответственности. Номера на сценариях совпадают с разделами ниже, чтобы карту можно было читать слева направо и сразу находить детали.</p>
     <div class="diagram mermaid wide">
-flowchart TD
+flowchart LR
     Guest["Гость<br/>Telegram / future web chat"]
     Transport["Transport adapters<br/>TelegramRouter / REST<br/>voice -> transcript"]
     Gateway["MessageGatewayService<br/>единая точка входа"]
-    Intake["Intake layer<br/>profile + message + consent evidence"]
+    Intake["3. Общий вход<br/>profile + message + consent evidence"]
     EventTrail["Outbox + Kafka<br/>astor.user.events"]
     Admin["Admin / Analytics chat<br/>наблюдаемость"]
 
-    FirstTouch["FirstTouchScenario<br/>контакт + consent"]
-    MainMenu["MainMenuScenario<br/>READY_FOR_DIALOG<br/>дом сценариев"]
+    FirstTouch["4. FirstTouchScenario<br/>контакт + consent"]
+    MainMenu["5. MainMenuScenario<br/>READY_FOR_DIALOG<br/>дом сценариев"]
     Router{"Scenario Router<br/>intent + current state"}
 
-    TableBooking["TableBookingScenario<br/>посадка за стол"]
-    EventBooking["EventBookingScenario<br/>банкеты / события"]
-    MenuAssets["MenuAssetsScenario<br/>меню / карта бара / RAG"]
-    ManagerHelp["ManagerHelpScenario<br/>подключить команду"]
-    ChangeCancel["ChangeCancelScenario<br/>изменить / отменить"]
-    SmartTip["SmartTipScenario<br/>чаевые / благодарность"]
-    HiddenHeart["HiddenHeartScenario<br/>донаты / социальный вклад"]
-    ArtAuction["ArtAuctionScenario<br/>картины / аукцион"]
-    QuietGuide["QuietGuideScenario<br/>афиши / справки / видео-тур / концепция"]
-    SafePlay["SafePlayScenario<br/>мини-сценарии"]
-    Impact["ImpactMeterScenario<br/>культурный вклад"]
-    Recovery["RecoveryScenario<br/>непонятно / сбой"]
+    TableBooking["6. TableBookingScenario<br/>посадка за стол"]
+    EventBooking["7. EventBookingScenario<br/>банкеты / события"]
+    MenuAssets["8. MenuAssetsScenario<br/>меню / карта бара / RAG"]
+    MerchOrder["9. MerchScenario<br/>витрина / запрос мерча"]
+    QuietGuide["10. QuietGuideScenario<br/>афиши / справки / видео-тур / концепция"]
+    ChannelIngest["10.1 AERIS Channel Ingest<br/>public parser now<br/>channel_post later"]
+    SmartTip["11. SmartTipScenario<br/>чаевые / благодарность"]
+    HiddenHeart["12. HiddenHeartScenario<br/>донаты / социальный вклад"]
+    ArtAuction["13. ArtAuctionScenario<br/>картины / аукцион"]
+    Impact["14. ImpactMeterScenario<br/>культурный вклад"]
+    Feedback["15. FeedbackScenario<br/>отзыв / обратная связь"]
+    ManagerHelp["16. ManagerHelpScenario<br/>подключить команду"]
+    ChangeCancel["17. ChangeCancelScenario<br/>изменить / отменить"]
+    Recovery["18. RecoveryScenario<br/>непонятно / сбой"]
+    SafePlay["18.2 SafePlayScenario<br/>сабраж / игровой ритуал"]
 
+    ContentStore["Venue content store<br/>PostgreSQL + MinIO<br/>pgvector later"]
     Domain["Domain services<br/>booking / media / consent / notifications"]
     Redis["Redis<br/>FSM state + runtime drafts"]
     Postgres["PostgreSQL<br/>durable facts"]
@@ -289,30 +300,38 @@ flowchart TD
     Router --> TableBooking
     Router --> EventBooking
     Router --> MenuAssets
-    Router --> ManagerHelp
-    Router --> ChangeCancel
+    Router --> MerchOrder
+    Router --> QuietGuide
     Router --> SmartTip
     Router --> HiddenHeart
     Router --> ArtAuction
-    Router --> QuietGuide
-    Router --> SafePlay
     Router --> Impact
+    Router --> Feedback
+    Router --> ManagerHelp
+    Router --> ChangeCancel
     Router --> Recovery
+    Router --> SafePlay
 
     TableBooking --> Domain --> Hostess
     EventBooking --> Domain --> Manager
     MenuAssets --> Resources
     MenuAssets --> Rag
-    ManagerHelp --> Manager
-    ChangeCancel --> Domain
+    MerchOrder --> Domain
+    MerchOrder --> Resources
+    QuietGuide --> Domain
+    QuietGuide --> Resources
+    ChannelIngest --> ContentStore --> QuietGuide
     SmartTip --> Domain
     HiddenHeart --> Domain
     ArtAuction --> Domain
-    QuietGuide --> Domain
-    QuietGuide --> Resources
-    SafePlay --> Domain
     Impact --> Domain
+    Feedback --> Manager
+    ManagerHelp --> Manager
+    ChangeCancel --> Domain
     Recovery --> Manager
+    SafePlay --> Domain
+    SafePlay --> Resources
+    SafePlay --> Manager
 
     Gateway --> Redis
     Domain --> Postgres
@@ -323,15 +342,17 @@ flowchart TD
     TableBooking --> MainMenu
     EventBooking --> MainMenu
     MenuAssets --> MainMenu
-    ManagerHelp --> MainMenu
-    ChangeCancel --> MainMenu
+    MerchOrder --> MainMenu
+    QuietGuide --> MainMenu
     SmartTip --> MainMenu
     HiddenHeart --> MainMenu
     ArtAuction --> MainMenu
-    QuietGuide --> MainMenu
-    SafePlay --> MainMenu
     Impact --> MainMenu
+    Feedback --> MainMenu
+    ManagerHelp --> MainMenu
+    ChangeCancel --> MainMenu
     Recovery --> MainMenu
+    SafePlay --> MainMenu
 
     classDef core fill:#E8F5E9,stroke:#2E7D32,stroke-width:1px,color:#1B5E20;
     classDef scenario fill:#FFF8E1,stroke:#F9A825,stroke-width:1px,color:#3E2723;
@@ -340,9 +361,10 @@ flowchart TD
     classDef human fill:#FCE4EC,stroke:#AD1457,stroke-width:1px,color:#880E4F;
 
     class Gateway,Domain core;
-    class FirstTouch,MainMenu,TableBooking,EventBooking,MenuAssets,ManagerHelp,ChangeCancel,SmartTip,HiddenHeart,ArtAuction,QuietGuide,SafePlay,Impact,Recovery scenario;
+    class FirstTouch,MainMenu,TableBooking,EventBooking,MenuAssets,MerchOrder,QuietGuide,SmartTip,HiddenHeart,ArtAuction,Impact,Feedback,ManagerHelp,ChangeCancel,Recovery,SafePlay scenario;
     class Transport,LLM adapter;
-    class Redis,Postgres,EventTrail,Resources,Rag,Intake storage;
+    class Redis,Postgres,EventTrail,Resources,Rag,Intake,ContentStore storage;
+    class ChannelIngest adapter;
     class Guest,Hostess,Admin,Manager human;
     </div>
     <div class="hint">Браузерный zoom: <code>Cmd +</code> / <code>Cmd -</code>. Диаграммы внутри блоков можно прокручивать горизонтально.</div>
@@ -354,6 +376,7 @@ flowchart TD
     <table>
       <thead>
       <tr>
+        <th>#</th>
         <th>Сценарий</th>
         <th>Вход</th>
         <th>Результат</th>
@@ -361,19 +384,242 @@ flowchart TD
       </tr>
       </thead>
       <tbody>
-      <tr><td><code>FirstTouchScenario</code></td><td><code>/start</code>, новый гость, повторный старт</td><td>safe restart + persistent preview + contact/consent routing</td><td><code>CONSENT_REQUIRED</code> или <code>READY_FOR_DIALOG</code></td></tr>
-      <tr><td><code>MainMenuScenario</code></td><td>гость уже в системе</td><td>выбор сценария</td><td><code>READY_FOR_DIALOG</code></td></tr>
-      <tr><td><code>TableBookingScenario</code></td><td>стол, посадка, на двоих</td><td>заявка хостес / подтверждение</td><td><code>READY_FOR_DIALOG</code></td></tr>
-      <tr><td><code>EventBookingScenario</code></td><td>банкет, день рождения, корпоратив</td><td>structured request менеджеру</td><td><code>READY_FOR_DIALOG</code></td></tr>
-      <tr><td><code>MenuAssetsScenario</code></td><td>меню, карта бара, вино, коктейли, voice/text</td><td>LLM/RAG уточнение + 1-4 актуальных PDF</td><td><code>READY_FOR_DIALOG</code></td></tr>
-      <tr><td><code>QuietGuideScenario</code></td><td>афиша, справка, видео-тур, концепция AERIS</td><td>контент/видео/approved copy без спама</td><td><code>READY_FOR_DIALOG</code></td></tr>
-      <tr><td><code>SmartTipScenario</code></td><td>чаевые, благодарность</td><td>tip intent до payment boundary</td><td><code>READY_FOR_DIALOG</code></td></tr>
-      <tr><td><code>HiddenHeartScenario</code></td><td>донат, благотворительность</td><td>анонимный donation draft</td><td><code>READY_FOR_DIALOG</code></td></tr>
-      <tr><td><code>ArtAuctionScenario</code></td><td>картина, аукцион, ставка</td><td>bid flow с подтверждением</td><td><code>READY_FOR_DIALOG</code></td></tr>
-      <tr><td><code>ImpactMeterScenario</code></td><td>сколько собрали, итоги, impact</td><td>агрегированный отчет</td><td><code>READY_FOR_DIALOG</code></td></tr>
-      <tr><td><code>ManagerHelpScenario</code></td><td>менеджер, человек, жалоба</td><td>карточка команде</td><td><code>READY_FOR_DIALOG</code></td></tr>
-      <tr><td><code>ChangeCancelScenario</code></td><td>отмена, перенос, изменить бронь</td><td>изменение/отмена order</td><td><code>READY_FOR_DIALOG</code></td></tr>
-      <tr><td><code>RecoveryScenario</code></td><td>непонятно, конфликт, сбой</td><td>уточнение или admin alert</td><td><code>READY_FOR_DIALOG</code></td></tr>
+      <tr><td>3</td><td><code>Intake / MessageGateway</code></td><td>любой inbound update</td><td>normalization + audit + service chat guard</td><td>guest FSM или service command path</td></tr>
+      <tr><td>4</td><td><code>FirstTouchScenario</code></td><td><code>/start</code>, новый гость, повторный старт</td><td>safe restart + persistent preview + contact/consent routing</td><td><code>CONSENT_REQUIRED</code> или <code>READY_FOR_DIALOG</code></td></tr>
+      <tr><td>5</td><td><code>MainMenuScenario</code></td><td>гость уже в системе</td><td>выбор сценария, composite plan, route to domain</td><td><code>READY_FOR_DIALOG</code></td></tr>
+      <tr><td>6</td><td><code>TableBookingScenario</code></td><td>стол, посадка, на двоих</td><td>план зала + заявка хостес / подтверждение</td><td><code>READY_FOR_DIALOG</code></td></tr>
+      <tr><td>7</td><td><code>EventBookingScenario</code></td><td>банкет, день рождения, корпоратив</td><td>structured request менеджеру</td><td><code>READY_FOR_DIALOG</code></td></tr>
+      <tr><td>8</td><td><code>MenuAssetsScenario</code></td><td>меню, карта бара, вино, коктейли, voice/text</td><td>RAG уточнение + 1-4 актуальных PDF</td><td><code>READY_FOR_DIALOG</code></td></tr>
+      <tr><td>9</td><td><code>MerchScenario</code></td><td>мерч, подарок, купить вещь/сертификат</td><td><code>merch_request</code> draft + карточка команде</td><td><code>READY_FOR_DIALOG</code></td></tr>
+      <tr><td>10</td><td><code>QuietGuideScenario</code></td><td>афиша, справка, видео-тур, концепция AERIS</td><td>контент/видео/approved copy без спама</td><td><code>READY_FOR_DIALOG</code></td></tr>
+      <tr><td>10.1</td><td><code>AERIS Channel Ingest</code></td><td>official channel posts</td><td>content normalization for Quiet Guide</td><td>content store / not guest FSM</td></tr>
+      <tr><td>11</td><td><code>SmartTipScenario</code></td><td>чаевые, благодарность</td><td>tip intent до СПБ/payment boundary</td><td><code>READY_FOR_DIALOG</code></td></tr>
+      <tr><td>12</td><td><code>HiddenHeartScenario</code></td><td>донат, благотворительность</td><td>анонимный donation draft</td><td><code>READY_FOR_DIALOG</code></td></tr>
+      <tr><td>13</td><td><code>ArtAuctionScenario</code></td><td>картина, аукцион, ставка</td><td>bid flow + top-5 + confirmation</td><td><code>READY_FOR_DIALOG</code></td></tr>
+      <tr><td>14</td><td><code>ImpactMeterScenario</code></td><td>сколько собрали, итоги, impact</td><td>агрегированный отчет без PII/payment raw data</td><td><code>READY_FOR_DIALOG</code></td></tr>
+      <tr><td>15</td><td><code>FeedbackScenario</code></td><td>отзыв, жалоба, похвала, предложение</td><td>карточка отзыва команде + guest acknowledgement</td><td><code>READY_FOR_DIALOG</code></td></tr>
+      <tr><td>16</td><td><code>ManagerHelpScenario</code></td><td>менеджер, человек, explicit handoff</td><td>карточка команде с summary + deep link</td><td><code>READY_FOR_DIALOG</code></td></tr>
+      <tr><td>17</td><td><code>ChangeCancelScenario</code></td><td>отмена, перенос, изменить бронь</td><td>изменение/отмена active order</td><td><code>READY_FOR_DIALOG</code></td></tr>
+      <tr><td>18</td><td><code>RecoveryScenario</code></td><td>непонятно, конфликт, сбой</td><td>уточнение, восстановление или manager handoff</td><td><code>READY_FOR_DIALOG</code></td></tr>
+      <tr><td>18.2</td><td><code>SafePlayScenario</code></td><td>сабраж, шампанское, игристое, ритуал, цепь</td><td>safe ritual request + team card + optional merch link</td><td><code>READY_FOR_DIALOG</code></td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section id="anti-fallback">
+    <h2>1.1 Anti-Fallback Strategy</h2>
+    <p>Главное правило: <code>AI_FALLBACK</code> не является рабочим сценарием. Это аварийный выход после повторного непонимания, технической ошибки или прямого запроса человека. Основной поток должен сначала пытаться распознать намерение, уточнить недостающие данные и только потом просить администратора.</p>
+    <div class="diagram mermaid compact">
+flowchart LR
+    Input["Guest input<br/>text / voice transcript"]
+    Clean["Normalize<br/>remove STT/log noise"]
+    Guard["State guard<br/>active scenario?"]
+    Fast["Fast commands<br/>/start / stop / contact / buttons"]
+    Retrieve["pgvector + examples<br/>similar intents"]
+    LLM["LLM intent adapter<br/>intent + entities + confidence"]
+    Decision{"Confidence<br/>and risk?"}
+    Route["Route explicit scenario<br/>or continue current state"]
+    Clarify["Clarify once<br/>quick options"]
+    Retry{"Second unclear<br/>or tech/risk?"}
+    Recovery["RecoveryScenario<br/>restore or graceful fallback"]
+    Handoff["ManagerHelpScenario<br/>admin card with context"]
+    Home["READY_FOR_DIALOG"]
+
+    Input --> Clean --> Guard --> Fast --> Retrieve --> LLM --> Decision
+    Decision -- "high / allowed" --> Route --> Home
+    Decision -- "medium / missing field" --> Clarify --> Route
+    Decision -- "low first time" --> Clarify --> Retry
+    Retry -- "resolved" --> Route
+    Retry -- "repeat / exception / money risk" --> Recovery --> Handoff --> Home
+
+    classDef good fill:#E8F5E9,stroke:#2E7D32,color:#1B5E20;
+    classDef warn fill:#FFF8E1,stroke:#F9A825,color:#3E2723;
+    classDef bad fill:#FCE4EC,stroke:#AD1457,color:#880E4F;
+    class Route,Fast,Guard,Retrieve good;
+    class Clarify,LLM,Decision warn;
+    class Recovery,Handoff bad;
+    </div>
+    <table>
+      <thead><tr><th>Уровень защиты</th><th>Что проверяем до fallback</th><th>Правильное действие</th></tr></thead>
+      <tbody>
+      <tr><td><code>TRANSPORT_CLEANUP</code></td><td>STT мусор, runtime warnings, пустой voice transcript, дубликаты callback/message.</td><td>Очищаем вход, при первом STT-сбое просим повторить голосом, при втором предлагаем текст.</td></tr>
+      <tr><td><code>ACTIVE_STATE_GUARD</code></td><td>Гость уже внутри брони, меню, доната, аукциона, мерча или feedback.</td><td>Сначала продолжаем активный сценарий и ищем недостающие поля, не роутим заново в общий fallback.</td></tr>
+      <tr><td><code>FAST_INTENT_RULES</code></td><td><code>/start</code>, стоп, контакт, кнопки хостес, меню, бронь, менеджер, отзыв, мерч.</td><td>Явные команды проходят без LLM и без риска таймаута.</td></tr>
+      <tr><td><code>SEMANTIC_RETRIEVAL</code></td><td>Похожие фразы, FSM spec chunks, approved guides, menu/content chunks.</td><td>Даем LLM контекст и примеры, чтобы он выбрал сценарий и entities.</td></tr>
+      <tr><td><code>CLARIFY_ONCE</code></td><td>Низкая уверенность, но есть 1-3 близких сценария.</td><td>Один короткий вопрос с вариантами: стол, меню, афиша, мерч, отзыв, менеджер.</td></tr>
+      <tr><td><code>RECOVERY_GATE</code></td><td>Повторная неясность, state conflict, tool/LLM error, money/policy risk.</td><td>Включаем RecoveryScenario и только потом handoff в ManagerHelpScenario.</td></tr>
+      </tbody>
+    </table>
+    <table>
+      <thead><tr><th>Ситуация</th><th>Нельзя делать</th><th>Нужно делать</th></tr></thead>
+      <tbody>
+      <tr><td>Гость пишет непонятно впервые</td><td>Сразу писать "передам администратору".</td><td>Задать один полезный вопрос или показать quick options.</td></tr>
+      <tr><td>LLM/Ollama timeout</td><td>Показывать гостю <code>ResourceAccessException</code> или stacktrace.</td><td>Дать спокойный ответ, записать reason/correlation, при повторе отправить карточку команде.</td></tr>
+      <tr><td>Voice распознался плохо</td><td>Трактовать мусор как intent и запускать неверный сценарий.</td><td>Один раз попросить повторить голосом, затем предложить написать текстом.</td></tr>
+      <tr><td>Запрос связан с деньгами</td><td>Автоматически создавать оплату, ставку, донат или отмену.</td><td>Требовать явное подтверждение и писать audit trail.</td></tr>
+      <tr><td>Служебный чат пишет сообщение</td><td>Запускать guest FSM.</td><td>Сохранить audit/control input и обработать только service commands.</td></tr>
+      </tbody>
+    </table>
+    <div class="grid">
+      <div class="card"><strong>AI_FALLBACK is terminal-ish</strong><span>Это не рабочее состояние диалога, а редкий safety-net после попытки восстановить сценарий или уточнить запрос.</span></div>
+      <div class="card"><strong>Guest sees calm UX</strong><span>Гость видит человеческое уточнение или мягкое "я передал команде", но не exception class, stacktrace и внутренние state ids.</span></div>
+      <div class="card"><strong>Admin sees evidence</strong><span>Админ получает state, reason, correlation, transcript/raw text, active order и последние шаги, чтобы быстро понять проблему.</span></div>
+      <div class="card"><strong>Fallback becomes training data</strong><span>Каждый fallback пишет intent candidates и missed entities, чтобы потом добавить правило, пример в pgvector или новый FSM-state.</span></div>
+    </div>
+  </section>
+
+  <section id="semantic-context">
+    <h2>1.2 Semantic Context / pgvector</h2>
+    <p><code>pgvector</code> нужен не вместо FSM, а перед ним: он помогает найти похожие фразы, инструкции и куски сценариев, когда гость пишет естественно или голосовая расшифровка получилась шумной. FSM остается источником истины по допустимым переходам.</p>
+    <div class="diagram mermaid compact">
+flowchart LR
+    Input["Normalized guest input<br/>text or STT transcript"]
+    Embed["Embedding adapter<br/>one shared model"]
+    Search["pgvector search<br/>semantic_chunks + examples"]
+    Context["Top-K context pack<br/>scenario + facts + prohibitions"]
+    Intent["LLM intent adapter<br/>intent + entities + confidence"]
+    Guard["FSM guard<br/>allowed transition?"]
+    Scenario["Scenario handler<br/>domain action"]
+    Clarify["Clarify / Recovery<br/>if not enough confidence"]
+    Learn["Missed intent feedback<br/>new examples/chunks"]
+
+    Input --> Embed --> Search --> Context --> Intent --> Guard
+    Guard -- "allowed" --> Scenario
+    Guard -- "not allowed / low confidence" --> Clarify
+    Clarify --> Learn --> Search
+    </div>
+    <table>
+      <thead><tr><th>Источник</th><th>Что храним</th><th>Как помогает</th><th>Владелец истины</th></tr></thead>
+      <tbody>
+      <tr><td>FSM scenarios</td><td>описания states, allowed transitions, запреты и recovery hints</td><td>подсказывает LLM, какой сценарий похож на запрос</td><td>FSM spec + код сценариев</td></tr>
+      <tr><td>Guest / Staff guides</td><td>инструкции гостя и команды, короткие approved ответы</td><td>дает стиль и понятные ответы без выдумывания</td><td>docs / approved guides</td></tr>
+      <tr><td>Menu / Bar / Wine / Elements</td><td>chunks PDF + metadata + source asset id</td><td>понимает запросы вроде "хочу вино к рыбе" и прикладывает source</td><td>managed media catalog + RAG chunks</td></tr>
+      <tr><td>AERIS concept</td><td>approved copy про Георгия Матвеева, 21 страну и философию кухни</td><td>рассказывает красиво, но в утвержденных границах</td><td>approved content store</td></tr>
+      <tr><td>AERIS channel posts</td><td>афиша, промо, события, медиа, normalized post type</td><td>отвечает на "что сегодня", "какая афиша", "есть акция"</td><td>channel ingest + content moderation</td></tr>
+      <tr><td>Intent examples</td><td>удачные фразы гостей + expected scenario/entities</td><td>снижает фоллбэки на живом языке</td><td>curated examples table</td></tr>
+      <tr><td>Negative/fallback examples</td><td>фразы, где была ошибка, STT шум или неверный route</td><td>превращает fallback в новые правила и примеры</td><td>admin review / training queue</td></tr>
+      </tbody>
+    </table>
+    <table>
+      <thead><tr><th>Таблица / объект</th><th>Смысл</th><th>Ключевые поля</th></tr></thead>
+      <tbody>
+      <tr><td><code>semantic_sources</code></td><td>Реестр источников: FSM spec, guide, menu PDF, channel post, fallback queue.</td><td><code>source_id</code>, <code>type</code>, <code>version</code>, <code>status</code>, <code>owner</code>.</td></tr>
+      <tr><td><code>semantic_chunks</code></td><td>Нормализованные куски текста с metadata и ссылкой на source.</td><td><code>chunk_id</code>, <code>source_id</code>, <code>text</code>, <code>locale</code>, <code>tags</code>, <code>valid_from</code>.</td></tr>
+      <tr><td><code>semantic_embeddings</code></td><td>Вектор для каждого chunk/example, общий для всех LLM-инстансов.</td><td><code>chunk_id</code>, <code>embedding</code>, <code>model</code>, <code>dimension</code>, <code>created_at</code>.</td></tr>
+      <tr><td><code>intent_examples</code></td><td>Обучающие примеры для intent routing без fine-tune.</td><td><code>phrase</code>, <code>expected_intent</code>, <code>entities_json</code>, <code>confidence_hint</code>.</td></tr>
+      <tr><td><code>missed_intent_queue</code></td><td>Очередь фраз из fallback/recovery, которые надо разобрать человеком.</td><td><code>raw_text</code>, <code>transcript</code>, <code>candidates</code>, <code>reason</code>, <code>resolved_as</code>.</td></tr>
+      </tbody>
+    </table>
+    <table>
+      <thead><tr><th>Что pgvector может</th><th>Что pgvector не может</th></tr></thead>
+      <tbody>
+      <tr><td>Найти похожие фразы и подсказать вероятный сценарий.</td><td>Подтвердить бронь, оплату, ставку, донат или отмену.</td></tr>
+      <tr><td>Достать approved facts по меню, концепции, афише и инструкциям.</td><td>Быть "памятью гостя" вместо durable profile/order state.</td></tr>
+      <tr><td>Дать LLM контекст, чтобы не выдумывать и не падать в fallback.</td><td>Обойти FSM guard или разрешить запрещенный переход.</td></tr>
+      <tr><td>Хранить negative examples для улучшения маршрутизации.</td><td>Решать, что реально создано в доменной БД.</td></tr>
+      </tbody>
+    </table>
+    <div class="grid">
+      <div class="card"><strong>Shared retrieval layer</strong><span>Все локальные LLM-инстансы получают один и тот же context pack из PostgreSQL/pgvector, а не держат разные "памяти" внутри себя.</span></div>
+      <div class="card"><strong>Before LLM, before FSM</strong><span>pgvector работает до LLM intent adapter и до FSM guard: сначала похожий смысл, потом гипотеза, потом допустимый переход.</span></div>
+      <div class="card"><strong>Source-linked answers</strong><span>Ответы по меню, концепции и афише должны ссылаться на source/chunk/asset, чтобы не было фантазий по ценам и событиям.</span></div>
+      <div class="card"><strong>Human-curated learning</strong><span>Fallback examples попадают в очередь, но становятся routing knowledge только после review, иначе система начнет учиться на мусоре.</span></div>
+    </div>
+    <div class="hint">Граница ответственности: pgvector ищет похожий смысл и approved context, LLM формирует гипотезу, FSM проверяет допустимость перехода, domain service создает реальные факты.</div>
+  </section>
+
+  <section id="composite-intent">
+    <h2>1.3 Composite Intent Plan</h2>
+    <p>Если гость в одном сообщении просит несколько вещей, Astor строит план исполнения. Безопасный контент можно выполнить вместе, а действия с side effects идут по очереди и требуют явного подтверждения.</p>
+    <div class="diagram mermaid compact">
+flowchart LR
+    Input["Guest input<br/>one message or active scenario"]
+    Detect["IntentPlanner<br/>detect 1..N intents + entities"]
+    Current{"Active scenario<br/>exists?"}
+    Classify["Classify intents<br/>content / order / money / destructive / handoff"]
+    Plan["CompositeIntentPlan<br/>primary + parallel + pending + blocked"]
+    Mode{"Execution mode"}
+    Parallel["PARALLEL_CONTENT<br/>safe content together"]
+    Sequential["SEQUENTIAL<br/>primary first, pending later"]
+    Confirm["CONFIRM_REQUIRED<br/>money / cancel / bid"]
+    Handoff["HANDOFF_REQUIRED<br/>manager/help risk"]
+    Execute["Execute allowed step<br/>FSM guard per intent"]
+    Resume["Resume pendingIntents<br/>after primary done"]
+    Timeline["Timeline/Kafka<br/>plan observed"]
+
+    Input --> Detect --> Current
+    Current -- "yes" --> Classify
+    Current -- "no" --> Classify
+    Classify --> Plan --> Mode
+    Mode -- "safe content" --> Parallel --> Execute --> Timeline
+    Mode -- "order + content" --> Sequential --> Execute --> Resume --> Timeline
+    Mode -- "side effect" --> Confirm --> Execute --> Timeline
+    Mode -- "risk / human" --> Handoff --> Timeline
+    </div>
+    <table>
+      <thead><tr><th>Режим</th><th>Когда использовать</th><th>Правило исполнения</th></tr></thead>
+      <tbody>
+      <tr><td><code>SINGLE</code></td><td>Найден один intent или активный сценарий ждет одно поле.</td><td>Обычный route/continue через FSM guard.</td></tr>
+      <tr><td><code>PARALLEL_CONTENT</code></td><td>Все intents безопасные: меню, афиша, концепция, видео-тур, справка.</td><td>Можно выполнить вместе, но порядок ответа должен быть спокойным и коротким.</td></tr>
+      <tr><td><code>SEQUENTIAL</code></td><td>Есть order/action intent + безопасный content intent.</td><td>Сначала primary intent, остальные в <code>pendingIntents</code> и выполняются после безопасной точки.</td></tr>
+      <tr><td><code>CONFIRM_REQUIRED</code></td><td>Отмена, деньги, ставка, донат, чаевые, изменение order.</td><td>Нужна явная сводка и подтверждение перед side effect.</td></tr>
+      <tr><td><code>HANDOFF_REQUIRED</code></td><td>Гость просит человека, жалоба с риском, policy/money conflict.</td><td>Создать manager handoff, а остальные intents сохранить как контекст.</td></tr>
+      </tbody>
+    </table>
+    <table>
+      <thead><tr><th>Запрос гостя</th><th>Composite plan</th><th>Почему так</th></tr></thead>
+      <tbody>
+      <tr><td>пришли винную карту и видео-тур</td><td><code>parallelIntents=[MENU_ASSETS, QUIET_GUIDE]</code></td><td>PDF и видео - безопасный контент, можно отправить вместе.</td></tr>
+      <tr><td>забронируй стол завтра на 20:00 и пришли меню</td><td><code>primary=TABLE_BOOKING</code>, <code>pending=MENU_ASSETS</code></td><td>Бронь требует сбор/hold/review, меню можно выполнить после первого шага.</td></tr>
+      <tr><td>отмени бронь и создай новую</td><td><code>primary=CHANGE_CANCEL</code>, <code>pending=TABLE_BOOKING</code>, <code>confirm=true</code></td><td>Сначала найти активную бронь и подтвердить отмену.</td></tr>
+      <tr><td>оставь чаевые Саше 1000 и напиши отзыв</td><td><code>primary=SMART_TIP</code>, <code>pending=FEEDBACK</code>, <code>confirm=true</code></td><td>Деньги требуют confirmation, отзыв сохраняется после payment boundary или отмены.</td></tr>
+      <tr><td>ставлю 20000 за картину и донат 5000</td><td><code>blocked=[AUCTION, HIDDEN_HEART]</code> до уточнения</td><td>Две money-side-effect операции нельзя выполнять автоматически.</td></tr>
+      <tr><td>я в брони стола, еще хочу видео-тур</td><td><code>primary=current TABLE_BOOKING</code>, <code>pending=QUIET_GUIDE</code></td><td>Активный scenario state важнее нового intent.</td></tr>
+      </tbody>
+    </table>
+    <table>
+      <thead><tr><th>Поле плана</th><th>Что означает</th><th>Зачем хранить</th></tr></thead>
+      <tbody>
+      <tr><td><code>primaryIntent</code></td><td>Главное действие, которое двигает текущий FSM state.</td><td>Чтобы не распараллелить бронь, отмену, деньги или handoff.</td></tr>
+      <tr><td><code>parallelIntents</code></td><td>Безопасные content-intents, которые можно выполнить вместе.</td><td>Чтобы не заставлять гостя повторять просьбу про меню/афишу/видео.</td></tr>
+      <tr><td><code>pendingIntents</code></td><td>Вторичные intents, которые ждут безопасной точки сценария.</td><td>Чтобы не потерять вторую часть запроса.</td></tr>
+      <tr><td><code>blockedIntents</code></td><td>Intents, которые нельзя выполнить без выбора, подтверждения или менеджера.</td><td>Чтобы видеть, что запрос распознан, но заблокирован guardrail.</td></tr>
+      <tr><td><code>requiredConfirmations</code></td><td>Отдельные подтверждения по каждому side effect.</td><td>Чтобы не смешивать отмену, донат, ставку и чаевые в один опасный yes.</td></tr>
+      <tr><td><code>completedIntents</code></td><td>Что уже выполнено в рамках composite plan.</td><td>Для timeline, аналитики и возобновления после сбоя.</td></tr>
+      </tbody>
+    </table>
+    <div class="grid">
+      <div class="card"><strong>Active state wins</strong><span>Если гость уже внутри сценария, текущий state имеет приоритет, а новые просьбы становятся <code>pendingIntents</code>.</span></div>
+      <div class="card"><strong>Content can bundle</strong><span>Меню, видео-тур, концепция, афиша и справки можно выполнить вместе, если это не перегружает чат.</span></div>
+      <div class="card"><strong>One confirm per side effect</strong><span>Отмена, ставка, чаевые, донат и платеж требуют отдельного подтверждения, даже если пришли в одном сообщении.</span></div>
+      <div class="card"><strong>Observable plan</strong><span><code>compositePlan</code>, <code>primaryIntent</code>, <code>pendingIntents</code>, <code>blockedIntents</code> и <code>completedIntents</code> пишутся в timeline.</span></div>
+    </div>
+  </section>
+
+  <section id="intake-matrix">
+    <h2>1.4 Scenario Intake Matrix</h2>
+    <p>Эта таблица нужна, чтобы переводить живые фразы гостей в сценарии и целевые состояния. Если состояние есть здесь, но еще не реализовано в <code>BotState</code>, это next-code target.</p>
+    <table>
+      <thead><tr><th>#</th><th>Сценарий</th><th>Примеры фраз / сигнал</th><th>Нужные сущности</th><th>Целевые состояния / next-code target</th></tr></thead>
+      <tbody>
+      <tr><td>3</td><td>Intake</td><td>любой Telegram/REST update, voice, callback, service chat</td><td>chat id, source, raw payload, transcript, correlation id</td><td><code>GUEST_MESSAGE_RECEIVED</code>, <code>SERVICE_COMMAND_RECEIVED</code>, service chat skip guest FSM</td></tr>
+      <tr><td>4</td><td>FirstTouch</td><td><code>/start</code>, первый вход, повторный старт, contact shared</td><td>telegram id, contact phone, consent evidence</td><td><code>FIRST_TOUCH_SAFE_RESTART</code>, <code>FIRST_TOUCH_PREVIEW_PIN</code>, <code>CONSENT_REQUIRED</code>, <code>READY_FOR_DIALOG</code></td></tr>
+      <tr><td>5</td><td>MainMenu</td><td>свободный запрос известного гостя, "главное меню", composite intent</td><td>current state, intent candidates, confidence, composite plan</td><td><code>READY_FOR_DIALOG</code>, route to explicit scenario, <code>pendingIntents</code></td></tr>
+      <tr><td>6</td><td>TableBooking</td><td>хочу стол, забронировать завтра, на двоих, у окна</td><td>date, time, party size, table/zone</td><td><code>TABLE_BOOKING_SEND_PLAN</code>, <code>TABLE_BOOKING_COLLECT_DATE</code>, <code>TABLE_BOOKING_COLLECT_TIME</code>, <code>TABLE_BOOKING_COLLECT_PARTY_SIZE</code>, <code>TABLE_BOOKING_WAIT_HOSTESS_CONFIRMATION</code></td></tr>
+      <tr><td>7</td><td>EventBooking</td><td>день рождения, корпоратив, закрыть зал, банкет, свадьба</td><td>type, date, guests, budget, wishes</td><td><code>EVENT_BOOKING_SEND_MENU</code>, <code>EVENT_BOOKING_COLLECT_TYPE</code>, <code>EVENT_BOOKING_COLLECT_DATE</code>, <code>EVENT_BOOKING_CONFIRM_ORDER</code>, <code>EVENT_BOOKING_MANAGER_REVIEW</code></td></tr>
+      <tr><td>8</td><td>MenuAssets</td><td>меню, вино, барная карта, что поесть, коктейли</td><td>menu category, optional preference, source asset</td><td><code>MENU_ASSETS_INTAKE</code>, <code>MENU_ASSETS_LOOKUP</code>, <code>MENU_ASSETS_CLARIFY</code>, <code>MENU_ASSETS_DELIVER</code></td></tr>
+      <tr><td>9</td><td>Merch</td><td>мерч, сертификат, хочу купить, подарок</td><td>item, variant, quantity, guest note, delivery/pickup hint</td><td><code>MERCH_LOOKUP_CATALOG</code>, <code>MERCH_COLLECT_SELECTION</code>, <code>MERCH_CONFIRM_ORDER</code>, <code>MERCH_SEND_TEAM_CARD</code></td></tr>
+      <tr><td>10</td><td>QuietGuide</td><td>афиша, что сегодня, видео-тур, интерьер, концепция, кто шеф</td><td>content type, active media/content source</td><td><code>QUIET_GUIDE_CLASSIFY</code>, <code>QUIET_GUIDE_FETCH_CONTENT</code>, <code>QUIET_GUIDE_CLARIFY</code>, <code>QUIET_GUIDE_DELIVER</code></td></tr>
+      <tr><td>10.1</td><td>AERIS Channel Ingest</td><td>новый post в official channel / public parser</td><td>post id, media ids, post type, event date, expiry</td><td><code>CHANNEL_POST_DISCOVERED</code>, <code>CHANNEL_POST_NORMALIZED</code>, <code>CONTENT_READY_FOR_GUIDE</code></td></tr>
+      <tr><td>11</td><td>SmartTip</td><td>чаевые, на чай, поблагодарить официанта, Саше 1000</td><td>amount, target staff/team, confirmation</td><td><code>TIP_SELECT_STAFF</code>, <code>TIP_COLLECT_AMOUNT</code>, <code>TIP_CONFIRM_ORDER</code>, <code>TIP_WAIT_PAYMENT_RECEIPT</code></td></tr>
+      <tr><td>12</td><td>HiddenHeart</td><td>донат, благотворительность, хочу помочь, анонимно</td><td>initiative, amount, anonymity, confirmation</td><td><code>DONATION_SELECT_INITIATIVE</code>, <code>DONATION_PRIVACY_CONFIRM</code>, <code>DONATION_WAIT_PAYMENT_RECEIPT</code></td></tr>
+      <tr><td>13</td><td>ArtAuction</td><td>картина, лот, ставка, аукцион, ставлю 20000</td><td>active lot, bid amount, participant alias, confirmation</td><td><code>AUCTION_SHOW_LOT_PACK</code>, <code>AUCTION_WAIT_BID</code>, <code>AUCTION_TOP5_UPDATED</code>, <code>AUCTION_WAIT_WINNER_PAYMENT</code></td></tr>
+      <tr><td>14</td><td>ImpactMeter</td><td>сколько собрали, итоги, impact, культурный вклад</td><td>scope, period, event/initiative ids, requester role</td><td><code>IMPACT_SELECT_SCOPE</code>, <code>IMPACT_READ_EVENTS</code>, <code>IMPACT_PRIVACY_FILTER</code>, <code>IMPACT_BUILD_REPORT</code></td></tr>
+      <tr><td>15</td><td>Feedback</td><td>отзыв, жалоба, похвала, предложение, отличный сервис</td><td>feedback type, sentiment, active order, priority</td><td><code>FEEDBACK_CLASSIFY</code>, <code>FEEDBACK_ATTACH_CONTEXT</code>, <code>FEEDBACK_SEND_ADMIN_CARD</code>, <code>FEEDBACK_ESCALATE_IF_NEEDED</code></td></tr>
+      <tr><td>16</td><td>ManagerHelp</td><td>позови менеджера, нужен человек, хочу поговорить с админом</td><td>reason, priority, dialog summary, active order</td><td><code>MANAGER_HELP_COLLECT_REASON</code>, <code>MANAGER_HELP_SEND_CARD</code>, <code>MANAGER_HELP_CLAIMED</code>, <code>MANAGER_HELP_DONE</code></td></tr>
+      <tr><td>17</td><td>ChangeCancel</td><td>перенести бронь, отменить, опоздаем, поменять время</td><td>order reference, date/time, action, confirmation</td><td><code>CHANGE_CANCEL_FIND_ORDER</code>, <code>CHANGE_CANCEL_SELECT_ACTION</code>, <code>CHANGE_CANCEL_CANCEL</code>, <code>CHANGE_CANCEL_REVIEW</code></td></tr>
+      <tr><td>18</td><td>Recovery</td><td>непонятно, STT noise, LLM timeout, state conflict</td><td>reason, retry count, current state, candidates</td><td><code>RECOVERY_DIAGNOSE</code>, <code>RECOVERY_RESTORE_CONTEXT</code>, <code>RECOVERY_CLARIFY_ONCE</code>, <code>RECOVERY_MANAGER_HANDOFF</code></td></tr>
+      <tr><td>18.2</td><td>SafePlay</td><td>сабраж, открыть шампанское красиво, игристое с ритуалом, сабражная цепь, купить сабражную цепь</td><td>table/order context, staff availability, bottle type, age/safety flags, merch interest</td><td><code>SAFE_PLAY_SELECT_RITUAL</code>, <code>SAFE_PLAY_SAFETY_CHECK</code>, <code>SAFE_PLAY_TEAM_CONFIRMATION</code>, <code>SAFE_PLAY_MERCH_OFFER</code></td></tr>
       </tbody>
     </table>
   </section>
@@ -394,13 +640,13 @@ flowchart TD
     Exit["Безопасность<br/>Panic Exit"]
 
     First["FirstTouch / MainMenu"]
-    Pref["PreferenceScenario<br/>later"]
-    SmartTip["SmartTipScenario"]
-    Quiet["MenuAssets / QuietGuide"]
-    Donate["HiddenHeart / ArtAuction"]
-    Safe["SafePlay / SafeExit"]
-    Booking["TableBooking / EventBooking / ChangeCancel"]
-    Recovery["Recovery / SafeExit"]
+    Pref["MenuAssets / MerchScenario<br/>PreferenceScenario later"]
+    SmartTip["SmartTip / Feedback praise"]
+    Quiet["MenuAssets / QuietGuide<br/>AERIS Channel"]
+    Donate["HiddenHeart / ArtAuction<br/>ImpactMeter"]
+    Safe["13 ArtAuction / 18.2 SafePlay"]
+    Booking["TableBooking / EventBooking<br/>ChangeCancel"]
+    Recovery["Anti-Fallback / Recovery<br/>ManagerHelp / SafeExit later"]
 
     Center --> Memory --> First
     Center --> Preference --> Pref
@@ -414,82 +660,101 @@ flowchart TD
     <table>
       <thead><tr><th>Ось боли</th><th>Capability</th><th>FSM-сценарии</th><th>Смысл</th></tr></thead>
       <tbody>
-      <tr><td>Идентичность</td><td>Memory Engine</td><td>FirstTouch, MainMenu</td><td>Гостя узнают по профилю и истории.</td></tr>
-      <tr><td>Персонализация</td><td>Preference Map</td><td>PreferenceScenario later</td><td>Можно предложить "как в прошлый раз".</td></tr>
-      <tr><td>Благодарность</td><td>Smart Tip</td><td>SmartTipScenario</td><td>Гость благодарит команду без неловкости.</td></tr>
-      <tr><td>Инфо-поддержка</td><td>Quiet Guide</td><td>MenuAssets, QuietGuide</td><td>Меню, афиши и справки без спама.</td></tr>
-      <tr><td>Социальный вклад</td><td>Hidden Heart</td><td>HiddenHeart, ArtAuction</td><td>Анонимные донаты и благотворительные сценарии.</td></tr>
-      <tr><td>Игровой опыт</td><td>Safe Play</td><td>SafePlay, ArtAuction</td><td>Интерактив с мгновенным выходом.</td></tr>
-      <tr><td>Управление временем</td><td>Slot Keeper</td><td>TableBooking, EventBooking, ChangeCancel</td><td>Слоты, бронь, перенос и напоминания.</td></tr>
-      <tr><td>Безопасность</td><td>Panic Exit</td><td>Recovery, SafeExit</td><td>Сценарий можно остановить и вернуться домой.</td></tr>
-      </tbody>
-    </table>
-  </section>
-
-  <section id="legacy">
-    <h2>3. Legacy как источник продуктовых сценариев</h2>
-    <p>Legacy не переносится как архитектура. Он используется как память продуктовых веток: auction, charity, tip, merch, poster, feedback.</p>
-    <table>
-      <thead><tr><th>Legacy area</th><th>Новый слой</th><th>FSM-сценарий</th></tr></thead>
-      <tbody>
-      <tr><td><code>auction/*</code></td><td>Hidden Heart + Safe Play + Impact Meter + Event</td><td><code>ArtAuctionScenario</code></td></tr>
-      <tr><td><code>charity/*</code></td><td>Hidden Heart</td><td><code>HiddenHeartScenario</code></td></tr>
-      <tr><td><code>tip/*</code></td><td>Smart Tip</td><td><code>SmartTipScenario</code></td></tr>
-      <tr><td><code>merch/*</code></td><td>future commerce/order boundary</td><td><code>MerchOrderScenario</code> later</td></tr>
-      <tr><td><code>poster/*</code></td><td>Content + Quiet Guide</td><td><code>QuietGuideScenario</code></td></tr>
-      <tr><td><code>feedback/*</code></td><td>Timeline + future feedback capability</td><td><code>ManagerHelpScenario</code> / future feedback</td></tr>
+      <tr><td>Идентичность</td><td>Memory Engine</td><td>4 FirstTouch, 5 MainMenu, 15 Feedback</td><td>Гостя узнают по профилю, истории и аккуратно принимают обратную связь.</td></tr>
+      <tr><td>Персонализация</td><td>Preference Map</td><td>8 MenuAssets, 9 MerchScenario, future PreferenceScenario</td><td>Гость получает релевантные меню/мерч и позже персональные рекомендации без давления.</td></tr>
+      <tr><td>Благодарность</td><td>Smart Tip</td><td>11 SmartTip, 15 Feedback</td><td>Гость благодарит команду деньгами или словами без неловкости.</td></tr>
+      <tr><td>Инфо-поддержка</td><td>Quiet Guide</td><td>8 MenuAssets, 10 QuietGuide, 10.1 AERIS Channel Ingest</td><td>Меню, афиши, концепция и видео-тур по запросу, без рассылки и шума.</td></tr>
+      <tr><td>Социальный вклад</td><td>Hidden Heart</td><td>12 HiddenHeart, 13 ArtAuction, 14 ImpactMeter</td><td>Анонимные донаты, благотворительные аукционы и агрегированный культурный вклад.</td></tr>
+      <tr><td>Игровой опыт</td><td>Safe Play</td><td>13 ArtAuction, 18.2 SafePlay</td><td>Интерактив появляется только в активном контексте: аукцион или безопасный сабражный ритуал с командой.</td></tr>
+      <tr><td>Управление временем</td><td>Slot Keeper</td><td>6 TableBooking, 7 EventBooking, 17 ChangeCancel</td><td>Слоты, бронь, перенос, отмена и подтверждение командой.</td></tr>
+      <tr><td>Безопасность</td><td>Panic Exit</td><td>1.1 Anti-Fallback, 16 ManagerHelp, 18 Recovery, future SafeExit</td><td>Сценарий можно остановить, уточнить, восстановить или передать человеку без технического мусора гостю.</td></tr>
       </tbody>
     </table>
   </section>
 
   <section id="intake">
-    <h2>4. Общий вход</h2>
+    <h2>3. Общий вход</h2>
     <p>Служебные чаты не запускают гостевой FSM. Они нужны для наблюдаемости, аудита и ручного контроля.</p>
     <div class="diagram mermaid compact">
 flowchart LR
-    Message((Новое сообщение))
-    Gateway["MessageGatewayService"]
-    Store["Сохранить<br/>profile/message"]
-    Event["Outbox/Kafka event"]
-    Admin["Admin projection"]
-    Service{"Service chat?"}
-    Stop["FSM skipped"]
-    Guest{"Guest flow?"}
+    In["Inbound update<br/>Telegram / REST"]
+    Normalize["Transport adapter<br/>text or STT transcript"]
+    Envelope["MessageGatewayService<br/>single intake envelope"]
+    Persist["Persist message<br/>profile + timeline"]
+    Observe["Outbox / Kafka<br/>admin projection"]
+    ChatType{"Chat type?"}
 
-    Message --> Gateway --> Store --> Event --> Admin
-    Store --> Service
-    Service -- "да" --> Stop
-    Service -- "нет" --> Guest
+    Guest["Private guest chat"]
+    Service["Admin / hostess / analytics<br/>system chat -5403153261"]
+    Unknown["Unknown source<br/>quarantine"]
+
+    FSM["Guest FSM Router<br/>first touch / main menu / scenario"]
+    Commands["Service command router<br/>buttons, claim, approve, audit"]
+    Skip["Guest FSM skipped"]
+    Recovery["Recovery / manual review"]
+
+    In --> Normalize --> Envelope --> Persist --> Observe --> ChatType
+    ChatType -- "guest" --> Guest --> FSM
+    ChatType -- "service chat" --> Service --> Commands --> Skip
+    ChatType -- "unknown" --> Unknown --> Recovery
+    </div>
+    <table>
+      <thead><tr><th>Вход</th><th>Что происходит</th><th>Куда можно идти</th><th>Что запрещено</th></tr></thead>
+      <tbody>
+      <tr><td>Личный чат гостя</td><td>Сохраняем сообщение, профиль, source и correlation id. После этого запускается гостевой FSM.</td><td><code>FirstTouchScenario</code>, <code>MainMenuScenario</code>, активный доменный сценарий, <code>RecoveryScenario</code>.</td><td>Нельзя отправлять гостя в админскую механику или показывать технические причины.</td></tr>
+      <tr><td>Админ-чат</td><td>Сообщение сохраняется как audit/control input. Команда может взять ручной диалог, посмотреть summary или закрыть fallback.</td><td><code>ManagerHelpScenario</code> service commands, audit timeline, manual note.</td><td>Нельзя запускать бронь, меню, донаты или другой guest FSM от имени админ-чата.</td></tr>
+      <tr><td>Чат хостес</td><td>Работают только кнопки и команды по заявкам: подтвердить, отказать, предложить другой вариант.</td><td><code>TableBookingScenario</code> confirmation callback, order state update, guest notification.</td><td>Свободный текст из чата хостес не считается сообщением гостя.</td></tr>
+      <tr><td>Analytics / system chat</td><td>Используется как поток наблюдаемости: события, ошибки, Kafka/admin projection, health notices. Текущий system chat: <code>TELEGRAM_SYSTEM_CHAT_ID=-5403153261</code>.</td><td>Audit log, dashboards, incident follow-up.</td><td>Никакой гостевой FSM и никаких публичных ответов гостю.</td></tr>
+      <tr><td>Неизвестный источник</td><td>Сохраняется с флагом <code>UNKNOWN_SOURCE</code> и уходит в review.</td><td><code>RecoveryScenario</code> или ручная проверка.</td><td>Нельзя молча трактовать как гостя.</td></tr>
+      </tbody>
+    </table>
+    <div class="grid">
+      <div class="card"><strong>Single intake</strong><span>Все входящие сообщения сначала нормализуются и сохраняются, чтобы не терять контекст и иметь честный audit trail.</span></div>
+      <div class="card"><strong>Service chats are control plane</strong><span>Админка, хостес, аналитика и system chat управляют системой, но не становятся гостем и не двигают его FSM напрямую.</span></div>
+      <div class="card"><strong>Guest FSM is private</strong><span>Гостевые сценарии запускаются только из личного диалога гостя или через явный callback, привязанный к его order.</span></div>
+      <div class="card"><strong>Observable by default</strong><span>Каждый вход пишет timeline/Kafka/admin projection, но шум служебных чатов не превращается в fallback гостя.</span></div>
     </div>
   </section>
 
   <section id="first-touch">
-    <h2>5. Первое касание</h2>
+    <h2>4. Первое касание</h2>
     <p><code>/start</code> - безопасный рестарт: сбрасывает активный runtime-сценарий, заново показывает/pin preview и ведет гостя либо к контакту, либо в главное меню.</p>
     <div class="diagram mermaid compact">
-flowchart TD
-    Unknown["UNKNOWN"]
-    Start{"/start или первое касание?"}
-    Reset["Reset active guest runtime<br/>FSM state + drafts + current exchange"]
-    Preview["Send / refresh / pin<br/>persistent AERIS preview"]
-    Known{"Есть contact + consent?"}
-    Consent["CONSENT_REQUIRED<br/>contact + policy"]
-    Nudge["Nudge<br/>вернуть к кнопке"]
-    Save["Сохранить contact<br/>и consent evidence"]
-    Ready["READY_FOR_DIALOG<br/>MainMenuScenario"]
+flowchart LR
+    Entry["/start или первый вход"]
+    Reset["Safe restart<br/>clear active scenario + drafts"]
+    Preview["Send / refresh / pin<br/>AERIS preview"]
+    Known{"Есть contact<br/>и consent?"}
+    Contact["CONSENT_REQUIRED<br/>кнопка Telegram contact"]
+    Save["Save contact<br/>consent evidence"]
+    Menu["READY_FOR_DIALOG<br/>MainMenuScenario"]
+    Nudge["Мягко вернуть<br/>к contact button"]
 
-    Unknown --> Start
-    Start -- "/start" --> Reset --> Preview --> Known
-    Start -- "первое касание без /start" --> Preview
-    Known -- "да" --> Ready
-    Known -- "нет" --> Consent
-    Consent -- "текст без контакта" --> Nudge --> Consent
-    Consent -- "Telegram contact" --> Save --> Ready
+    Entry --> Reset --> Preview --> Known
+    Known -- "да" --> Menu
+    Known -- "нет" --> Contact
+    Contact -- "contact shared" --> Save --> Menu
+    Contact -- "текст вместо контакта" --> Nudge --> Contact
+    </div>
+    <table>
+      <thead><tr><th>Шаг FSM</th><th>Что делает Батлер</th><th>Что важно не потерять</th></tr></thead>
+      <tbody>
+      <tr><td><code>FIRST_TOUCH_SAFE_RESTART</code></td><td><code>/start</code> сбрасывает активный runtime-сценарий и черновики текущего диалога.</td><td>Durable facts: профиль, контакт, consent, прошлые orders остаются.</td></tr>
+      <tr><td><code>FIRST_TOUCH_PREVIEW_PIN</code></td><td>Заново отправляет/обновляет/pin preview с инструкцией гостя.</td><td>Preview должен быть видимым якорем в каждом диалоге.</td></tr>
+      <tr><td><code>FIRST_TOUCH_CONTACT_REQUIRED</code></td><td>Если контакта/consent нет, просит Telegram contact кнопкой, без свободного обхода.</td><td>phone, telegram id, consent evidence, timestamp.</td></tr>
+      <tr><td><code>FIRST_TOUCH_READY</code></td><td>Если contact уже есть или только что сохранен, переводит в MainMenuScenario.</td><td><code>READY_FOR_DIALOG</code>, admin/Kafka event, current state.</td></tr>
+      </tbody>
+    </table>
+    <div class="grid">
+      <div class="card"><strong>Safe restart</strong><span><code>/start</code> можно нажать в любой момент: активная бронь/меню/донат сбрасываются, но профиль и история не стираются.</span></div>
+      <div class="card"><strong>Preview pinned</strong><span>Preview - главный UX-якорь. Он объясняет, что умеет Батлер, и должен снова появляться после рестарта.</span></div>
+      <div class="card"><strong>Contact gate</strong><span>Новый гость проходит через contact/consent. Текст вместо контакта возвращает к кнопке, а не в fallback.</span></div>
+      <div class="card"><strong>Main Menu</strong><span>Известный гость после <code>/start</code> сразу попадает в <code>READY_FOR_DIALOG</code> и может запускать доменные сценарии.</span></div>
     </div>
   </section>
 
   <section id="main-menu">
-    <h2>6. Главное меню</h2>
+    <h2>5. Главное меню</h2>
     <p><code>READY_FOR_DIALOG</code> - дом сценариев. Это не свободный чат и не прямой путь в fallback.</p>
     <div class="diagram mermaid">
 flowchart TD
@@ -499,267 +764,490 @@ flowchart TD
     Table["TableBookingScenario"]
     Event["EventBookingScenario"]
     Menu["MenuAssetsScenario"]
+    Merch["MerchScenario"]
     Guide["QuietGuideScenario"]
     Tip["SmartTipScenario"]
     Donation["HiddenHeartScenario"]
     Auction["ArtAuctionScenario"]
+    Feedback["FeedbackScenario"]
     Manager["ManagerHelpScenario"]
     Change["ChangeCancelScenario"]
+    SafePlay["SafePlayScenario"]
     Clarify["Уточнение + quick options"]
 
     Ready --> Render --> Intent
     Intent -- "стол / посадка" --> Table
     Intent -- "банкет / корпоратив" --> Event
     Intent -- "меню / бар" --> Menu
+    Intent -- "мерч / подарок / сертификат" --> Merch
     Intent -- "афиша / что сегодня" --> Guide
     Intent -- "чаевые / спасибо команде" --> Tip
     Intent -- "донат / благотворительность" --> Donation
     Intent -- "картина / аукцион / ставка" --> Auction
+    Intent -- "отзыв / жалоба / похвала" --> Feedback
     Intent -- "менеджер / человек" --> Manager
     Intent -- "отмена / перенос" --> Change
+    Intent -- "сабраж / ритуал / игра" --> SafePlay
     Intent -- "непонятно" --> Clarify
 
     Table --> Ready
     Event --> Ready
     Menu --> Ready
+    Merch --> Ready
     Guide --> Ready
     Tip --> Ready
     Donation --> Ready
     Auction --> Ready
+    Feedback --> Ready
     Manager --> Ready
     Change --> Ready
+    SafePlay --> Ready
     Clarify --> Ready
     </div>
   </section>
 
   <section id="table-booking">
-    <h2>7. Бронь стола</h2>
-    <p>Обычная посадка в AERIS: собрать дату, время, гостей, отправить план, получить стол, создать заявку и дождаться кнопки хостес.</p>
-    <div class="diagram mermaid">
-flowchart TD
-    Start["Intent: бронь стола"]
-    Date{"Есть дата?"}
-    Time{"Есть время?"}
-    Party{"Есть гости?"}
-    Draft["Redis draft"]
-    Plan["Send AERIS PLAN.pdf"]
-    Select["Wait table / zone / auto"]
-    Order["Create order + HELD hold"]
-    Hostess["Hostess card<br/>Да / Нет"]
-    Yes["CONFIRMED<br/>guest order"]
-    No["REJECTED<br/>polite refusal"]
+    <h2>6. Бронь стола</h2>
+    <p>Обычная посадка в AERIS начинается с плана зала: гость сначала видит пространство, затем выбирает дату, время, гостей и стол/зону. Итог - <code>table_order</code> и подтверждение хостес кнопками, не автоподтверждение.</p>
+    <div class="diagram mermaid compact">
+flowchart LR
+    Intent["Гость: бронь стола"]
+    Plan["Отправить AERIS PLAN.pdf<br/>первым сообщением"]
+    Collect["Собрать дату / время / гостей<br/>заполнить из composite intent"]
+    Select["Выбор стол / зона / авто"]
+    Order["table_order<br/>HELD / PENDING_HOSTESS"]
+    Hostess["Hostess card<br/>Да / Нет / Предложить другой"]
+    Yes["CONFIRMED<br/>красивый order гостю"]
+    Alternative["Предложить другой стол/время"]
+    No["REJECTED<br/>вежливый отказ"]
     Home["READY_FOR_DIALOG"]
 
-    Start --> Date
-    Date -- "нет" --> AskDate["Спросить дату"] --> Time
-    Date -- "да" --> Time
-    Time -- "нет" --> AskTime["Спросить время"] --> Party
-    Time -- "да" --> Party
-    Party -- "нет" --> AskParty["Спросить гостей"] --> Draft
-    Party -- "да" --> Draft
-    Draft --> Plan --> Select
-    Select -- "неясно / повтор" --> Plan
-    Select -- "17 / vip / бар / выбери сам" --> Order --> Hostess
+    Intent --> Plan --> Collect --> Select --> Order --> Hostess
     Hostess -- "Да" --> Yes --> Home
     Hostess -- "Нет" --> No --> Home
+    Hostess -- "Другой вариант" --> Alternative --> Select
+    Select -- "неясно / повтор" --> Plan
+    </div>
+    <table>
+      <thead><tr><th>Шаг FSM</th><th>Что делает Батлер</th><th>Что храним</th></tr></thead>
+      <tbody>
+      <tr><td><code>TABLE_BOOKING_SEND_PLAN</code></td><td>Сразу отправляет план зала, чтобы гость выбирал из визуального контекста.</td><td><code>AERIS_PLAN_ASSET</code>, file id, version, sent_at.</td></tr>
+      <tr><td><code>TABLE_BOOKING_COLLECT_DATE</code></td><td>Собирает дату. Если дата уже в первом сообщении, не спрашивает повторно.</td><td><code>requested_date</code>, flexible flag, source text/voice.</td></tr>
+      <tr><td><code>TABLE_BOOKING_COLLECT_TIME</code></td><td>Собирает время и мягко уточняет, если формат неоднозначный.</td><td><code>requested_time</code>, timezone, confidence.</td></tr>
+      <tr><td><code>TABLE_BOOKING_COLLECT_PARTY_SIZE</code></td><td>Собирает количество гостей и особые пожелания по посадке.</td><td><code>party_size</code>, children/pets/notes if present.</td></tr>
+      <tr><td><code>TABLE_BOOKING_WAIT_TABLE_SELECTION</code></td><td>Ждет номер стола, зону или разрешение выбрать подходящий стол автоматически.</td><td><code>table_code</code>, zone, auto_select flag.</td></tr>
+      <tr><td><code>TABLE_BOOKING_CREATE_ORDER</code></td><td>Создает заявку и короткий hold до решения хостес.</td><td><code>table_order_id</code>, <code>HELD</code>, date/time/party/table.</td></tr>
+      <tr><td><code>TABLE_BOOKING_WAIT_HOSTESS_CONFIRMATION</code></td><td>Отправляет карточку хостес с кнопками: Да, Нет, Предложить другой.</td><td>hostess chat message id, decision, decision_at.</td></tr>
+      <tr><td><code>TABLE_BOOKING_CONFIRMED</code></td><td>Отправляет гостю красивое подтверждение брони.</td><td><code>CONFIRMED</code> event, timeline, Kafka admin event.</td></tr>
+      <tr><td><code>TABLE_BOOKING_REJECTED</code></td><td>Дает вежливый отказ и предлагает другой стол/время.</td><td><code>REJECTED</code> reason, alternatives if any.</td></tr>
+      </tbody>
+    </table>
+    <div class="grid">
+      <div class="card"><strong>Plan first</strong><span>План зала отправляется первым, даже если в сообщении уже есть дата/время. Это снижает вопросы и помогает выбрать стол.</span></div>
+      <div class="card"><strong>Composite intent</strong><span>Фраза "завтра в 20:00 на двоих у окна" заполняет дату, время, гостей и предпочтение сразу.</span></div>
+      <div class="card"><strong>Hostess кнопки</strong><span>Финальное решение за хостес: Да, Нет или другой вариант. Батлер не обещает подтверждение заранее.</span></div>
+      <div class="card"><strong>Order</strong><span><code>table_order</code> хранит весь след: запрос, план, выбранный стол, hold, решение и сообщение гостю.</span></div>
     </div>
   </section>
 
   <section id="event-booking">
-    <h2>8. Мероприятие</h2>
+    <h2>7. Мероприятие</h2>
     <p>Отдельная ветка для банкетов, дней рождения, корпоративов, свадеб и выкупа зала. Итог - структурированная заявка менеджеру, не автоматическое подтверждение.</p>
-    <div class="diagram mermaid">
-flowchart TD
-    Start["Intent: мероприятие"]
-    Type["Тип события"]
-    Date["Дата / диапазон"]
-    Time["Время / длительность"]
-    Guests["Количество гостей"]
-    Format["Формат"]
-    Budget["Бюджет / депозит"]
-    Menu["Меню / напитки"]
-    Tech["Техника / подрядчики"]
-    Contact["Контакт / комментарии"]
-    Summary["Сводка заявки"]
-    Confirm{"Гость подтверждает?"}
-    Manager["Передать менеджеру"]
+    <div class="diagram mermaid compact">
+flowchart LR
+    Intent["Гость: банкет / др / корпоратив / свадьба"]
+    Menu["Отправить banquet menu<br/>asset позже"]
+    Collect["Собрать brief<br/>тип / дата / гости / формат / бюджет"]
+    Wishes["Меню, бар, техника,<br/>аллергии, подрядчики"]
+    Order["event_order<br/>DRAFT"]
+    Confirm{"Гость подтверждает<br/>заявку?"}
+    Manager["Manager review<br/>Да / Нет / Уточнить"]
+    Accepted["event_order REVIEWING<br/>гостю: менеджер свяжется"]
+    Changes["Уточнить поля<br/>и обновить order"]
+    Cancel["Отмена без давления"]
     Home["READY_FOR_DIALOG"]
 
-    Start --> Type --> Date --> Time --> Guests --> Format --> Budget --> Menu --> Tech --> Contact --> Summary --> Confirm
-    Confirm -- "да" --> Manager --> Home
-    Confirm -- "поправки" --> Type
+    Intent --> Menu --> Collect --> Wishes --> Order --> Confirm
+    Confirm -- "да" --> Manager --> Accepted --> Home
+    Confirm -- "поправки" --> Changes --> Collect
+    Confirm -- "отмена" --> Cancel --> Home
+    </div>
+    <table>
+      <thead><tr><th>Шаг FSM</th><th>Что делает Батлер</th><th>Что храним</th></tr></thead>
+      <tbody>
+      <tr><td><code>EVENT_BOOKING_SEND_MENU</code></td><td>Отправляет банкетное меню/условия, когда asset будет добавлен.</td><td><code>BANQUET_MENU_ASSET</code>, file id, version, sent_at.</td></tr>
+      <tr><td><code>EVENT_BOOKING_COLLECT_TYPE</code></td><td>Определяет тип: банкет, день рождения, корпоратив, свадьба, выкуп зала.</td><td><code>event_type</code>, source text/voice, confidence.</td></tr>
+      <tr><td><code>EVENT_BOOKING_COLLECT_DATE</code></td><td>Собирает дату, диапазон, время начала и длительность.</td><td><code>date</code>, <code>time_from</code>, <code>duration</code>, flexible flag.</td></tr>
+      <tr><td><code>EVENT_BOOKING_COLLECT_GUESTS</code></td><td>Собирает количество гостей и формат посадки.</td><td><code>guest_count</code>, seating style, hall buyout flag.</td></tr>
+      <tr><td><code>EVENT_BOOKING_COLLECT_BUDGET</code></td><td>Собирает бюджет/депозит мягко, без давления.</td><td><code>budget_range</code>, deposit expectation, payment notes.</td></tr>
+      <tr><td><code>EVENT_BOOKING_COLLECT_WISHES</code></td><td>Собирает меню, бар, аллергии, техника, ведущий/DJ/подрядчики, особые пожелания.</td><td>structured wishes JSON, menu preferences, restrictions.</td></tr>
+      <tr><td><code>EVENT_BOOKING_CONFIRM_ORDER</code></td><td>Показывает гостю сводку и явно говорит: это заявка менеджеру, не автоматическое подтверждение.</td><td><code>event_order_id</code>, <code>DRAFT</code>, summary version.</td></tr>
+      <tr><td><code>EVENT_BOOKING_MANAGER_REVIEW</code></td><td>Отправляет карточку менеджеру/хостес с кнопками: Да, Нет, Уточнить.</td><td><code>REVIEWING</code>, manager chat message id, decision.</td></tr>
+      <tr><td><code>EVENT_BOOKING_COMPLETED</code></td><td>Возвращает гостя в главное меню после передачи заявки или правок.</td><td>timeline event, Kafka admin event, current state.</td></tr>
+      </tbody>
+    </table>
+    <div class="grid">
+      <div class="card"><strong>Order</strong><span>Механика как у брони стола, но объект крупнее: <code>event_order</code> с brief, пожеланиями, статусом и manager review.</span></div>
+      <div class="card"><strong>Banquet menu</strong><span>Файл банкетного меню добавим как managed asset. До этого сценарий готов хранить ссылку/версию и отправлять ее гостю.</span></div>
+      <div class="card"><strong>Не автоподтверждение</strong><span>Батлер не обещает зал и дату. Он собирает качественную заявку и передает менеджеру на решение.</span></div>
+      <div class="card"><strong>Composite intent</strong><span>Если в одном сообщении есть дата, гости, бюджет и формат, Батлер заполняет все поля сразу и спрашивает только пропуски.</span></div>
     </div>
   </section>
 
   <section id="menu-assets">
-    <h2>9. Меню и материалы</h2>
+    <h2>8. Меню и материалы</h2>
     <p>Quiet Guide ветка для меню: гость текстом или голосом просит меню, карту бара, вино или коктейли. Astor уточняет только при необходимости, отправляет актуальные PDF и пишет событие в наблюдаемость.</p>
+    <div class="diagram mermaid compact">
+flowchart LR
+    Intent["Гость: меню / бар / вино<br/>text или voice"]
+    Intake["Normalize input<br/>voice -> transcript"]
+    Catalog["Managed asset catalog<br/>4 active menu PDFs"]
+    Rag["Menu RAG / pgvector<br/>категория + факты"]
+    Clear{"Понятно<br/>что отправить?"}
+    Clarify["One clarification<br/>кухня / бар / коктейли / вино / все"]
+    Attach["Attach selected PDFs<br/>1-4 файла"]
+    Reply["Короткий стильный ответ<br/>без выдуманных цен"]
+    Log["MENU_ASSETS_DELIVERED<br/>Kafka/admin event"]
+    Home["READY_FOR_DIALOG"]
+
+    Intent --> Intake --> Catalog --> Rag --> Clear
+    Clear -- "да" --> Attach --> Reply --> Log --> Home
+    Clear -- "нет" --> Clarify --> Rag
+    </div>
     <table>
       <thead><tr><th>Asset</th><th>Runtime target</th><th>Когда отправлять</th></tr></thead>
       <tbody>
-      <tr><td>Кухня / основное меню</td><td><code>AERIS_MENU_KITCHEN -> content/aeris/menu/kitchen/MENU_AERIS_A4_2026_DIGITAL.pdf</code></td><td>меню, еда, кухня, что поесть</td></tr>
+      <tr><td>Кухня / основное меню</td><td><code>AERIS_MENU_KITCHEN -> content/aeris/menu/kitchen/MENU_AERIS_A4_2026_DIGITAL.pdf</code></td><td>меню, еда, кухня, что поесть, блюда</td></tr>
       <tr><td>Бар</td><td><code>AERIS_MENU_BAR -> content/aeris/menu/bar/BAR_CARD.pdf</code></td><td>бар, напитки, крепкое, барная карта</td></tr>
       <tr><td>Коктейли / Elements</td><td><code>AERIS_MENU_ELEMENTS -> content/aeris/menu/elements/ELEMENTS_CARD.pdf</code></td><td>коктейли, elements, авторские коктейли</td></tr>
       <tr><td>Вино</td><td><code>AERIS_MENU_WINE -> content/aeris/menu/wine/WINE_MENU_2026_FINAL.pdf</code></td><td>вино, винная карта, шампанское</td></tr>
       </tbody>
     </table>
-    <div class="diagram mermaid wide">
-flowchart TD
-    Start["Text или voice intent:<br/>меню / бар / вино / коктейли / еда"]
-    Transport["Transport normalized input<br/>voice -> transcript"]
-    Classify["LLM/RAG intent extraction<br/>menu categories + confidence"]
-    NeedClarify{"Понятно, какие карты нужны?"}
-    Clarify["MENU_ASSETS_CLARIFY<br/>Спросить: кухня, бар, коктейли, вино или все?"]
-    Select{"Категории"}
-    Food["Attach kitchen PDF"]
-    Bar["Attach BAR CARD.pdf"]
-    Elements["Attach ELEMENTS CARD.pdf"]
-    Wine["Attach WINE MENU.pdf"]
-    All["Attach 4 PDFs<br/>calm order"]
-    Reply["Стильный короткий ответ<br/>+ файлы"]
-    Log["Kafka/admin event<br/>MENU_ASSETS_DELIVERED"]
-    Offer["Могу помочь с бронью стола<br/>или позвать менеджера"]
-    Home["READY_FOR_DIALOG"]
-
-    Start --> Transport --> Classify --> NeedClarify
-    NeedClarify -- "нет" --> Clarify --> Classify
-    NeedClarify -- "да" --> Select
-    Select -- "кухня" --> Food --> Reply
-    Select -- "бар" --> Bar --> Reply
-    Select -- "коктейли" --> Elements --> Reply
-    Select -- "вино" --> Wine --> Reply
-    Select -- "все меню" --> All --> Reply
-    Reply --> Log --> Offer --> Home
-    </div>
+    <table>
+      <thead><tr><th>Шаг FSM</th><th>Что делает Батлер</th><th>Что храним / читаем</th></tr></thead>
+      <tbody>
+      <tr><td><code>MENU_ASSETS_INTAKE</code></td><td>Принимает текст или voice transcript, не различая транспорт дальше по сценарию.</td><td>raw input, transcript, confidence, source message.</td></tr>
+      <tr><td><code>MENU_ASSETS_LOOKUP</code></td><td>Читает активный каталог меню и RAG chunks по вопросу гостя.</td><td>asset ids, versions, pgvector top-K, matched categories.</td></tr>
+      <tr><td><code>MENU_ASSETS_CLARIFY</code></td><td>Уточняет только если непонятно, какие карты нужны.</td><td>clarification question, options, attempt count.</td></tr>
+      <tr><td><code>MENU_ASSETS_DELIVER</code></td><td>Отправляет 1-4 актуальных PDF в спокойном порядке.</td><td>delivered asset ids, file ids/object keys, delivery status.</td></tr>
+      <tr><td><code>MENU_ASSETS_ANSWER</code></td><td>Если гость спрашивает по блюдам/ценам, отвечает только по RAG/source.</td><td>source chunks, answer text, guardrail status.</td></tr>
+      <tr><td><code>MENU_ASSETS_DONE</code></td><td>Пишет событие и возвращает гостя в главное меню.</td><td>Kafka/admin event, current state.</td></tr>
+      </tbody>
+    </table>
     <div class="grid">
-      <div class="card"><strong>RAG</strong><span>PDF - source of truth. Индекс меню общий для всех локальных LLM-инстансов через shared retrieval, а не внутри каждой модели.</span></div>
+      <div class="card"><strong>Managed assets</strong><span>PDF не живут в git как runtime truth: каталог знает active version, MinIO object key и человекочитаемую категорию.</span></div>
+      <div class="card"><strong>RAG</strong><span>PDF - source of truth. Индекс меню общий для LLM-инстансов через shared retrieval, а не внутри каждой модели.</span></div>
       <div class="card"><strong>Voice</strong><span>Telegram voice/audio сначала транскрибируется в transport/intake, затем идет тот же путь, что и текст.</span></div>
       <div class="card"><strong>Guardrail</strong><span>LLM не выдумывает позиции, цены и наличие. Если отвечает по блюдам, опирается на RAG/menu source.</span></div>
+    </div>
+  </section>
+
+  <section id="merch-order">
+    <h2>9. Merch / продажа мерча</h2>
+    <p>Мерч - отдельный commerce/order сценарий: Батлер показывает доступные позиции, собирает намерение купить и передает подтвержденную заявку команде. Он не обещает оплату, доставку или наличие без подтверждения.</p>
+    <div class="diagram mermaid compact">
+flowchart LR
+    Intent["Гость: мерч / подарок<br/>сертификат / хочу купить"]
+    Catalog["Read merch catalog<br/>active items + media"]
+    Show["Показать 1-5 позиций<br/>фото / цена / наличие"]
+    Pick{"Гость выбрал<br/>позицию?"}
+    Clarify["Уточнить товар<br/>размер / цвет / количество"]
+    Collect["Собрать контактные детали<br/>самовывоз / доставка later"]
+    Summary["Показать order summary<br/>без автосписания"]
+    Confirm{"Подтверждает?"}
+    Order["merch_order<br/>PENDING_TEAM"]
+    Team["Admin/team card<br/>подтвердить наличие и способ оплаты"]
+    Done["Гостю: заявка принята<br/>команда проверит"]
+    Home["READY_FOR_DIALOG"]
+
+    Intent --> Catalog --> Show --> Pick
+    Pick -- "да" --> Collect --> Summary --> Confirm
+    Pick -- "нет" --> Clarify --> Show
+    Confirm -- "да" --> Order --> Team --> Done --> Home
+    Confirm -- "правки" --> Collect
+    Confirm -- "отмена" --> Home
+    </div>
+    <table>
+      <thead><tr><th>Шаг FSM</th><th>Что делает Батлер</th><th>Что храним / читаем</th></tr></thead>
+      <tbody>
+      <tr><td><code>MERCH_LOOKUP_CATALOG</code></td><td>Читает активный каталог мерча, цены, медиа и ограничение по наличию.</td><td>item ids, active version, stock hint, media asset ids.</td></tr>
+      <tr><td><code>MERCH_SHOW_OPTIONS</code></td><td>Показывает короткую витрину или релевантные позиции по запросу гостя.</td><td>shown item ids, source query, ranking reason.</td></tr>
+      <tr><td><code>MERCH_COLLECT_SELECTION</code></td><td>Собирает товар, размер/цвет/количество и комментарий.</td><td>selected item id, variant, quantity, guest note.</td></tr>
+      <tr><td><code>MERCH_CONFIRM_ORDER</code></td><td>Показывает сводку и явно говорит, что это заявка команде, не автоматическая покупка.</td><td>summary text, confirmation message id, draft version.</td></tr>
+      <tr><td><code>MERCH_SEND_TEAM_CARD</code></td><td>Создает <code>merch_order</code> и отправляет карточку в админ/командный чат.</td><td><code>merch_order_id</code>, status=<code>PENDING_TEAM</code>, admin message id.</td></tr>
+      <tr><td><code>MERCH_DONE</code></td><td>Благодарит гостя и возвращает в главное меню.</td><td>timeline event, Kafka/admin event, current state.</td></tr>
+      </tbody>
+    </table>
+    <div class="grid">
+      <div class="card"><strong>Catalog first</strong><span>Мерч не живет в тексте сценария: позиции, фото, цены и активность должны читаться из managed catalog.</span></div>
+      <div class="card"><strong>Order boundary</strong><span>До платежной интеграции Батлер создает заявку, а команда подтверждает наличие и способ оплаты.</span></div>
+      <div class="card"><strong>No false promises</strong><span>Нельзя обещать доставку, наличие или списание денег без явного подтверждения команды.</span></div>
+      <div class="card"><strong>Admin visibility</strong><span>Каждый merch_order уходит в админ-чат и timeline, чтобы не потерять коммерческий интерес гостя.</span></div>
     </div>
   </section>
 
   <section id="quiet-guide">
     <h2>10. Quiet Guide / справки, видео-тур и концепция</h2>
     <p>Quiet Guide отвечает только на запрос гостя: афиша, справка, интерьер, концепция AERIS. Это не рассылка и не маркетинговый шум.</p>
-    <div class="diagram mermaid wide">
-flowchart TD
-    Start["Text или voice intent:<br/>афиша / справка / видео-тур / концепция"]
-    Transport["Transport normalized input<br/>voice -> transcript"]
-    Type{"Что ищем?"}
-    Poster["Афиша / события<br/>content items"]
-    Help["Короткая справка<br/>rules / info"]
-    Video["QUIET_GUIDE_DELIVERED<br/>INTERIOR.mp4 из MinIO/cache"]
-    Concept["Approved concept copy<br/>Георгий Матвеев / 21 страна / философия"]
-    Clarify["QUIET_GUIDE_CLARIFY<br/>афиша / меню / видео-тур / концепция / менеджер"]
-    Reply["Короткий красивый ответ<br/>+ релевантный материал"]
-    Log["Kafka/admin event<br/>QUIET_GUIDE_DELIVERED"]
-    Offer["Предложить следующий шаг<br/>без давления"]
+    <div class="diagram mermaid compact">
+flowchart LR
+    Intent["Гость: афиша / справка<br/>видео-тур / концепция"]
+    Intake["Normalize input<br/>text или voice transcript"]
+    Classify["Classify content type<br/>афиша / интерьер / концепция / справка"]
+    Fetch["Fetch approved content<br/>channel posts + media_assets + approved copy"]
+    Deliver["Deliver material<br/>text + photo/video/doc"]
+    Clarify["One clarification<br/>если запрос широкий"]
+    Fallback["Polite fallback<br/>no technical details"]
+    Log["QUIET_GUIDE_DELIVERED<br/>or QUIET_GUIDE_FAILED"]
     Home["READY_FOR_DIALOG"]
 
-    Start --> Transport --> Type
-    Type -- "афиша / события" --> Poster --> Reply
-    Type -- "правила / справка" --> Help --> Reply
-    Type -- "интерьер / зал / видео" --> Video --> Reply
-    Type -- "концепция / шеф / кухня" --> Concept --> Reply
-    Type -- "непонятно" --> Clarify --> Home
-    Reply --> Log --> Offer --> Home
+    Intent --> Intake --> Classify
+    Classify -- "понятно" --> Fetch --> Deliver --> Log --> Home
+    Classify -- "широко" --> Clarify --> Classify
+    Fetch -- "asset unavailable" --> Fallback --> Log
     </div>
+    <table>
+      <thead><tr><th>Запрос</th><th>Источник</th><th>Ответ гостю</th></tr></thead>
+      <tbody>
+      <tr><td>Афиша, события, акции, что сегодня</td><td><code>venue_content_posts/assets</code> из official channel ingest</td><td>Ближайшие события, условия промо, 1-3 медиа без спама.</td></tr>
+      <tr><td>Видео-тур, интерьер, как внутри</td><td><code>INTERIOR.mp4</code> из MinIO/cache, активная версия в <code>media_assets</code></td><td>Видео без перекодирования/искажения + короткий атмосферный текст.</td></tr>
+      <tr><td>Концепция, шеф, кухня AERIS</td><td>Approved concept copy + RAG/source chunks</td><td>Короткий рассказ про Георгия Матвеева, 21 страну Средиземноморья и философию продукта.</td></tr>
+      <tr><td>Справка, правила, режим</td><td>Approved venue info / future knowledge base</td><td>Точный короткий ответ и предложение следующего шага.</td></tr>
+      </tbody>
+    </table>
+    <table>
+      <thead><tr><th>Шаг FSM</th><th>Что делает Батлер</th><th>Что храним / читаем</th></tr></thead>
+      <tbody>
+      <tr><td><code>QUIET_GUIDE_INTAKE</code></td><td>Принимает текст или voice transcript.</td><td>raw input, transcript, confidence, source message.</td></tr>
+      <tr><td><code>QUIET_GUIDE_CLASSIFY</code></td><td>Определяет content type: афиша, справка, интерьер, концепция.</td><td>content_type, confidence, matched phrases/chunks.</td></tr>
+      <tr><td><code>QUIET_GUIDE_FETCH_CONTENT</code></td><td>Читает только approved/active контент и актуальные assets.</td><td>content ids, media asset ids, object keys, source refs.</td></tr>
+      <tr><td><code>QUIET_GUIDE_CLARIFY</code></td><td>Уточняет один раз, если запрос широкий: афиша, меню, видео-тур, концепция или менеджер.</td><td>clarification question, options, attempt count.</td></tr>
+      <tr><td><code>QUIET_GUIDE_DELIVER</code></td><td>Отправляет короткий ответ и релевантный материал без рассылки и давления.</td><td>delivery status, sent asset ids, reply text.</td></tr>
+      <tr><td><code>QUIET_GUIDE_FALLBACK</code></td><td>Если asset недоступен, спокойно объясняет и пишет admin event.</td><td>failure reason, correlation id, admin event.</td></tr>
+      </tbody>
+    </table>
     <div class="grid">
+      <div class="card"><strong>Афиша</strong><span>Свежие события и промо приходят из official channel ingest, а не из ручного текста внутри сценария.</span></div>
       <div class="card"><strong>Media</strong><span>PDF и видео живут в MinIO/S3, активные версии - в <code>media_assets</code>. Git хранит код, docs и manifest, не бинарники.</span></div>
       <div class="card"><strong>Концепция</strong><span>Ответ строится на approved copy: гастрономическая экспедиция Георгия Матвеева, 21 страна Средиземноморья, чистота вкуса и продукт.</span></div>
       <div class="card"><strong>Fallback</strong><span>Если media storage недоступен, Astor спокойно извиняется, дает концепт-текст и отправляет admin event без технических деталей гостю.</span></div>
     </div>
   </section>
 
+  <section id="aeris-channel-ingest">
+    <h2>10.1 AERIS Channel Ingest / источник афиши</h2>
+    <p>Пока у нас нет доступа добавить бота админом официального канала, MVP читает публичную страницу <code>https://t.me/s/aeris_gastrobar</code>. Когда бот станет админом канала в заведении, источник меняется на <code>channel_post</code>/<code>edited_channel_post</code>, а домен Quiet Guide не меняется.</p>
+    <p><strong>Статус MVP:</strong> готов public parser, rules classifier, MinIO media mirroring, PostgreSQL store, manual endpoint и read path в <code>QuietGuideScenario</code>. <code>pgvector</code>, Kafka/Scylla события и admin-review кнопки - следующий слой.</p>
+    <div class="diagram mermaid wide">
+flowchart TD
+    Public["PublicTelegramHtmlSource<br/>https://t.me/s/aeris_gastrobar<br/>MVP now"]
+    AdminBot["TelegramChannelPostSource<br/>channel_post / edited_channel_post<br/>production later"]
+    Port["VenueContentSource port<br/>единый normalized DTO"]
+    Normalize["Normalize post<br/>text / date / media / source ids"]
+    Hash["Idempotency<br/>sourceMessageId + sourceHash"]
+    Classify["Classifier<br/>rules now, LLM/pgvector later"]
+    Type{"contentType?"}
+    Afisha["AFISHA_EVENT<br/>date / time / title"]
+    Promo["PROMO_OFFER<br/>active window / conditions"]
+    Menu["MENU_UPDATE"]
+    News["VENUE_NEWS"]
+    Atmosphere["ATMOSPHERE_CONTENT"]
+    Review["UNKNOWN_REVIEW<br/>admin buttons"]
+    Assets["Download media<br/>photo / video / document"]
+    Minio["MinIO<br/>content/aeris/channel/YYYY/MM/..."]
+    Pg["PostgreSQL<br/>venue_content_posts<br/>venue_content_assets"]
+    Vector["pgvector<br/>semantic chunks later"]
+    Events["Kafka + Scylla<br/>CONTENT_POST_INGESTED"]
+    Quiet["QuietGuideScenario<br/>answer афиша / акции / что сегодня"]
+    Retention["Retention job<br/>90 days fast media pool"]
+
+    Public --> Port
+    AdminBot --> Port
+    Port --> Normalize --> Hash --> Classify --> Type
+    Type -- "событие" --> Afisha
+    Type -- "промо" --> Promo
+    Type -- "меню" --> Menu
+    Type -- "новость" --> News
+    Type -- "атмосфера" --> Atmosphere
+    Type -- "не уверен" --> Review
+    Afisha --> Pg
+    Promo --> Pg
+    Menu --> Pg
+    News --> Pg
+    Atmosphere --> Pg
+    Review --> Pg
+    Normalize --> Assets --> Minio --> Pg
+    Pg --> Vector
+    Pg --> Events
+    Pg --> Quiet
+    Vector --> Quiet
+    Retention --> Minio
+    Retention --> Pg
+
+    classDef source fill:#E3F2FD,stroke:#1565C0,color:#0D47A1;
+    classDef store fill:#F3E5F5,stroke:#6A1B9A,color:#4A148C;
+    classDef scenario fill:#FFF8E1,stroke:#F9A825,color:#3E2723;
+    classDef review fill:#FCE4EC,stroke:#AD1457,color:#880E4F;
+    class Public,AdminBot,Port source;
+    class Pg,Minio,Vector,Events store;
+    class Quiet scenario;
+    class Review review;
+    </div>
+    <table>
+      <thead><tr><th>Тип</th><th>Что значит</th><th>Как отвечает Quiet Guide</th></tr></thead>
+      <tbody>
+      <tr><td><code>AFISHA_EVENT</code></td><td>Событие с датой/временем: музыка, DJ, гастроужин, вечеринка.</td><td>Показывает ближайшие события, дату, время и 1-3 медиа.</td></tr>
+      <tr><td><code>PROMO_OFFER</code></td><td>Акция, спецпредложение, сет, happy hour.</td><td>Отвечает на "есть акции?" и объясняет условия.</td></tr>
+      <tr><td><code>MENU_UPDATE</code></td><td>Новое блюдо, сезонное меню, новый коктейль.</td><td>Связывает с MenuAssets/RAG и предлагает актуальную карту.</td></tr>
+      <tr><td><code>VENUE_NEWS</code></td><td>Новости заведения, режим работы, команда.</td><td>Дает короткую справку без рекламного шума.</td></tr>
+      <tr><td><code>ATMOSPHERE_CONTENT</code></td><td>Фото/видео атмосферы без конкретной даты.</td><td>Использует как мягкий контент для "покажи как внутри".</td></tr>
+      <tr><td><code>UNKNOWN_REVIEW</code></td><td>Классификатор не уверен.</td><td>Не показывает гостю, отправляет админу карточку классификации.</td></tr>
+      </tbody>
+    </table>
+    <div class="grid">
+      <div class="card"><strong>Сейчас</strong><span>Парсим публичный <code>t.me/s/aeris_gastrobar</code>, классифицируем посты и отдаем их в Quiet Guide через runtime endpoint.</span></div>
+      <div class="card"><strong>Потом</strong><span>Меняем source на bot-admin <code>channel_post</code>. Normalized DTO, storage и Quiet Guide остаются теми же.</span></div>
+      <div class="card"><strong>Storage</strong><span>PostgreSQL хранит смысл и классификацию, MinIO - медиа; pgvector indexing добавим отдельным слоем.</span></div>
+      <div class="card"><strong>Retention</strong><span>Быстрый media pool чистится через 90 дней, active афиши/промо живут до окончания окна + запас.</span></div>
+    </div>
+  </section>
+
   <section id="smart-tip">
     <h2>11. Smart Tip / благодарность</h2>
-    <p>Сценарий благодарности из Legacy <code>tip/*</code>. Пока нет платежной интеграции, FSM создает только подтвержденное намерение и не обещает оплату.</p>
-    <div class="diagram mermaid">
-flowchart TD
-    Start["Intent: чаевые / благодарность"]
-    Target{"Кому благодарность?"}
-    AskTarget["Уточнить: команда / официант / бар"]
-    Amount{"Есть сумма?"}
-    AskAmount["Спросить сумму"]
-    Summary["Сводка благодарности"]
-    Confirm{"Гость подтверждает?"}
-    Boundary["Create tip intent<br/>future payment boundary"]
-    Thanks["Спасибо + timeline event"]
-    Cancel["Отмена без давления"]
+    <p>Smart Tip связывает гостя и сотрудника напрямую через СПБ. Astor Butler не берет комиссию и не хранит платежные средства: он выбирает получателя, формирует order, дает СПБ-ссылку, принимает чек/факт оплаты и пишет аналитику.</p>
+    <div class="diagram mermaid compact">
+flowchart LR
+    Intent["Гость: чаевые / спасибо"]
+    Staff["Показать staff directory<br/>официант / бар / кухня / команда"]
+    ConfirmStaff{"Точно этот получатель?"}
+    Amount["Сумма + короткое спасибо"]
+    Order["tip_order<br/>PENDING"]
+    SBP["СПБ link / QR<br/>guest -> staff directly"]
+    Receipt{"Есть чек / callback?"}
+    Done["tip_order PAID<br/>уведомить staff: кайфуйте"]
+    Review["manual review<br/>если чек не прочитан"]
+    Cancel["отмена без давления"]
     Home["READY_FOR_DIALOG"]
 
-    Start --> Target
-    Target -- "известно" --> Amount
-    Target -- "неизвестно" --> AskTarget --> Amount
-    Amount -- "нет" --> AskAmount --> Summary
-    Amount -- "да" --> Summary
-    Summary --> Confirm
-    Confirm -- "да" --> Boundary --> Thanks --> Home
-    Confirm -- "нет" --> Cancel --> Home
+    Intent --> Staff --> ConfirmStaff
+    ConfirmStaff -- "да" --> Amount --> Order --> SBP --> Receipt
+    ConfirmStaff -- "нет" --> Staff
+    ConfirmStaff -- "отмена" --> Cancel --> Home
+    Receipt -- "paid" --> Done --> Home
+    Receipt -- "unclear / timeout" --> Review --> Home
+    </div>
+    <table>
+      <thead><tr><th>Шаг FSM</th><th>Что делает Батлер</th><th>Что храним</th></tr></thead>
+      <tbody>
+      <tr><td><code>TIP_SELECT_STAFF</code></td><td>Дает список активного staff и командный получатель заведения.</td><td><code>staff_id</code>, роль, имя, СПБ-псевдоним/номер, active flag.</td></tr>
+      <tr><td><code>TIP_CONFIRM_STAFF</code></td><td>Просит подтвердить адресата, чтобы не отправить не тому человеку.</td><td><code>target_type</code>: staff / team / venue.</td></tr>
+      <tr><td><code>TIP_COLLECT_AMOUNT</code></td><td>Собирает сумму и необязательное сообщение благодарности.</td><td><code>amount</code>, <code>currency=RUB</code>, note.</td></tr>
+      <tr><td><code>TIP_CONFIRM_ORDER</code></td><td>Показывает сводку: кому, сколько, через СПБ, без комиссии Батлера.</td><td><code>tip_order_id</code>, <code>PENDING</code>, source chat/message.</td></tr>
+      <tr><td><code>TIP_WAIT_PAYMENT_RECEIPT</code></td><td>Отправляет СПБ-ссылку/QR и ждет чек, callback или ручное подтверждение.</td><td>СПБ link, receipt raw, paid_at, parsed bank/payment facts.</td></tr>
+      <tr><td><code>TIP_COMPLETED</code></td><td>Благодарит гостя, пишет сотруднику: "кайфуйте", возвращает в главное меню.</td><td><code>PAID</code> event, analytics timeline, Kafka admin event.</td></tr>
+      </tbody>
+    </table>
+    <div class="grid">
+      <div class="card"><strong>Получатели</strong><span>Справочник staff: официанты, бар, кухня, менеджер и общий получатель заведения. Пока номер заведения можно привязать командой админа.</span></div>
+      <div class="card"><strong>СПБ boundary</strong><span>Гость платит напрямую staff/venue. Батлер не процессит деньги и не обещает оплату до факта чека/callback.</span></div>
+      <div class="card"><strong>Аналитика</strong><span>Сумма, время, кто, кому, сценарий, чек и исходное сообщение остаются в БД для понимания благодарности и качества сервиса.</span></div>
+      <div class="card"><strong>Fallback</strong><span>Если чек не распознан или оплата зависла, order уходит в manual review, гость получает спокойный статус без давления.</span></div>
     </div>
   </section>
 
   <section id="hidden-heart">
     <h2>12. Hidden Heart / донаты</h2>
-    <p>Социальный вклад из Legacy <code>charity/*</code>: анонимный донат или поддержка инициативы. Никакого давления, публичного сравнения и лишних персональных данных.</p>
-    <div class="diagram mermaid">
-flowchart TD
-    Start["Intent: донат / благотворительность"]
-    Cause{"Понятна цель?"}
-    Causes["Показать инициативы"]
-    Amount{"Есть сумма?"}
-    AskAmount["Спросить сумму"]
-    Privacy{"Анонимно?"}
-    Anonymous["anonymous=true"]
-    Named["named donation"]
-    Summary["Donation summary"]
-    Confirm{"Гость подтверждает?"}
-    Draft["Create donation draft/order<br/>future payment boundary"]
-    Impact["Impact event<br/>aggregated only"]
-    Cancel["Отмена без давления"]
+    <p>Hidden Heart показывает список инициатив и документы, затем связывает гостя с получателем напрямую через СПБ. По умолчанию вклад анонимный; публичных рейтингов, давления и лишних персональных данных нет.</p>
+    <div class="diagram mermaid compact">
+flowchart LR
+    Intent["Гость: донат / помощь"]
+    Initiatives["Показать initiatives directory<br/>цель / документы / срок / получатель"]
+    Pick{"Инициатива выбрана?"}
+    Amount["Сумма + опционально сообщение"]
+    Privacy["privacy default:<br/>anonymous=true"]
+    Order["donation_order<br/>PENDING"]
+    SBP["СПБ link / QR<br/>guest -> initiative receiver"]
+    Receipt{"Есть чек / callback?"}
+    Done["donation_order PAID<br/>impact aggregated"]
+    Review["manual review<br/>если чек не прочитан"]
+    Cancel["отмена без давления"]
     Home["READY_FOR_DIALOG"]
 
-    Start --> Cause
-    Cause -- "нет" --> Causes --> Amount
-    Cause -- "да" --> Amount
-    Amount -- "нет" --> AskAmount --> Privacy
-    Amount -- "да" --> Privacy
-    Privacy -- "да / default" --> Anonymous --> Summary
-    Privacy -- "нет" --> Named --> Summary
-    Summary --> Confirm
-    Confirm -- "да" --> Draft --> Impact --> Home
-    Confirm -- "нет" --> Cancel --> Home
+    Intent --> Initiatives --> Pick
+    Pick -- "да" --> Amount --> Privacy --> Order --> SBP --> Receipt
+    Pick -- "не выбрана" --> Initiatives
+    Pick -- "отмена" --> Cancel --> Home
+    Receipt -- "paid" --> Done --> Home
+    Receipt -- "unclear / timeout" --> Review --> Home
+    </div>
+    <table>
+      <thead><tr><th>Шаг FSM</th><th>Что делает Батлер</th><th>Что храним</th></tr></thead>
+      <tbody>
+      <tr><td><code>DONATION_SELECT_INITIATIVE</code></td><td>Показывает активные инициативы, цель, документы и доверенный получатель.</td><td><code>initiative_id</code>, title, docs/media links, receiver СПБ-реквизиты, active window.</td></tr>
+      <tr><td><code>DONATION_EXPLAIN_INITIATIVE</code></td><td>По запросу объясняет, зачем сбор, кому идет платеж, какие документы приложены.</td><td>semantic chunks из docs, source files в MinIO, ответ LLM/RAG.</td></tr>
+      <tr><td><code>DONATION_COLLECT_AMOUNT</code></td><td>Собирает сумму и необязательное сообщение поддержки.</td><td><code>amount</code>, <code>currency=RUB</code>, note.</td></tr>
+      <tr><td><code>DONATION_PRIVACY_CONFIRM</code></td><td>Подтверждает режим видимости. Default - анонимно.</td><td><code>anonymous=true</code> по умолчанию, display_name только с явного согласия.</td></tr>
+      <tr><td><code>DONATION_CONFIRM_ORDER</code></td><td>Показывает сводку: инициатива, сумма, получатель, СПБ, без комиссии Батлера.</td><td><code>donation_order_id</code>, <code>PENDING</code>, source chat/message.</td></tr>
+      <tr><td><code>DONATION_WAIT_PAYMENT_RECEIPT</code></td><td>Отправляет СПБ-ссылку/QR и ждет чек, callback или ручное подтверждение.</td><td>СПБ link, receipt raw, paid_at, parsed bank/payment facts.</td></tr>
+      <tr><td><code>DONATION_COMPLETED</code></td><td>Благодарит гостя спокойно, обновляет агрегированный Impact Meter.</td><td><code>PAID</code> event, aggregated impact, Kafka admin event.</td></tr>
+      </tbody>
+    </table>
+    <div class="grid">
+      <div class="card"><strong>Инициативы</strong><span>Ты добавляешь список инициатив, документы и медиа. Бот показывает только active/published, без неутвержденных сборов.</span></div>
+      <div class="card"><strong>СПБ boundary</strong><span>Платеж идет напрямую получателю инициативы. Батлер не процессит деньги и не обещает оплату до чека/callback.</span></div>
+      <div class="card"><strong>Privacy</strong><span>Default - анонимно. Имя гостя показывается только после явного согласия, без рейтингов и соревнования.</span></div>
+      <div class="card"><strong>Impact</strong><span>Для гостя - деликатное спасибо. Для системы - агрегированная аналитика по инициативам, суммам, времени и источникам.</span></div>
     </div>
   </section>
 
   <section id="art-auction">
     <h2>13. Art Auction / картины на событии</h2>
-    <p>Аукцион на мероприятии - это стык Hidden Heart, Safe Play, Impact Meter и EventBooking. Он не запускается случайной фразой: нужен активный event/lot.</p>
-    <div class="diagram mermaid">
-flowchart TD
-    Start["Intent: картина / аукцион / ставка"]
-    Active{"Есть активный аукцион?"}
-    Info["Показать ближайший аукцион<br/>или предложить менеджера"]
-    Lot["Показать лот<br/>описание / текущая ставка"]
-    Bid{"Гость делает ставку?"}
-    Watch["Остаться наблюдателем<br/>или выйти"]
-    Validate["Проверить шаг ставки<br/>current + minStep"]
-    Explain["Объяснить минимальную ставку"]
-    Confirm["Явно подтвердить ставку"]
-    Place["Принять bid<br/>обновить лидера"]
-    Notify["Уведомить event/manager"]
-    Impact["Impact event"]
+    <p>Аукцион живет вокруг активного event/lot: картина стоит в заведении 2 недели, рядом показываются другие работы художника, гости делают ставки, а на финальном событии победитель из top-5 оплачивает работу через СПБ. Если победитель не платит, право покупки переходит следующему участнику.</p>
+    <div class="diagram mermaid compact">
+flowchart LR
+    Entry["Intent / pinned promo<br/>как первая ссылка в рекламе"]
+    Lot["Отправить lot pack<br/>фото / pdf / artist / works"]
+    Rules["Условия аукциона<br/>2 недели / min step / финал"]
+    Active{"Lot active?"}
+    Bid["Ставка гостя"]
+    Validate{"bid >= current + minStep?"}
+    Top5["Обновить leaderboard<br/>top-5 участников"]
+    Close["Финал события<br/>закрыть прием ставок"]
+    Pay["winner #1 СПБ payment"]
+    Paid{"Оплачен чек/callback?"}
+    Next["offer next winner<br/>#2 -> #5"]
+    Done["sold / impact / notify artist"]
     Home["READY_FOR_DIALOG"]
 
-    Start --> Active
-    Active -- "нет" --> Info --> Home
-    Active -- "да" --> Lot --> Bid
-    Bid -- "нет" --> Watch --> Home
-    Bid -- "да" --> Validate
-    Validate -- "ниже minStep" --> Explain --> Lot
-    Validate -- "ok" --> Confirm
-    Confirm -- "да" --> Place --> Notify --> Impact --> Home
-    Confirm -- "нет" --> Watch
+    Entry --> Lot --> Rules --> Active
+    Active -- "да" --> Bid --> Validate
+    Active -- "нет" --> Home
+    Validate -- "ok" --> Top5 --> Home
+    Validate -- "low" --> Rules
+    Top5 --> Close --> Pay --> Paid
+    Paid -- "yes" --> Done --> Home
+    Paid -- "no / timeout" --> Next --> Pay
+    </div>
+    <table>
+      <thead><tr><th>Шаг FSM</th><th>Что делает Батлер</th><th>Что храним</th></tr></thead>
+      <tbody>
+      <tr><td><code>AUCTION_PROMO_ENTRY</code></td><td>Показывает аукцион как sponsored/pinned карточку: "первая ссылка" в ответах про искусство/ивенты.</td><td><code>auction_id</code>, priority, active window, source scenario.</td></tr>
+      <tr><td><code>AUCTION_SHOW_LOT_PACK</code></td><td>Отправляет файлы по картине: фото, описание, художник, документы, другие работы.</td><td><code>lot_id</code>, media/docs in MinIO, artist_id, стартовая цена.</td></tr>
+      <tr><td><code>AUCTION_SHOW_RULES</code></td><td>Объясняет условия: 2 недели экспозиции, min step, top-5, финальный event, СПБ-оплата победителя.</td><td>rules version, min_step, starts_at, ends_at, final_event_id.</td></tr>
+      <tr><td><code>AUCTION_COLLECT_BID</code></td><td>Принимает ставку только по активному лоту.</td><td><code>bid_amount</code>, bidder, source chat/message, timestamp.</td></tr>
+      <tr><td><code>AUCTION_VALIDATE_BID</code></td><td>Проверяет, что ставка выше текущей минимум на <code>min_step</code>, иначе объясняет порог.</td><td>current_bid, min_step, validation result.</td></tr>
+      <tr><td><code>AUCTION_TOP5_UPDATED</code></td><td>Обновляет leaderboard top-5 и показывает гостю его место без раскрытия лишних данных.</td><td>top5 snapshot, public alias, rank, Kafka admin event.</td></tr>
+      <tr><td><code>AUCTION_FINALIZE_EVENT</code></td><td>В финале закрывает ставки и выбирает winner #1 из top-5.</td><td>closed_at, winner_order, final_bid, event link.</td></tr>
+      <tr><td><code>AUCTION_WAIT_WINNER_PAYMENT</code></td><td>Отправляет победителю СПБ-ссылку/QR и ждет чек/callback.</td><td>payment_order_id, СПБ link, receipt raw, paid_at.</td></tr>
+      <tr><td><code>AUCTION_NEXT_WINNER</code></td><td>Если #1 не оплатил в срок, предлагает покупку #2, потом #3-#5.</td><td>timeout reason, skipped winner, next candidate.</td></tr>
+      <tr><td><code>AUCTION_SOLD</code></td><td>Фиксирует продажу, уведомляет художника/менеджера, обновляет Impact Meter.</td><td><code>SOLD</code> event, artist payout target, aggregate impact.</td></tr>
+      </tbody>
+    </table>
+    <div class="grid">
+      <div class="card"><strong>Экспозиция</strong><span>Лот живет 2 недели: картина в заведении, рядом контент художника и других работ, все медиа/доки лежат в MinIO.</span></div>
+      <div class="card"><strong>Sponsored entry</strong><span>Механика как первая рекламная ссылка: при релевантных запросах Батлер аккуратно показывает активный аукцион первым, но не запускает его случайно.</span></div>
+      <div class="card"><strong>Top-5</strong><span>Показываем первые 5 ставок/участников как игру и социальный интерес, но с публичными alias без лишних персональных данных.</span></div>
+      <div class="card"><strong>СПБ финал</strong><span>Деньги идут напрямую получателю/художнику через СПБ. При неоплате winner #1 право покупки переходит следующему в top-5.</span></div>
     </div>
   </section>
 
@@ -767,81 +1255,210 @@ flowchart TD
     <h2>14. Impact Meter / культурный вклад</h2>
     <p>Extension point для отчетности: донаты, аукционы, чаевые и события превращаются в агрегированные KPI без раскрытия приватных платежных данных.</p>
     <div class="diagram mermaid compact">
-flowchart TD
-    Start["Intent: impact / итоги / сколько собрали"]
-    Scope{"Какой scope?"}
-    Event["Событие"]
-    Cause["Инициатива"]
-    Venue["Площадка"]
-    Report["Человекочитаемый отчет"]
+flowchart LR
+    Intent["Гость / менеджер:<br/>итоги / сколько собрали"]
+    Sources["Read events<br/>tips + donations + auctions + events"]
+    Scope["Scope<br/>venue / event / initiative / period"]
+    Privacy["Privacy filter<br/>no raw payment / no PII"]
+    Aggregate["Aggregate KPI<br/>amounts / count / conversion / top categories"]
+    Narrative["Human report<br/>коротко и красиво"]
+    Export["Admin export<br/>CSV/dashboard later"]
     Home["READY_FOR_DIALOG"]
 
-    Start --> Scope
-    Scope -- "событие" --> Event --> Report
-    Scope -- "инициатива" --> Cause --> Report
-    Scope -- "общий" --> Venue --> Report
-    Report --> Home
+    Intent --> Sources --> Scope --> Privacy --> Aggregate --> Narrative --> Home
+    Aggregate --> Export
+    </div>
+    <table>
+      <thead><tr><th>Шаг FSM</th><th>Что делает Батлер</th><th>Что храним / читаем</th></tr></thead>
+      <tbody>
+      <tr><td><code>IMPACT_SELECT_SCOPE</code></td><td>Определяет, что нужно: площадка, событие, инициатива, художник, период.</td><td>scope type, ids, date range, requester role.</td></tr>
+      <tr><td><code>IMPACT_READ_EVENTS</code></td><td>Читает только события: <code>TIP_PAID</code>, <code>DONATION_PAID</code>, <code>AUCTION_SOLD</code>, <code>EVENT_COMPLETED</code>.</td><td>event stream / projections, no raw card/payment data.</td></tr>
+      <tr><td><code>IMPACT_PRIVACY_FILTER</code></td><td>Удаляет PII и приватные платежные данные до построения отчета.</td><td>anonymous aliases, aggregate only, access policy.</td></tr>
+      <tr><td><code>IMPACT_AGGREGATE_KPI</code></td><td>Считает суммы, количество участников, конверсию, топ категорий и динамику.</td><td>aggregates by scope, currency, period, source scenario.</td></tr>
+      <tr><td><code>IMPACT_BUILD_REPORT</code></td><td>Формирует человекочитаемый отчет для гостя/менеджера.</td><td>report text, charts later, generated_at.</td></tr>
+      <tr><td><code>IMPACT_ADMIN_EXPORT</code></td><td>Для админов готовит выгрузку/дашборд без персональных платежных данных.</td><td>CSV/dashboard link, actor id, audit trail.</td></tr>
+      </tbody>
+    </table>
+    <div class="grid">
+      <div class="card"><strong>Sources</strong><span>Питается из Smart Tip, Hidden Heart, Art Auction и EventBooking, но не владеет платежами и orders.</span></div>
+      <div class="card"><strong>Privacy first</strong><span>Гость видит красивую агрегированную историю. Админ видит аналитику. Никто не видит лишние raw payment details.</span></div>
+      <div class="card"><strong>KPI</strong><span>Сумма, количество участников, средний вклад, конверсия, top categories, динамика по периодам и событиям.</span></div>
+      <div class="card"><strong>Story</strong><span>Задача не только посчитать, но и красиво рассказать культурный вклад AERIS без давления на гостей.</span></div>
+    </div>
+  </section>
+
+  <section id="feedback">
+    <h2>15. Feedback / отзыв гостя</h2>
+    <p>Отзыв - явный сценарий обратной связи: похвала, жалоба или предложение сохраняются в timeline и уходят карточкой команде в админ-чат. Это не fallback и не автоматическая публичная реакция.</p>
+    <div class="diagram mermaid compact">
+flowchart LR
+    Intent["Гость: отзыв / жалоба<br/>похвала / предложение"]
+    Classify["Classify feedback<br/>praise / complaint / idea / service issue"]
+    Context["Attach context<br/>guest + last dialog + active order"]
+    Risk{"Есть риск<br/>или срочность?"}
+    Acknowledge["Гостю: спасибо<br/>приняли и передали команде"]
+    Card["Admin feedback card<br/>summary + type + priority"]
+    Claim{"Нужен ручной ответ?"}
+    Manager["ManagerHelpScenario<br/>claim + reply"]
+    Archive["Feedback stored<br/>analytics + quality loop"]
+    Home["READY_FOR_DIALOG"]
+
+    Intent --> Classify --> Context --> Risk
+    Risk -- "обычный" --> Acknowledge --> Card --> Archive --> Home
+    Risk -- "жалоба / срочно" --> Acknowledge --> Card --> Claim
+    Claim -- "да" --> Manager --> Archive --> Home
+    Claim -- "нет" --> Archive --> Home
+    </div>
+    <table>
+      <thead><tr><th>Шаг FSM</th><th>Что делает Батлер</th><th>Что храним / передаем</th></tr></thead>
+      <tbody>
+      <tr><td><code>FEEDBACK_CLASSIFY</code></td><td>Определяет тип: похвала, жалоба, идея, сервисная проблема, техническая проблема.</td><td>feedback_type, confidence, sentiment, risk flags.</td></tr>
+      <tr><td><code>FEEDBACK_ATTACH_CONTEXT</code></td><td>Прикладывает гостя, последние сообщения, активную бронь/order и source message.</td><td>guest id, order refs, dialog summary, correlation id.</td></tr>
+      <tr><td><code>FEEDBACK_ACK_GUEST</code></td><td>Благодарит гостя спокойным тоном и обещает только передачу команде.</td><td>guest acknowledgement, sent_at, tone variant.</td></tr>
+      <tr><td><code>FEEDBACK_SEND_ADMIN_CARD</code></td><td>Отправляет в админ-чат карточку отзыва с типом, приоритетом, summary и deep link.</td><td>admin message id, priority, deep link, status=<code>OPEN</code>.</td></tr>
+      <tr><td><code>FEEDBACK_ESCALATE_IF_NEEDED</code></td><td>Для жалобы, VIP, денег, безопасности или повторного негатива предлагает команде ручной ответ.</td><td>escalation reason, assigned scenario, SLA hint.</td></tr>
+      <tr><td><code>FEEDBACK_DONE</code></td><td>Сохраняет feedback event для аналитики качества и возвращает гостя в главное меню.</td><td>timeline event, Kafka/admin event, current state.</td></tr>
+      </tbody>
+    </table>
+    <div class="grid">
+      <div class="card"><strong>Not fallback</strong><span>Фраза "хочу оставить отзыв" не должна попадать в Recovery. Это нормальный продуктовый сценарий.</span></div>
+      <div class="card"><strong>Team visibility</strong><span>Команда получает карточку с контекстом, типом отзыва и ссылкой на диалог, а не голый текст.</span></div>
+      <div class="card"><strong>Guest comfort</strong><span>Гостю не показываем внутренние reason codes. Он получает короткое человеческое "спасибо, передал команде".</span></div>
+      <div class="card"><strong>Quality loop</strong><span>Все отзывы потом становятся источником аналитики сервиса: типы проблем, похвалы, повторяемость, скорость реакции.</span></div>
     </div>
   </section>
 
   <section id="manager-help">
-    <h2>15. Менеджер / ручная помощь</h2>
-    <p>Ручное подключение команды должно быть явным сценарием, а не побочным эффектом любой непонятной фразы.</p>
+    <h2>16. Менеджер / ручная помощь</h2>
+    <p>Ручное подключение команды - явный handoff: в админ-чат уходит саммари диалога, причина обращения или LLM-сбоя, ссылка на чат с гостем и карточка, которую может взять любой участник команды.</p>
     <div class="diagram mermaid compact">
-flowchart TD
-    Start["Intent: менеджер / человек / жалоба"]
-    Reason["Коротко определить причину"]
-    Card["Собрать карточку<br/>chatId / user / text / state"]
-    Notify["Отправить admin/manager"]
-    Guest["Гостю: команда увидит запрос"]
+flowchart LR
+    Intent["Гость: менеджер / жалоба<br/>или explicit handoff"]
+    Context["Build context<br/>dialog summary + active order"]
+    Reason["Reason<br/>guest request / LLM failure / policy"]
+    Card["Admin handoff card<br/>summary + deep link + buttons"]
+    Claim{"Кто-то взял?"}
+    Guest["Гостю: команда подключилась<br/>или скоро ответит"]
+    Manual["Manager replies in guest chat<br/>and updates system"]
+    Done["Close handoff<br/>timeline + admin event"]
+    Escalate["No claim timeout<br/>raise priority"]
     Home["READY_FOR_DIALOG"]
 
-    Start --> Reason --> Card --> Notify --> Guest --> Home
+    Intent --> Context --> Reason --> Card --> Claim
+    Claim -- "claim" --> Guest --> Manual --> Done --> Home
+    Claim -- "timeout" --> Escalate --> Card
+    </div>
+    <table>
+      <thead><tr><th>Шаг FSM</th><th>Что делает Батлер</th><th>Что храним</th></tr></thead>
+      <tbody>
+      <tr><td><code>MANAGER_HELP_COLLECT_REASON</code></td><td>Фиксирует причину: гость просит человека, жалоба, VIP, ошибка LLM/FSM, policy boundary.</td><td>reason code, raw text, current state, confidence.</td></tr>
+      <tr><td><code>MANAGER_HELP_BUILD_CONTEXT</code></td><td>Собирает саммари последних сообщений, активные orders, контакт и текущее место в сценарии.</td><td>conversation summary, active order refs, user profile snapshot.</td></tr>
+      <tr><td><code>MANAGER_HELP_SEND_CARD</code></td><td>Отправляет в админ-чат карточку с summary, причиной, deep link в чат гостя и кнопками.</td><td>admin message id, deep link, correlation id, priority.</td></tr>
+      <tr><td><code>MANAGER_HELP_CLAIMED</code></td><td>Любой участник админ-чата может взять обращение в работу.</td><td>claimed_by, claimed_at, status=<code>IN_PROGRESS</code>.</td></tr>
+      <tr><td><code>MANAGER_HELP_MANUAL_UPDATE</code></td><td>Менеджер отвечает гостю от своего имени и вносит изменения в orders/notes через команды или админ UI.</td><td>actor id, command/update payload, audit trail.</td></tr>
+      <tr><td><code>MANAGER_HELP_TIMEOUT_ESCALATION</code></td><td>Если никто не взял карточку, повышает приоритет или повторно пингует админ-чат.</td><td>timeout_at, escalation level, notification count.</td></tr>
+      <tr><td><code>MANAGER_HELP_DONE</code></td><td>Закрывает handoff и возвращает гостя в главное меню.</td><td>final status, resolution note, timeline/Kafka event.</td></tr>
+      </tbody>
+    </table>
+    <div class="grid">
+      <div class="card"><strong>Админ-чат как dispatch</strong><span>Не личка одного менеджера: любой участник команды видит карточку, контекст и может взять обращение.</span></div>
+      <div class="card"><strong>Deep link</strong><span>Карточка должна вести прямо в чат с гостем или в будущий operator view, чтобы не искать человека вручную.</span></div>
+      <div class="card"><strong>Причина handoff</strong><span>Всегда пишем, почему Батлер передал: просьба гостя, LLM не уверен, ошибка сервиса, policy/деньги/конфликт.</span></div>
+      <div class="card"><strong>Audit trail</strong><span>Все ручные изменения в orders/notes идут с actor id. Человек действует от своего имени, не как безликий бот.</span></div>
     </div>
   </section>
 
   <section id="change-cancel">
-    <h2>16. Изменить или отменить</h2>
-    <p>Отмена и изменение должны искать активную бронь, освобождать holds и при изменении заново проходить подтверждение.</p>
-    <div class="diagram mermaid">
-flowchart TD
-    Start["Intent: изменить / отменить"]
-    Lookup{"Есть активная бронь?"}
-    None["Активной брони не видно"]
-    Action{"Что сделать?"}
-    Cancel["CANCELLED<br/>release holds"]
-    Change["Обновить draft"]
-    Recheck["Проверить доступность"]
-    Hostess["Новое подтверждение хостес"]
+    <h2>17. Изменить или отменить</h2>
+    <p>Отмена и изменение работают для <code>table_order</code> и <code>event_order</code>: сначала найти активную заявку гостя, затем освободить holds при отмене или заново пройти review при изменении.</p>
+    <div class="diagram mermaid compact">
+flowchart LR
+    Intent["Гость: отменить / изменить / перенести"]
+    Lookup["Find active orders<br/>table_order + event_order"]
+    Pick{"Найдена одна<br/>или несколько?"}
+    Action{"Отмена или изменение?"}
+    Cancel["Cancel order<br/>release holds"]
+    Patch["Update requested fields<br/>date/time/guests/table/event brief"]
+    Recheck["Recheck availability<br/>new hold if needed"]
+    Review{"Order type"}
+    Hostess["Table: hostess buttons<br/>Да / Нет / Другой"]
+    Manager["Event: manager review<br/>Да / Нет / Уточнить"]
+    Done["Guest status update<br/>timeline + admin event"]
+    None["Активной брони не найдено<br/>предложить новую заявку"]
     Home["READY_FOR_DIALOG"]
 
-    Start --> Lookup
-    Lookup -- "нет" --> None --> Home
-    Lookup -- "да" --> Action
-    Action -- "отмена" --> Cancel --> Home
-    Action -- "изменить" --> Change --> Recheck --> Hostess --> Home
+    Intent --> Lookup --> Pick
+    Pick -- "нет активных" --> None --> Home
+    Pick -- "несколько" --> Action
+    Pick -- "одна" --> Action
+    Action -- "отмена" --> Cancel --> Done --> Home
+    Action -- "изменение" --> Patch --> Recheck --> Review
+    Review -- "table_order" --> Hostess --> Done
+    Review -- "event_order" --> Manager --> Done
+    Done --> Home
+    </div>
+    <table>
+      <thead><tr><th>Шаг FSM</th><th>Что делает Батлер</th><th>Что храним</th></tr></thead>
+      <tbody>
+      <tr><td><code>CHANGE_CANCEL_FIND_ORDER</code></td><td>Ищет активные <code>table_order</code> и <code>event_order</code> гостя.</td><td>order ids, type, status, date/time, short summary.</td></tr>
+      <tr><td><code>CHANGE_CANCEL_SELECT_ORDER</code></td><td>Если активных заявок несколько, просит выбрать конкретную.</td><td>selected_order_id, selection source.</td></tr>
+      <tr><td><code>CHANGE_CANCEL_SELECT_ACTION</code></td><td>Определяет действие: отменить, перенести, изменить гостей, стол, brief мероприятия.</td><td>action type, extracted fields, confidence.</td></tr>
+      <tr><td><code>CHANGE_CANCEL_CANCEL</code></td><td>Отменяет заявку, освобождает holds и уведомляет нужный чат команды.</td><td><code>CANCELLED</code>, released holds, reason, admin/Kafka event.</td></tr>
+      <tr><td><code>CHANGE_CANCEL_PATCH_ORDER</code></td><td>Обновляет поля заявки, но не подтверждает автоматически.</td><td>previous snapshot, requested changes, new draft version.</td></tr>
+      <tr><td><code>CHANGE_CANCEL_RECHECK</code></td><td>Проверяет доступность и создает новый hold, если это бронь стола.</td><td>availability result, new hold id, conflict reason.</td></tr>
+      <tr><td><code>CHANGE_CANCEL_REVIEW</code></td><td>Для стола снова отправляет хостес, для мероприятия - менеджеру.</td><td>review chat message id, decision, decision_at.</td></tr>
+      <tr><td><code>CHANGE_CANCEL_DONE</code></td><td>Сообщает гостю итог и возвращает в главное меню.</td><td>timeline event, final status, current state.</td></tr>
+      </tbody>
+    </table>
+    <div class="grid">
+      <div class="card"><strong>Два типа order</strong><span>Один сценарий обслуживает и обычную бронь стола, и заявку на мероприятие, но review route разный.</span></div>
+      <div class="card"><strong>Cancel releases holds</strong><span>Любая отмена освобождает временные holds и пишет событие в админ/аналитику.</span></div>
+      <div class="card"><strong>Change is not confirm</strong><span>Изменение даты/времени/стола/brief всегда заново проходит хостес или менеджера.</span></div>
+      <div class="card"><strong>Several active orders</strong><span>Если у гостя несколько заявок, Батлер сначала показывает короткий список и просит выбрать одну.</span></div>
     </div>
   </section>
 
   <section id="recovery">
-    <h2>17. Recovery / fallback</h2>
+    <h2>18. Recovery / fallback</h2>
     <p>Recovery сначала уточняет, и только потом эскалирует. Это должен быть редкий safety-net.</p>
     <div class="diagram mermaid compact">
-flowchart TD
-    Start["Unknown intent / error / timeout"]
-    Repeat{"Повторная неясность?"}
-    Clarify["Показать варианты<br/>стол / меню / менеджер / мероприятие"]
-    Alert["Admin alert<br/>state + correlation"]
+flowchart LR
+    Trigger["Unknown intent / low confidence<br/>error / timeout / state conflict"]
+    Diagnose["Classify recovery reason<br/>language / STT / LLM / tool / business"]
+    CanRestore{"Можно восстановить<br/>сценарий?"}
+    Restore["Restore last safe state<br/>or ask one missing field"]
+    Clarify["One useful clarification<br/>quick options"]
+    Retry{"Повторная ошибка<br/>или risk?"}
+    Handoff["ManagerHelp handoff<br/>summary + reason"]
     Home["READY_FOR_DIALOG"]
 
-    Start --> Repeat
-    Repeat -- "первый раз" --> Clarify --> Home
-    Repeat -- "повтор / ошибка" --> Alert --> Home
+    Trigger --> Diagnose --> CanRestore
+    CanRestore -- "да" --> Restore --> Home
+    CanRestore -- "нет" --> Clarify --> Retry
+    Retry -- "нет" --> Home
+    Retry -- "да" --> Handoff --> Home
+    </div>
+    <table>
+      <thead><tr><th>Шаг FSM</th><th>Что делает Батлер</th><th>Что храним</th></tr></thead>
+      <tbody>
+      <tr><td><code>RECOVERY_DIAGNOSE</code></td><td>Определяет тип сбоя: непонятный intent, низкая уверенность, STT, LLM timeout, tool error, конфликт state/order.</td><td>reason code, confidence, exception class, current state, correlation id.</td></tr>
+      <tr><td><code>RECOVERY_RESTORE_CONTEXT</code></td><td>Если можно, возвращает гостя в последний безопасный шаг активного сценария.</td><td>last safe state, draft snapshot, restored fields.</td></tr>
+      <tr><td><code>RECOVERY_CLARIFY_ONCE</code></td><td>Задает один полезный вопрос или показывает quick options: стол, меню, афиша, мероприятие, менеджер.</td><td>clarification question, offered options, attempt count.</td></tr>
+      <tr><td><code>RECOVERY_RETRY_GUARD</code></td><td>Не зацикливается: после повторной ошибки, money/policy risk или LLM failure уходит в handoff.</td><td>retry count, risk flags, handoff required flag.</td></tr>
+      <tr><td><code>RECOVERY_MANAGER_HANDOFF</code></td><td>Передает в ManagerHelpScenario с summary, причиной и deep link.</td><td>handoff id, admin message id, reason, timeline event.</td></tr>
+      <tr><td><code>RECOVERY_DONE</code></td><td>Возвращает гостя в главное меню или восстановленный сценарий.</td><td>final recovery status, next state.</td></tr>
+      </tbody>
+    </table>
+    <div class="grid">
+      <div class="card"><strong>Clarify once</strong><span>Гость не должен видеть техническую ошибку. Сначала один короткий вопрос или варианты действий.</span></div>
+      <div class="card"><strong>Restore if safe</strong><span>Если был активный order/scenario, Батлер возвращает к последнему безопасному шагу, а не начинает хаос заново.</span></div>
+      <div class="card"><strong>No loops</strong><span>Повторная ошибка, money boundary, policy risk или LLM timeout переводят в manager handoff.</span></div>
+      <div class="card"><strong>Observed failure</strong><span>Каждый recovery пишет reason, state, correlation и исходное сообщение для аналитики просадок сценариев.</span></div>
     </div>
   </section>
 
   <section id="llm">
-    <h2>18. Контракт LLM</h2>
+    <h2>18.1 Контракт LLM</h2>
     <p>LLM - адаптер языка. Он помогает понять и красиво сказать, но не владеет бизнес-решениями.</p>
     <div class="grid">
       <div class="card"><strong>LLM может</strong><span>Классифицировать intent, извлекать дату/время/гостей/зону/сумму/лот, задавать одно уточнение, помогать с тоном.</span></div>
@@ -850,36 +1467,170 @@ flowchart TD
     </div>
   </section>
 
+  <section id="safe-play">
+    <h2>18.2 Safe Play / сабражный ритуал</h2>
+    <p>Safe Play - игровой hospitality-сценарий без давления и опасных инструкций. Для AERIS базовый кейс: подача игристого вина или шампанского с сабражным ритуалом, который выполняет команда, а гость участвует как зритель/участник опыта. Сабражная цепь - связанный merch item, который можно купить отдельно.</p>
+    <div class="diagram mermaid compact">
+flowchart LR
+    Intent["Гость: сабраж / шампанское<br/>игристое / ритуал / игра"]
+    Context["Check context<br/>table/order + guests + staff availability"]
+    Safety{"Safety allowed?<br/>age + venue + trained staff"}
+    Options["Show ritual options<br/>игристое / шампанское / цепь-merch"]
+    Confirm{"Guest confirms<br/>ritual request?"}
+    Team["Team card<br/>manager/staff approve"]
+    Perform["Ritual scheduled/performed<br/>no how-to instructions"]
+    Merch{"Interested in<br/>sabrage chain?"}
+    MerchOrder["MerchScenario<br/>sabrage chain"]
+    Done["SAFE_PLAY_COMPLETED<br/>timeline + admin event"]
+    Reject["Polite fallback<br/>offer menu/manager"]
+    Home["READY_FOR_DIALOG"]
+
+    Intent --> Context --> Safety
+    Safety -- "yes" --> Options --> Confirm
+    Safety -- "no" --> Reject --> Home
+    Confirm -- "yes" --> Team --> Perform --> Merch
+    Confirm -- "no" --> Home
+    Merch -- "yes" --> MerchOrder --> Done --> Home
+    Merch -- "no" --> Done --> Home
+    </div>
+    <table>
+      <thead><tr><th>Шаг FSM</th><th>Что делает Батлер</th><th>Что храним / проверяем</th></tr></thead>
+      <tbody>
+      <tr><td><code>SAFE_PLAY_SELECT_RITUAL</code></td><td>Понимает запрос на сабражный ритуал, игристое/шампанское или игровой момент для стола.</td><td>ritual type, source message, confidence, active table/order refs.</td></tr>
+      <tr><td><code>SAFE_PLAY_SAFETY_CHECK</code></td><td>Проверяет safety boundary: возрастной контекст, наличие обученного staff, допустимость площадки и время.</td><td>age/safety flags, staff availability, venue policy, risk status.</td></tr>
+      <tr><td><code>SAFE_PLAY_SHOW_OPTIONS</code></td><td>Показывает гостю опыт как сервис: ритуал, подача, фото/видео-память later, сабражная цепь как merch.</td><td>option ids, media asset ids, merch item id, no-how-to guard.</td></tr>
+      <tr><td><code>SAFE_PLAY_GUEST_CONFIRM</code></td><td>Просит подтвердить именно запрос на ритуал, не выполнение гостем опасного действия.</td><td>confirmation message id, selected option, guest note.</td></tr>
+      <tr><td><code>SAFE_PLAY_TEAM_CONFIRMATION</code></td><td>Отправляет карточку команде/менеджеру: стол, бутылка/категория, желаемое время, safety flags.</td><td>team message id, decision, assigned staff, status.</td></tr>
+      <tr><td><code>SAFE_PLAY_MERCH_OFFER</code></td><td>После рассказа о ритуале предлагает сабражную цепь как отдельный merch item.</td><td>merch item id, interest flag, route to <code>MerchScenario</code>.</td></tr>
+      <tr><td><code>SAFE_PLAY_DONE</code></td><td>Фиксирует итог и возвращает гостя в главное меню.</td><td>timeline event, Kafka/admin event, final status.</td></tr>
+      </tbody>
+    </table>
+    <table>
+      <thead><tr><th>Правило</th><th>Как формулируем</th></tr></thead>
+      <tbody>
+      <tr><td>Безопасность важнее игры</td><td>Если нет обученного staff или venue policy запрещает, Батлер вежливо предлагает альтернативу: подачу, бокалы, меню или менеджера.</td></tr>
+      <tr><td>Без dangerous how-to</td><td>Батлер не объясняет гостю технику сабража и не инструктирует выполнять действие самостоятельно.</td></tr>
+      <tr><td>Alcohol boundary</td><td>Не продвигаем алкоголь несовершеннолетним и не превращаем сценарий в pressure-sale.</td></tr>
+      <tr><td>Merch link</td><td>Сабражная цепь продается через <code>MerchScenario</code>: каталог, фото, цена, подтверждение команды.</td></tr>
+      <tr><td>Observability</td><td>Каждый запрос и отказ пишет reason/status, чтобы команда видела интерес к ритуалу и merch.</td></tr>
+      </tbody>
+    </table>
+    <div class="grid">
+      <div class="card"><strong>Hospitality ritual</strong><span>Сабраж подается как опыт AERIS: красиво, контролируемо, командой, без самодеятельности гостя.</span></div>
+      <div class="card"><strong>Staff game</strong><span>Команда и менеджер видят карточку, могут подтвердить, назначить staff и превратить подачу в маленький спектакль.</span></div>
+      <div class="card"><strong>Merch bridge</strong><span>Сабражная цепь становится понятным merch item: после ритуала ее можно купить или подарить.</span></div>
+      <div class="card"><strong>Assets later</strong><span>Фото цепи, подачи и карточки ритуала будут managed media assets в MinIO/catalog, когда ты приложишь файлы.</span></div>
+    </div>
+  </section>
+
   <section id="tests">
     <h2>19. Предкодовый тест-план</h2>
-    <p>Перед кодом проверяем эту карту глазами, затем переносим ее в unit/integration тесты.</p>
+    <p>Перед кодом проверяем эту карту глазами, затем переносим ее в unit/integration/e2e тесты. Этот раздел - мост между продуктовой логикой FSM и будущими автотестами: каждый маршрут ниже должен быть либо реализован, либо явно помечен как next-code target.</p>
+
+    <div class="grid">
+      <div class="card">
+        <strong>Unit</strong>
+        <span>Чистая маршрутизация: входное сообщение, текущий state, найденный intent, следующий state, без Telegram и БД.</span>
+      </div>
+      <div class="card">
+        <strong>Integration</strong>
+        <span>Side effects: PostgreSQL, Redis/Scylla timeline, pgvector lookup, Kafka events, MinIO assets, admin/hostess cards.</span>
+      </div>
+      <div class="card">
+        <strong>E2E smoke</strong>
+        <span>Контейнерный прогон с Telegram adapter mock: гость проходит сценарий, команда видит события, FSM возвращается в главное меню.</span>
+      </div>
+      <div class="card">
+        <strong>Manual review</strong>
+        <span>Перед кодом человек проверяет эту страницу: нет случайных fallback, нет опасных обещаний, money-flow только через подтверждение.</span>
+      </div>
+    </div>
+
+    <h3>19.1 Контракт тестирования</h3>
     <table>
       <thead>
-      <tr><th>Блок</th><th>Сценарий</th><th>Ожидаемый результат</th></tr>
+      <tr><th>Слой</th><th>Что проверяем</th><th>Минимальный набор assertions</th></tr>
       </thead>
       <tbody>
-      <tr><td>First Touch</td><td><code>UNKNOWN</code> + <code>/start</code></td><td>persistent preview sent/pinned, <code>CONSENT_REQUIRED</code>, кнопка контакта</td></tr>
-      <tr><td>First Touch</td><td>known contact + consent + <code>/start</code></td><td>active runtime scenario reset, preview sent/pinned, <code>READY_FOR_DIALOG</code></td></tr>
-      <tr><td>First Touch</td><td>active booking/menu/guide + <code>/start</code></td><td>scenario draft cleared, durable facts kept, safe start</td></tr>
-      <tr><td>First Touch</td><td><code>CONSENT_REQUIRED</code> + contact</td><td>consent saved, <code>READY_FOR_DIALOG</code></td></tr>
-      <tr><td>Main Menu</td><td>"хочу столик завтра"</td><td>route <code>TABLE_BOOKING</code></td></tr>
-      <tr><td>Main Menu</td><td>"скинь меню"</td><td>route <code>MENU_ASSETS</code></td></tr>
-      <tr><td>Main Menu</td><td>"позови менеджера"</td><td>route <code>MANAGER_HELP</code></td></tr>
-      <tr><td>Main Menu</td><td>"что сегодня по афише"</td><td>route <code>QUIET_GUIDE</code></td></tr>
-      <tr><td>Smart Tip</td><td>"хочу оставить чаевые 1000"</td><td>route <code>SMART_TIP</code>, confirmation before payment boundary</td></tr>
-      <tr><td>Hidden Heart</td><td>"донат 5000 анонимно"</td><td>anonymous donation draft, no public pressure</td></tr>
-      <tr><td>Art Auction</td><td>"ставлю 20000 за картину"</td><td>active auction check, min step validation, explicit confirmation</td></tr>
-      <tr><td>Impact Meter</td><td>"сколько собрали?"</td><td>aggregated report only</td></tr>
-      <tr><td>Table Booking</td><td>"столик завтра в 20:00 на двоих"</td><td>send plan, wait table</td></tr>
-      <tr><td>Table Booking</td><td><code>TABLE_BOOKING_WAIT_TABLE_SELECTION</code> + "17"</td><td>create order/hold, send hostess card</td></tr>
-      <tr><td>Menu Assets</td><td>"скинь все меню"</td><td>send 4 PDFs: кухня, бар, elements, вино; admin event</td></tr>
-      <tr><td>Menu Assets</td><td>"что у вас по вину?"</td><td>send wine PDF only + calm answer</td></tr>
-      <tr><td>Menu Assets</td><td>voice "покажи коктейли"</td><td>transport transcript, route <code>MENU_ASSETS</code>, send elements/bar by classification</td></tr>
-      <tr><td>Quiet Guide</td><td>"покажи ресторан внутри"</td><td>send <code>INTERIOR.mp4</code> from MinIO/cache + event</td></tr>
-      <tr><td>Quiet Guide</td><td>"какая у вас концепция?"</td><td>approved concept answer, offer menu/table</td></tr>
-      <tr><td>Quiet Guide</td><td>video unavailable</td><td>polite guest fallback + admin event, no technical dump</td></tr>
-      <tr><td>Safe Exit</td><td>любой активный сценарий + "стоп"</td><td>return <code>READY_FOR_DIALOG</code></td></tr>
-      <tr><td>Observability</td><td>admin chat message</td><td>stored + projection, guest FSM skipped</td></tr>
+      <tr><td>Transport</td><td>Telegram text/voice/contact/callback/service chat</td><td>voice превращается в transcript; service chats не запускают guest FSM; contact проходит только через consent flow.</td></tr>
+      <tr><td>Intent Router</td><td>fast rules + pgvector + LLM intent classifier</td><td>возвращает intent, confidence, missing slots, composite plan; не пишет напрямую в БД.</td></tr>
+      <tr><td>FSM</td><td>single source of truth по переходам</td><td>текущий state допускает переход; недостающие slots уточняются; side effects не выполняются без нужного подтверждения.</td></tr>
+      <tr><td>Scenario Services</td><td>booking, event, menu, guide, tip, donation, auction, merch, feedback</td><td>создают draft/order/hold/event только в разрешенном шаге; после завершения возвращают <code>READY_FOR_DIALOG</code>.</td></tr>
+      <tr><td>Observability</td><td>timeline/Kafka/admin chat</td><td>каждый шаг гостя, переход state и ошибка имеют человекочитаемую карточку без технического мусора для гостя.</td></tr>
+      </tbody>
+    </table>
+
+    <h3>19.2 Route/state matrix</h3>
+    <table>
+      <thead>
+      <tr><th>#</th><th>Блок</th><th>Вход</th><th>Ожидаемый маршрут/state</th><th>Side effects</th></tr>
+      </thead>
+      <tbody>
+      <tr><td>3</td><td>Общий вход</td><td>сообщение из admin/hostess/analytics/system chat, включая <code>-5403153261</code></td><td><code>SERVICE_COMMAND</code> / guest FSM skipped</td><td>audit event, optional command handling, no guest state mutation.</td></tr>
+      <tr><td>4</td><td>Первое касание</td><td><code>UNKNOWN</code> + <code>/start</code></td><td><code>CONSENT_REQUIRED</code></td><td>persistent preview sent/pinned, contact button, admin event.</td></tr>
+      <tr><td>4</td><td>Первое касание</td><td>known contact + <code>/start</code></td><td><code>READY_FOR_DIALOG</code></td><td>active runtime scenario reset, preview refreshed, durable guest facts kept.</td></tr>
+      <tr><td>5</td><td>Главное меню</td><td>"главное меню" / "что умеешь?"</td><td><code>MAIN_MENU</code> projection over <code>READY_FOR_DIALOG</code></td><td>short capabilities message, no scenario draft.</td></tr>
+      <tr><td>6</td><td>Бронь стола</td><td>"столик завтра в 20:00 на двоих"</td><td><code>TABLE_BOOKING_WAIT_TABLE_SELECTION</code></td><td>send hall plan first, collect missing slots, create hold only after table selection.</td></tr>
+      <tr><td>6</td><td>Бронь стола</td><td><code>TABLE_BOOKING_WAIT_TABLE_SELECTION</code> + "17"</td><td><code>TABLE_BOOKING_WAIT_HOSTESS_CONFIRMATION</code></td><td>create booking draft/hold, send hostess card with buttons.</td></tr>
+      <tr><td>7</td><td>Мероприятие</td><td>"хочу банкет на 20 человек"</td><td><code>EVENT_BOOKING_COLLECT_DETAILS</code></td><td>collect date, guests, budget, occasion; send manager order, no auto-confirmation.</td></tr>
+      <tr><td>8</td><td>Меню</td><td>"скинь все меню"</td><td><code>MENU_ASSETS_SEND</code></td><td>send 4 PDFs: кухня, бар, elements, вино; write menu asset event.</td></tr>
+      <tr><td>8</td><td>Меню</td><td>voice "покажи коктейли"</td><td><code>MENU_ASSETS_SEND_FILTERED</code></td><td>transport transcript, semantic route, send elements/bar by classification.</td></tr>
+      <tr><td>9</td><td>Мерч</td><td>"хочу купить сертификат / сабражную цепь"</td><td><code>MERCH_ORDER_SELECT_ITEM</code></td><td>show active catalog, create <code>merch_order</code> only after explicit confirmation.</td></tr>
+      <tr><td>10</td><td>Quiet Guide</td><td>"покажи ресторан внутри"</td><td><code>QUIET_GUIDE_SEND_INTERIOR</code></td><td>send original <code>INTERIOR.mp4</code> from MinIO/cache, then offer table/menu/concept.</td></tr>
+      <tr><td>10</td><td>Quiet Guide</td><td>"какая у вас концепция?"</td><td><code>QUIET_GUIDE_CONCEPT</code></td><td>approved concept answer, no marketing spam, optional menu/table follow-up.</td></tr>
+      <tr><td>10.1</td><td>AERIS Channel</td><td>new channel post</td><td><code>CHANNEL_POST_CLASSIFIED</code></td><td>classify poster/promo/ad/noise, store media in MinIO, update quiet-guide source pool.</td></tr>
+      <tr><td>11</td><td>Smart Tip</td><td>"хочу оставить чаевые 1000"</td><td><code>SMART_TIP_CONFIRM_STAFF</code></td><td>staff selection, amount confirmation, SBP link only after confirmation.</td></tr>
+      <tr><td>12</td><td>Hidden Heart</td><td>"донат 5000 анонимно"</td><td><code>HIDDEN_HEART_CONFIRM_INITIATIVE</code></td><td>anonymous donation draft, no public pressure, SBP boundary after confirmation.</td></tr>
+      <tr><td>13</td><td>Art Auction</td><td>"ставлю 20000 за картину"</td><td><code>ART_AUCTION_CONFIRM_BID</code></td><td>active lot check, min step validation, top-5 update after confirmed bid.</td></tr>
+      <tr><td>14</td><td>Impact Meter</td><td>"сколько собрали?"</td><td><code>IMPACT_REPORT</code></td><td>aggregated KPI only, no private payment data.</td></tr>
+      <tr><td>15</td><td>Feedback</td><td>"отличный сервис" / "у меня жалоба"</td><td><code>FEEDBACK_COLLECT_CONTEXT</code></td><td>acknowledge guest, send admin feedback card with context, escalate complaint if needed.</td></tr>
+      <tr><td>16</td><td>Менеджер</td><td>"позови менеджера"</td><td><code>MANAGER_HELP_REQUESTED</code></td><td>admin card with summary, reason and guest link; guest gets calm acknowledgement.</td></tr>
+      <tr><td>17</td><td>Изменить/отменить</td><td>"отмени бронь" / "перенеси мероприятие"</td><td><code>CHANGE_CANCEL_FIND_ACTIVE_ORDER</code></td><td>find active booking/event, release holds on cancel, restart confirmation on change.</td></tr>
+      <tr><td>18</td><td>Recovery</td><td>unknown phrase after one clarification</td><td><code>RECOVERY_ESCALATE</code></td><td>admin card only after clarify-once fails; guest sees no stacktrace.</td></tr>
+      <tr><td>18.2</td><td>Safe Play</td><td>"хочу сабраж / шампанское с ритуалом"</td><td><code>SAFE_PLAY_TEAM_CONFIRMATION</code></td><td>safety check, team card, no dangerous how-to, optional merch handoff.</td></tr>
+      </tbody>
+    </table>
+
+    <h3>19.3 Safety and fallback tests</h3>
+    <table>
+      <thead>
+      <tr><th>Правило</th><th>Тестовый вход</th><th>Ожидаемое поведение</th></tr>
+      </thead>
+      <tbody>
+      <tr><td><code>AI_FALLBACK</code> не рабочий сценарий</td><td>шумная voice transcription или неполная фраза</td><td>сначала normalize + pgvector + clarify once; fallback только после повторного непонимания или технической ошибки.</td></tr>
+      <tr><td>CompositeIntentPlan</td><td>"хочу стол на завтра и винную карту"</td><td>безопасный контент отправляется сразу, бронь идет как primary flow с подтверждениями.</td></tr>
+      <tr><td>Money boundary</td><td>"переведи 5000 официанту" / "ставлю 20000"</td><td>создается draft, требуется явное подтверждение, SBP link не создается до confirmation state.</td></tr>
+      <tr><td>Service chat isolation</td><td>hostess нажимает approve/decline</td><td>обновляет order и уведомляет гостя, но не меняет FSM service-chat участника как guest.</td></tr>
+      <tr><td>Safe Play safety</td><td>"научи меня сабражу дома"</td><td>нет инструкций по опасному действию; только предложение безопасного ритуала с командой AERIS.</td></tr>
+      <tr><td>Assets unavailable</td><td>MinIO не отдал меню или видео</td><td>гостю мягкий ответ и альтернатива; админам техническая карточка; state не застревает.</td></tr>
+      <tr><td>pgvector as helper</td><td>"покажи тели", "винишко", noisy transcript</td><td>semantic candidates повышают confidence, но FSM все равно проверяет допустимый переход.</td></tr>
+      </tbody>
+    </table>
+
+    <h3>19.4 Observability checklist</h3>
+    <table>
+      <thead>
+      <tr><th>Событие</th><th>Где должно быть видно</th><th>Что нельзя допустить</th></tr>
+      </thead>
+      <tbody>
+      <tr><td>guest message received</td><td>PostgreSQL/Mongo message log, Kafka <code>astor.user.events</code>, admin chat card</td><td>сырой JSON или stacktrace в гостевом чате.</td></tr>
+      <tr><td>state transition</td><td>FSM storage + timeline/Scylla candidate + admin event</td><td>переход без предыдущего state, correlation id или scenario id.</td></tr>
+      <tr><td>asset sent</td><td>MinIO key, media metadata, admin event</td><td>бинарники в Redis или файлы меню в git как runtime source.</td></tr>
+      <tr><td>order/draft created</td><td>PostgreSQL order table + admin/hostess card</td><td>автоматическое подтверждение брони/ивента без команды.</td></tr>
+      <tr><td>technical failure</td><td>admin chat + logs + recovery metric</td><td>повторяющийся спам, двойные сообщения гостю, бесконечный LLM retry loop.</td></tr>
+      </tbody>
+    </table>
+
+    <h3>19.5 Готовность к кодингу</h3>
+    <table>
+      <thead>
+      <tr><th>Gate</th><th>Условие</th><th>Решение</th></tr>
+      </thead>
+      <tbody>
+      <tr><td>Visual review</td><td>Все разделы 0-19 читаются в viewer, номера совпадают с registry и intake matrix.</td><td>После ручного OK переносим states в <code>BotState</code> и contracts.</td></tr>
+      <tr><td>Test naming</td><td>Каждая строка route/state matrix превращается в test case name.</td><td><code>ScenarioRouterTest</code>, <code>MessageGatewayIntegrationTest</code>, scenario-specific tests.</td></tr>
+      <tr><td>Side effects</td><td>Для каждого сценария есть список записей и сообщений, которые должны появиться.</td><td>Пишем fixtures и test doubles для Telegram, MinIO, Kafka, LLM gateway.</td></tr>
+      <tr><td>Safety</td><td>Fallback, money, service-chat, Safe Play и assets failures покрыты отдельно.</td><td>Без этих тестов не углубляем бизнес-сценарии в код.</td></tr>
       </tbody>
     </table>
   </section>

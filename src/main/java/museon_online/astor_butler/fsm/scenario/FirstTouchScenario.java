@@ -17,7 +17,7 @@ import java.util.List;
 @Component
 @RequiredArgsConstructor
 @Slf4j
-public class FirstTouchScenario {
+public class FirstTouchScenario implements FsmScenario {
 
     private static final String POLICY_URL = "https://michaelwelly.github.io/Astor_Butler_MVP/docs/policy.html";
 
@@ -26,6 +26,14 @@ public class FirstTouchScenario {
     private final ConsentVaultService consentVaultService;
     private final UserEventProducer userEventProducer;
     private final TableBookingDraftStorage tableBookingDraftStorage;
+
+    public String id() {
+        return "FIRST_TOUCH";
+    }
+
+    public int priority() {
+        return 10;
+    }
 
     public boolean supports(IncomingMessage incoming, BotState currentState, String text) {
         return signalFor(incoming, currentState, text) != null;
@@ -162,6 +170,14 @@ public class FirstTouchScenario {
 
     private boolean hasContact(IncomingMessage incoming) {
         return incoming.contactPhone() != null && !incoming.contactPhone().isBlank();
+    }
+
+    public boolean owns(BotState state) {
+        return state != null && state.canonical() == BotState.CONSENT_REQUIRED;
+    }
+
+    public boolean sideEffecting() {
+        return true;
     }
 
     private record LlmAnswer(String text, boolean fallbackUsed) {

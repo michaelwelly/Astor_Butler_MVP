@@ -1,0 +1,91 @@
+package museon_online.astor_butler.fsm.scenario;
+
+import museon_online.astor_butler.fsm.core.BotState;
+import museon_online.astor_butler.fsm.storage.FSMStorage;
+import museon_online.astor_butler.service.message.IncomingMessage;
+import museon_online.astor_butler.service.message.OutgoingMessage;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.verify;
+
+@ExtendWith(MockitoExtension.class)
+class SmartTipScenarioTest {
+
+    @Mock
+    private FSMStorage fsmStorage;
+
+    private SmartTipScenario scenario;
+
+    @BeforeEach
+    void setUp() {
+        scenario = new SmartTipScenario(fsmStorage);
+    }
+
+    @Test
+    void asksForAmountWhenTipIntentHasNoMoney() {
+        IncomingMessage incoming = telegram("хочу оставить чаевые");
+
+        OutgoingMessage outgoing = scenario.handle(incoming, BotState.READY_FOR_DIALOG, incoming.text());
+
+        assertThat(outgoing.nextState()).isEqualTo(BotState.TIP_COLLECT_AMOUNT.name());
+        assertThat(outgoing.actions()).containsExactly("SMART_TIP", "ASK_TIP_AMOUNT");
+        assertThat(outgoing.text()).contains("Какую сумму");
+        verify(fsmStorage).setState(incoming.chatId(), BotState.TIP_COLLECT_AMOUNT);
+    }
+
+    @Test
+    void movesToConfirmationWhenAmountIsPresent() {
+        IncomingMessage incoming = telegram("оставить чаевые 1000 рублей");
+
+        OutgoingMessage outgoing = scenario.handle(incoming, BotState.READY_FOR_DIALOG, incoming.text());
+
+        assertThat(outgoing.nextState()).isEqualTo(BotState.TIP_CONFIRMATION.name());
+        assertThat(outgoing.actions()).containsExactly("SMART_TIP", "TIP_CONFIRMATION");
+        assertThat(outgoing.metadata()).containsEntry("paymentBoundary", "SBP_FUTURE_INTEGRATION");
+        verify(fsmStorage).setState(incoming.chatId(), BotState.TIP_CONFIRMATION);
+    }
+
+    @Test
+    void confirmsTipDraftAndReturnsToMainMenu() {
+        IncomingMessage incoming = telegram("да");
+
+        OutgoingMessage outgoing = scenario.handle(incoming, BotState.TIP_CONFIRMATION, incoming.text());
+
+        assertThat(outgoing.nextState()).isEqualTo(BotState.READY_FOR_DIALOG.name());
+        assertThat(outgoing.actions()).containsExactly("SMART_TIP", "TIP_DRAFT_CONFIRMED", "RETURN_MAIN_MENU");
+        verify(fsmStorage).setState(incoming.chatId(), BotState.READY_FOR_DIALOG);
+    }
+
+    @Test
+    void cancelsTipDraftAndReturnsToMainMenu() {
+        IncomingMessage incoming = telegram("нет");
+
+        OutgoingMessage outgoing = scenario.handle(incoming, BotState.TIP_CONFIRMATION, incoming.text());
+
+        assertThat(outgoing.nextState()).isEqualTo(BotState.READY_FOR_DIALOG.name());
+        assertThat(outgoing.actions()).containsExactly("SMART_TIP", "TIP_CANCELLED", "RETURN_MAIN_MENU");
+        verify(fsmStorage).setState(incoming.chatId(), BotState.READY_FOR_DIALOG);
+    }
+
+    private IncomingMessage telegram(String text) {
+        return IncomingMessage.telegram(
+                1773317437L,
+                1773317437L,
+                351,
+                284069875,
+                text,
+                null,
+                "Наталья",
+                "Поединенко",
+                "Poedinenko",
+                "ru",
+                false,
+                "284069875"
+        );
+    }
+}

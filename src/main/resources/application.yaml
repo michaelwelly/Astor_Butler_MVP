@@ -67,6 +67,19 @@ astor:
       uri: ${ASTOR_GRAPH_NEO4J_URI:bolt://localhost:7687}
       username: ${ASTOR_GRAPH_NEO4J_USERNAME:neo4j}
       password: ${ASTOR_GRAPH_NEO4J_PASSWORD:astor_graph_password}
+  content:
+    telegram:
+      public-channel:
+        enabled: ${ASTOR_AERIS_CHANNEL_INGEST_ENABLED:true}
+        scheduled-enabled: ${ASTOR_AERIS_CHANNEL_INGEST_SCHEDULED_ENABLED:false}
+        fixed-delay-ms: ${ASTOR_AERIS_CHANNEL_INGEST_FIXED_DELAY_MS:1800000}
+        timeout-seconds: ${ASTOR_AERIS_CHANNEL_INGEST_TIMEOUT_SECONDS:8}
+        asset-mirroring-enabled: ${ASTOR_AERIS_CHANNEL_ASSET_MIRRORING_ENABLED:true}
+        asset-timeout-seconds: ${ASTOR_AERIS_CHANNEL_ASSET_TIMEOUT_SECONDS:12}
+        asset-max-bytes: ${ASTOR_AERIS_CHANNEL_ASSET_MAX_BYTES:25000000}
+        venue-code: ${ASTOR_AERIS_CHANNEL_VENUE_CODE:AERIS}
+        username: ${ASTOR_AERIS_CHANNEL_USERNAME:aeris_gastrobar}
+        url: ${ASTOR_AERIS_CHANNEL_URL:https://t.me/s/aeris_gastrobar}
 
 spring:
   application:
@@ -111,8 +124,8 @@ telegram:
     username: ${TELEGRAM_BOT_USERNAME:astor_butler_bot}
   ui:
     preview-enabled: ${TELEGRAM_UI_PREVIEW_ENABLED:true}
-    cleanup-enabled: ${TELEGRAM_UI_CLEANUP_ENABLED:true}
-    delete-user-messages-enabled: ${TELEGRAM_UI_DELETE_USER_MESSAGES_ENABLED:true}
+    cleanup-enabled: ${TELEGRAM_UI_CLEANUP_ENABLED:false}
+    delete-user-messages-enabled: ${TELEGRAM_UI_DELETE_USER_MESSAGES_ENABLED:false}
     preview-version: ${TELEGRAM_UI_PREVIEW_VERSION:2026-06-08-aeris-guide}
     preview-avatar-path: ${TELEGRAM_UI_PREVIEW_AVATAR_PATH:classpath:telegram/aeris-butler-preview.png}
   voice:
@@ -123,6 +136,8 @@ telegram:
     chat-id: ${TELEGRAM_ANALYTICS_CHAT_ID:${TELEGRAM_ADMIN_CHAT_ID:}}
     min-send-interval-ms: ${TELEGRAM_ANALYTICS_MIN_SEND_INTERVAL_MS:3200}
     max-retries: ${TELEGRAM_ANALYTICS_MAX_RETRIES:2}
+  system:
+    chat-id: ${TELEGRAM_SYSTEM_CHAT_ID:}
   booking:
     notifications-enabled: ${TELEGRAM_BOOKING_NOTIFICATIONS_ENABLED:true}
     manager-chat-id: ${TELEGRAM_BOOKING_MANAGER_CHAT_ID:876857557}
