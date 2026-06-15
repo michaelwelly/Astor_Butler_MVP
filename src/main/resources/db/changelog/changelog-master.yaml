@@ -33,3 +33,5 @@ databaseChangeLog:
       file: db/changelog/2026-06-15-art-auction-foundation.yaml
   - include:
       file: db/changelog/2026-06-15-feedback-foundation.yaml
+  - include:
+      file: db/changelog/2026-06-15-telegram-stars-foundation.yaml
