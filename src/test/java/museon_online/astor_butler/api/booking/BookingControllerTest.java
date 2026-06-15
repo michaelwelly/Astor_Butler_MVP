@@ -1,6 +1,7 @@
 package museon_online.astor_butler.api.booking;
 
 import museon_online.astor_butler.domain.booking.TableAvailability;
+import museon_online.astor_butler.domain.booking.EventBookingService;
 import museon_online.astor_butler.domain.booking.TableBookingRuntimeService;
 import museon_online.astor_butler.domain.booking.TableReservationOrder;
 import museon_online.astor_butler.domain.booking.TableReservationService;
@@ -22,9 +23,11 @@ class BookingControllerTest {
 
     private final TableReservationService tableReservationService = mock(TableReservationService.class);
     private final TableBookingRuntimeService tableBookingRuntimeService = mock(TableBookingRuntimeService.class);
+    private final EventBookingService eventBookingService = mock(EventBookingService.class);
     private final BookingController controller = new BookingController(
             tableReservationService,
-            tableBookingRuntimeService
+            tableBookingRuntimeService,
+            eventBookingService
     );
 
     @Test
