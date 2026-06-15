@@ -80,30 +80,54 @@ public class TableBookingScenario implements FsmScenario {
 
         TableBookingDraftStorage.Draft draft = mergeDraft(incoming, normalized);
         if (draft.requestedDate() == null) {
-            fsmStorage.setState(incoming.chatId(), BotState.TABLE_BOOKING_COLLECT_DATE);
-            return message(incoming, "Конечно. На какую дату бронируем стол?", BotState.TABLE_BOOKING_COLLECT_DATE, "ASK_DATE");
+            return askMissingSlot(incoming, state, BotState.TABLE_BOOKING_COLLECT_DATE,
+                    "Конечно. На какую дату бронируем стол?",
+                    "ASK_DATE");
         }
         if (draft.requestedTime() == null) {
-            fsmStorage.setState(incoming.chatId(), BotState.TABLE_BOOKING_COLLECT_TIME);
-            return message(incoming, "Принял дату. На какое время поставить бронь?", BotState.TABLE_BOOKING_COLLECT_TIME, "ASK_TIME");
+            return askMissingSlot(incoming, state, BotState.TABLE_BOOKING_COLLECT_TIME,
+                    "Принял дату. На какое время поставить бронь?",
+                    "ASK_TIME");
         }
         if (draft.partySize() == null) {
-            fsmStorage.setState(incoming.chatId(), BotState.TABLE_BOOKING_COLLECT_PARTY_SIZE);
-            return message(incoming, "На сколько гостей бронируем?", BotState.TABLE_BOOKING_COLLECT_PARTY_SIZE, "ASK_PARTY_SIZE");
+            return askMissingSlot(incoming, state, BotState.TABLE_BOOKING_COLLECT_PARTY_SIZE,
+                    "На сколько гостей бронируем?",
+                    "ASK_PARTY_SIZE");
         }
         return sendHallPlan(incoming);
     }
 
+    private OutgoingMessage askMissingSlot(IncomingMessage incoming, BotState currentState, BotState nextState, String text, String action) {
+        if (shouldSendPlanBeforeSlotCollection(currentState)) {
+            fsmStorage.setState(incoming.chatId(), nextState);
+            return withHallPlan(
+                    message(
+                            incoming,
+                            "Сначала отправляю план зала AERIS, чтобы вы видели пространство. " + text,
+                            nextState,
+                            "SEND_HALL_PLAN",
+                            action
+                    )
+            );
+        }
+        fsmStorage.setState(incoming.chatId(), nextState);
+        return message(incoming, text, nextState, action);
+    }
+
     private OutgoingMessage sendHallPlan(IncomingMessage incoming) {
-        MediaAsset floorPlan = mediaCatalog.floorPlan();
         fsmStorage.setState(incoming.chatId(), BotState.TABLE_BOOKING_WAIT_TABLE_SELECTION);
-        return message(
+        return withHallPlan(message(
                 incoming,
                 "Отправляю план зала AERIS. Выберите, пожалуйста, номер стола или зону. Если хотите, напишите \"выбери сам\" — подберу подходящий вариант.",
                 BotState.TABLE_BOOKING_WAIT_TABLE_SELECTION,
                 "SEND_HALL_PLAN",
                 "ASK_TABLE_SELECTION"
-        ).withMetadata(Map.of(
+        ));
+    }
+
+    private OutgoingMessage withHallPlan(OutgoingMessage message) {
+        MediaAsset floorPlan = mediaCatalog.floorPlan();
+        return message.withMetadata(Map.of(
                 "documentAssetCode", planPdfAssetCode,
                 "documentObjectKey", floorPlan.objectKey(),
                 "documentFilename", floorPlan.filename(),
@@ -174,6 +198,15 @@ public class TableBookingScenario implements FsmScenario {
                 AdminAlert.none(),
                 List.of(actions)
         );
+    }
+
+    private boolean shouldSendPlanBeforeSlotCollection(BotState state) {
+        BotState canonical = state == null ? BotState.UNKNOWN : state.canonical();
+        return canonical == BotState.UNKNOWN
+                || canonical == BotState.READY_FOR_DIALOG
+                || canonical == BotState.AI_FALLBACK
+                || canonical == BotState.TABLE_BOOKING_INTENT
+                || canonical == BotState.TABLE_BOOKING_SHOW_PLAN;
     }
 
     private void saveDraftIfComplete(IncomingMessage incoming, String normalized) {

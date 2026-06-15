@@ -85,6 +85,31 @@ class TableBookingScenarioTest {
     }
 
     @Test
+    void sendsHallPlanFirstForIncompleteInitialTableBookingRequest() {
+        IncomingMessage incoming = telegram("Хочу забронировать столик");
+
+        OutgoingMessage outgoing = scenario.handle(incoming, BotState.READY_FOR_DIALOG, incoming.text());
+
+        assertThat(outgoing.nextState()).isEqualTo(BotState.TABLE_BOOKING_COLLECT_DATE.name());
+        assertThat(outgoing.actions()).contains("SEND_HALL_PLAN", "ASK_DATE");
+        assertThat(outgoing.text()).contains("Сначала отправляю план зала AERIS");
+        assertThat(outgoing.metadata()).containsEntry("documentObjectKey", "content/aeris/floor-plan/AERIS_PLAN.pdf");
+        verify(fsmStorage).setState(incoming.chatId(), BotState.TABLE_BOOKING_COLLECT_DATE);
+    }
+
+    @Test
+    void doesNotResendHallPlanDuringActiveSlotCollection() {
+        IncomingMessage incoming = telegram("завтра");
+
+        OutgoingMessage outgoing = scenario.handle(incoming, BotState.TABLE_BOOKING_COLLECT_DATE, incoming.text());
+
+        assertThat(outgoing.nextState()).isEqualTo(BotState.TABLE_BOOKING_COLLECT_TIME.name());
+        assertThat(outgoing.actions()).containsExactly("ASK_TIME");
+        assertThat(outgoing.metadata()).doesNotContainKey("documentObjectKey");
+        verify(fsmStorage).setState(incoming.chatId(), BotState.TABLE_BOOKING_COLLECT_TIME);
+    }
+
+    @Test
     void resendsHallPlanWhenGuestRepeatsBookingIntentDuringTableSelection() {
         IncomingMessage incoming = telegram("Хочу забронировать столик завтра на 20:00 на двоих");
 
@@ -138,6 +163,7 @@ class TableBookingScenarioTest {
                 "Хочу забронировать столик"
         );
         assertThat(datePrompt.nextState()).isEqualTo(BotState.TABLE_BOOKING_COLLECT_DATE.name());
+        assertThat(datePrompt.actions()).contains("SEND_HALL_PLAN", "ASK_DATE");
 
         OutgoingMessage timePrompt = scenario.handle(
                 telegram(bookingDateText),

@@ -24,11 +24,11 @@ must not own state, create holds, confirm reservations or invent availability.
 | State | Meaning | Required input | Action | Next states |
 | --- | --- | --- | --- | --- |
 | `READY_FOR_DIALOG` | Guest can start any scenario | free text | classify intent | `TABLE_BOOKING_INTENT`, `AI_FALLBACK` |
-| `TABLE_BOOKING_INTENT` | Table booking detected | date/time/party if present | create or resume draft | collect first missing slot |
+| `TABLE_BOOKING_INTENT` | Table booking detected | date/time/party if present | send AERIS plan once, create or resume draft | collect first missing slot |
 | `TABLE_BOOKING_COLLECT_DATE` | Missing date | date | store date | collect time |
 | `TABLE_BOOKING_COLLECT_TIME` | Missing time | time | store time | collect party size |
 | `TABLE_BOOKING_COLLECT_PARTY_SIZE` | Missing guest count | integer/phrase | store party size | show plan |
-| `TABLE_BOOKING_SHOW_PLAN` | Ready to show AERIS plan | none | send AERIS plan PDF/media | wait table choice |
+| `TABLE_BOOKING_SHOW_PLAN` | Ready to show or resend AERIS plan | none | send AERIS plan PDF/media | wait table choice or collect missing slot |
 | `TABLE_BOOKING_WAIT_TABLE_SELECTION` | Waiting table/zone/preference | table code, zone, "choose for me" | check availability and create hold | wait hostess confirmation or ask another option |
 | `TABLE_BOOKING_WAIT_HOSTESS_CONFIRMATION` | Hold created, hostess card sent | hostess button | no guest data collection | confirmed/rejected |
 | `TABLE_BOOKING_CONFIRMED` | Hostess approved | none | send guest order | ready dialog |
@@ -40,7 +40,7 @@ must not own state, create holds, confirm reservations or invent availability.
 
 ```text
 Guest: хочу столик сегодня на 20:00 на двоих
-Astor: asks table/zone preference and sends AERIS plan
+Astor: sends AERIS plan and asks table/zone preference
 Guest: стол 17
 Astor: creates table_reservation_order + HELD hold
 Astor -> hostess chat: approval card with Да/Нет
@@ -57,7 +57,11 @@ available fitting table. Astor still must ask hostess for confirmation.
 
 ## Hall Plan
 
-Before asking the guest to choose a table, Astor must send the AERIS hall plan.
+At the beginning of the table booking scenario, Astor must send the AERIS hall
+plan once. If date/time/party size is missing, the same response asks the first
+missing slot. During active slot collection Astor does not resend the plan on
+every reply. When date/time/party are complete, Astor waits for table/zone
+selection or permission to choose automatically.
 Current resource asset:
 
 ```text
@@ -74,9 +78,8 @@ Runtime configuration:
 TELEGRAM_BOOKING_PLAN_PDF_ASSET_CODE=AERIS_FLOOR_PLAN
 ```
 
-The next implementation step for `TableBookingScenario` must attach this PDF in
-`TABLE_BOOKING_SHOW_PLAN`, then move the guest to
-`TABLE_BOOKING_WAIT_TABLE_SELECTION`.
+`TableBookingScenario` attaches this PDF on the first scenario entry and when it
+explicitly resends the plan in `TABLE_BOOKING_WAIT_TABLE_SELECTION`.
 
 ## Rejection Path
 
@@ -122,10 +125,10 @@ confirmation again.
 
 Ask only one question at a time:
 
-- no date -> ask date;
+- no date -> send plan once, then ask date;
 - date but no time -> ask time;
 - date/time but no party size -> ask guest count;
-- date/time/party but no table preference -> send plan and ask table/zone or
+- date/time/party but no table preference -> ask table/zone or
   permission to choose automatically;
 - conflicting data -> summarize what you understood and ask for correction.
 
