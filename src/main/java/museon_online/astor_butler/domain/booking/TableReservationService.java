@@ -31,6 +31,25 @@ public class TableReservationService {
                 .toList();
     }
 
+    public TableReservationOrder getReservation(Long id) {
+        return requireOrder(id);
+    }
+
+    public List<TableReservationOrder> listReservationsByChatId(Long chatId, int limit) {
+        if (chatId == null) {
+            throw badRequest("chatId is required");
+        }
+        int safeLimit = Math.max(1, Math.min(limit, 100));
+        return repository.findOrdersByChatId(chatId, safeLimit);
+    }
+
+    public List<TableReservationOrder> listActiveReservationsByChatId(Long chatId) {
+        if (chatId == null) {
+            throw badRequest("chatId is required");
+        }
+        return repository.findActiveOrdersByChatId(chatId);
+    }
+
     @Transactional
     public TableReservationOrder createReservation(TableReservationCommand command) {
         validateCommand(command);

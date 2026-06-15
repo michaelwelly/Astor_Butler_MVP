@@ -2,6 +2,7 @@ package museon_online.astor_butler.api.booking;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import museon_online.astor_butler.domain.booking.TableBookingRuntimeService;
 import museon_online.astor_butler.domain.booking.TableAvailability;
 import museon_online.astor_butler.domain.booking.TableReservationCommand;
 import museon_online.astor_butler.domain.booking.TableReservationOrder;
@@ -35,6 +36,7 @@ import java.util.UUID;
 public class BookingController {
 
     private final TableReservationService tableReservationService;
+    private final TableBookingRuntimeService tableBookingRuntimeService;
 
     @PostMapping
     @Operation(summary = "Create booking request")
@@ -93,6 +95,32 @@ public class BookingController {
     public ResponseEntity<TableReservationResponse> createTableReservation(@RequestBody TableReservationCreateRequest request) {
         TableReservationOrder order = tableReservationService.createReservation(request.toCommand());
         return ResponseEntity.status(HttpStatus.CREATED).body(TableReservationResponse.from(order));
+    }
+
+    @GetMapping("/table-reservations/{id}")
+    @Operation(summary = "Get table reservation request")
+    public ResponseEntity<TableReservationResponse> getTableReservation(@PathVariable("id") Long id) {
+        return ResponseEntity.ok(TableReservationResponse.from(tableReservationService.getReservation(id)));
+    }
+
+    @GetMapping("/table-reservations/telegram/{chatId}")
+    @Operation(summary = "List recent table reservations for Telegram chat")
+    public ResponseEntity<List<TableReservationResponse>> listTelegramTableReservations(
+            @PathVariable("chatId") Long chatId,
+            @RequestParam(name = "limit", defaultValue = "10") Integer limit
+    ) {
+        return ResponseEntity.ok(tableReservationService.listReservationsByChatId(chatId, limit).stream()
+                .map(TableReservationResponse::from)
+                .toList());
+    }
+
+    @GetMapping("/table-reservations/telegram/{chatId}/runtime")
+    @Operation(summary = "Get table booking runtime view for Telegram chat")
+    public ResponseEntity<TableBookingRuntimeService.TableBookingRuntimeView> telegramTableBookingRuntime(
+            @PathVariable("chatId") Long chatId,
+            @RequestParam(name = "venueCode", defaultValue = "AERIS") String venueCode
+    ) {
+        return ResponseEntity.ok(tableBookingRuntimeService.telegramRuntime(chatId, venueCode));
     }
 
     @PostMapping("/table-reservations/{id}/confirm")

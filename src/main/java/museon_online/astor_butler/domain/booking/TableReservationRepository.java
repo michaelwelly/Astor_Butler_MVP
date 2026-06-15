@@ -130,6 +130,35 @@ public class TableReservationRepository {
         return result.stream().findFirst();
     }
 
+    public List<TableReservationOrder> findOrdersByChatId(Long chatId, int limit) {
+        return jdbcTemplate.query("""
+                SELECT tro.*, vt.table_code, vt.display_name AS table_display_name
+                FROM table_reservation_orders tro
+                LEFT JOIN venue_tables vt ON vt.id = tro.table_id
+                WHERE tro.chat_id = ?
+                ORDER BY tro.created_at DESC
+                LIMIT ?
+                """,
+                orderMapper(),
+                chatId,
+                limit
+        );
+    }
+
+    public List<TableReservationOrder> findActiveOrdersByChatId(Long chatId) {
+        return jdbcTemplate.query("""
+                SELECT tro.*, vt.table_code, vt.display_name AS table_display_name
+                FROM table_reservation_orders tro
+                LEFT JOIN venue_tables vt ON vt.id = tro.table_id
+                WHERE tro.chat_id = ?
+                  AND tro.status IN ('AWAITING_MANAGER_CONFIRMATION', 'CONFIRMED')
+                ORDER BY tro.created_at DESC
+                """,
+                orderMapper(),
+                chatId
+        );
+    }
+
     public Optional<TableReservationOrder> findLatestAwaitingManagerConfirmation(String hostessChatId) {
         List<TableReservationOrder> result = jdbcTemplate.query("""
                 SELECT tro.*, vt.table_code, vt.display_name AS table_display_name

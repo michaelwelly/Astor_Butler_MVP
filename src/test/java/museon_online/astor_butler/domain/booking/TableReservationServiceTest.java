@@ -70,6 +70,41 @@ class TableReservationServiceTest {
     }
 
     @Test
+    void returnsReservationById() {
+        VenueTable table = table(5L, "5", 4, true, true);
+        TableReservationOrder expected = order(12L, table);
+
+        when(repository.findOrder(12L)).thenReturn(Optional.of(expected));
+
+        TableReservationOrder result = service.getReservation(12L);
+
+        assertThat(result).isEqualTo(expected);
+    }
+
+    @Test
+    void listsReservationsByChatIdWithBoundedLimit() {
+        VenueTable table = table(5L, "5", 4, true, true);
+        TableReservationOrder expected = order(12L, table);
+        when(repository.findOrdersByChatId(1773317437L, 100)).thenReturn(List.of(expected));
+
+        List<TableReservationOrder> result = service.listReservationsByChatId(1773317437L, 500);
+
+        assertThat(result).containsExactly(expected);
+        verify(repository).findOrdersByChatId(1773317437L, 100);
+    }
+
+    @Test
+    void listsActiveReservationsByChatId() {
+        VenueTable table = table(5L, "5", 4, true, true);
+        TableReservationOrder expected = order(12L, table, TableReservationStatus.CONFIRMED);
+        when(repository.findActiveOrdersByChatId(1773317437L)).thenReturn(List.of(expected));
+
+        List<TableReservationOrder> result = service.listActiveReservationsByChatId(1773317437L);
+
+        assertThat(result).containsExactly(expected);
+    }
+
+    @Test
     void confirmsReservationAndNotifiesHostess() {
         VenueTable table = table(5L, "5", 4, true, true);
         TableReservationOrder awaiting = order(12L, table, TableReservationStatus.AWAITING_MANAGER_CONFIRMATION);
