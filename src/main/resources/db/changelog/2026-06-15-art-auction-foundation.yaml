@@ -1,0 +1,7 @@
+databaseChangeLog:
+  - changeSet:
+      id: 2026-06-15-art-auction-foundation
+      author: codex
+      changes:
+        - sqlFile:
+            path: db/changelog/2026-06-15-art-auction-foundation.sql
