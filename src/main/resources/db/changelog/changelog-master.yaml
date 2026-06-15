@@ -37,3 +37,5 @@ databaseChangeLog:
       file: db/changelog/2026-06-15-telegram-stars-foundation.yaml
   - include:
       file: db/changelog/2026-06-15-merch-foundation.yaml
+  - include:
+      file: db/changelog/2026-06-16-guest-preferences.yaml
