@@ -232,6 +232,7 @@
     <a href="#table-booking">6 Стол</a>
     <a href="#event-booking">7 Мероприятие</a>
     <a href="#menu-assets">8 Меню</a>
+    <a href="#preference">8.1 Preference</a>
     <a href="#merch-order">9 Мерч</a>
     <a href="#quiet-guide">10 Quiet Guide</a>
     <a href="#aeris-channel-ingest">10.1 AERIS Channel</a>
@@ -241,6 +242,7 @@
     <a href="#impact">14 Impact</a>
     <a href="#feedback">15 Отзыв</a>
     <a href="#manager-help">16 Менеджер</a>
+    <a href="#concierge">16.1 Concierge</a>
     <a href="#change-cancel">17 Изменить</a>
     <a href="#recovery">18 Recovery</a>
     <a href="#llm">18.1 LLM</a>
@@ -269,6 +271,7 @@ flowchart LR
     TableBooking["6. TableBookingScenario<br/>посадка за стол"]
     EventBooking["7. EventBookingScenario<br/>банкеты / события"]
     MenuAssets["8. MenuAssetsScenario<br/>меню / карта бара / RAG"]
+    Preference["8.1 PreferenceScenario<br/>память предпочтений"]
     MerchOrder["9. MerchScenario<br/>витрина / запрос мерча"]
     QuietGuide["10. QuietGuideScenario<br/>афиши / справки / видео-тур / концепция"]
     ChannelIngest["10.1 AERIS Channel Ingest<br/>public parser now<br/>channel_post later"]
@@ -278,6 +281,7 @@ flowchart LR
     Impact["14. ImpactMeterScenario<br/>культурный вклад"]
     Feedback["15. FeedbackScenario<br/>отзыв / обратная связь"]
     ManagerHelp["16. ManagerHelpScenario<br/>подключить команду"]
+    Concierge["16.1 ConciergeScenario<br/>сервисная просьба команде"]
     ChangeCancel["17. ChangeCancelScenario<br/>изменить / отменить"]
     Recovery["18. RecoveryScenario<br/>непонятно / сбой"]
     SafePlay["18.2 SafePlayScenario<br/>сабраж / игровой ритуал"]
@@ -300,6 +304,7 @@ flowchart LR
     Router --> TableBooking
     Router --> EventBooking
     Router --> MenuAssets
+    Router --> Preference
     Router --> MerchOrder
     Router --> QuietGuide
     Router --> SmartTip
@@ -308,6 +313,7 @@ flowchart LR
     Router --> Impact
     Router --> Feedback
     Router --> ManagerHelp
+    Router --> Concierge
     Router --> ChangeCancel
     Router --> Recovery
     Router --> SafePlay
@@ -316,6 +322,7 @@ flowchart LR
     EventBooking --> Domain --> Manager
     MenuAssets --> Resources
     MenuAssets --> Rag
+    Preference --> Domain
     MerchOrder --> Domain
     MerchOrder --> Resources
     QuietGuide --> Domain
@@ -327,6 +334,8 @@ flowchart LR
     Impact --> Domain
     Feedback --> Manager
     ManagerHelp --> Manager
+    Concierge --> Domain
+    Concierge --> Manager
     ChangeCancel --> Domain
     Recovery --> Manager
     SafePlay --> Domain
@@ -342,6 +351,7 @@ flowchart LR
     TableBooking --> MainMenu
     EventBooking --> MainMenu
     MenuAssets --> MainMenu
+    Preference --> MainMenu
     MerchOrder --> MainMenu
     QuietGuide --> MainMenu
     SmartTip --> MainMenu
@@ -350,6 +360,7 @@ flowchart LR
     Impact --> MainMenu
     Feedback --> MainMenu
     ManagerHelp --> MainMenu
+    Concierge --> MainMenu
     ChangeCancel --> MainMenu
     Recovery --> MainMenu
     SafePlay --> MainMenu
@@ -361,7 +372,7 @@ flowchart LR
     classDef human fill:#FCE4EC,stroke:#AD1457,stroke-width:1px,color:#880E4F;
 
     class Gateway,Domain core;
-    class FirstTouch,MainMenu,TableBooking,EventBooking,MenuAssets,MerchOrder,QuietGuide,SmartTip,HiddenHeart,ArtAuction,Impact,Feedback,ManagerHelp,ChangeCancel,Recovery,SafePlay scenario;
+    class FirstTouch,MainMenu,TableBooking,EventBooking,MenuAssets,Preference,MerchOrder,QuietGuide,SmartTip,HiddenHeart,ArtAuction,Impact,Feedback,ManagerHelp,Concierge,ChangeCancel,Recovery,SafePlay scenario;
     class Transport,LLM adapter;
     class Redis,Postgres,EventTrail,Resources,Rag,Intake,ContentStore storage;
     class ChannelIngest adapter;
@@ -390,6 +401,7 @@ flowchart LR
       <tr><td>6</td><td><code>TableBookingScenario</code></td><td>стол, посадка, на двоих</td><td>план зала + заявка хостес / подтверждение</td><td><code>READY_FOR_DIALOG</code></td></tr>
       <tr><td>7</td><td><code>EventBookingScenario</code></td><td>банкет, день рождения, корпоратив</td><td>structured request менеджеру</td><td><code>READY_FOR_DIALOG</code></td></tr>
       <tr><td>8</td><td><code>MenuAssetsScenario</code></td><td>меню, карта бара, вино, коктейли, voice/text</td><td>RAG уточнение + 1-4 актуальных PDF</td><td><code>READY_FOR_DIALOG</code></td></tr>
+      <tr><td>8.1</td><td><code>PreferenceScenario</code></td><td>запомни, я не ем острое, люблю тихий стол</td><td>durable guest preference для будущей персонализации</td><td><code>READY_FOR_DIALOG</code></td></tr>
       <tr><td>9</td><td><code>MerchScenario</code></td><td>мерч, подарок, купить вещь/сертификат</td><td><code>merch_request</code> draft + карточка команде</td><td><code>READY_FOR_DIALOG</code></td></tr>
       <tr><td>10</td><td><code>QuietGuideScenario</code></td><td>афиша, справка, видео-тур, концепция AERIS</td><td>контент/видео/approved copy без спама</td><td><code>READY_FOR_DIALOG</code></td></tr>
       <tr><td>10.1</td><td><code>AERIS Channel Ingest</code></td><td>official channel posts</td><td>content normalization for Quiet Guide</td><td>content store / not guest FSM</td></tr>
@@ -399,6 +411,7 @@ flowchart LR
       <tr><td>14</td><td><code>ImpactMeterScenario</code></td><td>сколько собрали, итоги, impact</td><td>агрегированный отчет без PII/payment raw data</td><td><code>READY_FOR_DIALOG</code></td></tr>
       <tr><td>15</td><td><code>FeedbackScenario</code></td><td>отзыв, жалоба, похвала, предложение</td><td>карточка отзыва команде + guest acknowledgement</td><td><code>READY_FOR_DIALOG</code></td></tr>
       <tr><td>16</td><td><code>ManagerHelpScenario</code></td><td>менеджер, человек, explicit handoff</td><td>карточка команде с summary + deep link</td><td><code>READY_FOR_DIALOG</code></td></tr>
+      <tr><td>16.1</td><td><code>ConciergeScenario</code></td><td>передай команде, подготовьте свечу, принесите плед</td><td><code>concierge_request</code> + карточка команде без автоподтверждения</td><td><code>READY_FOR_DIALOG</code></td></tr>
       <tr><td>17</td><td><code>ChangeCancelScenario</code></td><td>отмена, перенос, изменить бронь</td><td>изменение/отмена active order</td><td><code>READY_FOR_DIALOG</code></td></tr>
       <tr><td>18</td><td><code>RecoveryScenario</code></td><td>непонятно, конфликт, сбой</td><td>уточнение, восстановление или manager handoff</td><td><code>READY_FOR_DIALOG</code></td></tr>
       <tr><td>18.2</td><td><code>SafePlayScenario</code></td><td>сабраж, шампанское, игристое, ритуал, цепь</td><td>safe ritual request + team card + optional merch link</td><td><code>READY_FOR_DIALOG</code></td></tr>
@@ -608,6 +621,7 @@ flowchart LR
       <tr><td>6</td><td>TableBooking</td><td>хочу стол, забронировать завтра, на двоих, у окна</td><td>date, time, party size, table/zone</td><td><code>TABLE_BOOKING_SEND_PLAN</code>, <code>TABLE_BOOKING_COLLECT_DATE</code>, <code>TABLE_BOOKING_COLLECT_TIME</code>, <code>TABLE_BOOKING_COLLECT_PARTY_SIZE</code>, <code>TABLE_BOOKING_WAIT_HOSTESS_CONFIRMATION</code></td></tr>
       <tr><td>7</td><td>EventBooking</td><td>день рождения, корпоратив, закрыть зал, банкет, свадьба</td><td>type, date, guests, budget, wishes</td><td><code>EVENT_BOOKING_SEND_MENU</code>, <code>EVENT_BOOKING_COLLECT_TYPE</code>, <code>EVENT_BOOKING_COLLECT_DATE</code>, <code>EVENT_BOOKING_CONFIRM_ORDER</code>, <code>EVENT_BOOKING_MANAGER_REVIEW</code></td></tr>
       <tr><td>8</td><td>MenuAssets</td><td>меню, вино, барная карта, что поесть, коктейли</td><td>menu category, optional preference, source asset</td><td><code>MENU_ASSETS_INTAKE</code>, <code>MENU_ASSETS_LOOKUP</code>, <code>MENU_ASSETS_CLARIFY</code>, <code>MENU_ASSETS_DELIVER</code></td></tr>
+      <tr><td>8.1</td><td>Preference</td><td>запомни, я не ем острое, люблю тихий стол, предпочтения</td><td>preference text, category, confidence, source state</td><td><code>PREFERENCE_COLLECT_TEXT</code>, <code>PREFERENCE_SAVED</code></td></tr>
       <tr><td>9</td><td>Merch</td><td>мерч, сертификат, хочу купить, подарок</td><td>item, variant, quantity, guest note, delivery/pickup hint</td><td><code>MERCH_LOOKUP_CATALOG</code>, <code>MERCH_COLLECT_SELECTION</code>, <code>MERCH_CONFIRM_ORDER</code>, <code>MERCH_SEND_TEAM_CARD</code></td></tr>
       <tr><td>10</td><td>QuietGuide</td><td>афиша, что сегодня, видео-тур, интерьер, концепция, кто шеф</td><td>content type, active media/content source</td><td><code>QUIET_GUIDE_CLASSIFY</code>, <code>QUIET_GUIDE_FETCH_CONTENT</code>, <code>QUIET_GUIDE_CLARIFY</code>, <code>QUIET_GUIDE_DELIVER</code></td></tr>
       <tr><td>10.1</td><td>AERIS Channel Ingest</td><td>новый post в official channel / public parser</td><td>post id, media ids, post type, event date, expiry</td><td><code>CHANNEL_POST_DISCOVERED</code>, <code>CHANNEL_POST_NORMALIZED</code>, <code>CONTENT_READY_FOR_GUIDE</code></td></tr>
@@ -617,6 +631,7 @@ flowchart LR
       <tr><td>14</td><td>ImpactMeter</td><td>сколько собрали, итоги, impact, культурный вклад</td><td>scope, period, event/initiative ids, requester role</td><td><code>IMPACT_SELECT_SCOPE</code>, <code>IMPACT_READ_EVENTS</code>, <code>IMPACT_PRIVACY_FILTER</code>, <code>IMPACT_BUILD_REPORT</code></td></tr>
       <tr><td>15</td><td>Feedback</td><td>отзыв, жалоба, похвала, предложение, отличный сервис</td><td>feedback type, sentiment, active order, priority</td><td><code>FEEDBACK_CLASSIFY</code>, <code>FEEDBACK_ATTACH_CONTEXT</code>, <code>FEEDBACK_SEND_ADMIN_CARD</code>, <code>FEEDBACK_ESCALATE_IF_NEEDED</code></td></tr>
       <tr><td>16</td><td>ManagerHelp</td><td>позови менеджера, нужен человек, хочу поговорить с админом</td><td>reason, priority, dialog summary, active order</td><td><code>MANAGER_HELP_COLLECT_REASON</code>, <code>MANAGER_HELP_SEND_CARD</code>, <code>MANAGER_HELP_CLAIMED</code>, <code>MANAGER_HELP_DONE</code></td></tr>
+      <tr><td>16.1</td><td>Concierge</td><td>передай команде, подготовьте свечу, принесите плед, нужна помощь</td><td>request text, request type, guest snapshot, admin chat</td><td><code>CONCIERGE_COLLECT_REQUEST</code>, <code>CONCIERGE_SENT</code></td></tr>
       <tr><td>17</td><td>ChangeCancel</td><td>перенести бронь, отменить, опоздаем, поменять время</td><td>order reference, date/time, action, confirmation</td><td><code>CHANGE_CANCEL_FIND_ORDER</code>, <code>CHANGE_CANCEL_SELECT_ACTION</code>, <code>CHANGE_CANCEL_CANCEL</code>, <code>CHANGE_CANCEL_REVIEW</code></td></tr>
       <tr><td>18</td><td>Recovery</td><td>непонятно, STT noise, LLM timeout, state conflict</td><td>reason, retry count, current state, candidates</td><td><code>RECOVERY_DIAGNOSE</code>, <code>RECOVERY_RESTORE_CONTEXT</code>, <code>RECOVERY_CLARIFY_ONCE</code>, <code>RECOVERY_MANAGER_HANDOFF</code></td></tr>
       <tr><td>18.2</td><td>SafePlay</td><td>сабраж, открыть шампанское красиво, игристое с ритуалом, сабражная цепь, купить сабражную цепь</td><td>table/order context, staff availability, bottle type, age/safety flags, merch interest</td><td><code>SAFE_PLAY_SELECT_RITUAL</code>, <code>SAFE_PLAY_SAFETY_CHECK</code>, <code>SAFE_PLAY_TEAM_CONFIRMATION</code>, <code>SAFE_PLAY_MERCH_OFFER</code></td></tr>
@@ -640,7 +655,7 @@ flowchart TD
     Exit["Безопасность<br/>Panic Exit"]
 
     First["FirstTouch / MainMenu"]
-    Pref["MenuAssets / MerchScenario<br/>PreferenceScenario later"]
+    Pref["8.1 PreferenceScenario<br/>MenuAssets / MerchScenario"]
     SmartTip["SmartTip / Feedback praise"]
     Quiet["MenuAssets / QuietGuide<br/>AERIS Channel"]
     Donate["HiddenHeart / ArtAuction<br/>ImpactMeter"]
@@ -661,7 +676,7 @@ flowchart TD
       <thead><tr><th>Ось боли</th><th>Capability</th><th>FSM-сценарии</th><th>Смысл</th></tr></thead>
       <tbody>
       <tr><td>Идентичность</td><td>Memory Engine</td><td>4 FirstTouch, 5 MainMenu, 15 Feedback</td><td>Гостя узнают по профилю, истории и аккуратно принимают обратную связь.</td></tr>
-      <tr><td>Персонализация</td><td>Preference Map</td><td>8 MenuAssets, 9 MerchScenario, future PreferenceScenario</td><td>Гость получает релевантные меню/мерч и позже персональные рекомендации без давления.</td></tr>
+      <tr><td>Персонализация</td><td>Preference Map</td><td>8 MenuAssets, 8.1 PreferenceScenario, 9 MerchScenario</td><td>Гость может явно попросить "запомни", а система использует это как мягкую подсказку без скрытого profiling.</td></tr>
       <tr><td>Благодарность</td><td>Smart Tip</td><td>11 SmartTip, 15 Feedback</td><td>Гость благодарит команду деньгами или словами без неловкости.</td></tr>
       <tr><td>Инфо-поддержка</td><td>Quiet Guide</td><td>8 MenuAssets, 10 QuietGuide, 10.1 AERIS Channel Ingest</td><td>Меню, афиши, концепция и видео-тур по запросу, без рассылки и шума.</td></tr>
       <tr><td>Социальный вклад</td><td>Hidden Heart</td><td>12 HiddenHeart, 13 ArtAuction, 14 ImpactMeter</td><td>Анонимные донаты, благотворительные аукционы и агрегированный культурный вклад.</td></tr>
@@ -764,6 +779,7 @@ flowchart TD
     Table["TableBookingScenario"]
     Event["EventBookingScenario"]
     Menu["MenuAssetsScenario"]
+    Preference["PreferenceScenario"]
     Merch["MerchScenario"]
     Guide["QuietGuideScenario"]
     Tip["SmartTipScenario"]
@@ -771,6 +787,7 @@ flowchart TD
     Auction["ArtAuctionScenario"]
     Feedback["FeedbackScenario"]
     Manager["ManagerHelpScenario"]
+    Concierge["ConciergeScenario"]
     Change["ChangeCancelScenario"]
     SafePlay["SafePlayScenario"]
     Clarify["Уточнение + quick options"]
@@ -779,6 +796,7 @@ flowchart TD
     Intent -- "стол / посадка" --> Table
     Intent -- "банкет / корпоратив" --> Event
     Intent -- "меню / бар" --> Menu
+    Intent -- "запомни / я люблю / я не ем" --> Preference
     Intent -- "мерч / подарок / сертификат" --> Merch
     Intent -- "афиша / что сегодня" --> Guide
     Intent -- "чаевые / спасибо команде" --> Tip
@@ -786,6 +804,7 @@ flowchart TD
     Intent -- "картина / аукцион / ставка" --> Auction
     Intent -- "отзыв / жалоба / похвала" --> Feedback
     Intent -- "менеджер / человек" --> Manager
+    Intent -- "передай команде / подготовьте / принесите" --> Concierge
     Intent -- "отмена / перенос" --> Change
     Intent -- "сабраж / ритуал / игра" --> SafePlay
     Intent -- "непонятно" --> Clarify
@@ -793,6 +812,7 @@ flowchart TD
     Table --> Ready
     Event --> Ready
     Menu --> Ready
+    Preference --> Ready
     Merch --> Ready
     Guide --> Ready
     Tip --> Ready
@@ -800,6 +820,7 @@ flowchart TD
     Auction --> Ready
     Feedback --> Ready
     Manager --> Ready
+    Concierge --> Ready
     Change --> Ready
     SafePlay --> Ready
     Clarify --> Ready
@@ -939,6 +960,39 @@ flowchart LR
       <div class="card"><strong>RAG</strong><span>PDF - source of truth. Индекс меню общий для LLM-инстансов через shared retrieval, а не внутри каждой модели.</span></div>
       <div class="card"><strong>Voice</strong><span>Telegram voice/audio сначала транскрибируется в transport/intake, затем идет тот же путь, что и текст.</span></div>
       <div class="card"><strong>Guardrail</strong><span>LLM не выдумывает позиции, цены и наличие. Если отвечает по блюдам, опирается на RAG/menu source.</span></div>
+    </div>
+  </section>
+
+  <section id="preference">
+    <h2>8.1 Preference / память предпочтений</h2>
+    <p>Preference Map сохраняет только то, что гость явно сообщил сам: вкусы, посадку, сервисные пожелания, accessibility. Это не скрытый profiling, а мягкая память для следующих сценариев.</p>
+    <div class="diagram mermaid compact">
+flowchart LR
+    Intent["Гость:<br/>запомни / я люблю / я не ем"]
+    HasText{"Есть само<br/>предпочтение?"}
+    Ask["PREFERENCE_COLLECT_TEXT<br/>спросить что запомнить"]
+    Classify["Classify<br/>food / seating / service / other"]
+    Save["guest_preferences<br/>ACTIVE"]
+    Ack["Гостю:<br/>запомнил спокойно"]
+    Home["READY_FOR_DIALOG"]
+
+    Intent --> HasText
+    HasText -- "нет" --> Ask --> Classify
+    HasText -- "да" --> Classify
+    Classify --> Save --> Ack --> Home
+    </div>
+    <table>
+      <thead><tr><th>Шаг FSM</th><th>Что делает Батлер</th><th>Что храним</th></tr></thead>
+      <tbody>
+      <tr><td><code>PREFERENCE_COLLECT_TEXT</code></td><td>Если гость сказал только "предпочтения", просит уточнить, что именно запомнить.</td><td>chat id, source state, correlation id.</td></tr>
+      <tr><td><code>PREFERENCE_CLASSIFY</code></td><td>Определяет категорию: еда, посадка, сервис, accessibility, событие или другое.</td><td>category, confidence, raw guest text.</td></tr>
+      <tr><td><code>PREFERENCE_SAVED</code></td><td>Сохраняет durable preference и возвращает гостя домой.</td><td><code>guest_preference_id</code>, status=<code>ACTIVE</code>, boundary=<code>GUEST_PROVIDED_ONLY</code>.</td></tr>
+      </tbody>
+    </table>
+    <div class="grid">
+      <div class="card"><strong>Guest-provided only</strong><span>Не выводим предпочтения из молчания или поведения. Сохраняем только то, что гость сказал.</span></div>
+      <div class="card"><strong>Soft memory</strong><span>Предпочтение помогает следующему сценарию, но не заменяет уточнение, если есть риск ошибки.</span></div>
+      <div class="card"><strong>Future RAG</strong><span>Позже Preference Map станет контекстом для меню, посадки и сервисных рекомендаций.</span></div>
     </div>
   </section>
 
@@ -1368,6 +1422,40 @@ flowchart LR
     </div>
   </section>
 
+  <section id="concierge">
+    <h2>16.1 Concierge / сервисная просьба</h2>
+    <p>ConciergeScenario нужен для конкретной просьбы команде: подготовить свечу, принести плед, предупредить хостес, помочь с комфортом. Это не жалоба и не ручной диалог менеджера, а сервисная заявка без автоподтверждения.</p>
+    <div class="diagram mermaid compact">
+flowchart LR
+    Intent["Гость:<br/>передай команде / подготовьте / принесите"]
+    HasRequest{"Есть понятная<br/>просьба?"}
+    Ask["CONCIERGE_COLLECT_REQUEST<br/>уточнить просьбу"]
+    Classify["Classify<br/>comfort / celebration / accessibility / service"]
+    Create["concierge_request<br/>PENDING_TEAM"]
+    Card["Admin/team card<br/>guest + request + context"]
+    Ack["Гостю:<br/>передал команде"]
+    Home["READY_FOR_DIALOG"]
+
+    Intent --> HasRequest
+    HasRequest -- "нет" --> Ask --> Classify
+    HasRequest -- "да" --> Classify
+    Classify --> Create --> Card --> Ack --> Home
+    </div>
+    <table>
+      <thead><tr><th>Шаг FSM</th><th>Что делает Батлер</th><th>Что храним / передаем</th></tr></thead>
+      <tbody>
+      <tr><td><code>CONCIERGE_COLLECT_REQUEST</code></td><td>Если фраза слишком общая, спрашивает, что именно передать команде.</td><td>chat id, current state, source text.</td></tr>
+      <tr><td><code>CONCIERGE_CLASSIFY</code></td><td>Определяет тип просьбы: comfort, celebration, accessibility, service, technical, other.</td><td>request_type, confidence, normalized request.</td></tr>
+      <tr><td><code>CONCIERGE_SENT</code></td><td>Создает заявку и отправляет карточку команде.</td><td><code>concierge_request_id</code>, admin message, status=<code>PENDING_TEAM</code>.</td></tr>
+      </tbody>
+    </table>
+    <div class="grid">
+      <div class="card"><strong>Не ManagerHelp</strong><span>Если нужна беседа с человеком или жалоба, route в ManagerHelp/Feedback. Concierge - это конкретное действие.</span></div>
+      <div class="card"><strong>No false promise</strong><span>Гостю говорим "передал команде", но не обещаем выполнение до подтверждения staff.</span></div>
+      <div class="card"><strong>Service analytics</strong><span>Типы просьб потом покажут, чего гостям не хватает в зале и сервисе.</span></div>
+    </div>
+  </section>
+
   <section id="change-cancel">
     <h2>17. Изменить или отменить</h2>
     <p>Отмена и изменение работают для <code>table_order</code> и <code>event_order</code>: сначала найти активную заявку гостя, затем освободить holds при отмене или заново пройти review при изменении.</p>
@@ -1575,6 +1663,7 @@ flowchart LR
       <tr><td>7</td><td>Мероприятие</td><td>"хочу банкет на 20 человек"</td><td><code>EVENT_BOOKING_COLLECT_DETAILS</code></td><td>collect date, guests, budget, occasion; send manager order, no auto-confirmation.</td></tr>
       <tr><td>8</td><td>Меню</td><td>"скинь все меню"</td><td><code>MENU_ASSETS_SEND</code></td><td>send 4 PDFs: кухня, бар, elements, вино; write menu asset event.</td></tr>
       <tr><td>8</td><td>Меню</td><td>voice "покажи коктейли"</td><td><code>MENU_ASSETS_SEND_FILTERED</code></td><td>transport transcript, semantic route, send elements/bar by classification.</td></tr>
+      <tr><td>8.1</td><td>Preference</td><td>"запомни, я не ем острое"</td><td><code>PREFERENCE_SAVED</code></td><td>create <code>guest_preference</code>, return <code>READY_FOR_DIALOG</code>, no hidden inference.</td></tr>
       <tr><td>9</td><td>Мерч</td><td>"хочу купить сертификат / сабражную цепь"</td><td><code>MERCH_ORDER_SELECT_ITEM</code></td><td>show active catalog, create <code>merch_order</code> only after explicit confirmation.</td></tr>
       <tr><td>10</td><td>Quiet Guide</td><td>"покажи ресторан внутри"</td><td><code>QUIET_GUIDE_SEND_INTERIOR</code></td><td>send original <code>INTERIOR.mp4</code> from MinIO/cache, then offer table/menu/concept.</td></tr>
       <tr><td>10</td><td>Quiet Guide</td><td>"какая у вас концепция?"</td><td><code>QUIET_GUIDE_CONCEPT</code></td><td>approved concept answer, no marketing spam, optional menu/table follow-up.</td></tr>
@@ -1585,6 +1674,7 @@ flowchart LR
       <tr><td>14</td><td>Impact Meter</td><td>"сколько собрали?"</td><td><code>IMPACT_REPORT</code></td><td>aggregated KPI only, no private payment data.</td></tr>
       <tr><td>15</td><td>Feedback</td><td>"отличный сервис" / "у меня жалоба"</td><td><code>FEEDBACK_COLLECT_CONTEXT</code></td><td>acknowledge guest, send admin feedback card with context, escalate complaint if needed.</td></tr>
       <tr><td>16</td><td>Менеджер</td><td>"позови менеджера"</td><td><code>MANAGER_HELP_REQUESTED</code></td><td>admin card with summary, reason and guest link; guest gets calm acknowledgement.</td></tr>
+      <tr><td>16.1</td><td>Concierge</td><td>"передай команде, подготовьте свечу к десерту"</td><td><code>CONCIERGE_SENT</code></td><td>create <code>concierge_request</code>, send admin/team card, guest gets calm acknowledgement.</td></tr>
       <tr><td>17</td><td>Изменить/отменить</td><td>"отмени бронь" / "перенеси мероприятие"</td><td><code>CHANGE_CANCEL_FIND_ACTIVE_ORDER</code></td><td>find active booking/event, release holds on cancel, restart confirmation on change.</td></tr>
       <tr><td>18</td><td>Recovery</td><td>unknown phrase after one clarification</td><td><code>RECOVERY_ESCALATE</code></td><td>admin card only after clarify-once fails; guest sees no stacktrace.</td></tr>
       <tr><td>18.2</td><td>Safe Play</td><td>"хочу сабраж / шампанское с ритуалом"</td><td><code>SAFE_PLAY_TEAM_CONFIRMATION</code></td><td>safety check, team card, no dangerous how-to, optional merch handoff.</td></tr>
