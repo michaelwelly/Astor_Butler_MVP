@@ -6,6 +6,7 @@ import museon_online.astor_butler.domain.timeline.FsmTimelineWriter;
 import museon_online.astor_butler.fsm.core.BotState;
 import museon_online.astor_butler.fsm.scenario.ArtAuctionScenario;
 import museon_online.astor_butler.fsm.scenario.ChangeCancelScenario;
+import museon_online.astor_butler.fsm.scenario.ConciergeScenario;
 import museon_online.astor_butler.fsm.scenario.EventBookingScenario;
 import museon_online.astor_butler.fsm.scenario.FeedbackScenario;
 import museon_online.astor_butler.fsm.scenario.FirstTouchScenario;
@@ -15,6 +16,7 @@ import museon_online.astor_butler.fsm.scenario.MainMenuScenario;
 import museon_online.astor_butler.fsm.scenario.ManagerHelpScenario;
 import museon_online.astor_butler.fsm.scenario.MerchScenario;
 import museon_online.astor_butler.fsm.scenario.MenuAssetsScenario;
+import museon_online.astor_butler.fsm.scenario.PreferenceScenario;
 import museon_online.astor_butler.fsm.scenario.QuietGuideScenario;
 import museon_online.astor_butler.fsm.scenario.RecoveryScenario;
 import museon_online.astor_butler.fsm.scenario.SafePlayScenario;
@@ -62,6 +64,12 @@ class MessageGatewayServiceTest {
 
     @Mock
     private FeedbackScenario feedbackScenario;
+
+    @Mock
+    private PreferenceScenario preferenceScenario;
+
+    @Mock
+    private ConciergeScenario conciergeScenario;
 
     @Mock
     private SafePlayScenario safePlayScenario;
@@ -123,6 +131,8 @@ class MessageGatewayServiceTest {
                 changeCancelScenario,
                 managerHelpScenario,
                 feedbackScenario,
+                preferenceScenario,
+                conciergeScenario,
                 safePlayScenario,
                 merchScenario,
                 menuAssetsScenario,
