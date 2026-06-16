@@ -835,7 +835,7 @@ flowchart LR
     Intent["Гость: бронь стола"]
     Plan["Отправить AERIS PLAN.pdf<br/>первым сообщением"]
     Collect["Собрать дату / время / гостей<br/>заполнить из composite intent"]
-    Select["Выбор стол / зона / авто"]
+    Select["Выбор стол / зона / авто<br/>preferredZone + seatingPreference"]
     Order["table_order<br/>HELD / PENDING_HOSTESS"]
     Hostess["Hostess card<br/>Да / Нет / Предложить другой"]
     Yes["CONFIRMED<br/>красивый order гостю"]
@@ -855,9 +855,9 @@ flowchart LR
       <tr><td><code>TABLE_BOOKING_SEND_PLAN</code></td><td>Сразу отправляет план зала, чтобы гость выбирал из визуального контекста.</td><td><code>AERIS_PLAN_ASSET</code>, file id, version, sent_at.</td></tr>
       <tr><td><code>TABLE_BOOKING_COLLECT_DATE</code></td><td>Собирает дату. Если дата уже в первом сообщении, не спрашивает повторно.</td><td><code>requested_date</code>, flexible flag, source text/voice.</td></tr>
       <tr><td><code>TABLE_BOOKING_COLLECT_TIME</code></td><td>Собирает время и мягко уточняет, если формат неоднозначный.</td><td><code>requested_time</code>, timezone, confidence.</td></tr>
-      <tr><td><code>TABLE_BOOKING_COLLECT_PARTY_SIZE</code></td><td>Собирает количество гостей и особые пожелания по посадке.</td><td><code>party_size</code>, children/pets/notes if present.</td></tr>
-      <tr><td><code>TABLE_BOOKING_WAIT_TABLE_SELECTION</code></td><td>Ждет номер стола, зону или разрешение выбрать подходящий стол автоматически.</td><td><code>table_code</code>, zone, auto_select flag.</td></tr>
-      <tr><td><code>TABLE_BOOKING_CREATE_ORDER</code></td><td>Создает заявку и короткий hold до решения хостес.</td><td><code>table_order_id</code>, <code>HELD</code>, date/time/party/table.</td></tr>
+      <tr><td><code>TABLE_BOOKING_COLLECT_PARTY_SIZE</code></td><td>Собирает количество гостей и особые пожелания по посадке.</td><td><code>party_size</code>, <code>preferred_zone</code>, <code>seating_preference</code>.</td></tr>
+      <tr><td><code>TABLE_BOOKING_WAIT_TABLE_SELECTION</code></td><td>Ждет номер стола, зону или разрешение выбрать подходящий стол автоматически.</td><td><code>table_code</code>, <code>preferred_zone</code>, <code>seating_preference</code>, auto_select flag.</td></tr>
+      <tr><td><code>TABLE_BOOKING_CREATE_ORDER</code></td><td>Создает заявку и короткий hold до решения хостес.</td><td><code>table_order_id</code>, <code>HELD</code>, date/time/party/table/preference.</td></tr>
       <tr><td><code>TABLE_BOOKING_WAIT_HOSTESS_CONFIRMATION</code></td><td>Отправляет карточку хостес с кнопками: Да, Нет, Предложить другой.</td><td>hostess chat message id, decision, decision_at.</td></tr>
       <tr><td><code>TABLE_BOOKING_CONFIRMED</code></td><td>Отправляет гостю красивое подтверждение брони.</td><td><code>CONFIRMED</code> event, timeline, Kafka admin event.</td></tr>
       <tr><td><code>TABLE_BOOKING_REJECTED</code></td><td>Дает вежливый отказ и предлагает другой стол/время.</td><td><code>REJECTED</code> reason, alternatives if any.</td></tr>
@@ -865,7 +865,7 @@ flowchart LR
     </table>
     <div class="grid">
       <div class="card"><strong>Plan first</strong><span>План зала отправляется первым, даже если в сообщении уже есть дата/время. Это снижает вопросы и помогает выбрать стол.</span></div>
-      <div class="card"><strong>Composite intent</strong><span>Фраза "завтра в 20:00 на двоих у окна" заполняет дату, время, гостей и предпочтение сразу.</span></div>
+      <div class="card"><strong>Composite intent</strong><span>Фраза "завтра в 20:00 на двоих у окна" заполняет дату, время, гостей, <code>preferredZone</code> и <code>seatingPreference</code> сразу.</span></div>
       <div class="card"><strong>Hostess кнопки</strong><span>Финальное решение за хостес: Да, Нет или другой вариант. Батлер не обещает подтверждение заранее.</span></div>
       <div class="card"><strong>Order</strong><span><code>table_order</code> хранит весь след: запрос, план, выбранный стол, hold, решение и сообщение гостю.</span></div>
     </div>

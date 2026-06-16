@@ -8,6 +8,8 @@ public record TableReservationCommand(
         Long userId,
         String venueCode,
         String tableCode,
+        String preferredZone,
+        String seatingPreference,
         Instant requestedStartAt,
         Instant requestedEndAt,
         Integer partySize,

@@ -123,10 +123,19 @@ public class TableReservationService {
                         command.venueCode(),
                         command.requestedStartAt(),
                         command.requestedEndAt(),
-                        command.partySize()
+                        command.partySize(),
+                        command.preferredZone()
                 )
                 .stream()
                 .findFirst()
+                .or(() -> repository.findAvailableTables(
+                                command.venueCode(),
+                                command.requestedStartAt(),
+                                command.requestedEndAt(),
+                                command.partySize()
+                        )
+                        .stream()
+                        .findFirst())
                 .orElseThrow(() -> new ApiException(
                         HttpStatus.CONFLICT,
                         ErrorCode.CONFLICT,

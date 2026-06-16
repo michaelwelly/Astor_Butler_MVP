@@ -10,6 +10,8 @@ public record TableReservationOrder(
         Long tableId,
         String tableCode,
         String tableDisplayName,
+        String preferredZone,
+        String seatingPreference,
         TableReservationStatus status,
         String source,
         Instant requestedStartAt,

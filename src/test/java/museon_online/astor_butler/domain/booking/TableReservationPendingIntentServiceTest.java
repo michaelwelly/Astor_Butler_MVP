@@ -104,6 +104,8 @@ class TableReservationPendingIntentServiceTest {
                 5L,
                 "5",
                 "Стол 5",
+                null,
+                null,
                 TableReservationStatus.CONFIRMED,
                 "TELEGRAM",
                 Instant.parse("2026-06-06T17:00:00Z"),

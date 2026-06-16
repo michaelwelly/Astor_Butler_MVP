@@ -38,6 +38,8 @@ class TableBookingRuntimeServiceTest {
                 LocalDate.of(2026, 6, 6),
                 LocalTime.of(20, 0),
                 2,
+                "MAIN_HALL",
+                "тихий стол",
                 "Хочу столик"
         );
         VenueTable table = table("17");
@@ -104,6 +106,8 @@ class TableBookingRuntimeServiceTest {
                 table.id(),
                 table.tableCode(),
                 table.displayName(),
+                null,
+                null,
                 TableReservationStatus.AWAITING_MANAGER_CONFIRMATION,
                 "TELEGRAM",
                 Instant.parse("2026-06-06T15:00:00Z"),

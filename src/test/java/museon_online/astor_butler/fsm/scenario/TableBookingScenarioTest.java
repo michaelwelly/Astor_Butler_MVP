@@ -28,6 +28,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentCaptor.forClass;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.verify;
@@ -135,6 +136,31 @@ class TableBookingScenarioTest {
     }
 
     @Test
+    void carriesSeatingPreferenceIntoReservationCommand() {
+        IncomingMessage incoming = telegram("винная комната, тихий стол");
+        Instant start = Instant.parse("2026-06-06T15:00:00Z");
+        when(draftStorage.find(incoming.chatId())).thenReturn(Optional.of(new TableBookingDraftStorage.Draft(
+                "AERIS",
+                start,
+                start.plusSeconds(7200),
+                null,
+                null,
+                2,
+                "MAIN_HALL",
+                "тихий стол",
+                "Хочу забронировать столик завтра на 20:00 на двоих"
+        )));
+        when(tableReservationService.createReservation(any(TableReservationCommand.class))).thenReturn(order(44L));
+
+        scenario.handle(incoming, BotState.TABLE_BOOKING_WAIT_TABLE_SELECTION, incoming.text());
+
+        var commandCaptor = forClass(TableReservationCommand.class);
+        verify(tableReservationService).createReservation(commandCaptor.capture());
+        assertThat(commandCaptor.getValue().preferredZone()).isEqualTo("WINE_ROOM");
+        assertThat(commandCaptor.getValue().seatingPreference()).contains("тихий стол");
+    }
+
+    @Test
     void asksForDetailsWhenTableSelectedWithoutDraft() {
         IncomingMessage incoming = telegram("17");
         when(draftStorage.find(incoming.chatId())).thenReturn(Optional.empty());
@@ -223,6 +249,8 @@ class TableBookingScenarioTest {
                 17L,
                 "17",
                 "Table 17",
+                null,
+                null,
                 TableReservationStatus.AWAITING_MANAGER_CONFIRMATION,
                 "TELEGRAM",
                 Instant.parse("2026-06-06T15:00:00Z"),

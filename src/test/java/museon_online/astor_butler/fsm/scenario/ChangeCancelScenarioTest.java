@@ -151,6 +151,8 @@ class ChangeCancelScenarioTest {
                 7L,
                 "A7",
                 "Окно у бара",
+                null,
+                null,
                 TableReservationStatus.CONFIRMED,
                 "TELEGRAM",
                 Instant.parse("2026-06-18T15:00:00Z"),

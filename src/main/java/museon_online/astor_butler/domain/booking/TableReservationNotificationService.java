@@ -112,6 +112,7 @@ public class TableReservationNotificationService {
                 <b>Стол:</b> %s
                 <b>Время:</b> %s - %s
                 <b>Гостей:</b> %s
+                <b>Предпочтение:</b> %s
                 <b>Телефон:</b> %s
                 <b>Комментарий:</b> %s
 
@@ -124,6 +125,7 @@ public class TableReservationNotificationService {
                 format(order.requestedStartAt()),
                 format(order.requestedEndAt()),
                 order.partySize(),
+                escape(seatingPreference(order)),
                 escape(blank(order.guestPhone(), "не указан")),
                 escape(blank(order.guestComment(), "нет")),
                 order.status()
@@ -139,6 +141,7 @@ public class TableReservationNotificationService {
                 <b>Стол:</b> %s
                 <b>Время:</b> %s - %s
                 <b>Гостей:</b> %s
+                <b>Предпочтение:</b> %s
                 <b>Телефон:</b> %s
                 <b>Комментарий:</b> %s
                 """.formatted(
@@ -148,6 +151,7 @@ public class TableReservationNotificationService {
                 format(order.requestedStartAt()),
                 format(order.requestedEndAt()),
                 order.partySize(),
+                escape(seatingPreference(order)),
                 escape(blank(order.guestPhone(), "не указан")),
                 escape(blank(order.guestComment(), "нет"))
         );
@@ -163,6 +167,7 @@ public class TableReservationNotificationService {
                 <b>Стол:</b> %s
                 <b>Время:</b> %s - %s
                 <b>Гостей:</b> %s
+                <b>Пожелание:</b> %s
 
                 Если планы изменятся, просто напишите сюда, и я помогу все поправить.
                 """.formatted(
@@ -170,7 +175,8 @@ public class TableReservationNotificationService {
                 escape(tableName(order)),
                 format(order.requestedStartAt()),
                 format(order.requestedEndAt()),
-                order.partySize()
+                order.partySize(),
+                escape(seatingPreference(order))
         );
     }
 
@@ -184,6 +190,7 @@ public class TableReservationNotificationService {
                 <b>Стол:</b> %s
                 <b>Время:</b> %s - %s
                 <b>Гостей:</b> %s
+                <b>Пожелание:</b> %s
 
                 Давайте подберем другой стол или время. Напишите, что удобнее изменить: время, количество гостей или зону посадки.
                 """.formatted(
@@ -191,7 +198,8 @@ public class TableReservationNotificationService {
                 escape(tableName(order)),
                 format(order.requestedStartAt()),
                 format(order.requestedEndAt()),
-                order.partySize()
+                order.partySize(),
+                escape(seatingPreference(order))
         );
     }
 
@@ -224,6 +232,14 @@ public class TableReservationNotificationService {
             return order.tableCode();
         }
         return order.tableDisplayName() + " (" + order.tableCode() + ")";
+    }
+
+    private String seatingPreference(TableReservationOrder order) {
+        String preference = blank(order.seatingPreference(), "");
+        if (!preference.isBlank()) {
+            return preference;
+        }
+        return blank(order.preferredZone(), "нет");
     }
 
     private String format(java.time.Instant instant) {

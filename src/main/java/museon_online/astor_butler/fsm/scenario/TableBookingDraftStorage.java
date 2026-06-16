@@ -72,6 +72,8 @@ public class TableBookingDraftStorage {
             LocalDate requestedDate,
             LocalTime requestedTime,
             Integer partySize,
+            String preferredZone,
+            String seatingPreference,
             String originalText
     ) {
         public Draft(
@@ -81,7 +83,7 @@ public class TableBookingDraftStorage {
                 Integer partySize,
                 String originalText
         ) {
-            this(venueCode, requestedStartAt, requestedEndAt, null, null, partySize, originalText);
+            this(venueCode, requestedStartAt, requestedEndAt, null, null, partySize, null, null, originalText);
         }
     }
 }

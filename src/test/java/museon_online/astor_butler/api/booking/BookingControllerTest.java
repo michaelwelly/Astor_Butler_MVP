@@ -107,6 +107,8 @@ class BookingControllerTest {
                 17L,
                 "17",
                 "Table 17",
+                null,
+                null,
                 TableReservationStatus.AWAITING_MANAGER_CONFIRMATION,
                 "TELEGRAM",
                 Instant.parse("2026-06-06T15:00:00Z"),

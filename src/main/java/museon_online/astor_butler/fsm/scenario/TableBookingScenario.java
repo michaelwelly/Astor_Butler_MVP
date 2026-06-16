@@ -154,6 +154,8 @@ public class TableBookingScenario implements FsmScenario {
                     null,
                     draft.get().venueCode(),
                     tableCode(normalized),
+                    preferredZone(normalized).orElse(draft.get().preferredZone()),
+                    seatingPreference(normalized).orElse(draft.get().seatingPreference()),
                     draft.get().requestedStartAt(),
                     draft.get().requestedEndAt(),
                     draft.get().partySize(),
@@ -221,6 +223,8 @@ public class TableBookingScenario implements FsmScenario {
                 requestedDate(normalized),
                 requestedTime(normalized),
                 partySize(normalized),
+                preferredZone(normalized).orElse(null),
+                seatingPreference(normalized).orElse(null),
                 incoming.text()
         ));
     }
@@ -230,6 +234,8 @@ public class TableBookingScenario implements FsmScenario {
         LocalDate date = extractDate(normalized).or(() -> stored.map(TableBookingDraftStorage.Draft::requestedDate)).orElse(null);
         LocalTime time = extractTime(normalized).or(() -> stored.map(TableBookingDraftStorage.Draft::requestedTime)).orElse(null);
         Integer partySize = extractPartySize(normalized).or(() -> stored.map(TableBookingDraftStorage.Draft::partySize)).orElse(null);
+        String preferredZone = preferredZone(normalized).or(() -> stored.map(TableBookingDraftStorage.Draft::preferredZone)).orElse(null);
+        String seatingPreference = seatingPreference(normalized).or(() -> stored.map(TableBookingDraftStorage.Draft::seatingPreference)).orElse(null);
         String originalText = mergeOriginalText(stored.map(TableBookingDraftStorage.Draft::originalText).orElse(null), incoming.text());
 
         Instant startAt = date == null || time == null ? null : date.atTime(time).atZone(VENUE_ZONE).toInstant();
@@ -240,6 +246,8 @@ public class TableBookingScenario implements FsmScenario {
                 date,
                 time,
                 partySize,
+                preferredZone,
+                seatingPreference,
                 originalText
         );
         draftStorage.save(incoming.chatId(), draft);
@@ -327,9 +335,10 @@ public class TableBookingScenario implements FsmScenario {
                 || text.contains("любой подходящий")
                 || text.contains("на твой выбор")
                 || text.contains("где удобно")
-                || text.matches(".*\\b(vip|вип)\\b.*")
-                || text.matches(".*\\b(wine|винная|винный)\\b.*")
-                || text.matches(".*\\b(бар|у бара|барная)\\b.*")
+                || text.contains("vip")
+                || text.contains("вип")
+                || text.contains("винн")
+                || text.contains("бар")
                 || TABLE_NUMBER_SELECTION.matcher(text).matches()
                 || TABLE_NUMBER_IN_TEXT.matcher(text).matches();
     }
@@ -370,13 +379,13 @@ public class TableBookingScenario implements FsmScenario {
     }
 
     private String tableCode(String text) {
-        if (text.matches(".*\\b(бар|у бара|барная)\\b.*")) {
+        if (text.contains("бар")) {
             return "BAR";
         }
-        if (text.matches(".*\\b(vip|вип)\\b.*")) {
+        if (text.contains("vip") || text.contains("вип")) {
             return "13";
         }
-        if (text.matches(".*\\b(wine|винная|винный)\\b.*")) {
+        if (text.contains("wine") || text.contains("винн")) {
             return "7";
         }
         if (text.contains("выбери сам") || text.contains("любой") || text.contains("на твой выбор") || text.contains("где удобно")) {
@@ -384,6 +393,37 @@ public class TableBookingScenario implements FsmScenario {
         }
         Matcher matcher = Pattern.compile("\\b(?:стол(?:ик)?\\s*)?(1\\d|[1-9])\\b").matcher(text);
         return matcher.find() ? matcher.group(1) : null;
+    }
+
+    private Optional<String> preferredZone(String text) {
+        if (text.contains("vip") || text.contains("вип")) {
+            return Optional.of("VIP_ZONE");
+        }
+        if (text.contains("wine") || text.contains("винн")) {
+            return Optional.of("WINE_ROOM");
+        }
+        if (text.contains("бар")) {
+            return Optional.of("BAR");
+        }
+        return Optional.empty();
+    }
+
+    private Optional<String> seatingPreference(String text) {
+        if (text == null || text.isBlank()) {
+            return Optional.empty();
+        }
+        if (text.contains("тих")
+                || text.contains("окн")
+                || text.contains("диван")
+                || text.contains("vip")
+                || text.contains("вип")
+                || text.contains("винн")
+                || text.contains("бар")
+                || text.contains("не проход")
+                || text.contains("уют")) {
+            return Optional.of(text);
+        }
+        return Optional.empty();
     }
 
     private LocalTime parseTime(Matcher matcher) {

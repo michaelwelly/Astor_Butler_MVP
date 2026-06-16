@@ -45,6 +45,10 @@ public class TableReservationRepository {
     }
 
     public List<VenueTable> findAvailableTables(String venueCode, Instant startAt, Instant endAt, int partySize) {
+        return findAvailableTables(venueCode, startAt, endAt, partySize, null);
+    }
+
+    public List<VenueTable> findAvailableTables(String venueCode, Instant startAt, Instant endAt, int partySize, String preferredZone) {
         return jdbcTemplate.query("""
                 SELECT vt.*
                 FROM venue_tables vt
@@ -52,6 +56,7 @@ public class TableReservationRepository {
                   AND vt.active = TRUE
                   AND vt.bookable = TRUE
                   AND vt.capacity_max >= ?
+                  AND (? IS NULL OR vt.zone = ?)
                   AND NOT EXISTS (
                       SELECT 1
                       FROM table_reservation_holds h
@@ -65,6 +70,8 @@ public class TableReservationRepository {
                 venueTableMapper(),
                 normalizeVenue(venueCode),
                 partySize,
+                normalizeZone(preferredZone),
+                normalizeZone(preferredZone),
                 timestamp(endAt),
                 timestamp(startAt)
         );
@@ -92,10 +99,11 @@ public class TableReservationRepository {
                 INSERT INTO table_reservation_orders (
                     chat_id, telegram_user_id, user_id, table_id, status, source,
                     requested_start_at, requested_end_at, party_size, guest_name,
-                    guest_phone, guest_comment, manager_telegram_id, hostess_chat_id,
+                    guest_phone, guest_comment, preferred_zone, seating_preference,
+                    manager_telegram_id, hostess_chat_id,
                     created_at, updated_at
                 )
-                VALUES (?, ?, ?, ?, ?, 'TELEGRAM', ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+                VALUES (?, ?, ?, ?, ?, 'TELEGRAM', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
                 RETURNING id
                 """,
                 Long.class,
@@ -110,6 +118,8 @@ public class TableReservationRepository {
                 command.guestName(),
                 command.guestPhone(),
                 command.guestComment(),
+                normalizeZone(command.preferredZone()),
+                blankToNull(command.seatingPreference()),
                 command.managerTelegramId() == null ? DEFAULT_MANAGER_TELEGRAM_ID : command.managerTelegramId(),
                 command.hostessChatId()
         );
@@ -266,6 +276,8 @@ public class TableReservationRepository {
                 nullableLong(rs, "table_id"),
                 rs.getString("table_code"),
                 rs.getString("table_display_name"),
+                rs.getString("preferred_zone"),
+                rs.getString("seating_preference"),
                 TableReservationStatus.valueOf(rs.getString("status")),
                 rs.getString("source"),
                 instant(rs, "requested_start_at"),
@@ -289,6 +301,10 @@ public class TableReservationRepository {
 
     private String normalizeTableCode(String tableCode) {
         return tableCode == null ? null : tableCode.trim().toUpperCase();
+    }
+
+    private String normalizeZone(String zone) {
+        return zone == null || zone.isBlank() ? null : zone.trim().toUpperCase();
     }
 
     private String blankToNull(String value) {
