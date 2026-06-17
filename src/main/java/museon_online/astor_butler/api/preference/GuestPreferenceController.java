@@ -10,6 +10,7 @@ import museon_online.astor_butler.domain.preference.GuestPreferenceService;
 import museon_online.astor_butler.domain.preference.GuestPreferenceStatus;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -40,6 +41,12 @@ public class GuestPreferenceController {
     @Operation(summary = "Get guest preference")
     public ResponseEntity<GuestPreferenceResponse> getPreference(@PathVariable("id") Long id) {
         return ResponseEntity.ok(GuestPreferenceResponse.from(preferenceService.getPreference(id)));
+    }
+
+    @DeleteMapping("/{id}")
+    @Operation(summary = "Soft-delete guest preference")
+    public ResponseEntity<GuestPreferenceResponse> deletePreference(@PathVariable("id") Long id) {
+        return ResponseEntity.ok(GuestPreferenceResponse.from(preferenceService.deletePreference(id)));
     }
 
     @GetMapping("/telegram/{chatId}")

@@ -223,8 +223,9 @@
     <a href="#registry">1 Реестр</a>
     <a href="#anti-fallback">1.1 Anti-Fallback</a>
     <a href="#semantic-context">1.2 pgvector</a>
-    <a href="#composite-intent">1.3 Composite</a>
-    <a href="#intake-matrix">1.4 Intake Matrix</a>
+    <a href="#guest-input-understanding">1.3 Input Understanding</a>
+    <a href="#composite-intent">1.4 Composite</a>
+    <a href="#intake-matrix">1.5 Intake Matrix</a>
     <a href="#product-layer">2 8 осей</a>
     <a href="#intake">3 Вход</a>
     <a href="#first-touch">4 Первое касание</a>
@@ -402,7 +403,7 @@ flowchart LR
       <tr><td>7</td><td><code>EventBookingScenario</code></td><td>банкет, день рождения, корпоратив</td><td>structured request менеджеру</td><td><code>READY_FOR_DIALOG</code></td></tr>
       <tr><td>8</td><td><code>MenuAssetsScenario</code></td><td>меню, карта бара, вино, коктейли, voice/text</td><td>RAG уточнение + 1-4 актуальных PDF</td><td><code>READY_FOR_DIALOG</code></td></tr>
       <tr><td>8.1</td><td><code>PreferenceScenario</code></td><td>запомни, я не ем острое, люблю тихий стол</td><td>durable guest preference для будущей персонализации</td><td><code>READY_FOR_DIALOG</code></td></tr>
-      <tr><td>9</td><td><code>MerchScenario</code></td><td>мерч, подарок, купить вещь/сертификат</td><td><code>merch_request</code> draft + карточка команде</td><td><code>READY_FOR_DIALOG</code></td></tr>
+      <tr><td>9</td><td><code>MerchScenario</code></td><td>мерч, подарок, купить вещь/сертификат/сабражную цепь</td><td><code>merch_order</code> draft + подтверждение гостя + карточка команде</td><td><code>READY_FOR_DIALOG</code></td></tr>
       <tr><td>10</td><td><code>QuietGuideScenario</code></td><td>афиша, справка, видео-тур, концепция AERIS</td><td>контент/видео/approved copy без спама</td><td><code>READY_FOR_DIALOG</code></td></tr>
       <tr><td>10.1</td><td><code>AERIS Channel Ingest</code></td><td>official channel posts</td><td>content normalization for Quiet Guide</td><td>content store / not guest FSM</td></tr>
       <tr><td>11</td><td><code>SmartTipScenario</code></td><td>чаевые, благодарность</td><td>tip intent до СПБ/payment boundary</td><td><code>READY_FOR_DIALOG</code></td></tr>
@@ -414,7 +415,7 @@ flowchart LR
       <tr><td>16.1</td><td><code>ConciergeScenario</code></td><td>передай команде, подготовьте свечу, принесите плед</td><td><code>concierge_request</code> + карточка команде без автоподтверждения</td><td><code>READY_FOR_DIALOG</code></td></tr>
       <tr><td>17</td><td><code>ChangeCancelScenario</code></td><td>отмена, перенос, изменить бронь</td><td>изменение/отмена active order</td><td><code>READY_FOR_DIALOG</code></td></tr>
       <tr><td>18</td><td><code>RecoveryScenario</code></td><td>непонятно, конфликт, сбой</td><td>уточнение, восстановление или manager handoff</td><td><code>READY_FOR_DIALOG</code></td></tr>
-      <tr><td>18.2</td><td><code>SafePlayScenario</code></td><td>сабраж, шампанское, игристое, ритуал, цепь</td><td>safe ritual request + team card + optional merch link</td><td><code>READY_FOR_DIALOG</code></td></tr>
+      <tr><td>18.2</td><td><code>SafePlayScenario</code></td><td>сабражный ритуал, шампанское, игристое, dangerous how-to</td><td>safe ritual request + team card + optional merch link; покупка цепи идет в Merch</td><td><code>READY_FOR_DIALOG</code></td></tr>
       </tbody>
     </table>
   </section>
@@ -541,8 +542,68 @@ flowchart LR
     <div class="hint">Граница ответственности: pgvector ищет похожий смысл и approved context, LLM формирует гипотезу, FSM проверяет допустимость перехода, domain service создает реальные факты.</div>
   </section>
 
+  <section id="guest-input-understanding">
+    <h2>1.3 Guest Input Understanding</h2>
+    <p>Этот слой переводит живую речь гостя в машинный формат до входа в конкретный FSM-сценарий. Он не принимает бизнес-решений: он нормализует текст, достает slots, оценивает intent/confidence и отдает результат в <code>ScenarioRouter</code>.</p>
+    <div class="diagram mermaid compact">
+flowchart LR
+    Raw["Raw guest input<br/>text / STT / menu button"]
+    Normalize["Normalizer<br/>case, ё/е, buttons,<br/>date/time/party words"]
+    Slots["Slot extractors<br/>date, time, partySize,<br/>table, amount, yes/no"]
+    Examples["Knowledge corpus<br/>intent_examples + misses"]
+    Vector["pgvector<br/>optional embeddings"]
+    Intent["Intent classifier<br/>primary + candidates + confidence"]
+    Machine["UnderstoodInput<br/>normalizedText + slots + intent"]
+    Router["ScenarioRouter / FSM guard"]
+
+    Raw --> Normalize --> Slots --> Intent --> Machine --> Router
+    Examples --> Intent
+    Vector --> Intent
+    </div>
+    <table>
+      <thead><tr><th>Компонент</th><th>Что делает</th><th>Где живет сейчас</th><th>Куда масштабируем</th></tr></thead>
+      <tbody>
+      <tr><td><code>GuestInputUnderstandingService</code></td><td>Нормализует ручной ввод и кнопки, возвращает <code>UnderstoodInput</code>.</td><td>Spring service перед <code>ScenarioRouter</code>.</td><td>Гибрид: rules + DB examples + pgvector + LLM classifier.</td></tr>
+      <tr><td><code>UnderstoodInput</code></td><td>Машинный контракт: raw, normalized, intent, confidence, slots, candidates.</td><td>Java record.</td><td>Единый DTO для Telegram, REST и будущих transport adapters.</td></tr>
+      <tr><td><code>guest-input-golden-corpus.jsonl</code></td><td>Проверяемые примеры живых фраз без ручного Telegram-прогона.</td><td>Repo-owned seed/test corpus.</td><td>Загрузка в Postgres/pgvector как runtime knowledge.</td></tr>
+      <tr><td><code>intent_examples</code></td><td>Approved фразы, intent, state и expected slots.</td><td>PostgreSQL + Liquibase.</td><td>Admin review UI и автозагрузка из corpus.</td></tr>
+      <tr><td><code>intent_example_embeddings</code></td><td>Векторы approved examples с размерностью конкретной модели.</td><td>pgvector, provider выключен по умолчанию.</td><td><code>spring-ai</code> или <code>ollama</code> embedding provider.</td></tr>
+      <tr><td><code>intent_understanding_misses</code></td><td>Фразы, которые сломали тест или ушли в fallback.</td><td>PostgreSQL queue для review.</td><td>Admin review UI + пополнение corpus.</td></tr>
+      <tr><td><code>Duckling / Natasha spike</code></td><td>Отдельно проверяет русские даты, числа, морфологию и шумный STT.</td><td><code>scripts/spike_russian_nlu_tools.py</code>.</td><td>В runtime только после доказанной пользы.</td></tr>
+      </tbody>
+    </table>
+    <table>
+      <thead><tr><th>Ввод гостя</th><th>Машинный результат</th><th>Зачем</th></tr></thead>
+      <tbody>
+      <tr><td>На завтра</td><td><code>intent=PROVIDE_DATE</code>, <code>slot.date=завтра</code></td><td>Сценарий брони понимает ответ на вопрос о дате.</td></tr>
+      <tr><td>В 8 вечера</td><td><code>intent=PROVIDE_TIME</code>, <code>slot.time=20:00</code></td><td>Не путаем время с числом гостей.</td></tr>
+      <tr><td>На 2х / на двоих</td><td><code>intent=PROVIDE_PARTY_SIZE</code>, <code>slot.partySize=2</code></td><td>Один слой понимает разные формы ответа.</td></tr>
+      <tr><td>Тихий стол в винной комнате</td><td><code>intent=PROVIDE_TABLE_SELECTION</code>, <code>slot.seatingPreference</code></td><td>Не просим гостя повторять очевидное.</td></tr>
+      <tr><td>Меню и видео-тур</td><td><code>candidates=[MENU_ASSETS, QUIET_GUIDE]</code></td><td>Дальше включается composite plan.</td></tr>
+      </tbody>
+    </table>
+    <div class="grid">
+      <div class="card"><strong>Universal before scenarios</strong><span>Любой ручной ввод гостя сначала проходит через understanding, кроме служебных чатов, callbacks и структурированных Telegram events.</span></div>
+      <div class="card"><strong>FSM still owns truth</strong><span>Understanding говорит "на что похоже", а FSM решает, допустим ли переход в текущем state.</span></div>
+      <div class="card"><strong>Corpus before production</strong><span>Новые варианты фраз сначала попадают в golden corpus и unit tests, потом в контейнер и ручной smoke test.</span></div>
+      <div class="card"><strong>No code-only knowledge</strong><span>Правила в коде - стартовый fallback. Источник масштабирования - seed/corpus + Postgres/pgvector.</span></div>
+      <div class="card"><strong>Provider flags</strong><span><code>ASTOR_SEMANTIC_EMBEDDINGS_PROVIDER=none|spring-ai|ollama</code>; загрузка corpus включается отдельно.</span></div>
+    </div>
+    <table>
+      <thead><tr><th>Шаг наполнения</th><th>Что делаем</th><th>Результат</th></tr></thead>
+      <tbody>
+      <tr><td>1. Scenario/state</td><td>Берем узкий state: дата, время, гости, стол, меню, афиша.</td><td>Понятная область теста, без хаоса.</td></tr>
+      <tr><td>2. Phrase variants</td><td>Генерируем живые фразы: "к восьми", "на 2х", "нас двое".</td><td>Набор входов, похожих на реальный Telegram/STT.</td></tr>
+      <tr><td>3. Golden corpus</td><td>Пишем expected intent/slots в <code>guest-input-golden-corpus.jsonl</code>.</td><td>Повторяемый тест без Натальи и без Telegram.</td></tr>
+      <tr><td>4. Parser / normalizer</td><td>Правим только общий understanding layer, если corpus красный.</td><td>Одна правка помогает всем сценариям.</td></tr>
+      <tr><td>5. Runtime knowledge</td><td>Approved examples переносим в Postgres/pgvector.</td><td>Масштабируемая база похожих фраз и negative examples.</td></tr>
+      <tr><td>6. Manual feedback</td><td>Каждый fallback из ручного теста становится новым corpus case.</td><td>Система учится от ошибок, но через review и тесты.</td></tr>
+      </tbody>
+    </table>
+  </section>
+
   <section id="composite-intent">
-    <h2>1.3 Composite Intent Plan</h2>
+    <h2>1.4 Composite Intent Plan</h2>
     <p>Если гость в одном сообщении просит несколько вещей, Astor строит план исполнения. Безопасный контент можно выполнить вместе, а действия с side effects идут по очереди и требуют явного подтверждения.</p>
     <div class="diagram mermaid compact">
 flowchart LR
@@ -610,7 +671,7 @@ flowchart LR
   </section>
 
   <section id="intake-matrix">
-    <h2>1.4 Scenario Intake Matrix</h2>
+    <h2>1.5 Scenario Intake Matrix</h2>
     <p>Эта таблица нужна, чтобы переводить живые фразы гостей в сценарии и целевые состояния. Если состояние есть здесь, но еще не реализовано в <code>BotState</code>, это next-code target.</p>
     <table>
       <thead><tr><th>#</th><th>Сценарий</th><th>Примеры фраз / сигнал</th><th>Нужные сущности</th><th>Целевые состояния / next-code target</th></tr></thead>
@@ -622,7 +683,7 @@ flowchart LR
       <tr><td>7</td><td>EventBooking</td><td>день рождения, корпоратив, закрыть зал, банкет, свадьба</td><td>type, date, guests, budget, wishes</td><td><code>EVENT_BOOKING_SEND_MENU</code>, <code>EVENT_BOOKING_COLLECT_TYPE</code>, <code>EVENT_BOOKING_COLLECT_DATE</code>, <code>EVENT_BOOKING_CONFIRM_ORDER</code>, <code>EVENT_BOOKING_MANAGER_REVIEW</code></td></tr>
       <tr><td>8</td><td>MenuAssets</td><td>меню, вино, барная карта, что поесть, коктейли</td><td>menu category, optional preference, source asset</td><td><code>MENU_ASSETS_INTAKE</code>, <code>MENU_ASSETS_LOOKUP</code>, <code>MENU_ASSETS_CLARIFY</code>, <code>MENU_ASSETS_DELIVER</code></td></tr>
       <tr><td>8.1</td><td>Preference</td><td>запомни, я не ем острое, люблю тихий стол, предпочтения</td><td>preference text, category, confidence, source state</td><td><code>PREFERENCE_COLLECT_TEXT</code>, <code>PREFERENCE_SAVED</code></td></tr>
-      <tr><td>9</td><td>Merch</td><td>мерч, сертификат, хочу купить, подарок</td><td>item, variant, quantity, guest note, delivery/pickup hint</td><td><code>MERCH_LOOKUP_CATALOG</code>, <code>MERCH_COLLECT_SELECTION</code>, <code>MERCH_CONFIRM_ORDER</code>, <code>MERCH_SEND_TEAM_CARD</code></td></tr>
+      <tr><td>9</td><td>Merch</td><td>мерч, сертификат, сабражная цепь, хочу купить, подарок</td><td>item, variant, quantity, guest note, delivery/pickup hint</td><td><code>MERCH_LOOKUP_CATALOG</code>, <code>MERCH_COLLECT_SELECTION</code>, <code>MERCH_CONFIRM_ORDER</code>, <code>MERCH_SEND_TEAM_CARD</code></td></tr>
       <tr><td>10</td><td>QuietGuide</td><td>афиша, что сегодня, видео-тур, интерьер, концепция, кто шеф</td><td>content type, active media/content source</td><td><code>QUIET_GUIDE_CLASSIFY</code>, <code>QUIET_GUIDE_FETCH_CONTENT</code>, <code>QUIET_GUIDE_CLARIFY</code>, <code>QUIET_GUIDE_DELIVER</code></td></tr>
       <tr><td>10.1</td><td>AERIS Channel Ingest</td><td>новый post в official channel / public parser</td><td>post id, media ids, post type, event date, expiry</td><td><code>CHANNEL_POST_DISCOVERED</code>, <code>CHANNEL_POST_NORMALIZED</code>, <code>CONTENT_READY_FOR_GUIDE</code></td></tr>
       <tr><td>11</td><td>SmartTip</td><td>чаевые, на чай, поблагодарить официанта, Саше 1000</td><td>amount, target staff/team, confirmation</td><td><code>TIP_SELECT_STAFF</code>, <code>TIP_COLLECT_AMOUNT</code>, <code>TIP_CONFIRM_ORDER</code>, <code>TIP_WAIT_PAYMENT_RECEIPT</code></td></tr>
@@ -634,7 +695,7 @@ flowchart LR
       <tr><td>16.1</td><td>Concierge</td><td>передай команде, подготовьте свечу, принесите плед, нужна помощь</td><td>request text, request type, guest snapshot, admin chat</td><td><code>CONCIERGE_COLLECT_REQUEST</code>, <code>CONCIERGE_SENT</code></td></tr>
       <tr><td>17</td><td>ChangeCancel</td><td>перенести бронь, отменить, опоздаем, поменять время</td><td>order reference, date/time, action, confirmation</td><td><code>CHANGE_CANCEL_FIND_ORDER</code>, <code>CHANGE_CANCEL_SELECT_ACTION</code>, <code>CHANGE_CANCEL_CANCEL</code>, <code>CHANGE_CANCEL_REVIEW</code></td></tr>
       <tr><td>18</td><td>Recovery</td><td>непонятно, STT noise, LLM timeout, state conflict</td><td>reason, retry count, current state, candidates</td><td><code>RECOVERY_DIAGNOSE</code>, <code>RECOVERY_RESTORE_CONTEXT</code>, <code>RECOVERY_CLARIFY_ONCE</code>, <code>RECOVERY_MANAGER_HANDOFF</code></td></tr>
-      <tr><td>18.2</td><td>SafePlay</td><td>сабраж, открыть шампанское красиво, игристое с ритуалом, сабражная цепь, купить сабражную цепь</td><td>table/order context, staff availability, bottle type, age/safety flags, merch interest</td><td><code>SAFE_PLAY_SELECT_RITUAL</code>, <code>SAFE_PLAY_SAFETY_CHECK</code>, <code>SAFE_PLAY_TEAM_CONFIRMATION</code>, <code>SAFE_PLAY_MERCH_OFFER</code></td></tr>
+      <tr><td>18.2</td><td>SafePlay</td><td>сабражный ритуал, открыть шампанское красиво, игристое с ритуалом, dangerous how-to</td><td>table/order context, staff availability, bottle type, age/safety flags, optional merch interest</td><td><code>SAFE_PLAY_SELECT_RITUAL</code>, <code>SAFE_PLAY_SAFETY_CHECK</code>, <code>SAFE_PLAY_TEAM_CONFIRMATION</code>, <code>SAFE_PLAY_MERCH_OFFER</code></td></tr>
       </tbody>
     </table>
   </section>
@@ -975,11 +1036,16 @@ flowchart LR
     Save["guest_preferences<br/>ACTIVE"]
     Ack["Гостю:<br/>запомнил спокойно"]
     Home["READY_FOR_DIALOG"]
+    ActiveList["GET active preferences<br/>для сценариев"]
+    Delete["DELETE preference<br/>soft-delete"]
+    Deleted["guest_preferences<br/>DELETED"]
 
     Intent --> HasText
     HasText -- "нет" --> Ask --> Classify
     HasText -- "да" --> Classify
     Classify --> Save --> Ack --> Home
+    Save --> ActiveList
+    Delete --> Deleted
     </div>
     <table>
       <thead><tr><th>Шаг FSM</th><th>Что делает Батлер</th><th>Что храним</th></tr></thead>
@@ -987,11 +1053,13 @@ flowchart LR
       <tr><td><code>PREFERENCE_COLLECT_TEXT</code></td><td>Если гость сказал только "предпочтения", просит уточнить, что именно запомнить.</td><td>chat id, source state, correlation id.</td></tr>
       <tr><td><code>PREFERENCE_CLASSIFY</code></td><td>Определяет категорию: еда, посадка, сервис, accessibility, событие или другое.</td><td>category, confidence, raw guest text.</td></tr>
       <tr><td><code>PREFERENCE_SAVED</code></td><td>Сохраняет durable preference и возвращает гостя домой.</td><td><code>guest_preference_id</code>, status=<code>ACTIVE</code>, boundary=<code>GUEST_PROVIDED_ONLY</code>.</td></tr>
+      <tr><td><code>PREFERENCE_DELETED</code></td><td>Soft-delete по API, если предпочтение больше нельзя использовать.</td><td>status=<code>DELETED</code>, audit trail сохранен.</td></tr>
       </tbody>
     </table>
     <div class="grid">
       <div class="card"><strong>Guest-provided only</strong><span>Не выводим предпочтения из молчания или поведения. Сохраняем только то, что гость сказал.</span></div>
       <div class="card"><strong>Soft memory</strong><span>Предпочтение помогает следующему сценарию, но не заменяет уточнение, если есть риск ошибки.</span></div>
+      <div class="card"><strong>Active list only</strong><span>Сценарии читают только <code>ACTIVE</code> записи; удаленные остаются для аудита, но не влияют на диалог.</span></div>
       <div class="card"><strong>Future RAG</strong><span>Позже Preference Map станет контекстом для меню, посадки и сервисных рекомендаций.</span></div>
     </div>
   </section>
@@ -1007,7 +1075,7 @@ flowchart LR
     Pick{"Гость выбрал<br/>позицию?"}
     Clarify["Уточнить товар<br/>размер / цвет / количество"]
     Collect["Собрать контактные детали<br/>самовывоз / доставка later"]
-    Summary["Показать order summary<br/>без автосписания"]
+    Summary["Создать draft<br/>AWAITING_GUEST_CONFIRMATION"]
     Confirm{"Подтверждает?"}
     Order["merch_order<br/>PENDING_TEAM"]
     Team["Admin/team card<br/>подтвердить наличие и способ оплаты"]
@@ -1027,8 +1095,8 @@ flowchart LR
       <tr><td><code>MERCH_LOOKUP_CATALOG</code></td><td>Читает активный каталог мерча, цены, медиа и ограничение по наличию.</td><td>item ids, active version, stock hint, media asset ids.</td></tr>
       <tr><td><code>MERCH_SHOW_OPTIONS</code></td><td>Показывает короткую витрину или релевантные позиции по запросу гостя.</td><td>shown item ids, source query, ranking reason.</td></tr>
       <tr><td><code>MERCH_COLLECT_SELECTION</code></td><td>Собирает товар, размер/цвет/количество и комментарий.</td><td>selected item id, variant, quantity, guest note.</td></tr>
-      <tr><td><code>MERCH_CONFIRM_ORDER</code></td><td>Показывает сводку и явно говорит, что это заявка команде, не автоматическая покупка.</td><td>summary text, confirmation message id, draft version.</td></tr>
-      <tr><td><code>MERCH_SEND_TEAM_CARD</code></td><td>Создает <code>merch_order</code> и отправляет карточку в админ/командный чат.</td><td><code>merch_order_id</code>, status=<code>PENDING_TEAM</code>, admin message id.</td></tr>
+      <tr><td><code>MERCH_CONFIRM_ORDER</code></td><td>Создает черновик <code>merch_order</code>, показывает сводку и явно говорит, что это заявка команде, не автоматическая покупка.</td><td><code>merch_order_id</code>, status=<code>AWAITING_GUEST_CONFIRMATION</code>, confirmation message id.</td></tr>
+      <tr><td><code>MERCH_SEND_TEAM_CARD</code></td><td>После ответа гостя "да" переводит заявку в <code>PENDING_TEAM</code> и отправляет карточку в админ/командный чат.</td><td><code>merch_order_id</code>, status=<code>PENDING_TEAM</code>, admin message id.</td></tr>
       <tr><td><code>MERCH_DONE</code></td><td>Благодарит гостя и возвращает в главное меню.</td><td>timeline event, Kafka/admin event, current state.</td></tr>
       </tbody>
     </table>
@@ -1036,7 +1104,7 @@ flowchart LR
       <div class="card"><strong>Catalog first</strong><span>Мерч не живет в тексте сценария: позиции, фото, цены и активность должны читаться из managed catalog.</span></div>
       <div class="card"><strong>Order boundary</strong><span>До платежной интеграции Батлер создает заявку, а команда подтверждает наличие и способ оплаты.</span></div>
       <div class="card"><strong>No false promises</strong><span>Нельзя обещать доставку, наличие или списание денег без явного подтверждения команды.</span></div>
-      <div class="card"><strong>Admin visibility</strong><span>Каждый merch_order уходит в админ-чат и timeline, чтобы не потерять коммерческий интерес гостя.</span></div>
+      <div class="card"><strong>Admin visibility</strong><span>В админ-чат уходит только подтвержденный гостем merch_order, чтобы не зашумлять команду черновиками.</span></div>
     </div>
   </section>
 
@@ -1433,6 +1501,8 @@ flowchart LR
     Classify["Classify<br/>comfort / celebration / accessibility / service"]
     Create["concierge_request<br/>PENDING_TEAM"]
     Card["Admin/team card<br/>guest + request + context"]
+    Work["Team/API status<br/>IN_PROGRESS"]
+    Done["COMPLETED / CANCELLED"]
     Ack["Гостю:<br/>передал команде"]
     Home["READY_FOR_DIALOG"]
 
@@ -1440,6 +1510,7 @@ flowchart LR
     HasRequest -- "нет" --> Ask --> Classify
     HasRequest -- "да" --> Classify
     Classify --> Create --> Card --> Ack --> Home
+    Card -. "staff/API" .-> Work -. "finish/cancel" .-> Done
     </div>
     <table>
       <thead><tr><th>Шаг FSM</th><th>Что делает Батлер</th><th>Что храним / передаем</th></tr></thead>
@@ -1447,12 +1518,14 @@ flowchart LR
       <tr><td><code>CONCIERGE_COLLECT_REQUEST</code></td><td>Если фраза слишком общая, спрашивает, что именно передать команде.</td><td>chat id, current state, source text.</td></tr>
       <tr><td><code>CONCIERGE_CLASSIFY</code></td><td>Определяет тип просьбы: comfort, celebration, accessibility, service, technical, other.</td><td>request_type, confidence, normalized request.</td></tr>
       <tr><td><code>CONCIERGE_SENT</code></td><td>Создает заявку и отправляет карточку команде.</td><td><code>concierge_request_id</code>, admin message, status=<code>PENDING_TEAM</code>.</td></tr>
+      <tr><td><code>CONCIERGE_TEAM_STATUS</code></td><td>Команда или будущая админка переводит заявку в работу, завершает или отменяет.</td><td><code>IN_PROGRESS</code>, <code>COMPLETED</code>, <code>CANCELLED</code>; финальные статусы не меняются повторно.</td></tr>
       </tbody>
     </table>
     <div class="grid">
       <div class="card"><strong>Не ManagerHelp</strong><span>Если нужна беседа с человеком или жалоба, route в ManagerHelp/Feedback. Concierge - это конкретное действие.</span></div>
       <div class="card"><strong>No false promise</strong><span>Гостю говорим "передал команде", но не обещаем выполнение до подтверждения staff.</span></div>
       <div class="card"><strong>Service analytics</strong><span>Типы просьб потом покажут, чего гостям не хватает в зале и сервисе.</span></div>
+      <div class="card"><strong>Managed lifecycle</strong><span>Заявка доступна через API: взять в работу, завершить или отменить без повторного открытия финального статуса.</span></div>
     </div>
   </section>
 
@@ -1599,14 +1672,14 @@ flowchart LR
       <tr><td>Безопасность важнее игры</td><td>Если нет обученного staff или venue policy запрещает, Батлер вежливо предлагает альтернативу: подачу, бокалы, меню или менеджера.</td></tr>
       <tr><td>Без dangerous how-to</td><td>Батлер не объясняет гостю технику сабража и не инструктирует выполнять действие самостоятельно.</td></tr>
       <tr><td>Alcohol boundary</td><td>Не продвигаем алкоголь несовершеннолетним и не превращаем сценарий в pressure-sale.</td></tr>
-      <tr><td>Merch link</td><td>Сабражная цепь продается через <code>MerchScenario</code>: каталог, фото, цена, подтверждение команды.</td></tr>
+      <tr><td>Merch link</td><td>Покупка сабражной цепи не запускает Safe Play: она сразу роутится в <code>MerchScenario</code>, где есть draft, явное "да/нет" гостя и подтверждение команды.</td></tr>
       <tr><td>Observability</td><td>Каждый запрос и отказ пишет reason/status, чтобы команда видела интерес к ритуалу и merch.</td></tr>
       </tbody>
     </table>
     <div class="grid">
       <div class="card"><strong>Hospitality ritual</strong><span>Сабраж подается как опыт AERIS: красиво, контролируемо, командой, без самодеятельности гостя.</span></div>
       <div class="card"><strong>Staff game</strong><span>Команда и менеджер видят карточку, могут подтвердить, назначить staff и превратить подачу в маленький спектакль.</span></div>
-      <div class="card"><strong>Merch bridge</strong><span>Сабражная цепь становится понятным merch item: после ритуала ее можно купить или подарить.</span></div>
+      <div class="card"><strong>Merch bridge</strong><span>Сабражная цепь становится понятным merch item: купить/подарить цепь - это MerchScenario, заказать ритуал - SafePlayScenario.</span></div>
       <div class="card"><strong>Assets later</strong><span>Фото цепи, подачи и карточки ритуала будут managed media assets в MinIO/catalog, когда ты приложишь файлы.</span></div>
     </div>
   </section>
@@ -1664,7 +1737,7 @@ flowchart LR
       <tr><td>8</td><td>Меню</td><td>"скинь все меню"</td><td><code>MENU_ASSETS_SEND</code></td><td>send 4 PDFs: кухня, бар, elements, вино; write menu asset event.</td></tr>
       <tr><td>8</td><td>Меню</td><td>voice "покажи коктейли"</td><td><code>MENU_ASSETS_SEND_FILTERED</code></td><td>transport transcript, semantic route, send elements/bar by classification.</td></tr>
       <tr><td>8.1</td><td>Preference</td><td>"запомни, я не ем острое"</td><td><code>PREFERENCE_SAVED</code></td><td>create <code>guest_preference</code>, return <code>READY_FOR_DIALOG</code>, no hidden inference.</td></tr>
-      <tr><td>9</td><td>Мерч</td><td>"хочу купить сертификат / сабражную цепь"</td><td><code>MERCH_ORDER_SELECT_ITEM</code></td><td>show active catalog, create <code>merch_order</code> only after explicit confirmation.</td></tr>
+      <tr><td>9</td><td>Мерч</td><td>"хочу купить сертификат / сабражную цепь"</td><td><code>MERCH_ORDER_SELECT_ITEM</code></td><td>show active catalog, create <code>merch_order</code> draft, send team card only after explicit guest confirmation.</td></tr>
       <tr><td>10</td><td>Quiet Guide</td><td>"покажи ресторан внутри"</td><td><code>QUIET_GUIDE_SEND_INTERIOR</code></td><td>send original <code>INTERIOR.mp4</code> from MinIO/cache, then offer table/menu/concept.</td></tr>
       <tr><td>10</td><td>Quiet Guide</td><td>"какая у вас концепция?"</td><td><code>QUIET_GUIDE_CONCEPT</code></td><td>approved concept answer, no marketing spam, optional menu/table follow-up.</td></tr>
       <tr><td>10.1</td><td>AERIS Channel</td><td>new channel post</td><td><code>CHANNEL_POST_CLASSIFIED</code></td><td>classify poster/promo/ad/noise, store media in MinIO, update quiet-guide source pool.</td></tr>

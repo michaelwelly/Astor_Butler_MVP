@@ -40,6 +40,30 @@ public class ArtAuctionService {
         return repository.createBidDraft(command, lot);
     }
 
+    @Transactional
+    public ArtAuctionBid confirmLatestBidDraft(Long chatId) {
+        ArtAuctionBid bid = requireLatestAwaitingConfirmation(chatId);
+        return confirmBidDraft(bid.id());
+    }
+
+    @Transactional
+    public ArtAuctionBid cancelLatestBidDraft(Long chatId) {
+        ArtAuctionBid bid = requireLatestAwaitingConfirmation(chatId);
+        return cancelBidDraft(bid.id());
+    }
+
+    @Transactional
+    public ArtAuctionBid confirmBidDraft(Long id) {
+        ArtAuctionBid bid = requireAwaitingGuestConfirmation(id);
+        return repository.updateBidStatus(bid.id(), ArtAuctionBidStatus.AWAITING_MANAGER_VALIDATION);
+    }
+
+    @Transactional
+    public ArtAuctionBid cancelBidDraft(Long id) {
+        ArtAuctionBid bid = requireAwaitingGuestConfirmation(id);
+        return repository.updateBidStatus(bid.id(), ArtAuctionBidStatus.CANCELLED);
+    }
+
     private ArtAuctionLot resolveLot(ArtAuctionBidCommand command) {
         if (command.lotId() != null) {
             return repository.findLot(command.lotId())
@@ -70,6 +94,32 @@ public class ArtAuctionService {
                         "Art auction bid was not found",
                         Map.of("id", id)
                 ));
+    }
+
+    private ArtAuctionBid requireLatestAwaitingConfirmation(Long chatId) {
+        if (chatId == null) {
+            throw badRequest("chatId is required");
+        }
+        return repository.findLatestAwaitingGuestConfirmation(chatId)
+                .orElseThrow(() -> new ApiException(
+                        HttpStatus.NOT_FOUND,
+                        ErrorCode.NOT_FOUND,
+                        "Active auction bid draft was not found",
+                        Map.of("chatId", chatId)
+                ));
+    }
+
+    private ArtAuctionBid requireAwaitingGuestConfirmation(Long id) {
+        ArtAuctionBid bid = requireBid(id);
+        if (bid.status() != ArtAuctionBidStatus.AWAITING_GUEST_CONFIRMATION) {
+            throw new ApiException(
+                    HttpStatus.CONFLICT,
+                    ErrorCode.CONFLICT,
+                    "Only awaiting guest confirmation auction bid drafts can be changed",
+                    Map.of("id", id, "status", bid.status())
+            );
+        }
+        return bid;
     }
 
     private void validateCommand(ArtAuctionBidCommand command) {

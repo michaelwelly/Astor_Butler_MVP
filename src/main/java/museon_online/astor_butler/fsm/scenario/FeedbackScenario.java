@@ -97,7 +97,7 @@ public class FeedbackScenario implements FsmScenario {
                 false,
                 true,
                 false,
-                adminAlert(incoming, previousState, text),
+                adminAlert(incoming, previousState, text, feedback),
                 List.of("FEEDBACK", reasonAction, "ADMIN_ALERT", "RETURN_MAIN_MENU")
         ).withMetadata(Map.of(
                 "scenario", id(),
@@ -123,7 +123,7 @@ public class FeedbackScenario implements FsmScenario {
         );
     }
 
-    private AdminAlert adminAlert(IncomingMessage incoming, BotState previousState, String text) {
+    private AdminAlert adminAlert(IncomingMessage incoming, BotState previousState, String text, GuestFeedback feedback) {
         if (adminChatId == null || adminChatId.isBlank()) {
             return AdminAlert.none();
         }
@@ -144,12 +144,19 @@ public class FeedbackScenario implements FsmScenario {
                 <b>Отзыв</b>
                 <blockquote>%s</blockquote>
 
+                <b>Запись в системе</b>
+                Feedback: #%s
+                Type: %s
+                Sentiment: %s
+                Priority: %s
+                Status: %s
+
                 <b>Контекст</b>
                 Previous state: %s
                 Scenario: FEEDBACK
 
                 <b>Действие</b>
-                Сохраните обратную связь и ответьте гостю вручную, если нужен персональный follow-up.
+                Проверьте карточку feedback #%s. Если это жалоба, высокий приоритет или нужен персональный follow-up, ответьте гостю вручную и закройте запись после решения.
 
                 <b>Техника</b>
                 Channel: %s
@@ -160,7 +167,13 @@ public class FeedbackScenario implements FsmScenario {
                 html(text(incoming.telegramUserId())),
                 incoming.username() == null || incoming.username().isBlank() ? "" : " / @" + html(incoming.username()),
                 html(blankAsEmptyLabel(text)),
+                html(text(feedback.id())),
+                html(text(feedback.feedbackType())),
+                html(text(feedback.sentiment())),
+                html(text(feedback.priority())),
+                html(text(feedback.status())),
                 html(text(previousState)),
+                html(text(feedback.id())),
                 html(text(incoming.channel())),
                 html(blankAsEmptyLabel(incoming.correlationId()))
         );

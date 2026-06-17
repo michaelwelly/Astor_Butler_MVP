@@ -53,7 +53,10 @@ public class StartupAdminNotifier {
 
                 <b>Инструкции</b>
                 Guest: https://michaelwelly.github.io/Astor_Butler_MVP/docs/guest-guide.html
-                Staff: https://michaelwelly.github.io/Astor_Butler_MVP/docs/staff-guide.html
+                Knowledge Base: https://auspicious-kryptops-863.notion.site/Astor-Butler-380a7c019f1980d78b68d8bc659c609b?source=copy_link
+                Staff Chat: https://app.notion.com/p/381a7c019f1981b08ca4ed4146e630e4
+                Admin Chat: https://app.notion.com/p/381a7c019f1981988530d1464d567af4
+                System Chat: https://app.notion.com/p/382a7c019f198148b78aef491ceee4f6
 
                 <b>Техника</b>
                 Started at: %s

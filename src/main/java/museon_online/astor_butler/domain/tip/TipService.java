@@ -39,6 +39,30 @@ public class TipService {
         return repository.createDraft(command, staff);
     }
 
+    @Transactional
+    public TipOrder confirmLatestDraft(Long chatId) {
+        TipOrder order = requireLatestAwaitingConfirmation(chatId);
+        return confirmDraft(order.id());
+    }
+
+    @Transactional
+    public TipOrder cancelLatestDraft(Long chatId) {
+        TipOrder order = requireLatestAwaitingConfirmation(chatId);
+        return cancelDraft(order.id());
+    }
+
+    @Transactional
+    public TipOrder confirmDraft(Long id) {
+        TipOrder order = requireAwaitingConfirmation(id);
+        return repository.updateStatus(order.id(), TipOrderStatus.AWAITING_PAYMENT);
+    }
+
+    @Transactional
+    public TipOrder cancelDraft(Long id) {
+        TipOrder order = requireAwaitingConfirmation(id);
+        return repository.updateStatus(order.id(), TipOrderStatus.CANCELLED);
+    }
+
     private StaffProfile resolveStaff(TipOrderCommand command) {
         if (command.staffId() != null) {
             return repository.findStaff(command.staffId())
@@ -63,6 +87,32 @@ public class TipService {
                         "Tip order was not found",
                         Map.of("id", id)
                 ));
+    }
+
+    private TipOrder requireLatestAwaitingConfirmation(Long chatId) {
+        if (chatId == null) {
+            throw badRequest("chatId is required");
+        }
+        return repository.findLatestAwaitingGuestConfirmation(chatId)
+                .orElseThrow(() -> new ApiException(
+                        HttpStatus.NOT_FOUND,
+                        ErrorCode.NOT_FOUND,
+                        "Active tip draft was not found",
+                        Map.of("chatId", chatId)
+                ));
+    }
+
+    private TipOrder requireAwaitingConfirmation(Long id) {
+        TipOrder order = requireOrder(id);
+        if (order.status() != TipOrderStatus.AWAITING_GUEST_CONFIRMATION) {
+            throw new ApiException(
+                    HttpStatus.CONFLICT,
+                    ErrorCode.CONFLICT,
+                    "Only awaiting guest confirmation tip drafts can be changed",
+                    Map.of("id", id, "status", order.status())
+            );
+        }
+        return order;
     }
 
     private void validateCommand(TipOrderCommand command) {

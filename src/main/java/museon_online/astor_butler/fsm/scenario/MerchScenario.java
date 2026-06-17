@@ -50,8 +50,17 @@ public class MerchScenario implements FsmScenario {
     public OutgoingMessage handle(IncomingMessage incoming, BotState currentState, String text) {
         BotState state = currentState == null ? BotState.UNKNOWN : currentState.canonical();
         String normalized = normalize(text);
+        if (state == BotState.MERCH_SENT) {
+            if (isAffirmative(normalized)) {
+                return confirmMerchRequest(incoming, currentState);
+            }
+            if (isNegative(normalized)) {
+                return cancelMerchRequest(incoming);
+            }
+            return askMerchConfirmationAgain(incoming);
+        }
         if (state == BotState.MERCH_COLLECT_REQUEST) {
-            return sendMerchRequest(incoming, currentState, text, "MERCH_DETAILS_RECEIVED");
+            return createMerchDraft(incoming, text, "MERCH_DETAILS_RECEIVED");
         }
         if (isShortMerchCall(normalized)) {
             fsmStorage.setState(incoming.chatId(), BotState.MERCH_COLLECT_REQUEST);
@@ -67,7 +76,7 @@ public class MerchScenario implements FsmScenario {
                     List.of("MERCH", "ASK_MERCH_DETAILS")
             ).withMetadata(Map.of("scenario", id()));
         }
-        return sendMerchRequest(incoming, currentState, text, "MERCH_DIRECT_REQUEST");
+        return createMerchDraft(incoming, text, "MERCH_DIRECT_REQUEST");
     }
 
     @Override
@@ -81,32 +90,104 @@ public class MerchScenario implements FsmScenario {
         return true;
     }
 
-    private OutgoingMessage sendMerchRequest(
+    private OutgoingMessage createMerchDraft(
             IncomingMessage incoming,
-            BotState previousState,
             String text,
             String reasonAction
     ) {
         MerchOrder order = merchService.createOrder(merchOrderCommand(incoming, text));
+        fsmStorage.setState(incoming.chatId(), BotState.MERCH_SENT);
+        return OutgoingMessage.of(
+                incoming,
+                """
+                Черновик заявки по мерчу #%s.
+
+                Предмет: %s
+                Количество: %s
+                Комментарий: %s
+
+                Подтвердить и передать команде AERIS? Ответьте: да или нет.
+                """.formatted(
+                        order.id(),
+                        blankAsEmptyLabel(order.itemTitle()),
+                        text(order.quantity()),
+                        blankAsEmptyLabel(order.guestComment())
+                ).strip(),
+                BotState.MERCH_SENT.name(),
+                false,
+                false,
+                true,
+                false,
+                AdminAlert.none(),
+                List.of("MERCH", reasonAction, "ASK_GUEST_CONFIRMATION")
+        ).withMetadata(Map.of(
+                "scenario", id(),
+                "merchOrderId", order.id(),
+                "itemId", order.itemId() == null ? "" : order.itemId(),
+                "itemTitle", order.itemTitle() == null ? "" : order.itemTitle(),
+                "orderStatus", order.status().name(),
+                "orderBoundary", "GUEST_CONFIRMATION_REQUIRED"
+        ));
+    }
+
+    private OutgoingMessage confirmMerchRequest(IncomingMessage incoming, BotState previousState) {
+        MerchOrder order = merchService.confirmLatestDraft(incoming.chatId());
         fsmStorage.setState(incoming.chatId(), BotState.READY_FOR_DIALOG);
         return OutgoingMessage.of(
                 incoming,
-                "Создал заявку по мерчу #%s и передал команде. Пока это заявка без оплаты и без обещания наличия; менеджер подтвердит детали вручную."
+                "Принял. Передал заявку по мерчу #%s команде AERIS. Менеджер проверит наличие, цену и способ передачи."
                         .formatted(order.id()),
                 BotState.READY_FOR_DIALOG.name(),
                 false,
                 false,
                 true,
                 false,
-                adminAlert(incoming, previousState, text),
-                List.of("MERCH", reasonAction, "ADMIN_ALERT", "RETURN_MAIN_MENU")
+                adminAlert(incoming, previousState, order),
+                List.of("MERCH", "MERCH_GUEST_CONFIRMED", "ADMIN_ALERT", "RETURN_MAIN_MENU")
         ).withMetadata(Map.of(
                 "scenario", id(),
                 "merchOrderId", order.id(),
                 "itemId", order.itemId() == null ? "" : order.itemId(),
                 "itemTitle", order.itemTitle() == null ? "" : order.itemTitle(),
+                "orderStatus", order.status().name(),
                 "orderBoundary", "MANUAL_CONFIRMATION_REQUIRED"
         ));
+    }
+
+    private OutgoingMessage cancelMerchRequest(IncomingMessage incoming) {
+        MerchOrder order = merchService.cancelLatestDraft(incoming.chatId());
+        fsmStorage.setState(incoming.chatId(), BotState.READY_FOR_DIALOG);
+        return OutgoingMessage.of(
+                incoming,
+                "Хорошо, отменил черновик заявки по мерчу #%s. Если захотите вернуться к сабражной цепи или другому предмету, просто напишите."
+                        .formatted(order.id()),
+                BotState.READY_FOR_DIALOG.name(),
+                false,
+                false,
+                true,
+                false,
+                AdminAlert.none(),
+                List.of("MERCH", "MERCH_GUEST_CANCELLED", "RETURN_MAIN_MENU")
+        ).withMetadata(Map.of(
+                "scenario", id(),
+                "merchOrderId", order.id(),
+                "orderStatus", order.status().name()
+        ));
+    }
+
+    private OutgoingMessage askMerchConfirmationAgain(IncomingMessage incoming) {
+        fsmStorage.setState(incoming.chatId(), BotState.MERCH_SENT);
+        return OutgoingMessage.of(
+                incoming,
+                "Я держу черновик заявки по мерчу. Подтвердить и передать команде? Ответьте: да или нет.",
+                BotState.MERCH_SENT.name(),
+                false,
+                false,
+                true,
+                false,
+                AdminAlert.none(),
+                List.of("MERCH", "ASK_GUEST_CONFIRMATION_AGAIN")
+        ).withMetadata(Map.of("scenario", id()));
     }
 
     private MerchOrderCommand merchOrderCommand(IncomingMessage incoming, String text) {
@@ -124,19 +205,25 @@ public class MerchScenario implements FsmScenario {
         );
     }
 
-    private AdminAlert adminAlert(IncomingMessage incoming, BotState previousState, String text) {
+    private AdminAlert adminAlert(IncomingMessage incoming, BotState previousState, MerchOrder order) {
         if (adminChatId == null || adminChatId.isBlank()) {
             return AdminAlert.none();
         }
         String body = """
                 <b>Astor Butler / merch</b>
-                Гость интересуется мерчом
+                Гость подтвердил заявку по мерчу
 
                 <b>Гость</b>
                 %s
                 chat %s / user %s%s
 
-                <b>Запрос</b>
+                <b>Заявка</b>
+                Order: #%s
+                Предмет: %s
+                Количество: %s
+                Статус: %s
+
+                <b>Комментарий гостя</b>
                 <blockquote>%s</blockquote>
 
                 <b>Контекст</b>
@@ -144,7 +231,7 @@ public class MerchScenario implements FsmScenario {
                 Scenario: MERCH
 
                 <b>Действие</b>
-                Проверьте наличие/цену и ответьте гостю вручную или через будущий merch order-flow.
+                Проверьте наличие, цену и способ передачи. Оплату не обещаем до ручного подтверждения команды.
 
                 <b>Техника</b>
                 Channel: %s
@@ -154,7 +241,11 @@ public class MerchScenario implements FsmScenario {
                 html(text(incoming.chatId())),
                 html(text(incoming.telegramUserId())),
                 incoming.username() == null || incoming.username().isBlank() ? "" : " / @" + html(incoming.username()),
-                html(blankAsEmptyLabel(text)),
+                html(text(order.id())),
+                html(blankAsEmptyLabel(order.itemTitle())),
+                html(text(order.quantity())),
+                html(text(order.status())),
+                html(blankAsEmptyLabel(order.guestComment())),
                 html(text(previousState)),
                 html(text(incoming.channel())),
                 html(blankAsEmptyLabel(incoming.correlationId()))
@@ -172,6 +263,26 @@ public class MerchScenario implements FsmScenario {
                 || text.equals("сувениры")
                 || text.equals("/merch")
                 || text.equals("купить мерч");
+    }
+
+    private boolean isAffirmative(String text) {
+        return text.equals("да")
+                || text.equals("ок")
+                || text.equals("окей")
+                || text.equals("yes")
+                || text.equals("подтверждаю")
+                || text.equals("передавай")
+                || text.equals("согласен")
+                || text.equals("согласна");
+    }
+
+    private boolean isNegative(String text) {
+        return text.equals("нет")
+                || text.equals("не")
+                || text.equals("отмена")
+                || text.equals("отмени")
+                || text.equals("cancel")
+                || text.equals("не надо");
     }
 
     private boolean containsAny(String text, String... variants) {

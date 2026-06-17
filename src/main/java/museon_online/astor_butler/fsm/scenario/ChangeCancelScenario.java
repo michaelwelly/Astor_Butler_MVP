@@ -57,6 +57,10 @@ public class ChangeCancelScenario implements FsmScenario {
     public OutgoingMessage handle(IncomingMessage incoming, BotState currentState, String text) {
         BotState state = currentState == null ? BotState.UNKNOWN : currentState.canonical();
         String normalized = normalize(text);
+        OutgoingMessage cancellation = tryCancelActiveOrder(incoming, currentState, text, normalized);
+        if (cancellation != null) {
+            return cancellation;
+        }
         if (state == BotState.TABLE_BOOKING_CHANGE_REQUESTED || containsReference(normalized)) {
             return sendChangeCancelRequest(incoming, currentState, text);
         }
@@ -146,6 +150,90 @@ public class ChangeCancelScenario implements FsmScenario {
         return order.tableDisplayName() + " (" + order.tableCode() + ")";
     }
 
+    private OutgoingMessage tryCancelActiveOrder(
+            IncomingMessage incoming,
+            BotState previousState,
+            String text,
+            String normalized
+    ) {
+        if (!isCancelIntent(normalized)) {
+            return null;
+        }
+        Long requestedId = referencedId(normalized);
+        if (requestedId == null) {
+            return null;
+        }
+
+        List<TableReservationOrder> activeReservations = tableReservationService.listActiveReservationsByChatId(incoming.chatId());
+        for (TableReservationOrder order : activeReservations) {
+            if (requestedId.equals(order.id())) {
+                TableReservationOrder cancelled = tableReservationService.cancelByGuest(order.id());
+                fsmStorage.setState(incoming.chatId(), BotState.READY_FOR_DIALOG);
+                return OutgoingMessage.of(
+                        incoming,
+                        """
+                                Готово. Я отменил бронь стола #%s и освободил слот.
+
+                                %s
+                                %s - %s
+
+                                Если нужен новый стол или другое время, напишите новый запрос.
+                                """.formatted(
+                                cancelled.id(),
+                                tableName(cancelled),
+                                cancelled.requestedStartAt() == null ? "время не указано" : DATE_TIME.format(cancelled.requestedStartAt()),
+                                cancelled.requestedEndAt() == null ? "окончание не указано" : DATE_TIME.format(cancelled.requestedEndAt())
+                        ),
+                        BotState.READY_FOR_DIALOG.name(),
+                        false,
+                        false,
+                        true,
+                        false,
+                        AdminAlert.none(),
+                        List.of("CHANGE_CANCEL", "TABLE_RESERVATION_CANCELLED", "HOLD_RELEASED", "RETURN_MAIN_MENU")
+                ).withMetadata(Map.of(
+                        "scenario", id(),
+                        "cancelledTableReservationId", cancelled.id()
+                ));
+            }
+        }
+
+        List<EventBookingOrder> activeEvents = eventBookingService.listActiveOrdersByChatId(incoming.chatId());
+        for (EventBookingOrder order : activeEvents) {
+            if (requestedId.equals(order.id())) {
+                EventBookingOrder cancelled = eventBookingService.cancelByGuest(order.id());
+                fsmStorage.setState(incoming.chatId(), BotState.READY_FOR_DIALOG);
+                return OutgoingMessage.of(
+                        incoming,
+                        """
+                                Готово. Я отметил event-заявку #%s как отмененную.
+
+                                Формат: %s
+                                Дата: %s
+
+                                Команда увидит изменение в журнале. Если нужно создать новую заявку, напишите детали заново.
+                                """.formatted(
+                                cancelled.id(),
+                                cancelled.eventType() == null || cancelled.eventType().isBlank() ? "уточнялся" : cancelled.eventType(),
+                                cancelled.requestedDate() == null ? "уточнялась" : cancelled.requestedDate()
+                        ),
+                        BotState.READY_FOR_DIALOG.name(),
+                        false,
+                        false,
+                        true,
+                        false,
+                        adminAlert(incoming, previousState, text),
+                        List.of("CHANGE_CANCEL", "EVENT_BOOKING_CANCELLED", "ADMIN_ALERT", "RETURN_MAIN_MENU")
+                ).withMetadata(Map.of(
+                        "scenario", id(),
+                        "cancelledEventBookingId", cancelled.id()
+                ));
+            }
+        }
+
+        return null;
+    }
+
     @Override
     public boolean owns(BotState state) {
         BotState canonical = state == null ? BotState.UNKNOWN : state.canonical();
@@ -231,6 +319,24 @@ public class ChangeCancelScenario implements FsmScenario {
                 "опоздаем",
                 "задержимся"
         );
+    }
+
+    private boolean isCancelIntent(String text) {
+        return containsAny(text, "отмен", "не придем", "не придём", "не сможем");
+    }
+
+    private Long referencedId(String text) {
+        java.util.regex.Matcher hash = java.util.regex.Pattern.compile("#\\s*(\\d{1,8})").matcher(text);
+        if (hash.find()) {
+            return Long.parseLong(hash.group(1));
+        }
+        java.util.regex.Matcher order = java.util.regex.Pattern
+                .compile("(?:заказ|заявк[ауи]|бронь|брон[ьи])\\s*(?:номер|№|#)?\\s*(\\d{1,8})")
+                .matcher(text);
+        if (order.find()) {
+            return Long.parseLong(order.group(1));
+        }
+        return null;
     }
 
     private boolean containsReference(String text) {

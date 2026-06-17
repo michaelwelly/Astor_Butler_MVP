@@ -47,6 +47,18 @@ public class MerchController {
         return ResponseEntity.status(HttpStatus.CREATED).body(MerchOrderResponse.from(order));
     }
 
+    @PostMapping("/orders/{id}/confirm")
+    @Operation(summary = "Confirm merch order draft")
+    public ResponseEntity<MerchOrderResponse> confirmOrder(@PathVariable("id") Long id) {
+        return ResponseEntity.ok(MerchOrderResponse.from(merchService.confirmDraft(id)));
+    }
+
+    @PostMapping("/orders/{id}/cancel")
+    @Operation(summary = "Cancel merch order draft")
+    public ResponseEntity<MerchOrderResponse> cancelOrder(@PathVariable("id") Long id) {
+        return ResponseEntity.ok(MerchOrderResponse.from(merchService.cancelDraft(id)));
+    }
+
     @GetMapping("/orders/{id}")
     @Operation(summary = "Get merch order")
     public ResponseEntity<MerchOrderResponse> getOrder(@PathVariable("id") Long id) {

@@ -43,3 +43,5 @@ databaseChangeLog:
       file: db/changelog/2026-06-16-concierge-requests.yaml
   - include:
       file: db/changelog/2026-06-16-table-booking-seating-preferences.yaml
+  - include:
+      file: db/changelog/2026-06-17-intent-understanding-pgvector.yaml

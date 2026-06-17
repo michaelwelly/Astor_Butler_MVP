@@ -95,6 +95,18 @@ public class EventBookingRepository {
         );
     }
 
+    public EventBookingOrder cancel(Long id) {
+        jdbcTemplate.update("""
+                UPDATE event_booking_orders
+                SET status = 'CANCELLED',
+                    updated_at = CURRENT_TIMESTAMP
+                WHERE id = ?
+                """,
+                id
+        );
+        return findOrder(id).orElseThrow();
+    }
+
     private RowMapper<EventBookingOrder> orderMapper() {
         return (rs, rowNum) -> new EventBookingOrder(
                 rs.getLong("id"),

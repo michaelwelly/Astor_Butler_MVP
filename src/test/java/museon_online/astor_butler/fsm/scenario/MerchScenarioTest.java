@@ -58,16 +58,16 @@ class MerchScenarioTest {
 
         OutgoingMessage outgoing = scenario.handle(incoming, BotState.MERCH_COLLECT_REQUEST, incoming.text());
 
-        assertThat(outgoing.nextState()).isEqualTo(BotState.READY_FOR_DIALOG.name());
-        assertThat(outgoing.text()).contains("заявку по мерчу #99");
-        assertThat(outgoing.adminAlert().required()).isTrue();
-        assertThat(outgoing.adminAlert().text()).contains("Astor Butler / merch", "сабражную цепь");
-        assertThat(outgoing.actions()).containsExactly("MERCH", "MERCH_DETAILS_RECEIVED", "ADMIN_ALERT", "RETURN_MAIN_MENU");
+        assertThat(outgoing.nextState()).isEqualTo(BotState.MERCH_SENT.name());
+        assertThat(outgoing.text()).contains("Черновик заявки по мерчу #99", "Подтвердить");
+        assertThat(outgoing.adminAlert().required()).isFalse();
+        assertThat(outgoing.actions()).containsExactly("MERCH", "MERCH_DETAILS_RECEIVED", "ASK_GUEST_CONFIRMATION");
         assertThat(outgoing.metadata()).containsEntry("merchOrderId", 99L);
         assertThat(outgoing.metadata()).containsEntry("itemId", 7L);
         assertThat(outgoing.metadata()).containsEntry("itemTitle", "Сабражная цепь AERIS");
-        assertThat(outgoing.metadata()).containsEntry("orderBoundary", "MANUAL_CONFIRMATION_REQUIRED");
-        verify(fsmStorage).setState(incoming.chatId(), BotState.READY_FOR_DIALOG);
+        assertThat(outgoing.metadata()).containsEntry("orderStatus", MerchOrderStatus.AWAITING_GUEST_CONFIRMATION.name());
+        assertThat(outgoing.metadata()).containsEntry("orderBoundary", "GUEST_CONFIRMATION_REQUIRED");
+        verify(fsmStorage).setState(incoming.chatId(), BotState.MERCH_SENT);
     }
 
     @Test
@@ -77,10 +77,55 @@ class MerchScenarioTest {
 
         OutgoingMessage outgoing = scenario.handle(incoming, BotState.READY_FOR_DIALOG, incoming.text());
 
+        assertThat(outgoing.nextState()).isEqualTo(BotState.MERCH_SENT.name());
+        assertThat(outgoing.adminAlert().required()).isFalse();
+        assertThat(outgoing.actions()).containsExactly("MERCH", "MERCH_DIRECT_REQUEST", "ASK_GUEST_CONFIRMATION");
+        verify(fsmStorage).setState(incoming.chatId(), BotState.MERCH_SENT);
+    }
+
+    @Test
+    void confirmsLatestDraftAndAlertsAdmin() {
+        IncomingMessage incoming = telegram("да");
+        when(merchService.confirmLatestDraft(incoming.chatId())).thenReturn(merchOrder(MerchOrderStatus.PENDING_TEAM));
+
+        OutgoingMessage outgoing = scenario.handle(incoming, BotState.MERCH_SENT, incoming.text());
+
         assertThat(outgoing.nextState()).isEqualTo(BotState.READY_FOR_DIALOG.name());
+        assertThat(outgoing.text()).contains("Передал заявку по мерчу #99");
         assertThat(outgoing.adminAlert().required()).isTrue();
-        assertThat(outgoing.actions()).containsExactly("MERCH", "MERCH_DIRECT_REQUEST", "ADMIN_ALERT", "RETURN_MAIN_MENU");
+        assertThat(outgoing.adminAlert().text()).contains("Astor Butler / merch", "Order: #99", "Сабражная цепь AERIS");
+        assertThat(outgoing.actions()).containsExactly("MERCH", "MERCH_GUEST_CONFIRMED", "ADMIN_ALERT", "RETURN_MAIN_MENU");
+        assertThat(outgoing.metadata()).containsEntry("orderStatus", MerchOrderStatus.PENDING_TEAM.name());
+        verify(merchService).confirmLatestDraft(incoming.chatId());
         verify(fsmStorage).setState(incoming.chatId(), BotState.READY_FOR_DIALOG);
+    }
+
+    @Test
+    void cancelsLatestDraftWithoutAdminAlert() {
+        IncomingMessage incoming = telegram("нет");
+        when(merchService.cancelLatestDraft(incoming.chatId())).thenReturn(merchOrder(MerchOrderStatus.CANCELLED));
+
+        OutgoingMessage outgoing = scenario.handle(incoming, BotState.MERCH_SENT, incoming.text());
+
+        assertThat(outgoing.nextState()).isEqualTo(BotState.READY_FOR_DIALOG.name());
+        assertThat(outgoing.text()).contains("отменил черновик заявки по мерчу #99");
+        assertThat(outgoing.adminAlert().required()).isFalse();
+        assertThat(outgoing.actions()).containsExactly("MERCH", "MERCH_GUEST_CANCELLED", "RETURN_MAIN_MENU");
+        assertThat(outgoing.metadata()).containsEntry("orderStatus", MerchOrderStatus.CANCELLED.name());
+        verify(merchService).cancelLatestDraft(incoming.chatId());
+        verify(fsmStorage).setState(incoming.chatId(), BotState.READY_FOR_DIALOG);
+    }
+
+    @Test
+    void asksConfirmationAgainWhenGuestDoesNotAnswerYesOrNo() {
+        IncomingMessage incoming = telegram("а сколько стоит?");
+
+        OutgoingMessage outgoing = scenario.handle(incoming, BotState.MERCH_SENT, incoming.text());
+
+        assertThat(outgoing.nextState()).isEqualTo(BotState.MERCH_SENT.name());
+        assertThat(outgoing.text()).contains("Ответьте: да или нет");
+        assertThat(outgoing.actions()).containsExactly("MERCH", "ASK_GUEST_CONFIRMATION_AGAIN");
+        verify(fsmStorage).setState(incoming.chatId(), BotState.MERCH_SENT);
     }
 
     private IncomingMessage telegram(String text) {
@@ -101,6 +146,10 @@ class MerchScenarioTest {
     }
 
     private MerchOrder merchOrder() {
+        return merchOrder(MerchOrderStatus.AWAITING_GUEST_CONFIRMATION);
+    }
+
+    private MerchOrder merchOrder(MerchOrderStatus status) {
         return new MerchOrder(
                 99L,
                 1773317437L,
@@ -109,7 +158,7 @@ class MerchScenarioTest {
                 "AERIS",
                 7L,
                 "Сабражная цепь AERIS",
-                MerchOrderStatus.PENDING_TEAM,
+                status,
                 "TELEGRAM",
                 1,
                 null,

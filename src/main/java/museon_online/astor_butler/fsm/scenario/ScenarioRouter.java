@@ -3,6 +3,8 @@ package museon_online.astor_butler.fsm.scenario;
 import lombok.RequiredArgsConstructor;
 import museon_online.astor_butler.fsm.core.BotState;
 import museon_online.astor_butler.fsm.storage.FSMStorage;
+import museon_online.astor_butler.fsm.understanding.GuestInputUnderstandingService;
+import museon_online.astor_butler.fsm.understanding.UnderstoodInput;
 import museon_online.astor_butler.service.message.AdminAlert;
 import museon_online.astor_butler.service.message.IncomingMessage;
 import museon_online.astor_butler.service.message.OutgoingMessage;
@@ -36,20 +38,26 @@ public class ScenarioRouter {
     private final ArtAuctionScenario artAuctionScenario;
     private final MainMenuScenario mainMenuScenario;
     private final RecoveryScenario recoveryScenario;
+    private final GuestInputUnderstandingService inputUnderstandingService;
 
     public OutgoingMessage route(IncomingMessage incoming, BotState currentState, String text) {
         if (firstTouchScenario.supports(incoming, currentState, text)) {
             return firstTouchScenario.handle(incoming, currentState, text);
         }
 
-        OutgoingMessage composite = tryCompositeIntent(incoming, currentState, text);
+        UnderstoodInput understood = inputUnderstandingService.understand(text, currentState);
+        String routeText = understood.routeText();
+        OutgoingMessage composite = tryCompositeIntent(incoming, currentState, routeText);
         if (composite != null) {
-            return composite;
+            return withUnderstandingMetadata(composite, understood);
         }
 
         for (FsmScenario scenario : orderedRuntimeScenarios()) {
-            if (scenario.supports(incoming, currentState, text)) {
-                return withExecutablePendingContent(incoming, scenario.handle(incoming, currentState, text));
+            if (scenario.supports(incoming, currentState, routeText)) {
+                return withUnderstandingMetadata(
+                        withExecutablePendingContent(incoming, scenario.handle(incoming, currentState, routeText)),
+                        understood
+                );
             }
         }
         return null;
@@ -370,5 +378,18 @@ public class ScenarioRouter {
 
     private String normalize(String text) {
         return text == null ? "" : text.trim().toLowerCase();
+    }
+
+    private OutgoingMessage withUnderstandingMetadata(OutgoingMessage outgoing, UnderstoodInput understood) {
+        if (outgoing == null || understood == null) {
+            return outgoing;
+        }
+        return outgoing.withMetadata(Map.of(
+                "understandingIntent", understood.primaryIntent().name(),
+                "understandingConfidence", understood.confidence(),
+                "understandingCandidates", understood.candidates().stream().map(Enum::name).toList(),
+                "understandingSlots", understood.slots().keySet().stream().toList(),
+                "normalizedInput", understood.normalizedText()
+        ));
     }
 }

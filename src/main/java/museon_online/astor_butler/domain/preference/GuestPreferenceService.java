@@ -38,6 +38,15 @@ public class GuestPreferenceService {
         return repository.create(command);
     }
 
+    @Transactional
+    public GuestPreference deletePreference(Long id) {
+        GuestPreference preference = getPreference(id);
+        if (preference.status() == GuestPreferenceStatus.DELETED) {
+            return preference;
+        }
+        return repository.updateStatus(preference.id(), GuestPreferenceStatus.DELETED);
+    }
+
     public GuestPreferenceCategory classify(String text) {
         String normalized = text == null ? "" : text.toLowerCase(Locale.ROOT);
         if (containsAny(normalized, "аллерг", "неперенос", "без глютена", "лактоз", "орех")) {

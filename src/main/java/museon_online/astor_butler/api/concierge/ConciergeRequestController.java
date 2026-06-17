@@ -42,6 +42,24 @@ public class ConciergeRequestController {
         return ResponseEntity.ok(ConciergeRequestResponse.from(requestService.getRequest(id)));
     }
 
+    @PostMapping("/requests/{id}/in-progress")
+    @Operation(summary = "Mark concierge request as in progress")
+    public ResponseEntity<ConciergeRequestResponse> markInProgress(@PathVariable("id") Long id) {
+        return ResponseEntity.ok(ConciergeRequestResponse.from(requestService.markInProgress(id)));
+    }
+
+    @PostMapping("/requests/{id}/complete")
+    @Operation(summary = "Complete concierge request")
+    public ResponseEntity<ConciergeRequestResponse> complete(@PathVariable("id") Long id) {
+        return ResponseEntity.ok(ConciergeRequestResponse.from(requestService.complete(id)));
+    }
+
+    @PostMapping("/requests/{id}/cancel")
+    @Operation(summary = "Cancel concierge request")
+    public ResponseEntity<ConciergeRequestResponse> cancel(@PathVariable("id") Long id) {
+        return ResponseEntity.ok(ConciergeRequestResponse.from(requestService.cancel(id)));
+    }
+
     @GetMapping("/requests/telegram/{chatId}")
     @Operation(summary = "List concierge requests for Telegram chat")
     public ResponseEntity<List<ConciergeRequestResponse>> listTelegramRequests(

@@ -24,8 +24,10 @@ import museon_online.astor_butler.fsm.scenario.ScenarioRouter;
 import museon_online.astor_butler.fsm.scenario.SmartTipScenario;
 import museon_online.astor_butler.fsm.scenario.TableBookingScenario;
 import museon_online.astor_butler.fsm.storage.FSMStorage;
+import museon_online.astor_butler.fsm.understanding.GuestInputUnderstandingService;
 import museon_online.astor_butler.kafka.UserEventProducer;
 import museon_online.astor_butler.llm.OllamaClient;
+import museon_online.astor_butler.telegram.adapter.TelegramSystemNotifier;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -119,6 +121,9 @@ class MessageGatewayServiceTest {
     @Mock
     private FsmTimelineWriter fsmTimelineWriter;
 
+    @Mock
+    private TelegramSystemNotifier telegramSystemNotifier;
+
     private MessageGatewayService service;
 
     @BeforeEach
@@ -142,7 +147,8 @@ class MessageGatewayServiceTest {
                 hiddenHeartScenario,
                 artAuctionScenario,
                 mainMenuScenario,
-                recoveryScenario
+                recoveryScenario,
+                new GuestInputUnderstandingService()
         );
         service = new MessageGatewayService(
                 fsmStorage,
@@ -152,7 +158,8 @@ class MessageGatewayServiceTest {
                 userEventProducer,
                 llmScenarioPromptCatalog,
                 voiceTranscriptionRetryService,
-                fsmTimelineWriter
+                fsmTimelineWriter,
+                telegramSystemNotifier
         );
         ReflectionTestUtils.setField(service, "adminChatId", "100500");
         ReflectionTestUtils.setField(service, "analyticsChatId", "100501");
@@ -163,17 +170,18 @@ class MessageGatewayServiceTest {
     @Test
     void returnsFallbackWhenLlmTimesOut() {
         IncomingMessage incoming = telegram("Check админки");
+        String routeText = "check админки";
         when(fsmStorage.getState(incoming.chatId())).thenReturn(BotState.READY_FOR_DIALOG);
         when(llmScenarioPromptCatalog.tableBookingContract()).thenReturn("table booking contract");
-        when(firstTouchScenario.supports(eq(incoming), eq(BotState.READY_FOR_DIALOG), eq("Check админки")))
+        when(firstTouchScenario.supports(eq(incoming), eq(BotState.READY_FOR_DIALOG), eq(incoming.text())))
                 .thenReturn(false);
-        when(tableBookingScenario.supports(eq(incoming), eq(BotState.READY_FOR_DIALOG), eq("Check админки")))
+        when(tableBookingScenario.supports(eq(incoming), eq(BotState.READY_FOR_DIALOG), eq(routeText)))
                 .thenReturn(false);
-        when(menuAssetsScenario.supports(eq(incoming), eq(BotState.READY_FOR_DIALOG), eq("Check админки")))
+        when(menuAssetsScenario.supports(eq(incoming), eq(BotState.READY_FOR_DIALOG), eq(routeText)))
                 .thenReturn(false);
-        when(quietGuideScenario.supports(eq(incoming), eq(BotState.READY_FOR_DIALOG), eq("Check админки")))
+        when(quietGuideScenario.supports(eq(incoming), eq(BotState.READY_FOR_DIALOG), eq(routeText)))
                 .thenReturn(false);
-        when(mainMenuScenario.supports(eq(incoming), eq(BotState.READY_FOR_DIALOG), eq("Check админки")))
+        when(mainMenuScenario.supports(eq(incoming), eq(BotState.READY_FOR_DIALOG), eq(routeText)))
                 .thenReturn(false);
         when(ollamaClient.ask(any())).thenThrow(new ResourceAccessException("Read timed out"));
 
@@ -193,6 +201,7 @@ class MessageGatewayServiceTest {
     @Test
     void routesTableBookingIntentBeforeLlm() {
         IncomingMessage incoming = telegram("Хочу забронировать столик завтра на 20:00 на двоих");
+        String routeText = "хочу забронировать столик завтра на 20:00 на 2 гостей";
         OutgoingMessage scenarioResponse = OutgoingMessage.of(
                 incoming,
                 "Отправляю план зала AERIS.",
@@ -208,9 +217,9 @@ class MessageGatewayServiceTest {
         when(fsmStorage.getState(incoming.chatId())).thenReturn(BotState.READY_FOR_DIALOG);
         when(firstTouchScenario.supports(eq(incoming), eq(BotState.READY_FOR_DIALOG), eq(incoming.text())))
                 .thenReturn(false);
-        when(tableBookingScenario.supports(eq(incoming), eq(BotState.READY_FOR_DIALOG), eq(incoming.text())))
+        when(tableBookingScenario.supports(eq(incoming), eq(BotState.READY_FOR_DIALOG), eq(routeText)))
                 .thenReturn(true);
-        when(tableBookingScenario.handle(eq(incoming), eq(BotState.READY_FOR_DIALOG), eq(incoming.text())))
+        when(tableBookingScenario.handle(eq(incoming), eq(BotState.READY_FOR_DIALOG), eq(routeText)))
                 .thenReturn(scenarioResponse);
 
         OutgoingMessage outgoing = service.handle(incoming);

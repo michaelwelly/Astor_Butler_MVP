@@ -10,6 +10,7 @@ import museon_online.astor_butler.fsm.scenario.ScenarioRouter;
 import museon_online.astor_butler.fsm.storage.FSMStorage;
 import museon_online.astor_butler.kafka.UserEventProducer;
 import museon_online.astor_butler.llm.OllamaClient;
+import museon_online.astor_butler.telegram.adapter.TelegramSystemNotifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -28,6 +29,7 @@ public class MessageGatewayService {
     private final LlmScenarioPromptCatalog llmScenarioPromptCatalog;
     private final VoiceTranscriptionRetryService voiceTranscriptionRetryService;
     private final FsmTimelineWriter fsmTimelineWriter;
+    private final TelegramSystemNotifier telegramSystemNotifier;
 
     @Value("${telegram.admin.chat-id:}")
     private String adminChatId;
@@ -70,7 +72,12 @@ public class MessageGatewayService {
         if (isServiceChat(incoming.chatId())) {
             return finish(incoming, currentState, OutgoingMessage.of(
                     incoming,
-                    "Service chat online. Я вижу этот чат как служебный канал Astor Butler: сообщения сохраняю, Kafka-события публикую, в гостевой FSM-сценарий этот чат не отправляю.",
+                    """
+                    Service chat online.
+                    Я вижу этот чат как служебный канал Astor Butler: сообщения сохраняю, Kafka-события публикую, в гостевой FSM-сценарий этот чат не отправляю.
+
+                    Инструкции: https://auspicious-kryptops-863.notion.site/Astor-Butler-380a7c019f1980d78b68d8bc659c609b?source=copy_link
+                    """.strip(),
                     currentState.name(),
                     false,
                     false,
@@ -196,6 +203,7 @@ public class MessageGatewayService {
     private OutgoingMessage finish(IncomingMessage incoming, BotState previousState, OutgoingMessage outgoing) {
         userEventProducer.publishIncomingMessage(incoming, previousState, outgoing);
         fsmTimelineWriter.append(FsmTimelineEvent.from(incoming, previousState, outgoing));
+        telegramSystemNotifier.sendTransition(incoming, previousState, outgoing);
         return outgoing;
     }
 

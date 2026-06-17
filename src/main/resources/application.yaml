@@ -40,6 +40,7 @@ astor:
     log-conversations-enabled: ${ASTOR_LOG_CONVERSATIONS_ENABLED:true}
   startup:
     admin-notification-enabled: ${ASTOR_STARTUP_ADMIN_NOTIFICATION_ENABLED:true}
+    operational-preview-enabled: ${ASTOR_OPERATIONAL_PREVIEW_ENABLED:true}
   speech-to-text:
     enabled: ${ASTOR_STT_ENABLED:false}
     command: ${ASTOR_STT_COMMAND:}
@@ -52,6 +53,13 @@ astor:
       enabled: ${ASTOR_SEMANTIC_PGVECTOR_ENABLED:true}
       embedding-dimension: ${ASTOR_SEMANTIC_EMBEDDING_DIMENSION:1536}
       default-model: ${ASTOR_SEMANTIC_EMBEDDING_MODEL:text-embedding-3-small}
+    embeddings:
+      provider: ${ASTOR_SEMANTIC_EMBEDDINGS_PROVIDER:none}
+      model: ${ASTOR_SEMANTIC_EMBEDDING_MODEL:nomic-embed-text}
+      ollama-base-url: ${ASTOR_SEMANTIC_OLLAMA_BASE_URL:${LLM_OLLAMA_BASE_URL:http://localhost:11434}}
+    intent-examples:
+      ingest-golden-corpus-on-startup: ${ASTOR_INTENT_EXAMPLES_INGEST_ON_STARTUP:false}
+      golden-corpus: ${ASTOR_INTENT_EXAMPLES_GOLDEN_CORPUS:classpath:understanding/guest-input-golden-corpus.jsonl}
   timeline:
     scylla:
       enabled: ${ASTOR_TIMELINE_SCYLLA_ENABLED:false}
@@ -126,7 +134,7 @@ telegram:
     preview-enabled: ${TELEGRAM_UI_PREVIEW_ENABLED:true}
     cleanup-enabled: ${TELEGRAM_UI_CLEANUP_ENABLED:false}
     delete-user-messages-enabled: ${TELEGRAM_UI_DELETE_USER_MESSAGES_ENABLED:false}
-    preview-version: ${TELEGRAM_UI_PREVIEW_VERSION:2026-06-15-astor-butler-knowledge}
+    preview-version: ${TELEGRAM_UI_PREVIEW_VERSION:2026-06-17-weekend-rc}
     preview-avatar-path: ${TELEGRAM_UI_PREVIEW_AVATAR_PATH:classpath:telegram/aeris-butler-preview.png}
   voice:
     download-enabled: ${TELEGRAM_VOICE_DOWNLOAD_ENABLED:true}
@@ -138,6 +146,7 @@ telegram:
     max-retries: ${TELEGRAM_ANALYTICS_MAX_RETRIES:2}
   system:
     chat-id: ${TELEGRAM_SYSTEM_CHAT_ID:}
+    notifications-enabled: ${TELEGRAM_SYSTEM_NOTIFICATIONS_ENABLED:false}
   booking:
     notifications-enabled: ${TELEGRAM_BOOKING_NOTIFICATIONS_ENABLED:true}
     manager-chat-id: ${TELEGRAM_BOOKING_MANAGER_CHAT_ID:876857557}

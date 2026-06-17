@@ -69,6 +69,19 @@ public class GuestPreferenceRepository {
         );
     }
 
+    public GuestPreference updateStatus(Long id, GuestPreferenceStatus status) {
+        jdbcTemplate.update("""
+                UPDATE guest_preferences
+                SET status = ?,
+                    updated_at = CURRENT_TIMESTAMP
+                WHERE id = ?
+                """,
+                status.name(),
+                id
+        );
+        return findById(id).orElseThrow();
+    }
+
     private RowMapper<GuestPreference> mapper() {
         return (rs, rowNum) -> new GuestPreference(
                 rs.getLong("id"),

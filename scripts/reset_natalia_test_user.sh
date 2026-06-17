@@ -23,8 +23,8 @@ Defaults:
 The script resets the local manual-test guest in PostgreSQL and Redis:
   - telegram profile preview/current-message pointers
   - telegram messages and consents
-  - table reservation orders/holds for the guest
-  - local Redis FSM state and table-booking draft
+  - table/event orders, guest preferences, tips, donations, merch, feedback, auction and concierge rows for the guest
+  - local Redis FSM state, pending intents, recovery retry counter and table-booking draft
 
 It refuses to reset admin users.
 USAGE
@@ -170,6 +170,58 @@ BEGIN
 END
 \$\$;
 
+DO \$\$
+DECLARE
+    tbl TEXT;
+BEGIN
+    FOREACH tbl IN ARRAY ARRAY[
+        'concierge_requests',
+        'guest_preferences',
+        'guest_feedback',
+        'tip_orders',
+        'donation_orders',
+        'merch_orders',
+        'art_auction_bids',
+        'telegram_star_payments'
+    ]
+    LOOP
+        IF to_regclass('public.' || tbl) IS NULL THEN
+            CONTINUE;
+        END IF;
+
+        IF EXISTS (
+            SELECT 1 FROM information_schema.columns
+            WHERE table_schema = 'public' AND table_name = tbl AND column_name = 'user_id'
+        ) THEN
+            EXECUTE format(
+                'DELETE FROM %I t USING reset_target rt WHERE t.user_id = rt.user_id',
+                tbl
+            );
+        END IF;
+
+        IF EXISTS (
+            SELECT 1 FROM information_schema.columns
+            WHERE table_schema = 'public' AND table_name = tbl AND column_name = 'telegram_user_id'
+        ) THEN
+            EXECUTE format(
+                'DELETE FROM %I t USING reset_target rt WHERE t.telegram_user_id = rt.telegram_id',
+                tbl
+            );
+        END IF;
+
+        IF EXISTS (
+            SELECT 1 FROM information_schema.columns
+            WHERE table_schema = 'public' AND table_name = tbl AND column_name = 'chat_id'
+        ) THEN
+            EXECUTE format(
+                'DELETE FROM %I t USING reset_target rt WHERE t.chat_id = rt.chat_id',
+                tbl
+            );
+        END IF;
+    END LOOP;
+END
+\$\$;
+
 DELETE FROM user_contacts uc
 WHERE uc.user_id IN (SELECT user_id FROM reset_target WHERE user_id IS NOT NULL);
 
@@ -222,6 +274,8 @@ SQL
 
 REDIS_KEYS=(
   "$ASTOR_REDIS_KEY_PREFIX:fsm:telegram:$CHAT_ID:state"
+  "$ASTOR_REDIS_KEY_PREFIX:fsm:telegram:$CHAT_ID:pending-intents"
+  "$ASTOR_REDIS_KEY_PREFIX:fsm:recovery:retry:telegram:$CHAT_ID"
   "$ASTOR_REDIS_KEY_PREFIX:booking:table:draft:telegram:$CHAT_ID"
 )
 
@@ -241,5 +295,5 @@ fi
 if [[ "$DRY_RUN" == "true" ]]; then
   echo "Dry run complete. PostgreSQL transaction rolled back; Redis untouched."
 else
-  echo "Natalia test user reset complete."
+  echo "Manual-test user reset complete."
 fi

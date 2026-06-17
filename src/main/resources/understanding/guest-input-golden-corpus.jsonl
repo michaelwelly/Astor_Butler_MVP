@@ -1,0 +1,34 @@
+{"state":"READY_FOR_DIALOG","text":"📅 Забронировать стол","intent":"TABLE_BOOKING","normalized":"забронировать стол"}
+{"state":"READY_FOR_DIALOG","text":"Хочу забронировать столик завтра на 20:00 на двоих","intent":"TABLE_BOOKING","slot":"partySize","slotValue":"2"}
+{"state":"READY_FOR_DIALOG","text":"Нужен стол на завтра к восьми, будем вдвоем","intent":"TABLE_BOOKING","slot":"partySize","slotValue":"2"}
+{"state":"READY_FOR_DIALOG","text":"Есть места сегодня на троих?","intent":"TABLE_BOOKING","slot":"partySize","slotValue":"3"}
+{"state":"READY_FOR_DIALOG","text":"Столик у окна на 4 человека завтра","intent":"TABLE_BOOKING","slot":"partySize","slotValue":"4"}
+{"state":"TABLE_BOOKING_COLLECT_DATE","text":"На завтра","intent":"PROVIDE_DATE","normalized":"завтра","slot":"date","slotValue":"завтра"}
+{"state":"TABLE_BOOKING_COLLECT_DATE","text":"завтра","intent":"PROVIDE_DATE","normalized":"завтра","slot":"date","slotValue":"завтра"}
+{"state":"TABLE_BOOKING_COLLECT_DATE","text":"послезавтра","intent":"PROVIDE_DATE","slot":"date","slotValue":"послезавтра"}
+{"state":"TABLE_BOOKING_COLLECT_DATE","text":"сегодня","intent":"PROVIDE_DATE","slot":"date","slotValue":"сегодня"}
+{"state":"TABLE_BOOKING_COLLECT_TIME","text":"В 8 вечера","intent":"PROVIDE_TIME","normalized":"20:00","slot":"time","slotValue":"20:00"}
+{"state":"TABLE_BOOKING_COLLECT_TIME","text":"к восьми","intent":"PROVIDE_TIME","normalized":"20:00","slot":"time","slotValue":"20:00"}
+{"state":"TABLE_BOOKING_COLLECT_TIME","text":"около 8","intent":"PROVIDE_TIME","normalized":"20:00","slot":"time","slotValue":"20:00"}
+{"state":"TABLE_BOOKING_COLLECT_TIME","text":"20:00","intent":"PROVIDE_TIME","normalized":"20:00","slot":"time","slotValue":"20:00"}
+{"state":"TABLE_BOOKING_COLLECT_TIME","text":"в 20 часов","intent":"PROVIDE_TIME","normalized":"20:00","slot":"time","slotValue":"20:00"}
+{"state":"TABLE_BOOKING_COLLECT_TIME","text":"20 ч","intent":"PROVIDE_TIME","normalized":"20:00","slot":"time","slotValue":"20:00"}
+{"state":"TABLE_BOOKING_COLLECT_PARTY_SIZE","text":"На 2х","intent":"PROVIDE_PARTY_SIZE","normalized":"на 2 гостей","slot":"partySize","slotValue":"2"}
+{"state":"TABLE_BOOKING_COLLECT_PARTY_SIZE","text":"На двоих","intent":"PROVIDE_PARTY_SIZE","normalized":"на 2 гостей","slot":"partySize","slotValue":"2"}
+{"state":"TABLE_BOOKING_COLLECT_PARTY_SIZE","text":"Будем вдвоем","intent":"PROVIDE_PARTY_SIZE","normalized":"на 2 гостей","slot":"partySize","slotValue":"2"}
+{"state":"TABLE_BOOKING_COLLECT_PARTY_SIZE","text":"нас двое","intent":"PROVIDE_PARTY_SIZE","normalized":"на 2 гостей","slot":"partySize","slotValue":"2"}
+{"state":"TABLE_BOOKING_COLLECT_PARTY_SIZE","text":"мы втроем","intent":"PROVIDE_PARTY_SIZE","normalized":"на 3 гостей","slot":"partySize","slotValue":"3"}
+{"state":"TABLE_BOOKING_COLLECT_PARTY_SIZE","text":"четверо","intent":"PROVIDE_PARTY_SIZE","normalized":"на 4 гостей","slot":"partySize","slotValue":"4"}
+{"state":"TABLE_BOOKING_COLLECT_PARTY_SIZE","text":"4 человека","intent":"PROVIDE_PARTY_SIZE","slot":"partySize","slotValue":"4"}
+{"state":"TABLE_BOOKING_WAIT_TABLE_SELECTION","text":"Тихий стол в винной комнате","intent":"PROVIDE_TABLE_SELECTION","slot":"seatingPreference"}
+{"state":"TABLE_BOOKING_WAIT_TABLE_SELECTION","text":"стол 7","intent":"PROVIDE_TABLE_SELECTION","slot":"tableNumber","slotValue":"7"}
+{"state":"TABLE_BOOKING_WAIT_TABLE_SELECTION","text":"7","intent":"PROVIDE_TABLE_SELECTION","slot":"tableNumber","slotValue":"7"}
+{"state":"TABLE_BOOKING_WAIT_TABLE_SELECTION","text":"у окна","intent":"PROVIDE_TABLE_SELECTION","slot":"seatingPreference"}
+{"state":"TABLE_BOOKING_WAIT_TABLE_SELECTION","text":"выбери сам","intent":"PROVIDE_TABLE_SELECTION","slot":"seatingPreference"}
+{"state":"TABLE_BOOKING_WAIT_TABLE_SELECTION","text":"любой подходящий","intent":"PROVIDE_TABLE_SELECTION","slot":"seatingPreference"}
+{"state":"READY_FOR_DIALOG","text":"Покажи меню и винную карту","intent":"MENU_ASSETS"}
+{"state":"READY_FOR_DIALOG","text":"📖 Меню и карты","intent":"MENU_ASSETS","normalized":"покажи меню"}
+{"state":"READY_FOR_DIALOG","text":"Видео-тур по ресторану","intent":"QUIET_GUIDE"}
+{"state":"READY_FOR_DIALOG","text":"🏛 Видео-тур","intent":"QUIET_GUIDE","normalized":"покажи видео-тур"}
+{"state":"READY_FOR_DIALOG","text":"Можно сразу сделать сабраж?","intent":"SAFE_PLAY"}
+{"state":"READY_FOR_DIALOG","text":"🥂 Сабраж","intent":"SAFE_PLAY","normalized":"сабраж"}

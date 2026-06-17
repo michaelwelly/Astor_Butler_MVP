@@ -117,6 +117,59 @@ class ChangeCancelScenarioTest {
     }
 
     @Test
+    void cancelsReferencedActiveTableReservation() {
+        IncomingMessage incoming = telegram("отмени бронь #44");
+        TableReservationOrder active = activeReservation();
+        TableReservationOrder cancelled = cancelledReservation();
+        when(tableReservationService.listActiveReservationsByChatId(incoming.chatId()))
+                .thenReturn(List.of(active));
+        when(tableReservationService.cancelByGuest(44L)).thenReturn(cancelled);
+
+        OutgoingMessage outgoing = scenario.handle(incoming, BotState.READY_FOR_DIALOG, incoming.text());
+
+        assertThat(outgoing.nextState()).isEqualTo(BotState.READY_FOR_DIALOG.name());
+        assertThat(outgoing.adminAlert().required()).isFalse();
+        assertThat(outgoing.text()).contains("отменил бронь стола #44", "Окно у бара (A7)", "освободил слот");
+        assertThat(outgoing.actions()).containsExactly(
+                "CHANGE_CANCEL",
+                "TABLE_RESERVATION_CANCELLED",
+                "HOLD_RELEASED",
+                "RETURN_MAIN_MENU"
+        );
+        assertThat(outgoing.metadata()).containsEntry("cancelledTableReservationId", 44L);
+        verify(tableReservationService).cancelByGuest(44L);
+        verify(fsmStorage).setState(incoming.chatId(), BotState.READY_FOR_DIALOG);
+    }
+
+    @Test
+    void cancelsReferencedActiveEventBooking() {
+        IncomingMessage incoming = telegram("отмени заявку #88");
+        EventBookingOrder active = activeEvent();
+        EventBookingOrder cancelled = cancelledEvent();
+        when(tableReservationService.listActiveReservationsByChatId(incoming.chatId()))
+                .thenReturn(List.of());
+        when(eventBookingService.listActiveOrdersByChatId(incoming.chatId()))
+                .thenReturn(List.of(active));
+        when(eventBookingService.cancelByGuest(88L)).thenReturn(cancelled);
+
+        OutgoingMessage outgoing = scenario.handle(incoming, BotState.READY_FOR_DIALOG, incoming.text());
+
+        assertThat(outgoing.nextState()).isEqualTo(BotState.READY_FOR_DIALOG.name());
+        assertThat(outgoing.adminAlert().required()).isTrue();
+        assertThat(outgoing.adminAlert().chatId()).isEqualTo("100500");
+        assertThat(outgoing.text()).contains("event-заявку #88", "CORPORATE", "2026-06-21");
+        assertThat(outgoing.actions()).containsExactly(
+                "CHANGE_CANCEL",
+                "EVENT_BOOKING_CANCELLED",
+                "ADMIN_ALERT",
+                "RETURN_MAIN_MENU"
+        );
+        assertThat(outgoing.metadata()).containsEntry("cancelledEventBookingId", 88L);
+        verify(eventBookingService).cancelByGuest(88L);
+        verify(fsmStorage).setState(incoming.chatId(), BotState.READY_FOR_DIALOG);
+    }
+
+    @Test
     void supportsChangeCancelIntentAndContinuation() {
         IncomingMessage incoming = telegram("перенести бронь");
 
@@ -170,6 +223,34 @@ class ChangeCancelScenarioTest {
         );
     }
 
+    private TableReservationOrder cancelledReservation() {
+        return new TableReservationOrder(
+                44L,
+                1773317437L,
+                1773317437L,
+                777L,
+                7L,
+                "A7",
+                "Окно у бара",
+                null,
+                null,
+                TableReservationStatus.CANCELLED,
+                "TELEGRAM",
+                Instant.parse("2026-06-18T15:00:00Z"),
+                Instant.parse("2026-06-18T17:00:00Z"),
+                2,
+                "Наталья Поединенко",
+                "+79991234567",
+                null,
+                876857557L,
+                null,
+                "-1004291419562",
+                null,
+                Instant.parse("2026-06-15T10:00:00Z"),
+                Instant.parse("2026-06-15T10:00:00Z")
+        );
+    }
+
     private EventBookingOrder activeEvent() {
         return new EventBookingOrder(
                 88L,
@@ -189,6 +270,35 @@ class ChangeCancelScenarioTest {
                 null,
                 "Наталья Поединенко",
                 null,
+                "корпоратив на 30 гостей",
+                876857557L,
+                null,
+                "100500",
+                null,
+                Instant.parse("2026-06-15T10:00:00Z"),
+                Instant.parse("2026-06-15T10:00:00Z")
+        );
+    }
+
+    private EventBookingOrder cancelledEvent() {
+        return new EventBookingOrder(
+                88L,
+                1773317437L,
+                1773317437L,
+                null,
+                "AERIS",
+                EventBookingStatus.CANCELLED,
+                "TELEGRAM",
+                "CORPORATE",
+                LocalDate.parse("2026-06-21"),
+                "19:00",
+                30,
+                null,
+                null,
+                null,
+                null,
+                "Наталья Поединенко",
+                "+79991234567",
                 "корпоратив на 30 гостей",
                 876857557L,
                 null,

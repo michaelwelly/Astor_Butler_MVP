@@ -1,6 +1,7 @@
 package museon_online.astor_butler.fsm.scenario;
 
 import lombok.RequiredArgsConstructor;
+import museon_online.astor_butler.domain.telegram.TelegramGuestContextRepository;
 import museon_online.astor_butler.fsm.core.BotState;
 import museon_online.astor_butler.fsm.storage.FSMStorage;
 import museon_online.astor_butler.service.message.AdminAlert;
@@ -18,6 +19,7 @@ import java.util.Map;
 public class ManagerHelpScenario implements FsmScenario {
 
     private final FSMStorage fsmStorage;
+    private final TelegramGuestContextRepository guestContextRepository;
 
     @Value("${telegram.admin.chat-id:}")
     private String adminChatId;
@@ -121,12 +123,16 @@ public class ManagerHelpScenario implements FsmScenario {
                 <b>Сообщение гостя</b>
                 <blockquote>%s</blockquote>
 
+                <b>Последний контекст диалога</b>
+                %s
+
                 <b>Контекст</b>
                 Previous state: %s
                 Scenario: MANAGER_HELP
 
                 <b>Действие</b>
-                Проверьте диалог и подключитесь вручную, если вопрос нельзя закрыть FSM-сценарием.
+                Откройте диалог с гостем, проверьте историю и подключитесь вручную, если вопрос нельзя закрыть FSM-сценарием.
+                После решения внесите результат в систему отдельным действием: бронь, event-заявка, concierge request или комментарий.
 
                 <b>Техника</b>
                 Channel: %s
@@ -137,6 +143,7 @@ public class ManagerHelpScenario implements FsmScenario {
                 html(text(incoming.telegramUserId())),
                 incoming.username() == null || incoming.username().isBlank() ? "" : " / @" + html(incoming.username()),
                 html(blankAsEmptyLabel(text)),
+                recentContext(incoming.chatId()),
                 html(text(previousState)),
                 html(text(incoming.channel())),
                 html(blankAsEmptyLabel(incoming.correlationId()))
@@ -164,6 +171,32 @@ public class ManagerHelpScenario implements FsmScenario {
             }
         }
         return false;
+    }
+
+    private String recentContext(Long chatId) {
+        List<String> messages = guestContextRepository.recentMessages(chatId, 5);
+        if (messages.isEmpty()) {
+            return "нет сохраненных сообщений";
+        }
+        StringBuilder builder = new StringBuilder();
+        for (String message : messages) {
+            builder.append("• ")
+                    .append(html(compact(message, 180)))
+                    .append("\n");
+        }
+        return builder.toString().trim();
+    }
+
+    private String compact(String text, int maxLength) {
+        String normalized = normalizeDisplay(text)
+                .replace("\r", " ")
+                .replace("\n", " ")
+                .replaceAll("\\s+", " ")
+                .trim();
+        if (normalized.length() <= maxLength) {
+            return normalized;
+        }
+        return normalized.substring(0, Math.max(0, maxLength - 1)).trim() + "…";
     }
 
     private String displayName(IncomingMessage incoming) {

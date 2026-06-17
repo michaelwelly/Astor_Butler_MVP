@@ -2,6 +2,7 @@ package museon_online.astor_butler.telegram.adapter;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import museon_online.astor_butler.fsm.core.BotState;
 import museon_online.astor_butler.fsm.core.event.InboundEvent;
 import museon_online.astor_butler.fsm.core.idempotency.IdempotencyGuard;
 import museon_online.astor_butler.domain.booking.HostessReservationApprovalService;
@@ -28,6 +29,8 @@ import org.telegram.telegrambots.meta.api.objects.User;
 import org.telegram.telegrambots.meta.api.objects.Voice;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardRemove;
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardButton;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardRow;
 import org.telegram.telegrambots.meta.bots.AbsSender;
@@ -35,15 +38,19 @@ import org.telegram.telegrambots.meta.exceptions.TelegramApiRequestException;
 
 import java.io.InputStream;
 import java.io.Serializable;
+import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @Service
 @RequiredArgsConstructor
 @Slf4j
 public class TelegramRouter {
+    private static final Pattern SAFE_PLAY_CALLBACK = Pattern.compile("^safe_play:(approve|reject):(-?\\d+)$");
 
     private final TelegramExceptionHandler exceptionHandler;
     private final IdempotencyGuard idempotencyGuard;
@@ -56,11 +63,14 @@ public class TelegramRouter {
     @Value("${telegram.ui.preview-enabled:true}")
     private boolean previewEnabled;
 
-    @Value("${telegram.ui.preview-version:2026-06-05-aeris}")
+    @Value("${telegram.ui.preview-version:2026-06-17-weekend-rc}")
     private String previewVersion;
 
     @Value("${telegram.ui.preview-avatar-path:classpath:telegram/aeris-butler-preview.png}")
     private Resource previewAvatar;
+
+    @Value("${telegram.admin.chat-id:}")
+    private String adminChatId;
 
 
     public void handle(Update update, AbsSender sender) {
@@ -105,6 +115,17 @@ public class TelegramRouter {
 
         CallbackQuery callbackQuery = update.getCallbackQuery();
         Long chatId = callbackQuery.getMessage() == null ? null : callbackQuery.getMessage().getChatId();
+
+        CallbackAnswer safePlayAnswer = handleSafePlayCallback(callbackQuery, chatId, sender);
+        if (safePlayAnswer.handled()) {
+            execute(sender, AnswerCallbackQuery.builder()
+                    .callbackQueryId(callbackQuery.getId())
+                    .text(safePlayAnswer.answerText())
+                    .showAlert(false)
+                    .build());
+            return true;
+        }
+
         HostessReservationApprovalService.CallbackResult result = hostessReservationApprovalService.handleCallback(
                 callbackQuery.getData(),
                 chatId
@@ -119,6 +140,36 @@ public class TelegramRouter {
                 .showAlert(false)
                 .build());
         return true;
+    }
+
+    private CallbackAnswer handleSafePlayCallback(CallbackQuery callbackQuery, Long callbackChatId, AbsSender sender) {
+        if (callbackQuery == null || callbackQuery.getData() == null || !isAdminChat(callbackChatId)) {
+            return CallbackAnswer.notHandled();
+        }
+
+        Matcher matcher = SAFE_PLAY_CALLBACK.matcher(callbackQuery.getData());
+        if (!matcher.matches()) {
+            return CallbackAnswer.notHandled();
+        }
+
+        String action = matcher.group(1);
+        String guestChatId = matcher.group(2);
+        String guestText = "approve".equals(action)
+                ? """
+                Команда AERIS приняла запрос на сабражный ритуал. Сейчас проверим бутылку, время, стол и доступность обученного сотрудника. Я вернусь с подтверждением деталей.
+                """
+                : """
+                Сейчас не получится безопасно подтвердить сабражный ритуал. Можем предложить другой момент для подачи, помощь сомелье или спокойную альтернативу без ритуала.
+                """;
+
+        execute(sender, SendMessage.builder()
+                .chatId(guestChatId)
+                .text(guestText.strip())
+                .build());
+
+        return CallbackAnswer.handled("approve".equals(action)
+                ? "Запрос на сабраж принят, гостю отправлено сообщение"
+                : "Запрос на сабраж отклонен, гостю отправлено сообщение");
     }
     private boolean acceptInboundEvent(Update update) {
         try {
@@ -196,6 +247,8 @@ public class TelegramRouter {
         }
         if (outgoing.requestContact()) {
             builder.replyMarkup(contactKeyboard());
+        } else if (shouldShowGuestMainMenu(outgoing)) {
+            builder.replyMarkup(guestMainMenuKeyboard());
         } else if (outgoing.removeKeyboard()) {
             builder.replyMarkup(ReplyKeyboardRemove.builder().removeKeyboard(true).build());
         }
@@ -216,7 +269,24 @@ public class TelegramRouter {
                 .chatId(outgoing.adminAlert().chatId())
                 .text(outgoing.adminAlert().text())
                 .parseMode("HTML")
+                .replyMarkup(adminAlertKeyboard(outgoing.adminAlert()))
                 .build());
+    }
+
+    private InlineKeyboardMarkup adminAlertKeyboard(museon_online.astor_butler.service.message.AdminAlert alert) {
+        if (alert == null || alert.buttons() == null || alert.buttons().isEmpty()) {
+            return null;
+        }
+        return InlineKeyboardMarkup.builder()
+                .keyboard(alert.buttons().stream()
+                        .map(row -> row.stream()
+                                .map(button -> InlineKeyboardButton.builder()
+                                        .text(button.text())
+                                        .callbackData(button.callbackData())
+                                        .build())
+                                .toList())
+                        .toList())
+                .build();
     }
 
     private ReplyKeyboardMarkup contactKeyboard() {
@@ -230,6 +300,37 @@ public class TelegramRouter {
                 .resizeKeyboard(true)
                 .oneTimeKeyboard(true)
                 .build();
+    }
+
+    private ReplyKeyboardMarkup guestMainMenuKeyboard() {
+        return ReplyKeyboardMarkup.builder()
+                .keyboard(List.of(
+                        keyboardRow("📅 Забронировать стол", "📖 Меню и карты"),
+                        keyboardRow("🥂 Сабраж", "🏛 Видео-тур"),
+                        keyboardRow("🎟 Афиша", "✨ Концепция"),
+                        keyboardRow("🎉 Мероприятие", "🛎 Помощь команды"),
+                        keyboardRow("✏️ Изменить / отменить", "💬 Оставить отзыв"),
+                        keyboardRow("💚 Чаевые", "🤍 Донат"),
+                        keyboardRow("🎨 Аукцион", "🎁 Мерч"),
+                        keyboardRow("🏠 Главное меню")
+                ))
+                .resizeKeyboard(true)
+                .oneTimeKeyboard(false)
+                .build();
+    }
+
+    private KeyboardRow keyboardRow(String... labels) {
+        return new KeyboardRow(Arrays.stream(labels)
+                .map(label -> KeyboardButton.builder().text(label).build())
+                .toList());
+    }
+
+    private boolean shouldShowGuestMainMenu(OutgoingMessage outgoing) {
+        return outgoing != null
+                && outgoing.chatId() != null
+                && outgoing.chatId() > 0
+                && BotState.READY_FOR_DIALOG.name().equals(outgoing.nextState())
+                && !outgoing.requestContact();
     }
 
     private void ensurePreview(IncomingMessage incoming, AbsSender sender, boolean force) {
@@ -279,6 +380,10 @@ public class TelegramRouter {
         return incoming != null && incoming.text() != null && "/start".equalsIgnoreCase(incoming.text().trim());
     }
 
+    private boolean isAdminChat(Long chatId) {
+        return chatId != null && adminChatId != null && !adminChatId.isBlank() && adminChatId.equals(chatId.toString());
+    }
+
     private Map<String, Object> mediaPayload(Message message) {
         if (message == null) {
             return Map.of();
@@ -306,14 +411,16 @@ public class TelegramRouter {
         return """
                 <b><a href="https://aeris.bar/">AERIS</a> · Astor Butler</b>
 
-                Я на связи: помогу с меню, бронью, видео-туром, событиями и быстрым контактом с командой.
+                Я на связи. Выберите действие кнопкой ниже или напишите/скажите свободно.
 
-                Можно писать или говорить голосом:
+                Быстрые команды:
                 <i>хочу стол на завтра в 20:00</i>
                 <i>покажи меню и винную карту</i>
+                <i>сабраж</i>
                 <i>расскажи про AERIS</i>
+                <i>позови менеджера</i>
 
-                <a href="https://auspicious-kryptops-863.notion.site/Astor-Butler-Knowledge-Base-380a7c019f1980d78b68d8bc659c609b?source=copy_link">Короткая инструкция гостя</a>
+                <a href="https://michaelwelly.github.io/Astor_Butler_MVP/docs/guest-guide.html">Короткая инструкция гостя</a>
                 """;
     }
 
@@ -368,6 +475,16 @@ public class TelegramRouter {
             return Long.parseLong(suffix.split("\\s+")[0]);
         } catch (NumberFormatException ignored) {
             return null;
+        }
+    }
+
+    private record CallbackAnswer(boolean handled, String answerText) {
+        static CallbackAnswer handled(String answerText) {
+            return new CallbackAnswer(true, answerText);
+        }
+
+        static CallbackAnswer notHandled() {
+            return new CallbackAnswer(false, "");
         }
     }
 }

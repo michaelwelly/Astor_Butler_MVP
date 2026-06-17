@@ -116,10 +116,18 @@ public class ArtAuctionScenario implements FsmScenario {
 
     private OutgoingMessage continueAuction(IncomingMessage incoming, String text) {
         if (isConfirmIntent(text)) {
+            ArtAuctionBid bid = artAuctionService.confirmLatestBidDraft(incoming.chatId());
             fsmStorage.setState(incoming.chatId(), BotState.READY_FOR_DIALOG);
             return OutgoingMessage.of(
                     incoming,
-                    "Принял подтверждение ставки как заявку к активному лоту. Финальный прием ставки требует проверки лота, минимального шага и подтверждения event owner.",
+                    """
+                            Принял подтверждение ставки #%s как заявку к активному лоту.
+
+                            Сумма: %s ₽
+                            Лот: #%s
+
+                            Финальный прием ставки требует проверки лота, минимального шага, текущего top-5 и подтверждения event owner.
+                            """.formatted(bid.id(), rubles(bid.amountMinor()), bid.lotId()),
                     BotState.READY_FOR_DIALOG.name(),
                     false,
                     false,
@@ -127,13 +135,20 @@ public class ArtAuctionScenario implements FsmScenario {
                     false,
                     AdminAlert.none(),
                     List.of("ART_AUCTION", "AUCTION_BID_GUEST_CONFIRMED", "MANAGER_CONFIRMATION_REQUIRED", "RETURN_MAIN_MENU")
-            ).withMetadata(Map.of("scenario", id()));
+            ).withMetadata(Map.of(
+                    "scenario", id(),
+                    "auctionBidId", bid.id(),
+                    "auctionBidStatus", bid.status().name(),
+                    "lotId", bid.lotId(),
+                    "requiresManagerValidation", true
+            ));
         }
         if (isRejectIntent(text)) {
+            ArtAuctionBid bid = artAuctionService.cancelLatestBidDraft(incoming.chatId());
             fsmStorage.setState(incoming.chatId(), BotState.READY_FOR_DIALOG);
             return OutgoingMessage.of(
                     incoming,
-                    "Хорошо, ставку не фиксирую. Можно остаться наблюдателем или вернуться к другому сценарию.",
+                    "Хорошо, отменил заявку на ставку #%s. Можно остаться наблюдателем или вернуться к другому сценарию.".formatted(bid.id()),
                     BotState.READY_FOR_DIALOG.name(),
                     false,
                     false,
@@ -141,7 +156,11 @@ public class ArtAuctionScenario implements FsmScenario {
                     false,
                     AdminAlert.none(),
                     List.of("ART_AUCTION", "AUCTION_BID_CANCELLED", "RETURN_MAIN_MENU")
-            ).withMetadata(Map.of("scenario", id()));
+            ).withMetadata(Map.of(
+                    "scenario", id(),
+                    "auctionBidId", bid.id(),
+                    "auctionBidStatus", bid.status().name()
+            ));
         }
         return collectBid(incoming, text);
     }

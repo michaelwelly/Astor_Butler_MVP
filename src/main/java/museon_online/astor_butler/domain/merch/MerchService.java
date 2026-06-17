@@ -42,6 +42,30 @@ public class MerchService {
         return repository.createOrder(command, item);
     }
 
+    @Transactional
+    public MerchOrder confirmLatestDraft(Long chatId) {
+        MerchOrder order = requireLatestAwaitingConfirmation(chatId);
+        return confirmDraft(order.id());
+    }
+
+    @Transactional
+    public MerchOrder cancelLatestDraft(Long chatId) {
+        MerchOrder order = requireLatestAwaitingConfirmation(chatId);
+        return cancelDraft(order.id());
+    }
+
+    @Transactional
+    public MerchOrder confirmDraft(Long id) {
+        MerchOrder order = requireAwaitingConfirmation(id);
+        return repository.updateStatus(order.id(), MerchOrderStatus.PENDING_TEAM);
+    }
+
+    @Transactional
+    public MerchOrder cancelDraft(Long id) {
+        MerchOrder order = requireAwaitingConfirmation(id);
+        return repository.updateStatus(order.id(), MerchOrderStatus.CANCELLED);
+    }
+
     private MerchItem resolveItem(MerchOrderCommand command) {
         if (command.itemId() != null) {
             return repository.findItem(command.itemId())
@@ -64,6 +88,32 @@ public class MerchService {
             // Default item can still be selected from catalog; this just keeps totally empty API requests honest.
             return;
         }
+    }
+
+    private MerchOrder requireLatestAwaitingConfirmation(Long chatId) {
+        if (chatId == null) {
+            throw badRequest("chatId is required");
+        }
+        return repository.findLatestAwaitingGuestConfirmation(chatId)
+                .orElseThrow(() -> new ApiException(
+                        HttpStatus.NOT_FOUND,
+                        ErrorCode.NOT_FOUND,
+                        "Active merch draft was not found",
+                        Map.of("chatId", chatId)
+                ));
+    }
+
+    private MerchOrder requireAwaitingConfirmation(Long id) {
+        MerchOrder order = getOrder(id);
+        if (order.status() != MerchOrderStatus.AWAITING_GUEST_CONFIRMATION) {
+            throw new ApiException(
+                    HttpStatus.CONFLICT,
+                    ErrorCode.CONFLICT,
+                    "Only awaiting guest confirmation merch drafts can be changed",
+                    Map.of("id", id, "status", order.status())
+            );
+        }
+        return order;
     }
 
     private ApiException badRequest(String message) {

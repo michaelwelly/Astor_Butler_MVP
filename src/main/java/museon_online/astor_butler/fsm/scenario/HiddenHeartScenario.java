@@ -112,10 +112,24 @@ public class HiddenHeartScenario implements FsmScenario {
 
     private OutgoingMessage confirmDonation(IncomingMessage incoming, String text) {
         if (isConfirmIntent(text)) {
+            DonationOrder order = donationService.confirmLatestDraft(incoming.chatId());
             fsmStorage.setState(incoming.chatId(), BotState.READY_FOR_DIALOG);
             return OutgoingMessage.of(
                     incoming,
-                    "Зафиксировал анонимный donation draft. В impact попадет только агрегированный вклад, без приватных данных.",
+                    """
+                            Зафиксировал Hidden Heart #%s и перевел его в ожидание оплаты.
+
+                            Инициатива: %s
+                            Сумма: %s ₽
+                            Приватность: %s
+
+                            В impact попадет только агрегированный вклад, без приватных платежных данных. Следующий слой подключит СБП-ссылку инициативы или Telegram Stars invoice.
+                            """.formatted(
+                            order.id(),
+                            initiativeTitle(order),
+                            rubles(order.amountMinor()),
+                            Boolean.TRUE.equals(order.anonymous()) ? "анонимно" : "с именем гостя"
+                    ),
                     BotState.READY_FOR_DIALOG.name(),
                     false,
                     false,
@@ -123,13 +137,20 @@ public class HiddenHeartScenario implements FsmScenario {
                     false,
                     AdminAlert.none(),
                     List.of("HIDDEN_HEART", "DONATION_DRAFT_CONFIRMED", "IMPACT_EVENT_DRAFT", "RETURN_MAIN_MENU")
-            ).withMetadata(Map.of("scenario", id()));
+            ).withMetadata(Map.of(
+                    "scenario", id(),
+                    "donationOrderId", order.id(),
+                    "donationOrderStatus", order.status().name(),
+                    "privacy", Boolean.TRUE.equals(order.anonymous()) ? "ANONYMOUS" : "NAMED",
+                    "paymentBoundary", "SBP_OR_TELEGRAM_STARS_NEXT"
+            ));
         }
         if (isRejectIntent(text)) {
+            DonationOrder order = donationService.cancelLatestDraft(incoming.chatId());
             fsmStorage.setState(incoming.chatId(), BotState.READY_FOR_DIALOG);
             return OutgoingMessage.of(
                     incoming,
-                    "Хорошо, донат не фиксирую. Возвращаюсь в главное меню.",
+                    "Хорошо, отменил donation draft #%s. Возвращаюсь в главное меню.".formatted(order.id()),
                     BotState.READY_FOR_DIALOG.name(),
                     false,
                     false,
@@ -137,7 +158,11 @@ public class HiddenHeartScenario implements FsmScenario {
                     false,
                     AdminAlert.none(),
                     List.of("HIDDEN_HEART", "DONATION_CANCELLED", "RETURN_MAIN_MENU")
-            ).withMetadata(Map.of("scenario", id()));
+            ).withMetadata(Map.of(
+                    "scenario", id(),
+                    "donationOrderId", order.id(),
+                    "donationOrderStatus", order.status().name()
+            ));
         }
         fsmStorage.setState(incoming.chatId(), BotState.DONATION_CONFIRMATION);
         return OutgoingMessage.of(

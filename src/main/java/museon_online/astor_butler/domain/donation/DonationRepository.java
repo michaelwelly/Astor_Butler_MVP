@@ -96,6 +96,22 @@ public class DonationRepository {
         return result.stream().findFirst();
     }
 
+    public Optional<DonationOrder> findLatestAwaitingGuestConfirmation(Long chatId) {
+        List<DonationOrder> result = jdbcTemplate.query("""
+                SELECT *
+                FROM donation_orders
+                WHERE chat_id = ?
+                  AND status = ?
+                ORDER BY created_at DESC
+                LIMIT 1
+                """,
+                orderMapper(),
+                chatId,
+                DonationOrderStatus.AWAITING_GUEST_CONFIRMATION.name()
+        );
+        return result.stream().findFirst();
+    }
+
     public List<DonationOrder> findOrdersByChatId(Long chatId, int limit) {
         return jdbcTemplate.query("""
                 SELECT *
@@ -108,6 +124,19 @@ public class DonationRepository {
                 chatId,
                 limit
         );
+    }
+
+    public DonationOrder updateStatus(Long id, DonationOrderStatus status) {
+        jdbcTemplate.update("""
+                UPDATE donation_orders
+                SET status = ?,
+                    updated_at = CURRENT_TIMESTAMP
+                WHERE id = ?
+                """,
+                status.name(),
+                id
+        );
+        return findOrder(id).orElseThrow();
     }
 
     private RowMapper<DonationInitiative> initiativeMapper() {

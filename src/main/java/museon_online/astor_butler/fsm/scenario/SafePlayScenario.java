@@ -1,6 +1,8 @@
 package museon_online.astor_butler.fsm.scenario;
 
 import lombok.RequiredArgsConstructor;
+import museon_online.astor_butler.domain.booking.TableReservationOrder;
+import museon_online.astor_butler.domain.booking.TableReservationRepository;
 import museon_online.astor_butler.fsm.core.BotState;
 import museon_online.astor_butler.fsm.storage.FSMStorage;
 import museon_online.astor_butler.service.message.AdminAlert;
@@ -18,6 +20,7 @@ import java.util.Map;
 public class SafePlayScenario implements FsmScenario {
 
     private final FSMStorage fsmStorage;
+    private final TableReservationRepository tableReservationRepository;
 
     @Value("${telegram.admin.chat-id:}")
     private String adminChatId;
@@ -37,6 +40,9 @@ public class SafePlayScenario implements FsmScenario {
         BotState state = currentState == null ? BotState.UNKNOWN : currentState.canonical();
         String normalized = normalize(text);
         if (normalized.isBlank()) {
+            return false;
+        }
+        if (!owns(state) && isMerchChainPurchaseIntent(normalized)) {
             return false;
         }
         return owns(state) || isSafePlayIntent(normalized);
@@ -145,9 +151,10 @@ public class SafePlayScenario implements FsmScenario {
                 Previous state: %s
                 Scenario: SAFE_PLAY
                 Action: %s
+                %s
 
                 <b>Действие</b>
-                Проверьте стол/время, бутылку, staff availability и возможность ритуала. При интересе к цепи передайте в merch flow.
+                Проверьте стол/время, бутылку, staff availability и возможность ритуала. Нажмите Да/Нет ниже. При интересе к цепи передайте в merch flow.
 
                 <b>Техника</b>
                 Channel: %s
@@ -160,10 +167,54 @@ public class SafePlayScenario implements FsmScenario {
                 html(blankAsEmptyLabel(text)),
                 html(text(previousState)),
                 html(action),
+                html(bookingContext(incoming)),
                 html(text(incoming.channel())),
                 html(blankAsEmptyLabel(incoming.correlationId()))
         );
-        return new AdminAlert(true, adminChatId, body);
+        return new AdminAlert(true, adminChatId, body, List.of(List.of(
+                new AdminAlert.Button("Да, можно", "safe_play:approve:" + incoming.chatId()),
+                new AdminAlert.Button("Нет", "safe_play:reject:" + incoming.chatId())
+        )));
+    }
+
+    private String bookingContext(IncomingMessage incoming) {
+        if (incoming == null || incoming.chatId() == null) {
+            return "Активная бронь: не найдена";
+        }
+        return tableReservationRepository.findActiveOrdersByChatId(incoming.chatId())
+                .stream()
+                .findFirst()
+                .map(this::bookingContext)
+                .orElse("Активная бронь: не найдена. Если это предзаказ, уточните стол/время у гостя.");
+    }
+
+    private String bookingContext(TableReservationOrder order) {
+        return """
+                Активная бронь: #%s
+                Стол: %s
+                Время: %s - %s
+                Гостей: %s
+                Пожелание: %s
+                Телефон: %s
+                """.formatted(
+                text(order.id()),
+                tableName(order),
+                text(order.requestedStartAt()),
+                text(order.requestedEndAt()),
+                text(order.partySize()),
+                blankAsEmptyLabel(order.seatingPreference()),
+                blankAsEmptyLabel(order.guestPhone())
+        ).strip();
+    }
+
+    private String tableName(TableReservationOrder order) {
+        if (order.tableCode() == null || order.tableCode().isBlank()) {
+            return "не выбран";
+        }
+        if (order.tableDisplayName() == null || order.tableDisplayName().isBlank()) {
+            return order.tableCode();
+        }
+        return order.tableDisplayName() + " (" + order.tableCode() + ")";
     }
 
     private boolean isSafePlayIntent(String text) {
@@ -179,6 +230,11 @@ public class SafePlayScenario implements FsmScenario {
 
     private boolean isDangerousHowTo(String text) {
         return containsAny(text, "научи", "как сделать", "как открыть", "самому", "дома", "инструкция", "объясни технику");
+    }
+
+    private boolean isMerchChainPurchaseIntent(String text) {
+        return containsAny(text, "цепь", "цепочку", "цепи")
+                && containsAny(text, "купить", "заказать", "предзаказ", "подарок", "мерч", "стоимость", "цена");
     }
 
     private boolean containsAny(String text, String... variants) {

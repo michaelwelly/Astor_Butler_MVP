@@ -2,6 +2,7 @@ package museon_online.astor_butler.domain.booking;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import museon_online.astor_butler.domain.telegram.TelegramGuestContextRepository;
 import museon_online.astor_butler.telegram.utils.TelegramBot;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.beans.factory.ObjectProvider;
@@ -24,6 +25,7 @@ public class TableReservationNotificationService {
 
     private final ObjectProvider<TelegramBot> telegramBotProvider;
     private final TableReservationPendingIntentService pendingIntentService;
+    private final TelegramGuestContextRepository guestContextRepository;
 
     @Value("${telegram.bot.enabled:false}")
     private boolean telegramEnabled;
@@ -58,6 +60,27 @@ public class TableReservationNotificationService {
                 """.formatted(order.id()), null, "hostess-reject-ack");
     }
 
+    public void notifyHostessGuestCancelled(TableReservationOrder order) {
+        send(hostessChatId(order), """
+                <b>Гость отменил бронь стола</b>
+
+                <b>Заказ:</b> #%s
+                <b>Гость:</b> %s
+                <b>Стол:</b> %s
+                <b>Время:</b> %s - %s
+                <b>Телефон:</b> %s
+
+                Hold освобожден, статус заявки: <b>CANCELLED</b>.
+                """.formatted(
+                order.id(),
+                escape(blank(order.guestName(), "гость из Telegram")),
+                escape(tableName(order)),
+                format(order.requestedStartAt()),
+                format(order.requestedEndAt()),
+                escape(blank(order.guestPhone(), "не указан"))
+        ), null, "hostess-guest-cancelled");
+    }
+
     public void notifyGuestConfirmed(TableReservationOrder order) {
         if (order.chatId() == null) {
             return;
@@ -71,6 +94,13 @@ public class TableReservationNotificationService {
             return;
         }
         send(order.chatId().toString(), guestRejectedText(order), null, "guest-rejected");
+    }
+
+    public void notifyGuestCancelled(TableReservationOrder order) {
+        if (order.chatId() == null) {
+            return;
+        }
+        send(order.chatId().toString(), guestCancelledText(order), null, "guest-cancelled");
     }
 
     private void send(String chatId, String text, InlineKeyboardMarkup keyboard, String target) {
@@ -109,50 +139,70 @@ public class TableReservationNotificationService {
 
                 <b>Заказ:</b> #%s
                 <b>Гость:</b> %s
+                <b>Telegram:</b> chat %s / user %s
                 <b>Стол:</b> %s
                 <b>Время:</b> %s - %s
                 <b>Гостей:</b> %s
-                <b>Предпочтение:</b> %s
                 <b>Телефон:</b> %s
-                <b>Комментарий:</b> %s
+                <b>Зона/пожелание:</b> %s
 
-                Статус: <b>%s</b>
+                <b>Исходный запрос гостя</b>
+                <blockquote>%s</blockquote>
+
+                <b>Контекст для хостес</b>
+                %s
+
+                <b>Последние сообщения гостя</b>
+                %s
+
+                <b>Статус:</b> %s
                 Выберите действие кнопкой ниже.
                 """.formatted(
                 order.id(),
                 escape(blank(order.guestName(), "гость из Telegram")),
+                escape(text(order.chatId())),
+                escape(text(order.telegramUserId())),
                 escape(tableName(order)),
                 format(order.requestedStartAt()),
                 format(order.requestedEndAt()),
                 order.partySize(),
-                escape(seatingPreference(order)),
                 escape(blank(order.guestPhone(), "не указан")),
+                escape(seatingPreference(order)),
                 escape(blank(order.guestComment(), "нет")),
-                order.status()
+                escape(hostessContext(order)),
+                recentMessages(order),
+                escape(humanStatus(order.status()))
         );
     }
 
     private String hostessText(TableReservationOrder order) {
         return """
-                <b>Подтверждена бронь стола</b>
+                <b>Бронь стола подтверждена командой</b>
 
                 <b>Заказ:</b> #%s
                 <b>Гость:</b> %s
+                <b>Telegram:</b> chat %s / user %s
                 <b>Стол:</b> %s
                 <b>Время:</b> %s - %s
                 <b>Гостей:</b> %s
-                <b>Предпочтение:</b> %s
                 <b>Телефон:</b> %s
-                <b>Комментарий:</b> %s
+                <b>Зона/пожелание:</b> %s
+
+                <b>Исходный запрос гостя</b>
+                <blockquote>%s</blockquote>
+
+                Гостю отправлен красивый ордер. Если нужно добавить сабраж, предзаказ или комментарий для кухни, ответьте отдельным действием через соответствующий сценарий.
                 """.formatted(
                 order.id(),
                 escape(blank(order.guestName(), "гость из Telegram")),
+                escape(text(order.chatId())),
+                escape(text(order.telegramUserId())),
                 escape(tableName(order)),
                 format(order.requestedStartAt()),
                 format(order.requestedEndAt()),
                 order.partySize(),
-                escape(seatingPreference(order)),
                 escape(blank(order.guestPhone(), "не указан")),
+                escape(seatingPreference(order)),
                 escape(blank(order.guestComment(), "нет"))
         );
     }
@@ -203,6 +253,25 @@ public class TableReservationNotificationService {
         );
     }
 
+    private String guestCancelledText(TableReservationOrder order) {
+        return """
+                <b>Бронь отменена</b>
+
+                Я снял активную бронь и освободил стол.
+
+                <b>Заказ:</b> #%s
+                <b>Стол:</b> %s
+                <b>Время:</b> %s - %s
+
+                Если хотите выбрать другой стол или время, просто напишите новый запрос.
+                """.formatted(
+                order.id(),
+                escape(tableName(order)),
+                format(order.requestedStartAt()),
+                format(order.requestedEndAt())
+        );
+    }
+
     private InlineKeyboardMarkup approvalKeyboard(Long orderId) {
         return InlineKeyboardMarkup.builder()
                 .keyboard(List.of(List.of(
@@ -237,9 +306,51 @@ public class TableReservationNotificationService {
     private String seatingPreference(TableReservationOrder order) {
         String preference = blank(order.seatingPreference(), "");
         if (!preference.isBlank()) {
-            return preference;
+            if (order.preferredZone() == null || order.preferredZone().isBlank()) {
+                return preference;
+            }
+            return order.preferredZone() + " / " + preference;
         }
         return blank(order.preferredZone(), "нет");
+    }
+
+    private String hostessContext(TableReservationOrder order) {
+        return "Проверьте стол, время, вместимость и пожелание гостя. Контакт: "
+                + blank(order.guestPhone(), "нет телефона")
+                + ". После подтверждения гостю автоматически уйдет order-card.";
+    }
+
+    private String recentMessages(TableReservationOrder order) {
+        List<String> messages = guestContextRepository.recentMessages(order.chatId(), 5);
+        if (messages.isEmpty()) {
+            return "нет сохраненной истории";
+        }
+        StringBuilder builder = new StringBuilder();
+        for (String message : messages) {
+            builder.append("• ").append(escape(trimForCard(message))).append("\n");
+        }
+        return builder.toString().trim();
+    }
+
+    private String trimForCard(String value) {
+        String normalized = value == null ? "" : value.trim().replaceAll("\\s+", " ");
+        if (normalized.length() <= 180) {
+            return normalized;
+        }
+        return normalized.substring(0, 177) + "...";
+    }
+
+    private String humanStatus(TableReservationStatus status) {
+        if (status == TableReservationStatus.AWAITING_MANAGER_CONFIRMATION) {
+            return "ожидает решения хостес";
+        }
+        if (status == TableReservationStatus.CONFIRMED) {
+            return "подтверждена";
+        }
+        if (status == TableReservationStatus.REJECTED) {
+            return "отклонена";
+        }
+        return status == null ? "неизвестен" : status.name();
     }
 
     private String format(java.time.Instant instant) {
@@ -248,6 +359,10 @@ public class TableReservationNotificationService {
 
     private String blank(String value, String fallback) {
         return value == null || value.isBlank() ? fallback : value;
+    }
+
+    private String text(Object value) {
+        return value == null ? "" : String.valueOf(value);
     }
 
     private String escape(String value) {

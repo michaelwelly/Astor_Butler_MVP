@@ -41,6 +41,25 @@ public class EventBookingService {
         return repository.createAwaitingManagerReview(command);
     }
 
+    @Transactional
+    public EventBookingOrder cancelByGuest(Long id) {
+        EventBookingOrder current = requireOrder(id);
+        if (current.status() == EventBookingStatus.CANCELLED) {
+            return current;
+        }
+        if (current.status() != EventBookingStatus.AWAITING_MANAGER_REVIEW
+                && current.status() != EventBookingStatus.MANAGER_CLARIFICATION_REQUESTED
+                && current.status() != EventBookingStatus.CONFIRMED) {
+            throw new ApiException(
+                    HttpStatus.CONFLICT,
+                    ErrorCode.CONFLICT,
+                    "Only active event booking orders can be cancelled",
+                    Map.of("id", id)
+            );
+        }
+        return repository.cancel(id);
+    }
+
     private EventBookingOrder requireOrder(Long id) {
         if (id == null) {
             throw badRequest("event booking id is required");

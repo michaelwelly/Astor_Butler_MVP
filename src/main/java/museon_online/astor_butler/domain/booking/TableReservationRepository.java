@@ -103,7 +103,27 @@ public class TableReservationRepository {
                     manager_telegram_id, hostess_chat_id,
                     created_at, updated_at
                 )
-                VALUES (?, ?, ?, ?, ?, 'TELEGRAM', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+                VALUES (
+                    ?, ?, ?, ?, ?, 'TELEGRAM', ?, ?, ?, ?,
+                    COALESCE(
+                        NULLIF(TRIM(?), ''),
+                        (
+                            SELECT NULLIF(TRIM(u.phone), '')
+                            FROM users u
+                            WHERE u.telegram_id = ?
+                            LIMIT 1
+                        ),
+                        (
+                            SELECT NULLIF(TRIM(tp.phone_number), '')
+                            FROM telegram_profiles tp
+                            WHERE tp.telegram_user_id = ?
+                               OR tp.chat_id = ?
+                            ORDER BY tp.last_seen_at DESC NULLS LAST, tp.updated_at DESC NULLS LAST
+                            LIMIT 1
+                        )
+                    ),
+                    ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
+                )
                 RETURNING id
                 """,
                 Long.class,
@@ -117,6 +137,9 @@ public class TableReservationRepository {
                 command.partySize(),
                 command.guestName(),
                 command.guestPhone(),
+                command.telegramUserId(),
+                command.telegramUserId(),
+                command.chatId(),
                 command.guestComment(),
                 normalizeZone(command.preferredZone()),
                 blankToNull(command.seatingPreference()),
@@ -226,6 +249,27 @@ public class TableReservationRepository {
                     updated_at = CURRENT_TIMESTAMP
                 WHERE order_id = ?
                   AND status = 'HELD'
+                """,
+                id
+        );
+        return findOrder(id).orElseThrow();
+    }
+
+    public TableReservationOrder cancel(Long id) {
+        jdbcTemplate.update("""
+                UPDATE table_reservation_orders
+                SET status = 'CANCELLED',
+                    updated_at = CURRENT_TIMESTAMP
+                WHERE id = ?
+                """,
+                id
+        );
+        jdbcTemplate.update("""
+                UPDATE table_reservation_holds
+                SET status = 'RELEASED',
+                    updated_at = CURRENT_TIMESTAMP
+                WHERE order_id = ?
+                  AND status IN ('HELD', 'CONFIRMED')
                 """,
                 id
         );

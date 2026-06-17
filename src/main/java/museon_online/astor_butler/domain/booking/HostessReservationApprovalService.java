@@ -45,6 +45,14 @@ public class HostessReservationApprovalService {
 
         String action = matcher.group(1);
         Long orderId = Long.parseLong(matcher.group(2));
+        TableReservationOrder current = tableReservationService.getReservation(orderId);
+
+        if (current.status() == TableReservationStatus.CONFIRMED) {
+            return CallbackResult.handled("Бронь #" + orderId + " уже подтверждена");
+        }
+        if (current.status() == TableReservationStatus.REJECTED) {
+            return CallbackResult.handled("Бронь #" + orderId + " уже отменена");
+        }
 
         if ("confirm".equals(action)) {
             TableReservationOrder confirmed = tableReservationService.confirm(orderId);

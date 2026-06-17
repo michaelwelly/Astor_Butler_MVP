@@ -68,6 +68,7 @@ class HiddenHeartScenarioTest {
     @Test
     void confirmsDonationDraftAndReturnsToMainMenu() {
         IncomingMessage incoming = telegram("да");
+        when(donationService.confirmLatestDraft(incoming.chatId())).thenReturn(confirmedDonationOrder());
 
         OutgoingMessage outgoing = scenario.handle(incoming, BotState.DONATION_CONFIRMATION, incoming.text());
 
@@ -78,17 +79,26 @@ class HiddenHeartScenarioTest {
                 "IMPACT_EVENT_DRAFT",
                 "RETURN_MAIN_MENU"
         );
+        assertThat(outgoing.text()).contains("Hidden Heart #66", "ожидание оплаты", "1000 ₽", "анонимно");
+        assertThat(outgoing.metadata()).containsEntry("donationOrderId", 66L);
+        assertThat(outgoing.metadata()).containsEntry("donationOrderStatus", "AWAITING_PAYMENT");
+        verify(donationService).confirmLatestDraft(incoming.chatId());
         verify(fsmStorage).setState(incoming.chatId(), BotState.READY_FOR_DIALOG);
     }
 
     @Test
     void cancelsDonationDraftAndReturnsToMainMenu() {
         IncomingMessage incoming = telegram("нет");
+        when(donationService.cancelLatestDraft(incoming.chatId())).thenReturn(cancelledDonationOrder());
 
         OutgoingMessage outgoing = scenario.handle(incoming, BotState.DONATION_CONFIRMATION, incoming.text());
 
         assertThat(outgoing.nextState()).isEqualTo(BotState.READY_FOR_DIALOG.name());
         assertThat(outgoing.actions()).containsExactly("HIDDEN_HEART", "DONATION_CANCELLED", "RETURN_MAIN_MENU");
+        assertThat(outgoing.text()).contains("отменил donation draft #66");
+        assertThat(outgoing.metadata()).containsEntry("donationOrderId", 66L);
+        assertThat(outgoing.metadata()).containsEntry("donationOrderStatus", "CANCELLED");
+        verify(donationService).cancelLatestDraft(incoming.chatId());
         verify(fsmStorage).setState(incoming.chatId(), BotState.READY_FOR_DIALOG);
     }
 
@@ -119,6 +129,37 @@ class HiddenHeartScenarioTest {
                 1L,
                 "Hidden Heart / общий фонд",
                 DonationOrderStatus.AWAITING_GUEST_CONFIRMATION,
+                "TELEGRAM",
+                100_000L,
+                "RUB",
+                true,
+                "Наталья Поединенко",
+                "донат 1000 рублей",
+                null,
+                null,
+                Instant.parse("2026-06-15T10:00:00Z"),
+                Instant.parse("2026-06-15T10:00:00Z")
+        );
+    }
+
+    private DonationOrder confirmedDonationOrder() {
+        return donationOrder(DonationOrderStatus.AWAITING_PAYMENT);
+    }
+
+    private DonationOrder cancelledDonationOrder() {
+        return donationOrder(DonationOrderStatus.CANCELLED);
+    }
+
+    private DonationOrder donationOrder(DonationOrderStatus status) {
+        return new DonationOrder(
+                66L,
+                1773317437L,
+                1773317437L,
+                null,
+                "AERIS",
+                1L,
+                "Hidden Heart / общий фонд",
+                status,
                 "TELEGRAM",
                 100_000L,
                 "RUB",

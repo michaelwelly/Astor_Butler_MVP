@@ -53,6 +53,18 @@ public class ArtAuctionController {
         return ResponseEntity.ok(ArtAuctionBidResponse.from(artAuctionService.getBid(id)));
     }
 
+    @PostMapping("/bids/{id}/confirm")
+    @Operation(summary = "Confirm art auction bid draft and move it to manager validation")
+    public ResponseEntity<ArtAuctionBidResponse> confirmBid(@PathVariable("id") Long id) {
+        return ResponseEntity.ok(ArtAuctionBidResponse.from(artAuctionService.confirmBidDraft(id)));
+    }
+
+    @PostMapping("/bids/{id}/cancel")
+    @Operation(summary = "Cancel art auction bid draft")
+    public ResponseEntity<ArtAuctionBidResponse> cancelBid(@PathVariable("id") Long id) {
+        return ResponseEntity.ok(ArtAuctionBidResponse.from(artAuctionService.cancelBidDraft(id)));
+    }
+
     @GetMapping("/bids/telegram/{chatId}")
     @Operation(summary = "List recent art auction bids for Telegram chat")
     public ResponseEntity<List<ArtAuctionBidResponse>> listTelegramBids(

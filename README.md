@@ -2,14 +2,15 @@
 
 Astor Butler — backend MVP для Telegram/FSM-сценариев, где мессенджер является только транспортом, а состояние диалога, согласия, профиль гостя, события и аудит живут внутри системы.
 
-Текущий практический фокус проекта: проверить на реальном контуре AERIS gastro bar первый путь гостя — от `/start` до сохраненного профиля, согласия, сообщений, голосовых запросов, Kafka-событий и админского наблюдения.
+Текущий практический фокус проекта: довести реальный контур AERIS gastro bar до ручного тестирования Натальей — от `/start` и закрепленного preview до меню, брони, видео-тура, service requests, staff/admin/system чатов и наблюдаемого FSM event trail.
 
 Проект развивается как soft-governance tool для HoReCa: не давить на гостя, а спокойно распознавать его, помнить контекст и передавать команде только то, что действительно важно.
 
 ## Что уже есть
 
 - Telegram bot long polling как первый UI.
-- AERIS preview-карточка с изображением цифрового дворецкого и ссылкой на `https://aeris.bar/`.
+- AERIS preview-карточка с изображением цифрового дворецкого, ссылками на guest guide и Notion knowledge base.
+- Role previews для служебных Telegram-чатов: Staff Chat, Admin Chat и System Chat.
 - First-touch flow: `/start` -> Consent Vault -> контакт -> режим свободного диалога.
 - PostgreSQL persistence для пользователей, Telegram-профилей, сообщений, контактов и согласий.
 - Redis FSM hot state с TTL для сценариев.
@@ -20,6 +21,9 @@ Astor Butler — backend MVP для Telegram/FSM-сценариев, где ме
 - Swagger/OpenAPI группы для backend API и будущей frontend-интеграции.
 - Local API gateway на `localhost:8080`.
 - MongoDB `aether` для document/media metadata.
+- pgvector в PostgreSQL как semantic context слой перед FSM.
+- ScyllaDB/Cassandra-compatible контур для будущего event/state history.
+- Neo4j для графового просмотра сценариев, доменов и связей.
 - Prometheus/Grafana и Redpanda Console для локального наблюдения.
 
 ## UX-контракт Telegram
@@ -27,12 +31,12 @@ Astor Butler — backend MVP для Telegram/FSM-сценариев, где ме
 Telegram-экран гостя держится в формате:
 
 ```text
-persistent AERIS preview
+pinned AERIS preview
 + current guest request
 + current Astor Butler response
 ```
 
-При следующем сообщении гостя предыдущая пара `request/response` удаляется из Telegram UI. При этом в системе ничего не теряется: входящие сообщения, metadata, transcript, consent evidence и Kafka events сохраняются в PostgreSQL/Kafka.
+При `/start` бот безопасно сбрасывает активный runtime-сценарий, обновляет preview и возвращает гостя к контакту или в главное меню. Автоудаление сообщений в Telegram UI сейчас выключено, чтобы не путаться во время ручных тестов. При этом входящие сообщения, metadata, transcript, consent evidence, FSM timeline и Kafka events сохраняются в PostgreSQL/Kafka.
 
 Первое сообщение после preview:
 
@@ -41,6 +45,23 @@ persistent AERIS preview
 ```
 
 Кнопка контакта одновременно является явным согласием с политикой. До контакта бот не собирает бизнес-данные и не запускает бронирование.
+
+## Рабочие Telegram-чаты и инструкции
+
+Все роль-специфичные инструкции собраны в Notion knowledge base:
+
+```text
+https://auspicious-kryptops-863.notion.site/Astor-Butler-380a7c019f1980d78b68d8bc659c609b?source=copy_link
+```
+
+| Канал | Назначение | Инструкция |
+| --- | --- | --- |
+| Guest chat | Диалог гостя с Astor Butler: меню, бронь, видео-тур, афиша, концепция, менеджер, предпочтения | `https://michaelwelly.github.io/Astor_Butler_MVP/docs/guest-guide.html` |
+| Astor Butler Staff Chat | Операционный чат команды: брони, service requests, safe-play, merch/tip/donation/auction карточки | `https://app.notion.com/p/381a7c019f1981b08ca4ed4146e630e4` |
+| Astor Butler Admin Chat | Ручной контроль, fallback/recovery, feedback, manager help и спорные решения | `https://app.notion.com/p/381a7c019f1981988530d1464d567af4` |
+| Astor Butler System Chat | Техническая наблюдаемость: startup, FSM transitions, action tags, correlation ids | `https://app.notion.com/p/382a7c019f198148b78aef491ceee4f6` |
+
+Staff/Admin/System чаты не запускают гостевой FSM. Они получают pinned preview при старте приложения, если включен `ASTOR_OPERATIONAL_PREVIEW_ENABLED=true`.
 
 ## Архитектурные принципы
 
@@ -58,8 +79,11 @@ persistent AERIS preview
 - Spring Boot 3
 - JDBC/Liquibase как целевое направление persistence
 - PostgreSQL
+- pgvector
 - Redis
 - MongoDB
+- ScyllaDB
+- Neo4j
 - Kafka / Redpanda
 - MinIO как S3-compatible object storage
 - Telegram Bot API
@@ -88,6 +112,8 @@ scripts/run_local_app.sh
 - Backend health: `http://localhost:8080/actuator/health`
 - Redpanda Console: `http://localhost:8081`
 - Grafana: `http://localhost:3000`
+- Neo4j Browser: `http://localhost:7474`
+- Scylla CQL: `localhost:9042`
 - C3FLEX frontend: `http://localhost:3001`
 
 API Gateway проксирует внешний `localhost:8080` на Spring Boot dev-порт. Это позволяет держать единый вход для Swagger/frontend и не путаться между локальными портами.
@@ -133,6 +159,12 @@ PostgreSQL сейчас хранит:
 - `outbox_events` и `processed_kafka_events` — event handoff/idempotency boundary.
 
 Redis хранит быстрый FSM state.
+
+pgvector живет внутри PostgreSQL и используется как semantic context слой перед FSM: искать похожие фразы, инструкции, сценарные куски и шумные voice transcripts. Он не заменяет FSM и не принимает доменные решения.
+
+ScyllaDB добавлена как Cassandra-compatible контур для дальнейшего хранения длинной истории сценариев, timeline-событий и state history по гостю. В MVP это инфраструктурная заготовка: runtime state пока остается в Redis/PostgreSQL.
+
+Neo4j добавлена как graph workbench для визуального анализа сценариев, доменов, capability и связей. Источник истины для кода все еще `docs/FSM_SCENARIOS.md` и `docs/FSM_SCENARIOS_VIEWER.html`, а Neo4j помогает смотреть связи другим углом.
 
 MongoDB `aether` используется для document/media metadata и проектной библиотеки.
 

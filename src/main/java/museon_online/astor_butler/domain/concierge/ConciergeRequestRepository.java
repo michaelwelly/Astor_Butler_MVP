@@ -70,6 +70,19 @@ public class ConciergeRequestRepository {
         );
     }
 
+    public ConciergeRequest updateStatus(Long id, ConciergeRequestStatus status) {
+        jdbcTemplate.update("""
+                UPDATE concierge_requests
+                SET status = ?,
+                    updated_at = CURRENT_TIMESTAMP
+                WHERE id = ?
+                """,
+                status.name(),
+                id
+        );
+        return findById(id).orElseThrow();
+    }
+
     private RowMapper<ConciergeRequest> mapper() {
         return (rs, rowNum) -> new ConciergeRequest(
                 rs.getLong("id"),

@@ -69,29 +69,37 @@ class ArtAuctionScenarioTest {
     @Test
     void confirmsAuctionBidAsManagerCheckedRequest() {
         IncomingMessage incoming = telegram("ok");
+        when(artAuctionService.confirmLatestBidDraft(incoming.chatId())).thenReturn(confirmedAuctionBid());
 
         OutgoingMessage outgoing = scenario.handle(incoming, BotState.AUCTION_WAIT_BID, incoming.text());
 
         assertThat(outgoing.nextState()).isEqualTo(BotState.READY_FOR_DIALOG.name());
-        assertThat(outgoing.text()).contains("Финальный прием ставки требует проверки");
+        assertThat(outgoing.text()).contains("ставки #77", "20000 ₽", "Финальный прием ставки требует проверки");
         assertThat(outgoing.actions()).containsExactly(
                 "ART_AUCTION",
                 "AUCTION_BID_GUEST_CONFIRMED",
                 "MANAGER_CONFIRMATION_REQUIRED",
                 "RETURN_MAIN_MENU"
         );
+        assertThat(outgoing.metadata()).containsEntry("auctionBidId", 77L);
+        assertThat(outgoing.metadata()).containsEntry("auctionBidStatus", "AWAITING_MANAGER_VALIDATION");
+        verify(artAuctionService).confirmLatestBidDraft(incoming.chatId());
         verify(fsmStorage).setState(incoming.chatId(), BotState.READY_FOR_DIALOG);
     }
 
     @Test
     void cancelsAuctionBidAndReturnsHome() {
         IncomingMessage incoming = telegram("нет");
+        when(artAuctionService.cancelLatestBidDraft(incoming.chatId())).thenReturn(cancelledAuctionBid());
 
         OutgoingMessage outgoing = scenario.handle(incoming, BotState.AUCTION_WAIT_BID, incoming.text());
 
         assertThat(outgoing.nextState()).isEqualTo(BotState.READY_FOR_DIALOG.name());
-        assertThat(outgoing.text()).contains("ставку не фиксирую");
+        assertThat(outgoing.text()).contains("отменил заявку на ставку #77");
         assertThat(outgoing.actions()).containsExactly("ART_AUCTION", "AUCTION_BID_CANCELLED", "RETURN_MAIN_MENU");
+        assertThat(outgoing.metadata()).containsEntry("auctionBidId", 77L);
+        assertThat(outgoing.metadata()).containsEntry("auctionBidStatus", "CANCELLED");
+        verify(artAuctionService).cancelLatestBidDraft(incoming.chatId());
         verify(fsmStorage).setState(incoming.chatId(), BotState.READY_FOR_DIALOG);
     }
 
@@ -119,7 +127,34 @@ class ArtAuctionScenarioTest {
                 1773317437L,
                 1773317437L,
                 null,
-                ArtAuctionBidStatus.AWAITING_MANAGER_VALIDATION,
+                ArtAuctionBidStatus.AWAITING_GUEST_CONFIRMATION,
+                "TELEGRAM",
+                2_000_000L,
+                "RUB",
+                "Наталья Поединенко",
+                "ставлю 20000 за картину",
+                null,
+                Instant.parse("2026-06-15T10:00:00Z"),
+                Instant.parse("2026-06-15T10:00:00Z")
+        );
+    }
+
+    private ArtAuctionBid confirmedAuctionBid() {
+        return auctionBid(ArtAuctionBidStatus.AWAITING_MANAGER_VALIDATION);
+    }
+
+    private ArtAuctionBid cancelledAuctionBid() {
+        return auctionBid(ArtAuctionBidStatus.CANCELLED);
+    }
+
+    private ArtAuctionBid auctionBid(ArtAuctionBidStatus status) {
+        return new ArtAuctionBid(
+                77L,
+                12L,
+                1773317437L,
+                1773317437L,
+                null,
+                status,
                 "TELEGRAM",
                 2_000_000L,
                 "RUB",

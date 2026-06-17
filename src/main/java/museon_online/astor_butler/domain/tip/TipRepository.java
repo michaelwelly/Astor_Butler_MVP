@@ -95,6 +95,22 @@ public class TipRepository {
         return result.stream().findFirst();
     }
 
+    public Optional<TipOrder> findLatestAwaitingGuestConfirmation(Long chatId) {
+        List<TipOrder> result = jdbcTemplate.query("""
+                SELECT *
+                FROM tip_orders
+                WHERE chat_id = ?
+                  AND status = ?
+                ORDER BY created_at DESC
+                LIMIT 1
+                """,
+                orderMapper(),
+                chatId,
+                TipOrderStatus.AWAITING_GUEST_CONFIRMATION.name()
+        );
+        return result.stream().findFirst();
+    }
+
     public List<TipOrder> findOrdersByChatId(Long chatId, int limit) {
         return jdbcTemplate.query("""
                 SELECT *
@@ -107,6 +123,19 @@ public class TipRepository {
                 chatId,
                 limit
         );
+    }
+
+    public TipOrder updateStatus(Long id, TipOrderStatus status) {
+        jdbcTemplate.update("""
+                UPDATE tip_orders
+                SET status = ?,
+                    updated_at = CURRENT_TIMESTAMP
+                WHERE id = ?
+                """,
+                status.name(),
+                id
+        );
+        return findOrder(id).orElseThrow();
     }
 
     private RowMapper<StaffProfile> staffMapper() {

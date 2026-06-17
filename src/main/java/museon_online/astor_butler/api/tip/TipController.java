@@ -52,6 +52,18 @@ public class TipController {
         return ResponseEntity.ok(TipOrderResponse.from(tipService.getOrder(id)));
     }
 
+    @PostMapping("/orders/{id}/confirm")
+    @Operation(summary = "Confirm tip order draft and move it to awaiting payment")
+    public ResponseEntity<TipOrderResponse> confirmOrder(@PathVariable("id") Long id) {
+        return ResponseEntity.ok(TipOrderResponse.from(tipService.confirmDraft(id)));
+    }
+
+    @PostMapping("/orders/{id}/cancel")
+    @Operation(summary = "Cancel tip order draft")
+    public ResponseEntity<TipOrderResponse> cancelOrder(@PathVariable("id") Long id) {
+        return ResponseEntity.ok(TipOrderResponse.from(tipService.cancelDraft(id)));
+    }
+
     @GetMapping("/orders/telegram/{chatId}")
     @Operation(summary = "List recent tip orders for Telegram chat")
     public ResponseEntity<List<TipOrderResponse>> listTelegramOrders(

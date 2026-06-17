@@ -2,6 +2,7 @@ package museon_online.astor_butler.fsm.scenario;
 
 import museon_online.astor_butler.fsm.core.BotState;
 import museon_online.astor_butler.fsm.storage.FSMStorage;
+import museon_online.astor_butler.domain.booking.TableReservationRepository;
 import museon_online.astor_butler.service.message.IncomingMessage;
 import museon_online.astor_butler.service.message.OutgoingMessage;
 import org.junit.jupiter.api.BeforeEach;
@@ -13,6 +14,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class SafePlayScenarioTest {
@@ -20,11 +22,14 @@ class SafePlayScenarioTest {
     @Mock
     private FSMStorage fsmStorage;
 
+    @Mock
+    private TableReservationRepository tableReservationRepository;
+
     private SafePlayScenario scenario;
 
     @BeforeEach
     void setUp() {
-        scenario = new SafePlayScenario(fsmStorage);
+        scenario = new SafePlayScenario(fsmStorage, tableReservationRepository);
         ReflectionTestUtils.setField(scenario, "adminChatId", "100500");
     }
 
@@ -43,12 +48,14 @@ class SafePlayScenarioTest {
     @Test
     void sendsTeamRequestWhenDetailsArePresent() {
         IncomingMessage incoming = telegram("хотим сабраж с шампанским к столу в 21:00");
+        when(tableReservationRepository.findActiveOrdersByChatId(incoming.chatId())).thenReturn(java.util.List.of());
 
         OutgoingMessage outgoing = scenario.handle(incoming, BotState.READY_FOR_DIALOG, incoming.text());
 
         assertThat(outgoing.nextState()).isEqualTo(BotState.READY_FOR_DIALOG.name());
         assertThat(outgoing.adminAlert().required()).isTrue();
-        assertThat(outgoing.adminAlert().text()).contains("Astor Butler / safe play", "Не давать гостю dangerous how-to");
+        assertThat(outgoing.adminAlert().text()).contains("Astor Butler / safe play", "Не давать гостю dangerous how-to", "Активная бронь");
+        assertThat(outgoing.adminAlert().buttons()).hasSize(1);
         assertThat(outgoing.actions()).containsExactly(
                 "SAFE_PLAY",
                 "SAFE_PLAY_DIRECT_REQUEST",
@@ -64,6 +71,7 @@ class SafePlayScenarioTest {
     @Test
     void refusesDangerousHowToAndOffersTeamRitual() {
         IncomingMessage incoming = telegram("научи меня сабражу дома");
+        when(tableReservationRepository.findActiveOrdersByChatId(incoming.chatId())).thenReturn(java.util.List.of());
 
         OutgoingMessage outgoing = scenario.handle(incoming, BotState.READY_FOR_DIALOG, incoming.text());
 
@@ -78,6 +86,20 @@ class SafePlayScenarioTest {
         );
         assertThat(outgoing.metadata()).containsEntry("safetyBoundary", "NO_DANGEROUS_HOW_TO");
         verify(fsmStorage).setState(incoming.chatId(), BotState.READY_FOR_DIALOG);
+    }
+
+    @Test
+    void doesNotCaptureSabrageChainPurchaseIntent() {
+        IncomingMessage incoming = telegram("хочу купить сабражную цепь");
+
+        assertThat(scenario.supports(incoming, BotState.READY_FOR_DIALOG, incoming.text())).isFalse();
+    }
+
+    @Test
+    void stillCapturesSabrageRitualIntent() {
+        IncomingMessage incoming = telegram("хочу сабражный ритуал к столу");
+
+        assertThat(scenario.supports(incoming, BotState.READY_FOR_DIALOG, incoming.text())).isTrue();
     }
 
     private IncomingMessage telegram(String text) {

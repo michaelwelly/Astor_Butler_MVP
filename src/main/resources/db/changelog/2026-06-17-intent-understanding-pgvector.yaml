@@ -1,0 +1,10 @@
+databaseChangeLog:
+  - changeSet:
+      id: 2026-06-17-intent-understanding-pgvector
+      author: codex
+      dbms: postgresql
+      changes:
+        - sqlFile:
+            path: db/changelog/2026-06-17-intent-understanding-pgvector.sql
+            splitStatements: false
+            stripComments: false

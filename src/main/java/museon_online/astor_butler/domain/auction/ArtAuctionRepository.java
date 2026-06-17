@@ -79,7 +79,7 @@ public class ArtAuctionRepository {
                 command.chatId(),
                 command.telegramUserId(),
                 command.userId(),
-                ArtAuctionBidStatus.AWAITING_MANAGER_VALIDATION.name(),
+                ArtAuctionBidStatus.AWAITING_GUEST_CONFIRMATION.name(),
                 command.amountMinor(),
                 currency(command.currency()),
                 blankToNull(command.bidderName()),
@@ -100,6 +100,22 @@ public class ArtAuctionRepository {
         return result.stream().findFirst();
     }
 
+    public Optional<ArtAuctionBid> findLatestAwaitingGuestConfirmation(Long chatId) {
+        List<ArtAuctionBid> result = jdbcTemplate.query("""
+                SELECT *
+                FROM art_auction_bids
+                WHERE chat_id = ?
+                  AND status = ?
+                ORDER BY created_at DESC
+                LIMIT 1
+                """,
+                bidMapper(),
+                chatId,
+                ArtAuctionBidStatus.AWAITING_GUEST_CONFIRMATION.name()
+        );
+        return result.stream().findFirst();
+    }
+
     public List<ArtAuctionBid> findBidsByChatId(Long chatId, int limit) {
         return jdbcTemplate.query("""
                 SELECT *
@@ -112,6 +128,19 @@ public class ArtAuctionRepository {
                 chatId,
                 limit
         );
+    }
+
+    public ArtAuctionBid updateBidStatus(Long id, ArtAuctionBidStatus status) {
+        jdbcTemplate.update("""
+                UPDATE art_auction_bids
+                SET status = ?,
+                    updated_at = CURRENT_TIMESTAMP
+                WHERE id = ?
+                """,
+                status.name(),
+                id
+        );
+        return findBid(id).orElseThrow();
     }
 
     private RowMapper<ArtAuctionLot> lotMapper() {

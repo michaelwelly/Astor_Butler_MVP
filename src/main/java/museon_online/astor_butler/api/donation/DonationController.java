@@ -52,6 +52,18 @@ public class DonationController {
         return ResponseEntity.ok(DonationOrderResponse.from(donationService.getOrder(id)));
     }
 
+    @PostMapping("/orders/{id}/confirm")
+    @Operation(summary = "Confirm donation order draft and move it to awaiting payment")
+    public ResponseEntity<DonationOrderResponse> confirmOrder(@PathVariable("id") Long id) {
+        return ResponseEntity.ok(DonationOrderResponse.from(donationService.confirmDraft(id)));
+    }
+
+    @PostMapping("/orders/{id}/cancel")
+    @Operation(summary = "Cancel donation order draft")
+    public ResponseEntity<DonationOrderResponse> cancelOrder(@PathVariable("id") Long id) {
+        return ResponseEntity.ok(DonationOrderResponse.from(donationService.cancelDraft(id)));
+    }
+
     @GetMapping("/orders/telegram/{chatId}")
     @Operation(summary = "List recent donation orders for Telegram chat")
     public ResponseEntity<List<DonationOrderResponse>> listTelegramOrders(

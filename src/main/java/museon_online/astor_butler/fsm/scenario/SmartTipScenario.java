@@ -110,10 +110,18 @@ public class SmartTipScenario implements FsmScenario {
 
     private OutgoingMessage confirmTip(IncomingMessage incoming, String text) {
         if (isConfirmIntent(text)) {
+            TipOrder order = tipService.confirmLatestDraft(incoming.chatId());
             fsmStorage.setState(incoming.chatId(), BotState.READY_FOR_DIALOG);
             return OutgoingMessage.of(
                     incoming,
-                    "Зафиксировал draft благодарности. Следующий слой подключит СБП-ссылку напрямую к сотруднику, а сейчас я вернул вас в главное меню.",
+                    """
+                            Зафиксировал благодарность #%s и перевел ее в ожидание оплаты.
+
+                            Получатель: %s
+                            Сумма: %s ₽
+
+                            Следующий слой подключит прямую СБП-ссылку сотрудника или Telegram Stars invoice. Сейчас я вернул вас в главное меню.
+                            """.formatted(order.id(), staffName(order), rubles(order.amountMinor())),
                     BotState.READY_FOR_DIALOG.name(),
                     false,
                     false,
@@ -121,13 +129,19 @@ public class SmartTipScenario implements FsmScenario {
                     false,
                     AdminAlert.none(),
                     List.of("SMART_TIP", "TIP_DRAFT_CONFIRMED", "RETURN_MAIN_MENU")
-            ).withMetadata(Map.of("scenario", id()));
+            ).withMetadata(Map.of(
+                    "scenario", id(),
+                    "tipOrderId", order.id(),
+                    "tipOrderStatus", order.status().name(),
+                    "paymentBoundary", "SBP_OR_TELEGRAM_STARS_NEXT"
+            ));
         }
         if (isRejectIntent(text)) {
+            TipOrder order = tipService.cancelLatestDraft(incoming.chatId());
             fsmStorage.setState(incoming.chatId(), BotState.READY_FOR_DIALOG);
             return OutgoingMessage.of(
                     incoming,
-                    "Хорошо, чаевые не фиксирую. Возвращаюсь в главное меню.",
+                    "Хорошо, отменил draft чаевых #%s. Возвращаюсь в главное меню.".formatted(order.id()),
                     BotState.READY_FOR_DIALOG.name(),
                     false,
                     false,
@@ -135,7 +149,11 @@ public class SmartTipScenario implements FsmScenario {
                     false,
                     AdminAlert.none(),
                     List.of("SMART_TIP", "TIP_CANCELLED", "RETURN_MAIN_MENU")
-            ).withMetadata(Map.of("scenario", id()));
+            ).withMetadata(Map.of(
+                    "scenario", id(),
+                    "tipOrderId", order.id(),
+                    "tipOrderStatus", order.status().name()
+            ));
         }
         fsmStorage.setState(incoming.chatId(), BotState.TIP_CONFIRMATION);
         return OutgoingMessage.of(

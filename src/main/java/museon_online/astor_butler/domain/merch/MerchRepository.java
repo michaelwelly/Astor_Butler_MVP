@@ -74,7 +74,7 @@ public class MerchRepository {
                 normalizeVenue(command.venueCode()),
                 item == null ? command.itemId() : item.id(),
                 item == null ? blankToNull(command.itemTitle()) : item.title(),
-                MerchOrderStatus.PENDING_TEAM.name(),
+                MerchOrderStatus.AWAITING_GUEST_CONFIRMATION.name(),
                 command.quantity() == null ? 1 : command.quantity(),
                 item == null ? null : item.priceMinor(),
                 item == null ? "RUB" : item.currency(),
@@ -97,6 +97,22 @@ public class MerchRepository {
         return result.stream().findFirst();
     }
 
+    public Optional<MerchOrder> findLatestAwaitingGuestConfirmation(Long chatId) {
+        List<MerchOrder> result = jdbcTemplate.query("""
+                SELECT *
+                FROM merch_orders
+                WHERE chat_id = ?
+                  AND status = ?
+                ORDER BY created_at DESC
+                LIMIT 1
+                """,
+                orderMapper(),
+                chatId,
+                MerchOrderStatus.AWAITING_GUEST_CONFIRMATION.name()
+        );
+        return result.stream().findFirst();
+    }
+
     public List<MerchOrder> findOrdersByChatId(Long chatId, int limit) {
         return jdbcTemplate.query("""
                 SELECT *
@@ -109,6 +125,19 @@ public class MerchRepository {
                 chatId,
                 limit
         );
+    }
+
+    public MerchOrder updateStatus(Long id, MerchOrderStatus status) {
+        jdbcTemplate.update("""
+                UPDATE merch_orders
+                SET status = ?,
+                    updated_at = CURRENT_TIMESTAMP
+                WHERE id = ?
+                """,
+                status.name(),
+                id
+        );
+        return findOrder(id).orElseThrow();
     }
 
     private RowMapper<MerchItem> itemMapper() {

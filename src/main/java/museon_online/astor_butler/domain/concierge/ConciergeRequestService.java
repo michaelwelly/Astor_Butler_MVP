@@ -38,6 +38,27 @@ public class ConciergeRequestService {
         return repository.create(command);
     }
 
+    @Transactional
+    public ConciergeRequest markInProgress(Long id) {
+        ConciergeRequest request = requireMutableRequest(id);
+        if (request.status() == ConciergeRequestStatus.IN_PROGRESS) {
+            return request;
+        }
+        return repository.updateStatus(request.id(), ConciergeRequestStatus.IN_PROGRESS);
+    }
+
+    @Transactional
+    public ConciergeRequest complete(Long id) {
+        ConciergeRequest request = requireMutableRequest(id);
+        return repository.updateStatus(request.id(), ConciergeRequestStatus.COMPLETED);
+    }
+
+    @Transactional
+    public ConciergeRequest cancel(Long id) {
+        ConciergeRequest request = requireMutableRequest(id);
+        return repository.updateStatus(request.id(), ConciergeRequestStatus.CANCELLED);
+    }
+
     public ConciergeRequestType classify(String text) {
         String normalized = text == null ? "" : text.toLowerCase(Locale.ROOT);
         if (containsAny(normalized, "день рождения", "свеч", "поздрав", "сюрприз", "торт", "букет")) {
@@ -71,6 +92,20 @@ public class ConciergeRequestService {
         if (command.requestText().length() > 3000) {
             throw badRequest("requestText is too long");
         }
+    }
+
+    private ConciergeRequest requireMutableRequest(Long id) {
+        ConciergeRequest request = getRequest(id);
+        if (request.status() == ConciergeRequestStatus.COMPLETED
+                || request.status() == ConciergeRequestStatus.CANCELLED) {
+            throw new ApiException(
+                    HttpStatus.CONFLICT,
+                    ErrorCode.CONFLICT,
+                    "Concierge request is already final",
+                    Map.of("id", id, "status", request.status())
+            );
+        }
+        return request;
     }
 
     private boolean containsAny(String text, String... variants) {

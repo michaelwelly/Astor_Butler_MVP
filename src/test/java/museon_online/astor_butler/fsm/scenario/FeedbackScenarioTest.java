@@ -64,7 +64,15 @@ class FeedbackScenarioTest {
         assertThat(outgoing.nextState()).isEqualTo(BotState.READY_FOR_DIALOG.name());
         assertThat(outgoing.adminAlert().required()).isTrue();
         assertThat(outgoing.adminAlert().chatId()).isEqualTo("100500");
-        assertThat(outgoing.adminAlert().text()).contains("Astor Butler / feedback", "Наталья Поединенко", "Очень понравился сервис");
+        assertThat(outgoing.adminAlert().text()).contains(
+                "Astor Butler / feedback",
+                "Наталья Поединенко",
+                "Очень понравился сервис",
+                "Feedback: #88",
+                "Type: PRAISE",
+                "Sentiment: POSITIVE",
+                "Priority: NORMAL"
+        );
         assertThat(outgoing.metadata()).containsEntry("feedbackId", 88L);
         assertThat(outgoing.metadata()).containsEntry("feedbackType", "PRAISE");
         assertThat(outgoing.metadata()).containsEntry("sentiment", "POSITIVE");

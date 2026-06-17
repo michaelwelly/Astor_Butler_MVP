@@ -39,6 +39,30 @@ public class DonationService {
         return repository.createDraft(command, initiative);
     }
 
+    @Transactional
+    public DonationOrder confirmLatestDraft(Long chatId) {
+        DonationOrder order = requireLatestAwaitingConfirmation(chatId);
+        return confirmDraft(order.id());
+    }
+
+    @Transactional
+    public DonationOrder cancelLatestDraft(Long chatId) {
+        DonationOrder order = requireLatestAwaitingConfirmation(chatId);
+        return cancelDraft(order.id());
+    }
+
+    @Transactional
+    public DonationOrder confirmDraft(Long id) {
+        DonationOrder order = requireAwaitingConfirmation(id);
+        return repository.updateStatus(order.id(), DonationOrderStatus.AWAITING_PAYMENT);
+    }
+
+    @Transactional
+    public DonationOrder cancelDraft(Long id) {
+        DonationOrder order = requireAwaitingConfirmation(id);
+        return repository.updateStatus(order.id(), DonationOrderStatus.CANCELLED);
+    }
+
     private DonationInitiative resolveInitiative(DonationOrderCommand command) {
         if (command.initiativeId() != null) {
             return repository.findInitiative(command.initiativeId())
@@ -63,6 +87,32 @@ public class DonationService {
                         "Donation order was not found",
                         Map.of("id", id)
                 ));
+    }
+
+    private DonationOrder requireLatestAwaitingConfirmation(Long chatId) {
+        if (chatId == null) {
+            throw badRequest("chatId is required");
+        }
+        return repository.findLatestAwaitingGuestConfirmation(chatId)
+                .orElseThrow(() -> new ApiException(
+                        HttpStatus.NOT_FOUND,
+                        ErrorCode.NOT_FOUND,
+                        "Active donation draft was not found",
+                        Map.of("chatId", chatId)
+                ));
+    }
+
+    private DonationOrder requireAwaitingConfirmation(Long id) {
+        DonationOrder order = requireOrder(id);
+        if (order.status() != DonationOrderStatus.AWAITING_GUEST_CONFIRMATION) {
+            throw new ApiException(
+                    HttpStatus.CONFLICT,
+                    ErrorCode.CONFLICT,
+                    "Only awaiting guest confirmation donation drafts can be changed",
+                    Map.of("id", id, "status", order.status())
+            );
+        }
+        return order;
     }
 
     private void validateCommand(DonationOrderCommand command) {

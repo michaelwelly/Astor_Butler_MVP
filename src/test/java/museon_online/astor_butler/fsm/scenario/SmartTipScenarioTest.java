@@ -67,22 +67,32 @@ class SmartTipScenarioTest {
     @Test
     void confirmsTipDraftAndReturnsToMainMenu() {
         IncomingMessage incoming = telegram("да");
+        when(tipService.confirmLatestDraft(incoming.chatId())).thenReturn(confirmedTipOrder());
 
         OutgoingMessage outgoing = scenario.handle(incoming, BotState.TIP_CONFIRMATION, incoming.text());
 
         assertThat(outgoing.nextState()).isEqualTo(BotState.READY_FOR_DIALOG.name());
         assertThat(outgoing.actions()).containsExactly("SMART_TIP", "TIP_DRAFT_CONFIRMED", "RETURN_MAIN_MENU");
+        assertThat(outgoing.text()).contains("благодарность #55", "ожидание оплаты", "1000 ₽");
+        assertThat(outgoing.metadata()).containsEntry("tipOrderId", 55L);
+        assertThat(outgoing.metadata()).containsEntry("tipOrderStatus", "AWAITING_PAYMENT");
+        verify(tipService).confirmLatestDraft(incoming.chatId());
         verify(fsmStorage).setState(incoming.chatId(), BotState.READY_FOR_DIALOG);
     }
 
     @Test
     void cancelsTipDraftAndReturnsToMainMenu() {
         IncomingMessage incoming = telegram("нет");
+        when(tipService.cancelLatestDraft(incoming.chatId())).thenReturn(cancelledTipOrder());
 
         OutgoingMessage outgoing = scenario.handle(incoming, BotState.TIP_CONFIRMATION, incoming.text());
 
         assertThat(outgoing.nextState()).isEqualTo(BotState.READY_FOR_DIALOG.name());
         assertThat(outgoing.actions()).containsExactly("SMART_TIP", "TIP_CANCELLED", "RETURN_MAIN_MENU");
+        assertThat(outgoing.text()).contains("отменил draft чаевых #55");
+        assertThat(outgoing.metadata()).containsEntry("tipOrderId", 55L);
+        assertThat(outgoing.metadata()).containsEntry("tipOrderStatus", "CANCELLED");
+        verify(tipService).cancelLatestDraft(incoming.chatId());
         verify(fsmStorage).setState(incoming.chatId(), BotState.READY_FOR_DIALOG);
     }
 
@@ -113,6 +123,36 @@ class SmartTipScenarioTest {
                 1L,
                 "Команда AERIS",
                 TipOrderStatus.AWAITING_GUEST_CONFIRMATION,
+                "TELEGRAM",
+                100_000L,
+                "RUB",
+                "Наталья Поединенко",
+                "оставить чаевые 1000 рублей",
+                null,
+                null,
+                Instant.parse("2026-06-15T10:00:00Z"),
+                Instant.parse("2026-06-15T10:00:00Z")
+        );
+    }
+
+    private TipOrder confirmedTipOrder() {
+        return tipOrder(TipOrderStatus.AWAITING_PAYMENT);
+    }
+
+    private TipOrder cancelledTipOrder() {
+        return tipOrder(TipOrderStatus.CANCELLED);
+    }
+
+    private TipOrder tipOrder(TipOrderStatus status) {
+        return new TipOrder(
+                55L,
+                1773317437L,
+                1773317437L,
+                null,
+                "AERIS",
+                1L,
+                "Команда AERIS",
+                status,
                 "TELEGRAM",
                 100_000L,
                 "RUB",

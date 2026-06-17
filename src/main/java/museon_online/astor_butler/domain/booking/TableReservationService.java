@@ -95,6 +95,22 @@ public class TableReservationService {
         return rejected;
     }
 
+    @Transactional
+    public TableReservationOrder cancelByGuest(Long id) {
+        TableReservationOrder current = requireOrder(id);
+        if (current.status() == TableReservationStatus.CANCELLED) {
+            return current;
+        }
+        if (current.status() != TableReservationStatus.AWAITING_MANAGER_CONFIRMATION
+                && current.status() != TableReservationStatus.CONFIRMED) {
+            throw conflict("Only active table reservations can be cancelled", current.tableCode());
+        }
+
+        TableReservationOrder cancelled = repository.cancel(id);
+        notificationService.notifyHostessGuestCancelled(cancelled);
+        return cancelled;
+    }
+
     private TableReservationOrder requireOrder(Long id) {
         if (id == null) {
             throw badRequest("reservation id is required");

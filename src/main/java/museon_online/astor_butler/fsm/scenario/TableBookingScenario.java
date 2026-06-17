@@ -78,7 +78,7 @@ public class TableBookingScenario implements FsmScenario {
             return tableSelected(incoming, normalized);
         }
 
-        TableBookingDraftStorage.Draft draft = mergeDraft(incoming, normalized);
+        TableBookingDraftStorage.Draft draft = mergeDraft(incoming, state, normalized);
         if (draft.requestedDate() == null) {
             return askMissingSlot(incoming, state, BotState.TABLE_BOOKING_COLLECT_DATE,
                     "Конечно. На какую дату бронируем стол?",
@@ -94,7 +94,7 @@ public class TableBookingScenario implements FsmScenario {
                     "На сколько гостей бронируем?",
                     "ASK_PARTY_SIZE");
         }
-        return sendHallPlan(incoming);
+        return sendHallPlan(incoming, shouldSendPlanBeforeSlotCollection(state));
     }
 
     private OutgoingMessage askMissingSlot(IncomingMessage incoming, BotState currentState, BotState nextState, String text, String action) {
@@ -115,14 +115,21 @@ public class TableBookingScenario implements FsmScenario {
     }
 
     private OutgoingMessage sendHallPlan(IncomingMessage incoming) {
+        return sendHallPlan(incoming, true);
+    }
+
+    private OutgoingMessage sendHallPlan(IncomingMessage incoming, boolean includeDocument) {
         fsmStorage.setState(incoming.chatId(), BotState.TABLE_BOOKING_WAIT_TABLE_SELECTION);
-        return withHallPlan(message(
+        OutgoingMessage message = message(
                 incoming,
-                "Отправляю план зала AERIS. Выберите, пожалуйста, номер стола или зону. Если хотите, напишите \"выбери сам\" — подберу подходящий вариант.",
+                includeDocument
+                        ? "Отправляю план зала AERIS. Выберите, пожалуйста, номер стола или зону. Если хотите, напишите \"выбери сам\" — подберу подходящий вариант."
+                        : "Выберите, пожалуйста, номер стола или зону на плане AERIS. Если хотите, напишите \"выбери сам\" — подберу подходящий вариант.",
                 BotState.TABLE_BOOKING_WAIT_TABLE_SELECTION,
-                "SEND_HALL_PLAN",
+                includeDocument ? "SEND_HALL_PLAN" : "USE_EXISTING_HALL_PLAN",
                 "ASK_TABLE_SELECTION"
-        ));
+        );
+        return includeDocument ? withHallPlan(message) : message;
     }
 
     private OutgoingMessage withHallPlan(OutgoingMessage message) {
@@ -229,10 +236,13 @@ public class TableBookingScenario implements FsmScenario {
         ));
     }
 
-    private TableBookingDraftStorage.Draft mergeDraft(IncomingMessage incoming, String normalized) {
+    private TableBookingDraftStorage.Draft mergeDraft(IncomingMessage incoming, BotState currentState, String normalized) {
         Optional<TableBookingDraftStorage.Draft> stored = findDraft(incoming.chatId());
         LocalDate date = extractDate(normalized).or(() -> stored.map(TableBookingDraftStorage.Draft::requestedDate)).orElse(null);
-        LocalTime time = extractTime(normalized).or(() -> stored.map(TableBookingDraftStorage.Draft::requestedTime)).orElse(null);
+        Optional<LocalTime> extractedTime = currentState == BotState.TABLE_BOOKING_COLLECT_PARTY_SIZE
+                ? Optional.empty()
+                : extractTime(normalized);
+        LocalTime time = extractedTime.or(() -> stored.map(TableBookingDraftStorage.Draft::requestedTime)).orElse(null);
         Integer partySize = extractPartySize(normalized).or(() -> stored.map(TableBookingDraftStorage.Draft::partySize)).orElse(null);
         String preferredZone = preferredZone(normalized).or(() -> stored.map(TableBookingDraftStorage.Draft::preferredZone)).orElse(null);
         String seatingPreference = seatingPreference(normalized).or(() -> stored.map(TableBookingDraftStorage.Draft::seatingPreference)).orElse(null);
@@ -307,8 +317,11 @@ public class TableBookingScenario implements FsmScenario {
     }
 
     private Optional<LocalTime> extractTime(String text) {
+        if (looksLikePartySizeAnswer(text)) {
+            return Optional.empty();
+        }
         Matcher matcher = TIME.matcher(text);
-        return matcher.find() ? Optional.of(parseTime(matcher)) : Optional.empty();
+        return matcher.find() ? Optional.of(parseTime(matcher, text)) : Optional.empty();
     }
 
     private boolean hasPartySize(String text) {
@@ -319,14 +332,46 @@ public class TableBookingScenario implements FsmScenario {
         if (text.contains("двоих") || text.contains("двоем")) {
             return Optional.of(2);
         }
+        if (text.contains("двух") || text.contains("двое") || text.contains("двоём")) {
+            return Optional.of(2);
+        }
         if (text.contains("троих")) {
+            return Optional.of(3);
+        }
+        if (text.contains("трое") || text.contains("трех") || text.contains("трёх")) {
             return Optional.of(3);
         }
         if (text.contains("четверых")) {
             return Optional.of(4);
         }
+        if (text.contains("четверо") || text.contains("четырех") || text.contains("четырёх")) {
+            return Optional.of(4);
+        }
+        Matcher compactMatcher = Pattern.compile("(?:^|\\s)на\\s+(\\d{1,2})\\s*(?:x|х|-х|-x)(?:\\s|$)").matcher(text);
+        if (compactMatcher.find()) {
+            return Optional.of(Integer.parseInt(compactMatcher.group(1)));
+        }
+        Matcher guestMatcher = Pattern.compile("\\b(\\d{1,2})\\s*(?:гостей|гостя|человек|персон|чел)\\b").matcher(text);
+        if (guestMatcher.find()) {
+            return Optional.of(Integer.parseInt(guestMatcher.group(1)));
+        }
         Matcher matcher = Pattern.compile("\\bна\\s+(\\d{1,2})\\b").matcher(text);
         return matcher.find() ? Optional.of(Integer.parseInt(matcher.group(1))) : Optional.empty();
+    }
+
+    private boolean looksLikePartySizeAnswer(String text) {
+        return extractPartySize(text).isPresent()
+                && !containsAny(text, ":", "вечер", "утр", "дня", "ноч", "час", "ч ")
+                && !hasDate(text);
+    }
+
+    private boolean containsAny(String text, String... variants) {
+        for (String variant : variants) {
+            if (text.contains(variant)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private boolean looksLikeTableSelection(String text) {
@@ -371,7 +416,7 @@ public class TableBookingScenario implements FsmScenario {
         if (!matcher.find()) {
             return LocalTime.of(20, 0);
         }
-        return parseTime(matcher);
+        return parseTime(matcher, text);
     }
 
     private Integer partySize(String text) {
@@ -426,9 +471,13 @@ public class TableBookingScenario implements FsmScenario {
         return Optional.empty();
     }
 
-    private LocalTime parseTime(Matcher matcher) {
+    private LocalTime parseTime(Matcher matcher, String text) {
         int hour = Integer.parseInt(matcher.group(1));
         int minute = matcher.group(2) == null ? 0 : Integer.parseInt(matcher.group(2));
+        String normalized = normalize(text);
+        if (hour >= 1 && hour <= 11 && containsAny(normalized, "вечера", "вечер", "ночи")) {
+            hour += 12;
+        }
         return LocalTime.of(hour, minute);
     }
 

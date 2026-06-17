@@ -211,11 +211,33 @@ class TableBookingScenarioTest {
                 "на двоих"
         );
         assertThat(plan.nextState()).isEqualTo(BotState.TABLE_BOOKING_WAIT_TABLE_SELECTION.name());
-        assertThat(plan.actions()).contains("SEND_HALL_PLAN", "ASK_TABLE_SELECTION");
+        assertThat(plan.actions()).contains("ASK_TABLE_SELECTION");
+        assertThat(plan.actions()).doesNotContain("SEND_HALL_PLAN");
+        assertThat(plan.metadata()).doesNotContainKey("documentObjectKey");
         assertThat(storedDraft.get().requestedDate()).isEqualTo(bookingDate);
         assertThat(storedDraft.get().requestedTime()).isEqualTo(LocalTime.of(20, 0));
         assertThat(storedDraft.get().partySize()).isEqualTo(2);
         assertThat(storedDraft.get().requestedStartAt()).isNotNull();
+    }
+
+    @Test
+    void understandsEveningTimeAndCompactPartySizeReplies() {
+        AtomicReference<TableBookingDraftStorage.Draft> storedDraft = new AtomicReference<>();
+        doAnswer(invocation -> Optional.ofNullable(storedDraft.get()))
+                .when(draftStorage).find(eq(1773317437L));
+        doAnswer(invocation -> {
+            storedDraft.set(invocation.getArgument(1));
+            return null;
+        }).when(draftStorage).save(eq(1773317437L), any(TableBookingDraftStorage.Draft.class));
+
+        scenario.handle(telegram("на завтра"), BotState.TABLE_BOOKING_COLLECT_DATE, "на завтра");
+        scenario.handle(telegram("в 8 вечера"), BotState.TABLE_BOOKING_COLLECT_TIME, "в 8 вечера");
+        OutgoingMessage plan = scenario.handle(telegram("на 2х"), BotState.TABLE_BOOKING_COLLECT_PARTY_SIZE, "на 2х");
+
+        assertThat(plan.nextState()).isEqualTo(BotState.TABLE_BOOKING_WAIT_TABLE_SELECTION.name());
+        assertThat(plan.actions()).contains("ASK_TABLE_SELECTION");
+        assertThat(storedDraft.get().requestedTime()).isEqualTo(LocalTime.of(20, 0));
+        assertThat(storedDraft.get().partySize()).isEqualTo(2);
     }
 
     private IncomingMessage telegram(String text) {
