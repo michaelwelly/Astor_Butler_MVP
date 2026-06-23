@@ -188,6 +188,21 @@ Current read endpoints:
 
 Telegram scenarios still send files through their own transport metadata, but these endpoints are the operator-facing contract for checking what the bot is about to use.
 
+## Frontend Backend Contracts
+
+The production frontend contract pack is fixed in [FRONTEND_BACKEND_CONTRACTS.md](FRONTEND_BACKEND_CONTRACTS.md).
+
+It defines the current contract-first boundary for:
+
+- C3FLEX video catalog metadata;
+- object storage URL strategy;
+- web chat payloads through `POST /api/messages`;
+- OAuth/JWT expectations;
+- site privacy consent;
+- staff/admin/system notification projection.
+
+Frontend work may mock endpoints that are not implemented yet, but it must keep field names and payload shape compatible with that document.
+
 ## Internal Event Contract
 
 Kafka is an internal backend boundary for audit, analytics and future notifications. It is not exposed to frontend clients.

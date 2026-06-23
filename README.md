@@ -236,6 +236,7 @@ Claude project onboarding:
 - [CLAUDE.md](CLAUDE.md)
 - [docs/CLAUDE_PROJECT_PACK.md](docs/CLAUDE_PROJECT_PACK.md)
 - [docs/CLAUDE_FRONTEND_TASK.md](docs/CLAUDE_FRONTEND_TASK.md)
+- [docs/FRONTEND_BACKEND_CONTRACTS.md](docs/FRONTEND_BACKEND_CONTRACTS.md)
 
 Claude можно запускать на frontend-планирование сразу. Реализацию frontend запускаем после фиксации backend-контрактов: video metadata, web chat payload, auth/consent payload и object storage URL strategy.
 
@@ -311,6 +312,7 @@ scripts/run_k6_read_load.sh
 - [docs/FRONTEND_HANDOFF.md](docs/FRONTEND_HANDOFF.md)
 - [docs/CLAUDE_PROJECT_PACK.md](docs/CLAUDE_PROJECT_PACK.md)
 - [docs/CLAUDE_FRONTEND_TASK.md](docs/CLAUDE_FRONTEND_TASK.md)
+- [docs/FRONTEND_BACKEND_CONTRACTS.md](docs/FRONTEND_BACKEND_CONTRACTS.md)
 - [docs/PRODUCTION_DEPLOYMENT_PLAN.md](docs/PRODUCTION_DEPLOYMENT_PLAN.md)
 
 Локальная проектная память ведется отдельно в Obsidian и не является production-репозиторием.

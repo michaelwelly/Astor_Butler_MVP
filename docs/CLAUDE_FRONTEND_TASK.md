@@ -4,14 +4,20 @@ Use this prompt in Claude App after the project folder and context files are con
 
 ## When To Start Claude
 
-Start Claude now only for planning the frontend architecture and UI component map.
+Start Claude now with a planning step first: frontend architecture and UI component map.
 
-Do not ask Claude to implement until Codex confirms backend boundaries:
+Codex has confirmed the backend boundaries:
 
 - video metadata contract;
 - web chat payload contract;
 - auth/consent payload contract;
 - object storage URL strategy.
+
+These boundaries are collected in:
+
+- `docs/FRONTEND_BACKEND_CONTRACTS.md`
+
+After Claude returns the file/component plan and the user approves it, Claude may implement frontend-only changes against this contract.
 
 ## Prompt
 
@@ -21,6 +27,7 @@ You work in Astor_Butler_MVP.
 Read first:
 - CLAUDE.md
 - docs/CLAUDE_PROJECT_PACK.md
+- docs/FRONTEND_BACKEND_CONTRACTS.md
 - design-system/c3flex/MASTER.md
 - README.md
 
