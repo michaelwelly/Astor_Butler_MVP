@@ -7,6 +7,7 @@ import lombok.extern.slf4j.Slf4j;
 import museon_online.astor_butler.domain.identity.IdentityRecord;
 import museon_online.astor_butler.domain.identity.IdentityService;
 import museon_online.astor_butler.service.message.IncomingMessage;
+import museon_online.astor_butler.service.message.MessageChannel;
 import org.postgresql.util.PGobject;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
@@ -29,6 +30,9 @@ public class TelegramIntakeService {
 
     public void capture(IncomingMessage incoming) {
         if (incoming == null || incoming.chatId() == null) {
+            return;
+        }
+        if (incoming.channel() != MessageChannel.TELEGRAM) {
             return;
         }
 

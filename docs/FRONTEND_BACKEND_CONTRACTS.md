@@ -4,7 +4,7 @@
 
 Назначение: зафиксировать минимальные контракты между C3FLEX/Astor Butler frontend и backend перед реализацией production frontend. Эти контракты нужны Claude для UI-планирования и Codex для последующего Swagger/DTO implementation.
 
-Статус: `contract-first v0.1`.
+Статус: `contract-first v0.2`.
 
 ## 1. Общие Правила
 
@@ -156,13 +156,16 @@ POST /api/messages
 
 Frontend must use this endpoint for C3FLEX/site bot messages until a dedicated `/api/web-chat/sessions/{id}/messages` path is implemented.
 
+Backend now stores WEB sessions/messages in `web_sessions` and `web_messages`.
+For `channel=WEB`, `chatId` is optional: backend resolves a stable synthetic FSM `chatId` from `payload.sessionId` and returns it in the response.
+
 ### Request
 
 ```json
 {
   "channel": "WEB",
   "externalUserId": "web:anon:7c3417e0-3af4-4e7a-b5be-88759a7e9781",
-  "chatId": 900000001,
+  "chatId": null,
   "text": "Хочу обсудить похожий проект",
   "contactPhone": null,
   "firstName": null,
@@ -226,6 +229,8 @@ Frontend must use this endpoint for C3FLEX/site bot messages until a dedicated `
 ### Frontend Rules
 
 - `chatId` for anonymous web users is a temporary local numeric identifier until backend issues stable web sessions.
+- Preferred mode: frontend sends `payload.sessionId` and omits `chatId`; backend returns stable synthetic `chatId`.
+- Compatibility mode: frontend may still send an existing backend-issued `chatId` on later requests.
 - Frontend stores `sessionId` in local storage/cookie after consent.
 - User can write without OAuth login if privacy consent is accepted.
 - OAuth enriches profile but is not required for a first lead.
@@ -402,4 +407,3 @@ Claude must not implement backend endpoints, edit Docker, or change FSM docs.
 4. Add site lead/admin notification projection.
 5. Add Keycloak/OAuth2 resource server configuration.
 6. Add anonymous consent persistence and later link-to-user flow.
-

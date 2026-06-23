@@ -4,6 +4,8 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import museon_online.astor_butler.api.common.ApiException;
 import museon_online.astor_butler.api.common.ErrorCode;
+import museon_online.astor_butler.domain.web.WebSessionMessageService;
+import museon_online.astor_butler.domain.web.WebSessionResolution;
 import museon_online.astor_butler.service.message.IncomingMessage;
 import museon_online.astor_butler.service.message.MessageChannel;
 import museon_online.astor_butler.service.message.MessageGatewayService;
@@ -26,9 +28,14 @@ import java.util.UUID;
 public class MessageController {
 
     private final MessageGatewayService messageGatewayService;
+    private final WebSessionMessageService webSessionMessageService;
 
-    public MessageController(MessageGatewayService messageGatewayService) {
+    public MessageController(
+            MessageGatewayService messageGatewayService,
+            WebSessionMessageService webSessionMessageService
+    ) {
         this.messageGatewayService = messageGatewayService;
+        this.webSessionMessageService = webSessionMessageService;
     }
 
     @PostMapping
@@ -37,22 +44,40 @@ public class MessageController {
             description = "Common entry point for future web chat, Telegram-like adapters and smoke checks. Telegram stays a UI transport; FSM remains the source of truth."
     )
     public ResponseEntity<MessageResponse> process(@RequestBody MessageRequest request) {
-        if (request.chatId() == null) {
-            throw new ApiException(
-                    HttpStatus.BAD_REQUEST,
-                    ErrorCode.BAD_REQUEST,
-                    "chatId is required for current MVP message gateway"
-            );
-        }
-
         MessageChannel messageChannel = channel(request.channel());
         String correlationId = request.correlationId() == null ? UUID.randomUUID().toString() : request.correlationId();
         Map<String, Object> payload = request.payload() == null ? Map.of() : request.payload();
+        WebSessionResolution webSession = null;
+        Long chatId = request.chatId();
+        String externalUserId = request.externalUserId();
+
+        if (messageChannel == MessageChannel.WEB) {
+            try {
+                webSession = webSessionMessageService.resolve(externalUserId, chatId, payload);
+                chatId = webSession.chatId();
+                externalUserId = webSession.externalUserId();
+                webSessionMessageService.recordInbound(webSession, correlationId, request.text(), payload);
+            } catch (IllegalArgumentException e) {
+                throw new ApiException(
+                        HttpStatus.BAD_REQUEST,
+                        ErrorCode.BAD_REQUEST,
+                        e.getMessage()
+                );
+            }
+        }
+
+        if (chatId == null) {
+            throw new ApiException(
+                    HttpStatus.BAD_REQUEST,
+                    ErrorCode.BAD_REQUEST,
+                    "chatId is required for TELEGRAM and INTERNAL channels; WEB can be resolved from payload.sessionId"
+            );
+        }
 
         IncomingMessage incoming = messageChannel == MessageChannel.TELEGRAM
                 ? IncomingMessage.telegram(
-                        request.chatId(),
-                        telegramUserId(request.externalUserId(), request.chatId()),
+                        chatId,
+                        telegramUserId(externalUserId, chatId),
                         null,
                         null,
                         request.text(),
@@ -67,8 +92,8 @@ public class MessageController {
                 )
                 : new IncomingMessage(
                         messageChannel,
-                        request.externalUserId(),
-                        request.chatId(),
+                        externalUserId,
+                        chatId,
                         null,
                         null,
                         null,
@@ -84,7 +109,11 @@ public class MessageController {
                         payload
                 );
 
-        return ResponseEntity.ok(MessageResponse.from(messageGatewayService.handle(incoming)));
+        OutgoingMessage outgoing = messageGatewayService.handle(incoming);
+        if (webSession != null) {
+            webSessionMessageService.recordOutbound(webSession, correlationId, outgoing);
+        }
+        return ResponseEntity.ok(MessageResponse.from(outgoing));
     }
 
     private MessageChannel channel(String channel) {

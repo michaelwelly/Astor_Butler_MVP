@@ -45,3 +45,5 @@ databaseChangeLog:
       file: db/changelog/2026-06-16-table-booking-seating-preferences.yaml
   - include:
       file: db/changelog/2026-06-17-intent-understanding-pgvector.yaml
+  - include:
+      file: db/changelog/2026-06-23-web-session-foundation.yaml
