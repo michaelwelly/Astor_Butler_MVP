@@ -403,11 +403,20 @@ Claude can implement frontend against this contract using:
 
 Claude must not implement backend endpoints, edit Docker, or change FSM docs.
 
-## 9. Codex Backend Next Targets
+## 9. Codex Backend Status And Next Targets
 
-1. Add service-backed `GET /api/content/c3flex/videos`.
-2. Add stable web session id strategy instead of numeric fake `chatId`.
-3. Add Web channel persistence for site messages.
-4. Add site lead/admin notification projection.
-5. Add Keycloak/OAuth2 resource server configuration.
-6. Link anonymous web consent to internal users after OAuth.
+Done:
+
+- Service-backed `GET /api/content/c3flex/videos`.
+- Backend-owned WEB session mapping through `web_sessions`.
+- WEB message audit through `web_messages`.
+- Anonymous WEB privacy consent persistence through `web_consents`.
+- Tolerant backend DTOs for frontend-only fields such as `turn`.
+
+Next:
+
+1. Add site lead/admin notification projection.
+2. Add Keycloak/OAuth2 resource server configuration.
+3. Link anonymous web consent to internal users after OAuth.
+4. Upload C3FLEX media assets to object storage and replace placeholder URLs.
+5. Run full frontend production build once SWC/native dependencies are available locally.
