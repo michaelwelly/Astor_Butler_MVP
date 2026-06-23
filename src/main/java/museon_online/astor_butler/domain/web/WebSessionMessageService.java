@@ -16,21 +16,26 @@ public class WebSessionMessageService {
 
     public WebSessionResolution resolve(String externalUserId, Long requestedChatId, Map<String, Object> payload) {
         Map<String, Object> safePayload = payload == null ? Map.of() : payload;
+        String payloadSessionId = string(safePayload, "sessionId");
+        String externalSessionId = stripWebAnonPrefix(externalUserId);
         String sessionId = firstNonBlank(
-                string(safePayload, "sessionId"),
-                stripWebAnonPrefix(externalUserId),
+                payloadSessionId,
+                externalSessionId,
                 UUID.randomUUID().toString()
         );
-        return repository.upsert(
+        Long compatibilityChatId = hasStableSession(payloadSessionId, externalSessionId) ? null : requestedChatId;
+        WebSessionResolution session = repository.upsert(
                 stringOrDefault(safePayload, "site", "c3flex"),
                 sessionId,
                 externalUserId,
-                requestedChatId,
+                compatibilityChatId,
                 string(safePayload, "referrer"),
                 string(safePayload, "page"),
                 string(safePayload, "userAgentHash"),
                 safePayload
         );
+        repository.upsertConsentIfPresent(session, safePayload);
+        return session;
     }
 
     public void recordInbound(WebSessionResolution session, String correlationId, String text, Map<String, Object> payload) {
@@ -45,6 +50,20 @@ public class WebSessionMessageService {
         payload.put("actions", outgoing.actions() == null ? java.util.List.of() : outgoing.actions());
         payload.put("metadata", outgoing.metadata() == null ? Map.of() : outgoing.metadata());
         repository.appendMessage(session, correlationId, "OUT", outgoing.text(), payload);
+    }
+
+    public WebSessionResolution grantAnonymousConsent(String source, String policyVersion, Map<String, Object> evidence) {
+        Map<String, Object> safeEvidence = evidence == null ? Map.of() : evidence;
+        Map<String, Object> consent = new LinkedHashMap<>();
+        consent.put("privacyAccepted", true);
+        consent.put("policyVersion", firstNonBlank(policyVersion, string(safeEvidence, "policyVersion"), "2026-06-02-local"));
+        consent.put("acceptedAt", string(safeEvidence, "acceptedAt"));
+        consent.put("source", source == null || source.isBlank() ? "WEB" : source);
+
+        Map<String, Object> payload = new LinkedHashMap<>(safeEvidence);
+        payload.put("site", stringOrDefault(payload, "site", "c3flex"));
+        payload.put("consent", consent);
+        return resolve(null, null, payload);
     }
 
     private String stripWebAnonPrefix(String externalUserId) {
@@ -70,6 +89,11 @@ public class WebSessionMessageService {
             }
         }
         return UUID.randomUUID().toString();
+    }
+
+    private boolean hasStableSession(String payloadSessionId, String externalSessionId) {
+        return (payloadSessionId != null && !payloadSessionId.isBlank())
+                || (externalSessionId != null && !externalSessionId.isBlank());
     }
 
     private String string(Map<String, Object> payload, String key) {

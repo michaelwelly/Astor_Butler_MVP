@@ -9,6 +9,7 @@ import org.springframework.stereotype.Repository;
 
 import java.nio.charset.StandardCharsets;
 import java.sql.SQLException;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.UUID;
 
@@ -95,6 +96,56 @@ public class WebSessionRepository {
         );
     }
 
+    public void upsertConsentIfPresent(WebSessionResolution session, Map<String, Object> payload) {
+        if (session == null || session.id() == null || payload == null) {
+            return;
+        }
+        Object consentValue = payload.get("consent");
+        if (!(consentValue instanceof Map<?, ?> consent)) {
+            return;
+        }
+        if (!Boolean.parseBoolean(String.valueOf(consent.get("privacyAccepted")))) {
+            return;
+        }
+
+        String policyVersion = string(consent, "policyVersion");
+        if (policyVersion == null || policyVersion.isBlank()) {
+            policyVersion = "2026-06-02-local";
+        }
+
+        Map<String, Object> evidence = new LinkedHashMap<>();
+        evidence.put("sessionId", session.sessionId());
+        evidence.put("externalUserId", session.externalUserId());
+        evidence.put("chatId", session.chatId());
+        evidence.put("site", payload.get("site"));
+        evidence.put("page", payload.get("page"));
+        evidence.put("referrer", payload.get("referrer"));
+        evidence.put("acceptedAt", consent.get("acceptedAt"));
+        evidence.put("policyVersion", policyVersion);
+        evidence.put("consent", consent);
+
+        jdbcTemplate.update("""
+                INSERT INTO web_consents (
+                    id, web_session_id, consent_type, policy_version, status, source,
+                    evidence_json, granted_at, updated_at
+                )
+                VALUES (?, ?, 'PRIVACY_POLICY', ?, 'GRANTED', 'WEB_CHAT', ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+                ON CONFLICT (web_session_id, consent_type, policy_version)
+                DO UPDATE SET
+                    status = 'GRANTED',
+                    source = EXCLUDED.source,
+                    evidence_json = EXCLUDED.evidence_json,
+                    granted_at = COALESCE(web_consents.granted_at, EXCLUDED.granted_at),
+                    revoked_at = NULL,
+                    updated_at = CURRENT_TIMESTAMP
+                """,
+                UUID.randomUUID(),
+                session.id(),
+                policyVersion,
+                jsonb(evidence)
+        );
+    }
+
     private Long stableChatId(String sessionId) {
         UUID uuid = UUID.nameUUIDFromBytes(("web-session:" + sessionId).getBytes(StandardCharsets.UTF_8));
         long mixed = uuid.getMostSignificantBits() ^ uuid.getLeastSignificantBits();
@@ -110,6 +161,11 @@ public class WebSessionRepository {
 
     private String blankToNull(String value) {
         return value == null || value.isBlank() ? null : value.trim();
+    }
+
+    private String string(Map<?, ?> payload, String key) {
+        Object value = payload == null ? null : payload.get(key);
+        return value == null ? null : value.toString();
     }
 
     private PGobject jsonb(Map<String, Object> value) {

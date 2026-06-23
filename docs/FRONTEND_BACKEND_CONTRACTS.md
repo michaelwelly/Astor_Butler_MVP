@@ -4,7 +4,7 @@
 
 Назначение: зафиксировать минимальные контракты между C3FLEX/Astor Butler frontend и backend перед реализацией production frontend. Эти контракты нужны Claude для UI-планирования и Codex для последующего Swagger/DTO implementation.
 
-Статус: `contract-first v0.2`.
+Статус: `contract-first v0.3`.
 
 ## 1. Общие Правила
 
@@ -157,7 +157,8 @@ POST /api/messages
 Frontend must use this endpoint for C3FLEX/site bot messages until a dedicated `/api/web-chat/sessions/{id}/messages` path is implemented.
 
 Backend now stores WEB sessions/messages in `web_sessions` and `web_messages`.
-For `channel=WEB`, `chatId` is optional: backend resolves a stable synthetic FSM `chatId` from `payload.sessionId` and returns it in the response.
+For `channel=WEB`, `chatId` is optional and not authoritative: backend resolves a stable synthetic FSM `chatId` from `payload.sessionId` and returns it in the response.
+If frontend sends both `payload.sessionId` and a temporary `chatId`, backend prefers `payload.sessionId`.
 
 ### Request
 
@@ -230,7 +231,8 @@ For `channel=WEB`, `chatId` is optional: backend resolves a stable synthetic FSM
 
 - `chatId` for anonymous web users is a temporary local numeric identifier until backend issues stable web sessions.
 - Preferred mode: frontend sends `payload.sessionId` and omits `chatId`; backend returns stable synthetic `chatId`.
-- Compatibility mode: frontend may still send an existing backend-issued `chatId` on later requests.
+- Compatibility mode: frontend may send an existing backend-issued `chatId` only when `payload.sessionId` is unavailable.
+- Frontend-generated temporary `chatId` is never the source of truth when `payload.sessionId` exists.
 - Frontend stores `sessionId` in local storage/cookie after consent.
 - User can write without OAuth login if privacy consent is accepted.
 - OAuth enriches profile but is not required for a first lead.
@@ -272,8 +274,9 @@ Response:
 ```json
 {
   "provider": "keycloak",
-  "authorizationUrl": "/oauth2/authorization/keycloak",
+  "authorizationUrl": "/oauth2/authorization/keycloak?kc_idp_hint=google",
   "redirectUri": "https://site.example.com/auth/callback",
+  "returnTo": "/portfolio/aeris",
   "issuedAt": "2026-06-23T12:00:00Z"
 }
 ```
@@ -288,6 +291,7 @@ Authorization: Bearer <access-token>
 ```json
 {
   "subject": "keycloak-subject-id",
+  "authenticated": true,
   "roles": ["GUEST"],
   "claims": {
     "email": "guest@example.com",
@@ -350,7 +354,7 @@ Frontend must show privacy notice before sending web chat/contact data.
 
 Rules:
 
-- If `userId` is unknown, frontend keeps consent evidence in Web Chat payload until backend supports anonymous consent persistence.
+- If `userId` is unknown, backend persists anonymous consent in `web_consents` through either `POST /api/consents` or Web Chat payload consent evidence.
 - After OAuth login, frontend/backend links session consent to internal `users.id`.
 - Consent is required before sending phone/email/message to staff/admin chats.
 
@@ -406,4 +410,4 @@ Claude must not implement backend endpoints, edit Docker, or change FSM docs.
 3. Add Web channel persistence for site messages.
 4. Add site lead/admin notification projection.
 5. Add Keycloak/OAuth2 resource server configuration.
-6. Add anonymous consent persistence and later link-to-user flow.
+6. Link anonymous web consent to internal users after OAuth.

@@ -1,7 +1,11 @@
 package museon_online.astor_butler.api.consent;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import lombok.RequiredArgsConstructor;
+import museon_online.astor_butler.domain.web.WebSessionMessageService;
+import museon_online.astor_butler.domain.web.WebSessionResolution;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -19,12 +23,33 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/consents")
+@RequiredArgsConstructor
 @Tag(name = "Consent Vault API", description = "Consent capture, privacy policy acceptance and export boundary")
 public class ConsentController {
+
+    private final WebSessionMessageService webSessionMessageService;
 
     @PostMapping
     @Operation(summary = "Grant user consent")
     public ResponseEntity<ConsentResponse> grant(@RequestBody ConsentGrantRequest request) {
+        WebSessionResolution webSession = null;
+        if (request.userId() == null && "WEB".equalsIgnoreCase(request.source())) {
+            webSession = webSessionMessageService.grantAnonymousConsent(
+                    request.source(),
+                    request.policyVersion(),
+                    request.evidence()
+            );
+        }
+
+        Map<String, Object> metadata = webSession == null
+                ? Map.of("stub", true)
+                : Map.of(
+                        "anonymous", true,
+                        "sessionId", webSession.sessionId(),
+                        "chatId", webSession.chatId(),
+                        "externalUserId", webSession.externalUserId()
+                );
+
         return ResponseEntity.status(HttpStatus.CREATED).body(new ConsentResponse(
                 UUID.randomUUID(),
                 request.userId(),
@@ -33,7 +58,7 @@ public class ConsentController {
                 "GRANTED",
                 request.source(),
                 Instant.now(),
-                Map.of("stub", true)
+                metadata
         ));
     }
 
@@ -74,6 +99,7 @@ public class ConsentController {
         ));
     }
 
+    @JsonIgnoreProperties(ignoreUnknown = true)
     public record ConsentGrantRequest(UUID userId, String consentType, String policyVersion, String source, Map<String, Object> evidence) {
     }
 

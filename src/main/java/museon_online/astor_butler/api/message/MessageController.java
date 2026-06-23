@@ -1,5 +1,6 @@
 package museon_online.astor_butler.api.message;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import museon_online.astor_butler.api.common.ApiException;
@@ -148,6 +149,7 @@ public class MessageController {
         return chatId != null && chatId > 0 ? chatId : null;
     }
 
+    @JsonIgnoreProperties(ignoreUnknown = true)
     public record MessageRequest(
             String channel,
             String externalUserId,
