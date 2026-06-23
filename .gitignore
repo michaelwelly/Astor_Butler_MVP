@@ -25,10 +25,12 @@ frontend/out/
 .codex_whisper_chunks/
 .codex_whisper_out/
 .codex_whisper_venv/
+.claude/
 
 graphify-out/cache/
 graphify-out/manifest.json
 graphify-out/.graphify_root
+frontend/*.tsbuildinfo
 
 # Runtime media binaries belong to MinIO/S3 + media_assets, not the app jar.
 src/main/resources/menu/aeris/*.pdf

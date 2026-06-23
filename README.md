@@ -118,6 +118,19 @@ scripts/run_local_app.sh
 
 API Gateway проксирует внешний `localhost:8080` на Spring Boot dev-порт. Это позволяет держать единый вход для Swagger/frontend и не путаться между локальными портами.
 
+## Два Telegram-бота На Одной Инфраструктуре
+
+Проект поддерживает разделение AERIS/Astor Butler bot и site/C3FLEX bot на уровне application instance/profile, но не разносит их по разным инфраструктурам.
+
+Локальная идея:
+
+- основной `app` использует базовые Telegram env-переменные;
+- `app-dev` в Docker Compose profile `dev` использует `*_DEV` Telegram env-переменные и порт `8089`;
+- оба инстанса ходят в один инфраструктурный контур: PostgreSQL, Redis, Kafka, MinIO, MongoDB, ScyllaDB, Neo4j и LLM gateway;
+- сценарии, previews, staff/admin/system notifications и web/site bot routing должны оставаться явно разделенными.
+
+Backend/FSM контур AERIS приоритетнее frontend-экспериментов. Если site/C3FLEX bot или frontend требуют изменения backend-сценариев, сначала фиксируется контракт и только потом меняется код.
+
 ## Voice pipeline
 
 Голосовые сообщения обрабатываются как временные media assets:
@@ -207,6 +220,25 @@ Swagger уже группирует будущие границы:
 
 Часть REST API пока является stub/reserved contract. Реальная бизнес-логика сейчас сосредоточена в Telegram/FSM/Consent/Kafka pipeline. Это осознанно: сначала проверяется работающая ось гостевого взаимодействия, потом API расширяется до frontend/web-chat и manager dashboard.
 
+## Production / Frontend Work Split
+
+Production-дорожка зафиксирована в [docs/PRODUCTION_DEPLOYMENT_PLAN.md](docs/PRODUCTION_DEPLOYMENT_PLAN.md).
+
+Принцип:
+
+- Codex ведет backend, FSM, security, infra, data contracts, Docker/k3s и production readiness;
+- Claude ведет frontend/UX/design/C3FLEX только в разрешенной зоне;
+- видео и тяжелые media binaries не хранятся в git, а уходят в Object Storage;
+- в git хранятся metadata, контракты, frontend code и documentation.
+
+Claude project onboarding:
+
+- [CLAUDE.md](CLAUDE.md)
+- [docs/CLAUDE_PROJECT_PACK.md](docs/CLAUDE_PROJECT_PACK.md)
+- [docs/CLAUDE_FRONTEND_TASK.md](docs/CLAUDE_FRONTEND_TASK.md)
+
+Claude можно запускать на frontend-планирование сразу. Реализацию frontend запускаем после фиксации backend-контрактов: video metadata, web chat payload, auth/consent payload и object storage URL strategy.
+
 ## Capability-модули
 
 | Ось боли | Capability | MVP-статус |
@@ -277,6 +309,9 @@ scripts/run_k6_read_load.sh
 - [docs/API_CONTRACT.md](docs/API_CONTRACT.md)
 - [docs/LOAD_TESTING.md](docs/LOAD_TESTING.md)
 - [docs/FRONTEND_HANDOFF.md](docs/FRONTEND_HANDOFF.md)
+- [docs/CLAUDE_PROJECT_PACK.md](docs/CLAUDE_PROJECT_PACK.md)
+- [docs/CLAUDE_FRONTEND_TASK.md](docs/CLAUDE_FRONTEND_TASK.md)
+- [docs/PRODUCTION_DEPLOYMENT_PLAN.md](docs/PRODUCTION_DEPLOYMENT_PLAN.md)
 
 Локальная проектная память ведется отдельно в Obsidian и не является production-репозиторием.
 

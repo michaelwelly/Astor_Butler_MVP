@@ -30,6 +30,9 @@ services:
       dockerfile: Dockerfile
     image: astor-butler-mvp:local
     container_name: astor_app
+    dns:
+      - 8.8.8.8
+      - 8.8.4.4
     environment:
       SERVER_PORT: 8088
       SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-local}
@@ -114,6 +117,97 @@ services:
         condition: service_healthy
     healthcheck:
       test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:8088/actuator/health >/dev/null"]
+      interval: 45s
+      timeout: 5s
+      retries: 20
+      start_period: 60s
+
+  app-dev:
+    profiles: ["dev"]
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: astor-butler-mvp:local
+    container_name: astor_app_dev
+    dns:
+      - 8.8.8.8
+      - 8.8.4.4
+    environment:
+      SERVER_PORT: 8089
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-local}
+      POSTGRES_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-aether}
+      POSTGRES_USER: ${POSTGRES_USER:-oracle}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-astor_unlock}
+      SPRING_LIQUIBASE_CHANGE_LOG: ${SPRING_LIQUIBASE_CHANGE_LOG:-classpath:db/changelog/changelog-master.yaml}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-}
+      MONGODB_URI: mongodb://${MONGO_USER:-oracle}:${MONGO_PASSWORD:-astor_unlock}@mongo:27017/${MONGO_DB:-aether}?authSource=admin
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      KAFKA_USER_EVENTS_TOPIC: ${KAFKA_USER_EVENTS_TOPIC:-astor.user.events}
+      KAFKA_OUTBOX_USER_EVENTS_TOPIC: ${KAFKA_OUTBOX_USER_EVENTS_TOPIC:-astor.user.events}
+      S3_ENDPOINT: http://minio:9000
+      S3_PUBLIC_ENDPOINT: ${S3_PUBLIC_ENDPOINT:-http://localhost:9000}
+      S3_ACCESS_KEY: ${S3_ACCESS_KEY:-astor}
+      S3_SECRET_KEY: ${S3_SECRET_KEY:-astor_minio_password}
+      S3_BUCKET_MEDIA: ${S3_BUCKET_MEDIA:-astor-media}
+      S3_BUCKET_DOCUMENTS: ${S3_BUCKET_DOCUMENTS:-astor-documents}
+      TELEGRAM_BOT_ENABLED: ${TELEGRAM_BOT_ENABLED_DEV:-true}
+      TELEGRAM_BOT_USERNAME: ${TELEGRAM_BOT_USERNAME_DEV:-astor_butler_dev_bot}
+      TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN_DEV:-}
+      TELEGRAM_ADMIN_CHAT_ID: ${TELEGRAM_ADMIN_CHAT_ID:-}
+      TELEGRAM_ANALYTICS_CHAT_ID: ${TELEGRAM_ANALYTICS_CHAT_ID:-}
+      TELEGRAM_HOSTESS_CHAT_ID: ${TELEGRAM_HOSTESS_CHAT_ID:-}
+      TELEGRAM_SYSTEM_CHAT_ID: ${TELEGRAM_SYSTEM_CHAT_ID:-}
+      TELEGRAM_SYSTEM_NOTIFICATIONS_ENABLED: "false"
+      ASTOR_OPERATIONAL_PREVIEW_ENABLED: "false"
+      ASTOR_INTENT_EXAMPLES_INGEST_ON_STARTUP: "false"
+      ASTOR_SEMANTIC_EMBEDDINGS_PROVIDER: ${ASTOR_SEMANTIC_EMBEDDINGS_PROVIDER:-none}
+      TELEGRAM_UI_CLEANUP_ENABLED: "false"
+      TELEGRAM_UI_DELETE_USER_MESSAGES_ENABLED: "false"
+      TELEGRAM_QUIET_GUIDE_INTERIOR_VIDEO_OBJECT_KEY: ${TELEGRAM_QUIET_GUIDE_INTERIOR_VIDEO_OBJECT_KEY:-content/aeris/interior/INTERIOR.mp4}
+      TELEGRAM_CLIENT_ID: ${TELEGRAM_CLIENT_ID:-}
+      TELEGRAM_REDIRECT_URI: http://localhost:8089/auth/telegram/callback
+      LLM_OLLAMA_BASE_URL: ${APP_LLM_OLLAMA_BASE_URL:-http://llm-gateway:11434}
+      LLM_OLLAMA_MODEL: ${LLM_OLLAMA_MODEL:-qwen2.5:1.5b}
+      LLM_WARMUP_ENABLED: "false"
+      LLM_CONNECT_TIMEOUT_MS: "5000"
+      LLM_READ_TIMEOUT_MS: "45000"
+      LLM_OLLAMA_KEEP_ALIVE: ${LLM_OLLAMA_KEEP_ALIVE:-30m}
+      ASTOR_STT_ENABLED: "false"
+      ASTOR_TIMELINE_SCYLLA_ENABLED: ${ASTOR_TIMELINE_SCYLLA_ENABLED:-true}
+      ASTOR_TIMELINE_SCYLLA_HOST: scylla
+      ASTOR_TIMELINE_SCYLLA_PORT: "9042"
+      ASTOR_TIMELINE_SCYLLA_DATACENTER: ${ASTOR_TIMELINE_SCYLLA_DATACENTER:-datacenter1}
+      ASTOR_TIMELINE_SCYLLA_KEYSPACE: ${ASTOR_TIMELINE_SCYLLA_KEYSPACE:-astor_timeline}
+      ASTOR_GRAPH_NEO4J_ENABLED: ${ASTOR_GRAPH_NEO4J_ENABLED:-true}
+      ASTOR_GRAPH_NEO4J_URI: bolt://neo4j:7687
+      ASTOR_GRAPH_NEO4J_USERNAME: ${NEO4J_USER:-neo4j}
+      ASTOR_GRAPH_NEO4J_PASSWORD: ${NEO4J_PASSWORD:-astor_graph_password}
+      HF_HOME: /root/.cache/huggingface
+      JWT_SECRET: ${JWT_SECRET:-local-container-dev-only}
+      LOG_LEVEL: DEBUG
+    ports:
+      - "8089:8089"
+    volumes:
+      - huggingface-cache:/root/.cache/huggingface
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      mongo:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+      scylla:
+        condition: service_healthy
+      neo4j:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:8089/actuator/health >/dev/null"]
       interval: 45s
       timeout: 5s
       retries: 20
