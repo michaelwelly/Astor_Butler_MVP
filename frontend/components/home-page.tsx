@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { AnimatePresence } from "framer-motion";
+import { AnimatePresence, MotionConfig } from "framer-motion";
 import { useLenis } from "@/hooks/useLenis";
 import { Navigation } from "@/components/layout/Navigation";
 import { Footer } from "@/components/layout/Footer";
@@ -13,6 +13,14 @@ import { SplashGate } from "@/components/ui/SplashGate";
 import { MobileMenu } from "@/components/ui/MobileMenu";
 import { ChatWidget } from "@/components/ui/ChatWidget";
 import type { PortfolioCase } from "@/lib/portfolio";
+import { catalogVideos, toSelectedVideoRef } from "@/lib/video-catalog";
+import type { SelectedVideoRef } from "@/lib/web-chat";
+
+function toRef(item: PortfolioCase | null): SelectedVideoRef {
+  if (!item) return null;
+  const meta = catalogVideos.find((v) => v.slug === (item.slug ?? item.id));
+  return meta ? toSelectedVideoRef(meta) : null;
+}
 
 export function HomePage() {
   useLenis();
@@ -36,7 +44,7 @@ export function HomePage() {
   };
 
   return (
-    <>
+    <MotionConfig reducedMotion="user">
       <AnimatePresence>
         {!introComplete && (
           <SplashGate key="splash" onComplete={() => { window.scrollTo({ top: 0, behavior: "instant" }); setIntroComplete(true); }} />
@@ -50,7 +58,7 @@ export function HomePage() {
         <section className="chat-section">
           <h2 className="chat-section-heading">Обсудим ваш проект</h2>
           <p className="chat-section-sub">Astor Butler подберёт формат и команду под вашу задачу</p>
-          <ChatWidget inline />
+          <ChatWidget inline selectedVideo={toRef(watchingCase ?? selectedCase)} />
         </section>
         <Footer />
 
@@ -62,6 +70,10 @@ export function HomePage() {
         <VideoPlayer item={watchingCase} onClose={() => setWatchingCase(null)} />
         <MobileMenu open={menuOpen} onClose={() => setMenuOpen(false)} />
       </main>
-    </>
+
+      {introComplete && (
+        <ChatWidget selectedVideo={toRef(watchingCase ?? selectedCase)} />
+      )}
+    </MotionConfig>
   );
 }

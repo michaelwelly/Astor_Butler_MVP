@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Menu } from "lucide-react";
+import { AuthMenu } from "@/components/auth/AuthMenu";
 
 type Props = {
   onMenuOpen: () => void;
@@ -34,6 +35,7 @@ export function Navigation({ onMenuOpen }: Props) {
         ))}
       </nav>
       <div className="header-actions">
+        <AuthMenu />
         <button className="menu-button" type="button" onClick={onMenuOpen} aria-label="Открыть меню">
           <Menu size={20} />
         </button>

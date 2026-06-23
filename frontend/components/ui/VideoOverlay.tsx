@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Play, X } from "lucide-react";
 import type { PortfolioCase } from "@/lib/portfolio";
@@ -11,6 +12,15 @@ type Props = {
 };
 
 export function VideoOverlay({ item, onWatch, onClose }: Props) {
+  useEffect(() => {
+    if (!item) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [item, onClose]);
+
   return (
     <AnimatePresence>
       {item && (
@@ -20,6 +30,9 @@ export function VideoOverlay({ item, onWatch, onClose }: Props) {
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           onClick={onClose}
+          role="dialog"
+          aria-modal="true"
+          aria-label={`${item.category}: ${item.title}`}
         >
           <motion.div
             className="video-overlay-card"

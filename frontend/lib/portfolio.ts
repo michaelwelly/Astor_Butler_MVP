@@ -1,5 +1,10 @@
 export type DirectionId = "events" | "reels" | "commercials";
 
+/**
+ * Optional override fields let an editor pin contract-aligned metadata
+ * (FRONTEND_BACKEND_CONTRACTS.md §3) per item. When omitted, the catalog
+ * adapter in lib/video-catalog.ts derives deterministic defaults.
+ */
 export type PortfolioCase = {
   id: string;
   direction: DirectionId;
@@ -13,6 +18,13 @@ export type PortfolioCase = {
   video?: string;
   statement: string;
   featured?: boolean;
+  // ── Contract overrides (optional) ──────────────────────────────────────
+  videoId?: string;
+  slug?: string;
+  shortDescription?: string;
+  tags?: string[];
+  orientation?: "portrait" | "landscape";
+  status?: "READY" | "DRAFT" | "ARCHIVED";
 };
 
 export type Direction = {
