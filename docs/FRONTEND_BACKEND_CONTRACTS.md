@@ -415,8 +415,9 @@ Done:
 
 Next:
 
-1. Add site lead/admin notification projection.
-2. Add Keycloak/OAuth2 resource server configuration.
-3. Link anonymous web consent to internal users after OAuth.
-4. Upload C3FLEX media assets to object storage and replace placeholder URLs.
-5. Run full frontend production build once SWC/native dependencies are available locally.
+1. Hand-test the new WEB lead/admin notification projection from the site chat.
+2. Review Claude frontend session result and decide whether the two chat widgets collapse into one UX.
+3. Add Keycloak/OAuth2 resource server configuration.
+4. Link anonymous web consent to internal users after OAuth.
+5. Upload C3FLEX media assets to object storage and replace placeholder URLs.
+6. Run full frontend production build once SWC/native dependencies are available locally.

@@ -1,5 +1,7 @@
 package museon_online.astor_butler.api.message;
 
+import museon_online.astor_butler.domain.web.WebLeadNotificationService;
+import museon_online.astor_butler.domain.web.WebSessionMessageService;
 import museon_online.astor_butler.service.message.IncomingMessage;
 import museon_online.astor_butler.service.message.MessageChannel;
 import museon_online.astor_butler.service.message.MessageGatewayService;
@@ -18,7 +20,13 @@ import static org.mockito.Mockito.when;
 class MessageControllerTest {
 
     private final MessageGatewayService gatewayService = mock(MessageGatewayService.class);
-    private final MessageController controller = new MessageController(gatewayService);
+    private final WebSessionMessageService webSessionMessageService = mock(WebSessionMessageService.class);
+    private final WebLeadNotificationService webLeadNotificationService = mock(WebLeadNotificationService.class);
+    private final MessageController controller = new MessageController(
+            gatewayService,
+            webSessionMessageService,
+            webLeadNotificationService
+    );
 
     @Test
     void mapsTelegramExternalUserIdToTelegramUserIdForFsmSimulation() {

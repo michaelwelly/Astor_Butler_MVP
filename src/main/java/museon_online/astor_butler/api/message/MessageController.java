@@ -5,6 +5,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import museon_online.astor_butler.api.common.ApiException;
 import museon_online.astor_butler.api.common.ErrorCode;
+import museon_online.astor_butler.domain.web.WebLeadNotificationService;
 import museon_online.astor_butler.domain.web.WebSessionMessageService;
 import museon_online.astor_butler.domain.web.WebSessionResolution;
 import museon_online.astor_butler.service.message.IncomingMessage;
@@ -30,13 +31,16 @@ public class MessageController {
 
     private final MessageGatewayService messageGatewayService;
     private final WebSessionMessageService webSessionMessageService;
+    private final WebLeadNotificationService webLeadNotificationService;
 
     public MessageController(
             MessageGatewayService messageGatewayService,
-            WebSessionMessageService webSessionMessageService
+            WebSessionMessageService webSessionMessageService,
+            WebLeadNotificationService webLeadNotificationService
     ) {
         this.messageGatewayService = messageGatewayService;
         this.webSessionMessageService = webSessionMessageService;
+        this.webLeadNotificationService = webLeadNotificationService;
     }
 
     @PostMapping
@@ -113,6 +117,7 @@ public class MessageController {
         OutgoingMessage outgoing = messageGatewayService.handle(incoming);
         if (webSession != null) {
             webSessionMessageService.recordOutbound(webSession, correlationId, outgoing);
+            webLeadNotificationService.project(webSession, incoming, outgoing);
         }
         return ResponseEntity.ok(MessageResponse.from(outgoing));
     }

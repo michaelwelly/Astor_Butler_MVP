@@ -88,6 +88,9 @@ astor:
         venue-code: ${ASTOR_AERIS_CHANNEL_VENUE_CODE:AERIS}
         username: ${ASTOR_AERIS_CHANNEL_USERNAME:aeris_gastrobar}
         url: ${ASTOR_AERIS_CHANNEL_URL:https://t.me/s/aeris_gastrobar}
+  web:
+    notifications:
+      admin-chat-enabled: ${ASTOR_WEB_ADMIN_CHAT_NOTIFICATIONS_ENABLED:true}
 
 spring:
   application:
