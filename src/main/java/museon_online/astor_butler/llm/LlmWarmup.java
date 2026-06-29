@@ -4,6 +4,8 @@ import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import museon_online.astor_butler.model.ModelGateway;
+import museon_online.astor_butler.model.ModelTextRequest;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -16,7 +18,7 @@ import java.util.concurrent.TimeUnit;
 @RequiredArgsConstructor
 public class LlmWarmup {
 
-    private final OllamaClient ollamaClient;
+    private final ModelGateway modelGateway;
     private final ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor(r -> {
         Thread thread = new Thread(r, "llm-warmup-thread");
         thread.setDaemon(true);
@@ -52,7 +54,12 @@ public class LlmWarmup {
     private void ping() {
         try {
             long start = System.currentTimeMillis();
-            ollamaClient.ask("Ответь одним словом: готов.");
+            modelGateway.generateText(ModelTextRequest.of(
+                    "Ответь одним словом: готов.",
+                    "System",
+                    "WARMUP",
+                    "local-model-warmup"
+            ));
             long duration = System.currentTimeMillis() - start;
             log.info("[LLM] Warm-up ping finished in {} ms", duration);
         } catch (Exception e) {

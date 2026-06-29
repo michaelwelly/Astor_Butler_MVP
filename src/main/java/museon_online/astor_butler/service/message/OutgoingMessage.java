@@ -68,4 +68,22 @@ public record OutgoingMessage(
                 createdAt
         );
     }
+
+    public OutgoingMessage withRemoveKeyboard(boolean removeKeyboard) {
+        return new OutgoingMessage(
+                channel,
+                externalUserId,
+                chatId,
+                text,
+                nextState,
+                html,
+                requestContact,
+                removeKeyboard,
+                fallback,
+                adminAlert,
+                actions,
+                metadata,
+                createdAt
+        );
+    }
 }

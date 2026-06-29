@@ -114,6 +114,13 @@ public class MessageController {
                         payload
                 );
 
+        if (messageChannel == MessageChannel.WEB && webSession != null) {
+            OutgoingMessage outgoing = webLeadReply(incoming);
+            webSessionMessageService.recordOutbound(webSession, correlationId, outgoing);
+            webLeadNotificationService.project(webSession, incoming, outgoing);
+            return ResponseEntity.ok(MessageResponse.from(outgoing));
+        }
+
         OutgoingMessage outgoing = messageGatewayService.handle(incoming);
         if (webSession != null) {
             webSessionMessageService.recordOutbound(webSession, correlationId, outgoing);
@@ -152,6 +159,28 @@ public class MessageController {
             }
         }
         return chatId != null && chatId > 0 ? chatId : null;
+    }
+
+    private OutgoingMessage webLeadReply(IncomingMessage incoming) {
+        String text = """
+                Принял запрос. Я передам его команде C3FLEX: посмотрим задачу по продакшену, видео и сайту, а менеджер вернется с человеческим ответом.
+
+                Если удобно, следующим сообщением оставьте контакт, дедлайн и ссылку на текущие материалы.
+                """.strip();
+        return OutgoingMessage.of(
+                incoming,
+                text,
+                "WEB_LEAD_RECEIVED",
+                false,
+                false,
+                false,
+                false,
+                null,
+                List.of("WEB_LEAD_CAPTURED", "WEB_FAST_REPLY", "ADMIN_ALERT")
+        ).withMetadata(Map.of(
+                "site", incoming.payload() == null ? "c3flex" : incoming.payload().getOrDefault("site", "c3flex"),
+                "webFastPath", true
+        ));
     }
 
     @JsonIgnoreProperties(ignoreUnknown = true)

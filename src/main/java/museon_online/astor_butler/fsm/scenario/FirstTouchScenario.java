@@ -1,12 +1,9 @@
 package museon_online.astor_butler.fsm.scenario;
 
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import museon_online.astor_butler.domain.consent.ConsentVaultService;
 import museon_online.astor_butler.fsm.core.BotState;
 import museon_online.astor_butler.fsm.storage.FSMStorage;
-import museon_online.astor_butler.kafka.UserEventProducer;
-import museon_online.astor_butler.llm.OllamaClient;
 import museon_online.astor_butler.service.message.AdminAlert;
 import museon_online.astor_butler.service.message.IncomingMessage;
 import museon_online.astor_butler.service.message.OutgoingMessage;
@@ -16,15 +13,12 @@ import java.util.List;
 
 @Component
 @RequiredArgsConstructor
-@Slf4j
 public class FirstTouchScenario implements FsmScenario {
 
     private static final String POLICY_URL = "https://michaelwelly.github.io/Astor_Butler_MVP/docs/policy.html";
 
     private final FSMStorage fsmStorage;
-    private final OllamaClient ollamaClient;
     private final ConsentVaultService consentVaultService;
-    private final UserEventProducer userEventProducer;
     private final TableBookingDraftStorage tableBookingDraftStorage;
 
     public String id() {
@@ -107,7 +101,7 @@ public class FirstTouchScenario implements FsmScenario {
         consentVaultService.grantPrivacyPolicyFromTelegramContact(incoming);
         return OutgoingMessage.of(
                 incoming,
-                "Спасибо, контакт получил. Теперь могу узнавать вас и вести сценарии аккуратнее.\n\nОткройте меню или напишите, что хотите забронировать.",
+                "Спасибо, контакт получил. Я на связи: выберите действие кнопкой ниже или напишите запрос своими словами.",
                 BotState.READY_FOR_DIALOG.name(),
                 false,
                 false,
@@ -119,31 +113,9 @@ public class FirstTouchScenario implements FsmScenario {
     }
 
     private OutgoingMessage handleConsentNudge(IncomingMessage incoming, BotState currentState, String text) {
-        String prompt = """
-                Ты Astor Butler, цифровой дворецкий. Гость еще не нажал кнопку согласия и не поделился контактом.
-                Твоя задача: очень коротко, спокойно и элегантно ответить на реплику гостя и вернуть его к кнопке.
-                Не продолжай бронирование, не собирай данные, не обещай действие менеджера.
-                Обязательно упомяни, что для продолжения нужно нажать кнопку "Согласиться и поделиться контактом".
-                Максимум 2 коротких предложения.
-
-                Реплика гостя: "%s"
-                """.formatted(text);
-        LlmAnswer answer = askOrFallback(
-                prompt,
-                "Понимаю. Чтобы продолжить, нажмите кнопку \"Согласиться и поделиться контактом\" ниже."
-        );
-        userEventProducer.publishLlmResponse(
-                incoming,
-                currentState,
-                "PRE_AUTH_CONSENT_NUDGE",
-                prompt,
-                answer.text(),
-                answer.fallbackUsed()
-        );
-
         return OutgoingMessage.of(
                 incoming,
-                answer.text(),
+                "Для брони мне нужен контакт, чтобы команда AERIS могла подтвердить детали. Нажмите «Согласиться и поделиться контактом» ниже.",
                 BotState.CONSENT_REQUIRED.name(),
                 false,
                 true,
@@ -152,20 +124,6 @@ public class FirstTouchScenario implements FsmScenario {
                 AdminAlert.none(),
                 List.of("PRE_AUTH_CONSENT_NUDGE", "REQUEST_CONTACT", "CONSENT_REQUIRED")
         );
-    }
-
-    private LlmAnswer askOrFallback(String prompt, String fallback) {
-        try {
-            String response = ollamaClient.ask(prompt);
-            if (response == null || response.isBlank()) {
-                log.warn("LLM returned blank response during first-touch scenario, fallback used");
-                return new LlmAnswer(fallback, true);
-            }
-            return new LlmAnswer(response, false);
-        } catch (Exception e) {
-            log.warn("LLM fallback used during first-touch scenario: {}", e.getMessage());
-            return new LlmAnswer(fallback, true);
-        }
     }
 
     private boolean hasContact(IncomingMessage incoming) {
@@ -178,9 +136,6 @@ public class FirstTouchScenario implements FsmScenario {
 
     public boolean sideEffecting() {
         return true;
-    }
-
-    private record LlmAnswer(String text, boolean fallbackUsed) {
     }
 
     private enum FirstTouchSignal {

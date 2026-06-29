@@ -67,7 +67,7 @@ INSERT INTO semantic_sources (
     ('AERIS_MENU_WINE_SOURCE', 'MENU_PDF', 'Винная карта AERIS', 'AERIS', 'minio://astor-media/content/aeris/menu/wine/WINE_MENU_2026_FINAL.pdf', 'AERIS_MENU_WINE', '{"domain":"QUIET_GUIDE","ragScope":"menu"}'::jsonb),
     ('AERIS_GUEST_GUIDE_SOURCE', 'GUIDE_HTML', 'Инструкция гостя Astor Butler', 'AERIS', 'docs/guest-guide.html', NULL, '{"domain":"GUEST_SUPPORT","ragScope":"instructions"}'::jsonb),
     ('AERIS_STAFF_GUIDE_SOURCE', 'GUIDE_HTML', 'Инструкция команды Astor Butler', 'AERIS', 'docs/staff-guide.html', NULL, '{"domain":"STAFF_SUPPORT","ragScope":"instructions"}'::jsonb),
-    ('ASTOR_FSM_SCENARIOS_SOURCE', 'FSM_SPEC', 'FSM сценарии Astor Butler', 'AERIS', 'docs/FSM_SCENARIOS.md', NULL, '{"domain":"FSM","ragScope":"scenario_graph"}'::jsonb)
+    ('ASTOR_FSM_SCENARIOS_SOURCE', 'FSM_SPEC', 'FSM сценарии Astor Butler', 'AERIS', 'docs/fsm/FSM_SCENARIOS.md', NULL, '{"domain":"FSM","ragScope":"scenario_graph"}'::jsonb)
 ON CONFLICT (source_code) DO UPDATE SET
     source_type = EXCLUDED.source_type,
     title = EXCLUDED.title,

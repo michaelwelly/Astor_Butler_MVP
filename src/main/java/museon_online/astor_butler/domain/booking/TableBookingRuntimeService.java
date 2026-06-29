@@ -69,8 +69,10 @@ public class TableBookingRuntimeService {
             LocalDate requestedDate,
             LocalTime requestedTime,
             Integer partySize,
+            String tableCode,
             String preferredZone,
             String seatingPreference,
+            Boolean seatingPreferenceResolved,
             String originalText
     ) {
         static DraftView from(TableBookingDraftStorage.Draft draft) {
@@ -84,8 +86,10 @@ public class TableBookingRuntimeService {
                     draft.requestedDate(),
                     draft.requestedTime(),
                     draft.partySize(),
+                    draft.tableCode(),
                     draft.preferredZone(),
                     draft.seatingPreference(),
+                    draft.seatingPreferenceResolved(),
                     draft.originalText()
             );
         }

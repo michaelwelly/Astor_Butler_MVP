@@ -9,7 +9,9 @@ import museon_online.astor_butler.fsm.core.BotState;
 import museon_online.astor_butler.fsm.scenario.ScenarioRouter;
 import museon_online.astor_butler.fsm.storage.FSMStorage;
 import museon_online.astor_butler.kafka.UserEventProducer;
-import museon_online.astor_butler.llm.OllamaClient;
+import museon_online.astor_butler.model.ModelGateway;
+import museon_online.astor_butler.model.ModelTextRequest;
+import museon_online.astor_butler.model.ModelTextResponse;
 import museon_online.astor_butler.telegram.adapter.TelegramSystemNotifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -22,7 +24,7 @@ import java.util.List;
 public class MessageGatewayService {
 
     private final FSMStorage fsmStorage;
-    private final OllamaClient ollamaClient;
+    private final ModelGateway modelGateway;
     private final TelegramIntakeService telegramIntakeService;
     private final ScenarioRouter scenarioRouter;
     private final UserEventProducer userEventProducer;
@@ -126,7 +128,17 @@ public class MessageGatewayService {
         }
 
         if (text.isBlank()) {
-            return fallback(incoming, currentState, "Empty message");
+            return finish(incoming, currentState, OutgoingMessage.of(
+                    incoming,
+                    "",
+                    currentState.name(),
+                    false,
+                    false,
+                    false,
+                    false,
+                    AdminAlert.none(),
+                    List.of("EMPTY_MESSAGE_IGNORED", "SKIP_GUEST_FSM")
+            ));
         }
 
         return aiAssistedReply(incoming, currentState, text);
@@ -146,7 +158,13 @@ public class MessageGatewayService {
                 """.formatted(llmScenarioPromptCatalog.tableBookingContract(), currentState, text);
 
         try {
-            String aiText = ollamaClient.ask(prompt);
+            ModelTextResponse modelResponse = modelGateway.generateText(ModelTextRequest.of(
+                    prompt,
+                    "MessageGateway",
+                    currentState.name(),
+                    "fallback-reply"
+            ));
+            String aiText = modelResponse.text();
             if (aiText == null || aiText.isBlank()) {
                 return fallback(incoming, currentState, "LLM returned blank response");
             }

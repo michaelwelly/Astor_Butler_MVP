@@ -8,6 +8,9 @@ import museon_online.astor_butler.domain.booking.TableReservationService;
 import museon_online.astor_butler.domain.booking.TableReservationStatus;
 import museon_online.astor_butler.domain.media.AerisMediaCatalog;
 import museon_online.astor_butler.domain.media.MediaAsset;
+import museon_online.astor_butler.fsm.understanding.InputIntent;
+import museon_online.astor_butler.fsm.understanding.SlotValue;
+import museon_online.astor_butler.fsm.understanding.UnderstoodInput;
 import museon_online.astor_butler.service.message.IncomingMessage;
 import museon_online.astor_butler.service.message.OutgoingMessage;
 import org.junit.jupiter.api.BeforeEach;
@@ -17,11 +20,14 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import java.time.Clock;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -50,10 +56,26 @@ class TableBookingScenarioTest {
     private AerisMediaCatalog mediaCatalog;
 
     private TableBookingScenario scenario;
+    private BookingTimeProvider timeProvider;
 
     @BeforeEach
     void setUp() {
-        scenario = new TableBookingScenario(fsmStorage, draftStorage, tableReservationService, mediaCatalog);
+        timeProvider = new BookingTimeProvider(Clock.fixed(
+                Instant.parse("2026-06-26T09:32:00Z"),
+                BookingTimeProvider.VENUE_ZONE
+        ));
+        TableBookingDraftMerger draftMerger = new TableBookingDraftMerger(draftStorage, timeProvider);
+        ReflectionTestUtils.setField(draftMerger, "defaultVenueCode", "AERIS");
+        scenario = new TableBookingScenario(
+                fsmStorage,
+                draftStorage,
+                tableReservationService,
+                mediaCatalog,
+                draftMerger,
+                new TableBookingStepRegistry(),
+                new BookingPhraseService(),
+                timeProvider
+        );
         lenient().when(mediaCatalog.floorPlan()).thenReturn(new MediaAsset(
                 "AERIS_FLOOR_PLAN",
                 "AERIS",
@@ -67,9 +89,9 @@ class TableBookingScenarioTest {
                 true
         ));
         ReflectionTestUtils.setField(scenario, "planPdfAssetCode", "AERIS_FLOOR_PLAN");
-        ReflectionTestUtils.setField(scenario, "defaultVenueCode", "AERIS");
         ReflectionTestUtils.setField(scenario, "managerTelegramId", 876857557L);
         ReflectionTestUtils.setField(scenario, "hostessChatId", "-1004291419562");
+        lenient().when(tableReservationService.createReservation(any(TableReservationCommand.class))).thenReturn(order(44L));
     }
 
     @Test
@@ -91,16 +113,28 @@ class TableBookingScenarioTest {
 
         OutgoingMessage outgoing = scenario.handle(incoming, BotState.READY_FOR_DIALOG, incoming.text());
 
-        assertThat(outgoing.nextState()).isEqualTo(BotState.TABLE_BOOKING_COLLECT_DATE.name());
-        assertThat(outgoing.actions()).contains("SEND_HALL_PLAN", "ASK_DATE");
-        assertThat(outgoing.text()).contains("Сначала отправляю план зала AERIS");
+        assertThat(outgoing.nextState()).isEqualTo(BotState.TABLE_BOOKING_WAIT_TABLE_SELECTION.name());
+        assertThat(outgoing.actions()).contains("SEND_HALL_PLAN", "ASK_TABLE_SELECTION");
+        assertThat(outgoing.text()).contains("Отправляю план зала AERIS");
         assertThat(outgoing.metadata()).containsEntry("documentObjectKey", "content/aeris/floor-plan/AERIS_PLAN.pdf");
-        verify(fsmStorage).setState(incoming.chatId(), BotState.TABLE_BOOKING_COLLECT_DATE);
+        verify(fsmStorage).setState(incoming.chatId(), BotState.TABLE_BOOKING_WAIT_TABLE_SELECTION);
     }
 
     @Test
     void doesNotResendHallPlanDuringActiveSlotCollection() {
         IncomingMessage incoming = telegram("завтра");
+        when(draftStorage.find(incoming.chatId())).thenReturn(Optional.of(new TableBookingDraftStorage.Draft(
+                "AERIS",
+                null,
+                null,
+                null,
+                null,
+                null,
+                "18",
+                null,
+                null,
+                "18 стол"
+        )));
 
         OutgoingMessage outgoing = scenario.handle(incoming, BotState.TABLE_BOOKING_COLLECT_DATE, incoming.text());
 
@@ -111,28 +145,128 @@ class TableBookingScenarioTest {
     }
 
     @Test
-    void resendsHallPlanWhenGuestRepeatsBookingIntentDuringTableSelection() {
+    void keepsExistingHallPlanWhenGuestRepeatsBookingIntentDuringTableSelection() {
         IncomingMessage incoming = telegram("Хочу забронировать столик завтра на 20:00 на двоих");
 
         OutgoingMessage outgoing = scenario.handle(incoming, BotState.TABLE_BOOKING_WAIT_TABLE_SELECTION, incoming.text());
 
         assertThat(outgoing.nextState()).isEqualTo(BotState.TABLE_BOOKING_WAIT_TABLE_SELECTION.name());
-        assertThat(outgoing.actions()).contains("SEND_HALL_PLAN", "ASK_TABLE_SELECTION");
-        assertThat(outgoing.metadata()).containsEntry("documentObjectKey", "content/aeris/floor-plan/AERIS_PLAN.pdf");
+        assertThat(outgoing.actions()).contains("USE_EXISTING_HALL_PLAN", "ASK_TABLE_SELECTION");
+        assertThat(outgoing.actions()).doesNotContain("SEND_HALL_PLAN");
+        assertThat(outgoing.metadata()).doesNotContainKey("documentObjectKey");
+    }
+
+    @Test
+    void acceptsPartySizeReplyDuringTableSelectionWithoutRepeatingGuestQuestion() {
+        AtomicReference<TableBookingDraftStorage.Draft> storedDraft = new AtomicReference<>(new TableBookingDraftStorage.Draft(
+                "AERIS",
+                Instant.parse("2026-06-06T15:00:00Z"),
+                Instant.parse("2026-06-06T17:00:00Z"),
+                LocalDate.of(2026, 6, 6),
+                LocalTime.of(20, 0),
+                null,
+                "7",
+                "WINE_ROOM",
+                "тихий стол в винной комнате",
+                "хочу забронировать столик завтра в восемь вечера, тихий стол в винной комнате"
+        ));
+        doAnswer(invocation -> Optional.ofNullable(storedDraft.get()))
+                .when(draftStorage).find(eq(1773317437L));
+        doAnswer(invocation -> {
+            storedDraft.set(invocation.getArgument(1));
+            return null;
+        }).when(draftStorage).save(eq(1773317437L), any(TableBookingDraftStorage.Draft.class));
+        when(tableReservationService.createReservation(any(TableReservationCommand.class))).thenReturn(order(44L));
+
+        OutgoingMessage outgoing = scenario.handle(
+                telegram("На троих"),
+                BotState.TABLE_BOOKING_WAIT_TABLE_SELECTION,
+                "На троих"
+        );
+
+        assertThat(outgoing.nextState()).isEqualTo(BotState.READY_FOR_DIALOG.name());
+        assertThat(outgoing.actions()).contains("RESERVATION_CREATED", "WAIT_HOSTESS_CONFIRMATION", "RETURN_MAIN_MENU");
+        assertThat(outgoing.actions()).doesNotContain("ASK_PARTY_SIZE", "SEND_HALL_PLAN");
+        assertThat(outgoing.metadata()).doesNotContainKey("documentObjectKey");
+        assertThat(storedDraft.get().partySize()).isEqualTo(3);
+        verify(tableReservationService).createReservation(any(TableReservationCommand.class));
+    }
+
+    @Test
+    void doesNotTreatTableSelectionAsTimeWhileCollectingDate() {
+        AtomicReference<TableBookingDraftStorage.Draft> storedDraft = new AtomicReference<>();
+        doAnswer(invocation -> Optional.ofNullable(storedDraft.get()))
+                .when(draftStorage).find(eq(1773317437L));
+        doAnswer(invocation -> {
+            storedDraft.set(invocation.getArgument(1));
+            return null;
+        }).when(draftStorage).save(eq(1773317437L), any(TableBookingDraftStorage.Draft.class));
+
+        OutgoingMessage stillNeedsDate = scenario.handle(
+                telegram("18 стол"),
+                BotState.TABLE_BOOKING_COLLECT_DATE,
+                "18 стол"
+        );
+
+        assertThat(stillNeedsDate.nextState()).isEqualTo(BotState.TABLE_BOOKING_COLLECT_DATE.name());
+        assertThat(stillNeedsDate.actions()).contains("ASK_DATE");
+        assertThat(storedDraft.get().requestedTime()).isNull();
+
+        OutgoingMessage timePrompt = scenario.handle(
+                telegram("На завтра"),
+                BotState.TABLE_BOOKING_COLLECT_DATE,
+                "На завтра"
+        );
+
+        assertThat(timePrompt.nextState()).isEqualTo(BotState.TABLE_BOOKING_COLLECT_TIME.name());
+        assertThat(timePrompt.actions()).contains("ASK_TIME");
+        assertThat(storedDraft.get().requestedDate()).isNotNull();
+        assertThat(storedDraft.get().requestedTime()).isNull();
+    }
+
+    @Test
+    void acceptsRussianPartySizeVariantsWhileCollectingPartySize() {
+        for (String reply : java.util.List.of("На троих", "3", "трое")) {
+            AtomicReference<TableBookingDraftStorage.Draft> storedDraft = new AtomicReference<>(new TableBookingDraftStorage.Draft(
+                    "AERIS",
+                    Instant.parse("2026-06-06T15:00:00Z"),
+                    Instant.parse("2026-06-06T17:00:00Z"),
+                    LocalDate.of(2026, 6, 6),
+                    LocalTime.of(20, 0),
+                    null,
+                    "18",
+                    null,
+                    null,
+                    "Хочу стол завтра в 20:00"
+            ));
+            doAnswer(invocation -> Optional.ofNullable(storedDraft.get()))
+                    .when(draftStorage).find(eq(1773317437L));
+            doAnswer(invocation -> {
+                storedDraft.set(invocation.getArgument(1));
+                return null;
+            }).when(draftStorage).save(eq(1773317437L), any(TableBookingDraftStorage.Draft.class));
+            OutgoingMessage plan = scenario.handle(
+                    telegram(reply),
+                    BotState.TABLE_BOOKING_COLLECT_PARTY_SIZE,
+                    reply
+            );
+
+            assertThat(plan.nextState()).as(reply).isEqualTo(BotState.READY_FOR_DIALOG.name());
+            assertThat(plan.actions()).as(reply).contains("RESERVATION_CREATED", "WAIT_HOSTESS_CONFIRMATION", "RETURN_MAIN_MENU");
+            assertThat(plan.actions()).as(reply).doesNotContain("ASK_PARTY_SIZE");
+            assertThat(storedDraft.get().partySize()).as(reply).isEqualTo(3);
+        }
     }
 
     @Test
     void acceptsExplicitTableSelectionDuringTableSelection() {
         IncomingMessage incoming = telegram("17");
         when(draftStorage.find(incoming.chatId())).thenReturn(Optional.of(draft()));
-        when(tableReservationService.createReservation(any(TableReservationCommand.class))).thenReturn(order(44L));
 
         OutgoingMessage outgoing = scenario.handle(incoming, BotState.TABLE_BOOKING_WAIT_TABLE_SELECTION, incoming.text());
 
-        assertThat(outgoing.nextState()).isEqualTo(BotState.TABLE_BOOKING_WAIT_HOSTESS_CONFIRMATION.name());
-        assertThat(outgoing.actions()).contains("TABLE_SELECTED", "RESERVATION_CREATED", "WAIT_HOSTESS_CONFIRMATION");
-        verify(tableReservationService).createReservation(any(TableReservationCommand.class));
-        verify(draftStorage).clear(incoming.chatId());
+        assertThat(outgoing.nextState()).isEqualTo(BotState.READY_FOR_DIALOG.name());
+        assertThat(outgoing.actions()).contains("RESERVATION_CREATED", "WAIT_HOSTESS_CONFIRMATION", "RETURN_MAIN_MENU");
     }
 
     @Test
@@ -146,6 +280,7 @@ class TableBookingScenarioTest {
                 null,
                 null,
                 2,
+                null,
                 "MAIN_HALL",
                 "тихий стол",
                 "Хочу забронировать столик завтра на 20:00 на двоих"
@@ -168,7 +303,44 @@ class TableBookingScenarioTest {
         OutgoingMessage outgoing = scenario.handle(incoming, BotState.TABLE_BOOKING_WAIT_TABLE_SELECTION, incoming.text());
 
         assertThat(outgoing.nextState()).isEqualTo(BotState.TABLE_BOOKING_COLLECT_DATE.name());
-        assertThat(outgoing.actions()).contains("ASK_BOOKING_DETAILS");
+        assertThat(outgoing.actions()).contains("ASK_DATE");
+        assertThat(outgoing.metadata()).containsKey("replyKeyboardRows");
+    }
+
+    @Test
+    void interpretsCurrentFridayWithinCurrentWeekAndStillAsksForTime() {
+        AtomicReference<TableBookingDraftStorage.Draft> storedDraft = new AtomicReference<>(new TableBookingDraftStorage.Draft(
+                "AERIS",
+                null,
+                null,
+                null,
+                null,
+                null,
+                "9",
+                null,
+                null,
+                "9 стол"
+        ));
+        doAnswer(invocation -> Optional.ofNullable(storedDraft.get()))
+                .when(draftStorage).find(eq(1773317437L));
+        doAnswer(invocation -> {
+            storedDraft.set(invocation.getArgument(1));
+            return null;
+        }).when(draftStorage).save(eq(1773317437L), any(TableBookingDraftStorage.Draft.class));
+
+        OutgoingMessage outgoing = scenario.handle(
+                telegram("На пятницу"),
+                BotState.TABLE_BOOKING_COLLECT_DATE,
+                "На пятницу"
+        );
+
+        assertThat(outgoing.nextState()).isEqualTo(BotState.TABLE_BOOKING_COLLECT_TIME.name());
+        assertThat(outgoing.actions()).contains("ASK_TIME");
+        assertThat(outgoing.metadata()).containsKey("replyKeyboardRows");
+        assertThat(storedDraft.get().requestedDate()).isEqualTo(LocalDate.of(2026, 6, 26));
+        assertThat(storedDraft.get().requestedTime()).isNull();
+        assertThat(storedDraft.get().requestedStartAt()).isNull();
+        org.mockito.Mockito.verifyNoInteractions(tableReservationService);
     }
 
     @Test
@@ -188,8 +360,16 @@ class TableBookingScenarioTest {
                 BotState.READY_FOR_DIALOG,
                 "Хочу забронировать столик"
         );
-        assertThat(datePrompt.nextState()).isEqualTo(BotState.TABLE_BOOKING_COLLECT_DATE.name());
-        assertThat(datePrompt.actions()).contains("SEND_HALL_PLAN", "ASK_DATE");
+        assertThat(datePrompt.nextState()).isEqualTo(BotState.TABLE_BOOKING_WAIT_TABLE_SELECTION.name());
+        assertThat(datePrompt.actions()).contains("SEND_HALL_PLAN", "ASK_TABLE_SELECTION");
+
+        OutgoingMessage tablePrompt = scenario.handle(
+                telegram("18 стол"),
+                BotState.TABLE_BOOKING_WAIT_TABLE_SELECTION,
+                "18 стол"
+        );
+        assertThat(tablePrompt.nextState()).isEqualTo(BotState.TABLE_BOOKING_COLLECT_DATE.name());
+        assertThat(tablePrompt.actions()).contains("ASK_DATE");
 
         OutgoingMessage timePrompt = scenario.handle(
                 telegram(bookingDateText),
@@ -197,6 +377,7 @@ class TableBookingScenarioTest {
                 bookingDateText
         );
         assertThat(timePrompt.nextState()).isEqualTo(BotState.TABLE_BOOKING_COLLECT_TIME.name());
+        assertThat(timePrompt.metadata()).containsKey("replyKeyboardRows");
 
         OutgoingMessage partyPrompt = scenario.handle(
                 telegram("20:00"),
@@ -204,14 +385,16 @@ class TableBookingScenarioTest {
                 "20:00"
         );
         assertThat(partyPrompt.nextState()).isEqualTo(BotState.TABLE_BOOKING_COLLECT_PARTY_SIZE.name());
+        assertThat(partyPrompt.removeKeyboard()).isTrue();
+        assertThat(partyPrompt.metadata()).doesNotContainKey("replyKeyboardRows");
 
         OutgoingMessage plan = scenario.handle(
                 telegram("на двоих"),
                 BotState.TABLE_BOOKING_COLLECT_PARTY_SIZE,
                 "на двоих"
         );
-        assertThat(plan.nextState()).isEqualTo(BotState.TABLE_BOOKING_WAIT_TABLE_SELECTION.name());
-        assertThat(plan.actions()).contains("ASK_TABLE_SELECTION");
+        assertThat(plan.nextState()).isEqualTo(BotState.READY_FOR_DIALOG.name());
+        assertThat(plan.actions()).contains("RESERVATION_CREATED", "WAIT_HOSTESS_CONFIRMATION", "RETURN_MAIN_MENU");
         assertThat(plan.actions()).doesNotContain("SEND_HALL_PLAN");
         assertThat(plan.metadata()).doesNotContainKey("documentObjectKey");
         assertThat(storedDraft.get().requestedDate()).isEqualTo(bookingDate);
@@ -222,7 +405,18 @@ class TableBookingScenarioTest {
 
     @Test
     void understandsEveningTimeAndCompactPartySizeReplies() {
-        AtomicReference<TableBookingDraftStorage.Draft> storedDraft = new AtomicReference<>();
+        AtomicReference<TableBookingDraftStorage.Draft> storedDraft = new AtomicReference<>(new TableBookingDraftStorage.Draft(
+                "AERIS",
+                null,
+                null,
+                null,
+                null,
+                null,
+                "18",
+                null,
+                null,
+                "18 стол"
+        ));
         doAnswer(invocation -> Optional.ofNullable(storedDraft.get()))
                 .when(draftStorage).find(eq(1773317437L));
         doAnswer(invocation -> {
@@ -234,10 +428,209 @@ class TableBookingScenarioTest {
         scenario.handle(telegram("в 8 вечера"), BotState.TABLE_BOOKING_COLLECT_TIME, "в 8 вечера");
         OutgoingMessage plan = scenario.handle(telegram("на 2х"), BotState.TABLE_BOOKING_COLLECT_PARTY_SIZE, "на 2х");
 
-        assertThat(plan.nextState()).isEqualTo(BotState.TABLE_BOOKING_WAIT_TABLE_SELECTION.name());
-        assertThat(plan.actions()).contains("ASK_TABLE_SELECTION");
+        assertThat(plan.nextState()).isEqualTo(BotState.READY_FOR_DIALOG.name());
+        assertThat(plan.actions()).contains("RESERVATION_CREATED", "WAIT_HOSTESS_CONFIRMATION", "RETURN_MAIN_MENU");
         assertThat(storedDraft.get().requestedTime()).isEqualTo(LocalTime.of(20, 0));
         assertThat(storedDraft.get().partySize()).isEqualTo(2);
+    }
+
+    @Test
+    void asksForTimeAfterDucklingWeekdayDateInsteadOfCreatingMidnightOrder() {
+        AtomicReference<TableBookingDraftStorage.Draft> storedDraft = new AtomicReference<>(new TableBookingDraftStorage.Draft(
+                "AERIS",
+                null,
+                null,
+                null,
+                null,
+                null,
+                "9",
+                null,
+                null,
+                "9 стол"
+        ));
+        doAnswer(invocation -> Optional.ofNullable(storedDraft.get()))
+                .when(draftStorage).find(eq(1773317437L));
+        doAnswer(invocation -> {
+            storedDraft.set(invocation.getArgument(1));
+            return null;
+        }).when(draftStorage).save(eq(1773317437L), any(TableBookingDraftStorage.Draft.class));
+        UnderstoodInput understood = new UnderstoodInput(
+                "На пятницу",
+                "на пятницу",
+                InputIntent.PROVIDE_DATE,
+                0.9,
+                Map.of("date", new SlotValue("date", "2026-07-03", 0.82)),
+                List.of(InputIntent.PROVIDE_DATE),
+                false,
+                null
+        );
+
+        OutgoingMessage outgoing = scenario.handle(
+                telegram("На пятницу"),
+                BotState.TABLE_BOOKING_COLLECT_DATE,
+                "На пятницу",
+                understood
+        );
+
+        assertThat(outgoing.nextState()).isEqualTo(BotState.TABLE_BOOKING_COLLECT_TIME.name());
+        assertThat(outgoing.actions()).contains("ASK_TIME");
+        assertThat(storedDraft.get().requestedDate()).isEqualTo(LocalDate.of(2026, 7, 3));
+        assertThat(storedDraft.get().requestedTime()).isNull();
+        assertThat(storedDraft.get().requestedStartAt()).isNull();
+        org.mockito.Mockito.verifyNoInteractions(tableReservationService);
+    }
+
+    @Test
+    void usesUnderstandingSlotsInsteadOfRepeatingCurrentQuestion() {
+        AtomicReference<TableBookingDraftStorage.Draft> storedDraft = new AtomicReference<>(new TableBookingDraftStorage.Draft(
+                "AERIS",
+                Instant.parse("2026-06-06T15:00:00Z"),
+                Instant.parse("2026-06-06T17:00:00Z"),
+                LocalDate.of(2026, 6, 6),
+                LocalTime.of(20, 0),
+                null,
+                "18",
+                null,
+                null,
+                "18 стол | завтра | 20:00"
+        ));
+        doAnswer(invocation -> Optional.ofNullable(storedDraft.get()))
+                .when(draftStorage).find(eq(1773317437L));
+        doAnswer(invocation -> {
+            storedDraft.set(invocation.getArgument(1));
+            return null;
+        }).when(draftStorage).save(eq(1773317437L), any(TableBookingDraftStorage.Draft.class));
+
+        UnderstoodInput understood = new UnderstoodInput(
+                "На троих",
+                "на троих",
+                InputIntent.PROVIDE_PARTY_SIZE,
+                0.93,
+                Map.of("partySize", new SlotValue("partySize", "3", 0.98)),
+                List.of(InputIntent.PROVIDE_PARTY_SIZE),
+                false,
+                null
+        );
+
+        OutgoingMessage outgoing = scenario.handle(
+                telegram("На троих"),
+                BotState.TABLE_BOOKING_COLLECT_PARTY_SIZE,
+                "На троих",
+                understood
+        );
+
+        assertThat(outgoing.nextState()).isEqualTo(BotState.READY_FOR_DIALOG.name());
+        assertThat(outgoing.actions()).contains("RESERVATION_CREATED", "WAIT_HOSTESS_CONFIRMATION", "RETURN_MAIN_MENU");
+        assertThat(outgoing.actions()).doesNotContain("ASK_PARTY_SIZE");
+        assertThat(storedDraft.get().partySize()).isEqualTo(3);
+    }
+
+    @Test
+    void createsReservationAfterGuestDeclinesSeatingPreference() {
+        AtomicReference<TableBookingDraftStorage.Draft> storedDraft = new AtomicReference<>(new TableBookingDraftStorage.Draft(
+                "AERIS",
+                Instant.parse("2026-06-06T15:00:00Z"),
+                Instant.parse("2026-06-06T17:00:00Z"),
+                LocalDate.of(2026, 6, 6),
+                LocalTime.of(20, 0),
+                3,
+                "18",
+                null,
+                null,
+                false,
+                "Хочу стол"
+        ));
+        doAnswer(invocation -> Optional.ofNullable(storedDraft.get()))
+                .when(draftStorage).find(eq(1773317437L));
+        doAnswer(invocation -> {
+            storedDraft.set(invocation.getArgument(1));
+            return null;
+        }).when(draftStorage).save(eq(1773317437L), any(TableBookingDraftStorage.Draft.class));
+        when(tableReservationService.createReservation(any(TableReservationCommand.class))).thenReturn(order(44L));
+
+        OutgoingMessage outgoing = scenario.handle(
+                telegram("нет"),
+                BotState.TABLE_BOOKING_COLLECT_SEATING_PREFERENCE,
+                "нет"
+        );
+
+        assertThat(outgoing.nextState()).isEqualTo(BotState.READY_FOR_DIALOG.name());
+        assertThat(outgoing.actions()).contains("RESERVATION_CREATED", "WAIT_HOSTESS_CONFIRMATION", "RETURN_MAIN_MENU");
+        assertThat(storedDraft.get().seatingPreference()).isNull();
+        assertThat(storedDraft.get().seatingPreferenceResolved()).isTrue();
+        verify(tableReservationService).createReservation(any(TableReservationCommand.class));
+    }
+
+    @Test
+    void storesSeatingPreferenceBeforeCreatingReservation() {
+        AtomicReference<TableBookingDraftStorage.Draft> storedDraft = new AtomicReference<>(new TableBookingDraftStorage.Draft(
+                "AERIS",
+                Instant.parse("2026-06-06T15:00:00Z"),
+                Instant.parse("2026-06-06T17:00:00Z"),
+                LocalDate.of(2026, 6, 6),
+                LocalTime.of(20, 0),
+                2,
+                "7",
+                "WINE_ROOM",
+                null,
+                false,
+                "Хочу стол"
+        ));
+        doAnswer(invocation -> Optional.ofNullable(storedDraft.get()))
+                .when(draftStorage).find(eq(1773317437L));
+        doAnswer(invocation -> {
+            storedDraft.set(invocation.getArgument(1));
+            return null;
+        }).when(draftStorage).save(eq(1773317437L), any(TableBookingDraftStorage.Draft.class));
+        when(tableReservationService.createReservation(any(TableReservationCommand.class))).thenReturn(order(44L));
+
+        OutgoingMessage outgoing = scenario.handle(
+                telegram("тихий стол не у прохода"),
+                BotState.TABLE_BOOKING_COLLECT_SEATING_PREFERENCE,
+                "тихий стол не у прохода"
+        );
+
+        assertThat(outgoing.nextState()).isEqualTo(BotState.READY_FOR_DIALOG.name());
+        assertThat(storedDraft.get().seatingPreference()).contains("тихий стол");
+        assertThat(storedDraft.get().seatingPreferenceResolved()).isTrue();
+        verify(tableReservationService).createReservation(any(TableReservationCommand.class));
+    }
+
+    @Test
+    void storesAnyFreeTextAsSeatingPreferenceAtPreferenceStep() {
+        AtomicReference<TableBookingDraftStorage.Draft> storedDraft = new AtomicReference<>(new TableBookingDraftStorage.Draft(
+                "AERIS",
+                Instant.parse("2026-07-03T15:00:00Z"),
+                Instant.parse("2026-07-03T17:00:00Z"),
+                LocalDate.of(2026, 7, 3),
+                LocalTime.of(20, 0),
+                3,
+                "9",
+                null,
+                null,
+                false,
+                "Забронировать стол | 9 стол | На пятницу | 20:00 | На троих"
+        ));
+        doAnswer(invocation -> Optional.ofNullable(storedDraft.get()))
+                .when(draftStorage).find(eq(1773317437L));
+        doAnswer(invocation -> {
+            storedDraft.set(invocation.getArgument(1));
+            return null;
+        }).when(draftStorage).save(eq(1773317437L), any(TableBookingDraftStorage.Draft.class));
+        when(tableReservationService.createReservation(any(TableReservationCommand.class))).thenReturn(order(77L));
+
+        OutgoingMessage outgoing = scenario.handle(
+                telegram("Возможно будет четыре"),
+                BotState.TABLE_BOOKING_COLLECT_SEATING_PREFERENCE,
+                "Возможно будет четыре"
+        );
+
+        assertThat(outgoing.nextState()).isEqualTo(BotState.READY_FOR_DIALOG.name());
+        assertThat(storedDraft.get().seatingPreference()).isEqualTo("возможно будет четыре");
+        assertThat(storedDraft.get().seatingPreferenceResolved()).isTrue();
+        var commandCaptor = forClass(TableReservationCommand.class);
+        verify(tableReservationService).createReservation(commandCaptor.capture());
+        assertThat(commandCaptor.getValue().seatingPreference()).isEqualTo("возможно будет четыре");
     }
 
     private IncomingMessage telegram(String text) {

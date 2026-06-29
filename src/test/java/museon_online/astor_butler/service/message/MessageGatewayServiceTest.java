@@ -10,6 +10,7 @@ import museon_online.astor_butler.fsm.scenario.ConciergeScenario;
 import museon_online.astor_butler.fsm.scenario.EventBookingScenario;
 import museon_online.astor_butler.fsm.scenario.FeedbackScenario;
 import museon_online.astor_butler.fsm.scenario.FirstTouchScenario;
+import museon_online.astor_butler.fsm.scenario.FsmScenario;
 import museon_online.astor_butler.fsm.scenario.HiddenHeartScenario;
 import museon_online.astor_butler.fsm.scenario.ImpactMeterScenario;
 import museon_online.astor_butler.fsm.scenario.MainMenuScenario;
@@ -26,13 +27,15 @@ import museon_online.astor_butler.fsm.scenario.TableBookingScenario;
 import museon_online.astor_butler.fsm.storage.FSMStorage;
 import museon_online.astor_butler.fsm.understanding.GuestInputUnderstandingService;
 import museon_online.astor_butler.kafka.UserEventProducer;
-import museon_online.astor_butler.llm.OllamaClient;
+import museon_online.astor_butler.model.ModelGateway;
 import museon_online.astor_butler.telegram.adapter.TelegramSystemNotifier;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.web.client.ResourceAccessException;
 
@@ -40,17 +43,19 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 class MessageGatewayServiceTest {
 
     @Mock
     private FSMStorage fsmStorage;
 
     @Mock
-    private OllamaClient ollamaClient;
+    private ModelGateway modelGateway;
 
     @Mock
     private TelegramIntakeService telegramIntakeService;
@@ -128,6 +133,25 @@ class MessageGatewayServiceTest {
 
     @BeforeEach
     void setUp() {
+        bridgeUnderstandingAwareCalls(
+                tableBookingScenario,
+                eventBookingScenario,
+                changeCancelScenario,
+                managerHelpScenario,
+                feedbackScenario,
+                preferenceScenario,
+                conciergeScenario,
+                safePlayScenario,
+                merchScenario,
+                menuAssetsScenario,
+                quietGuideScenario,
+                impactMeterScenario,
+                smartTipScenario,
+                hiddenHeartScenario,
+                artAuctionScenario,
+                mainMenuScenario,
+                recoveryScenario
+        );
         ScenarioRouter scenarioRouter = new ScenarioRouter(
                 fsmStorage,
                 firstTouchScenario,
@@ -152,7 +176,7 @@ class MessageGatewayServiceTest {
         );
         service = new MessageGatewayService(
                 fsmStorage,
-                ollamaClient,
+                modelGateway,
                 telegramIntakeService,
                 scenarioRouter,
                 userEventProducer,
@@ -165,6 +189,23 @@ class MessageGatewayServiceTest {
         ReflectionTestUtils.setField(service, "analyticsChatId", "100501");
         ReflectionTestUtils.setField(service, "systemChatId", "-5403153261");
         ReflectionTestUtils.setField(service, "logConversationsEnabled", true);
+    }
+
+    private void bridgeUnderstandingAwareCalls(FsmScenario... scenarios) {
+        for (FsmScenario scenario : scenarios) {
+            lenient().when(scenario.supports(any(), any(), any(), any()))
+                    .thenAnswer(invocation -> scenario.supports(
+                            invocation.getArgument(0),
+                            invocation.getArgument(1),
+                            invocation.getArgument(2)
+                    ));
+            lenient().when(scenario.handle(any(), any(), any(), any()))
+                    .thenAnswer(invocation -> scenario.handle(
+                            invocation.getArgument(0),
+                            invocation.getArgument(1),
+                            invocation.getArgument(2)
+                    ));
+        }
     }
 
     @Test
@@ -183,7 +224,7 @@ class MessageGatewayServiceTest {
                 .thenReturn(false);
         when(mainMenuScenario.supports(eq(incoming), eq(BotState.READY_FOR_DIALOG), eq(routeText)))
                 .thenReturn(false);
-        when(ollamaClient.ask(any())).thenThrow(new ResourceAccessException("Read timed out"));
+        when(modelGateway.generateText(any())).thenThrow(new ResourceAccessException("Read timed out"));
 
         OutgoingMessage outgoing = service.handle(incoming);
 
@@ -226,7 +267,7 @@ class MessageGatewayServiceTest {
 
         assertThat(outgoing.nextState()).isEqualTo(BotState.TABLE_BOOKING_WAIT_TABLE_SELECTION.name());
         assertThat(outgoing.metadata()).containsEntry("documentObjectKey", "content/aeris/floor-plan/AERIS_PLAN.pdf");
-        verify(ollamaClient, never()).ask(any());
+        verify(modelGateway, never()).generateText(any());
         verify(userEventProducer).publishIncomingMessage(incoming, BotState.READY_FOR_DIALOG, outgoing);
         verify(fsmTimelineWriter).append(any(FsmTimelineEvent.class));
     }
@@ -272,7 +313,7 @@ class MessageGatewayServiceTest {
 
         assertThat(outgoing.nextState()).isEqualTo(BotState.READY_FOR_DIALOG.name());
         assertThat(outgoing.actions()).containsExactly("MAIN_MENU_READY");
-        verify(ollamaClient, never()).ask(any());
+        verify(modelGateway, never()).generateText(any());
         verify(userEventProducer).publishIncomingMessage(incoming, BotState.READY_FOR_DIALOG, outgoing);
     }
 
@@ -316,7 +357,7 @@ class MessageGatewayServiceTest {
         assertThat(outgoing.nextState()).isEqualTo(BotState.READY_FOR_DIALOG.name());
         assertThat(outgoing.actions()).containsExactly("IMPACT_METER", "SHOW_IMPACT_SUMMARY");
         verify(mainMenuScenario, never()).supports(any(), any(), any());
-        verify(ollamaClient, never()).ask(any());
+        verify(modelGateway, never()).generateText(any());
         verify(userEventProducer).publishIncomingMessage(incoming, BotState.READY_FOR_DIALOG, outgoing);
     }
 
@@ -360,7 +401,7 @@ class MessageGatewayServiceTest {
         assertThat(outgoing.nextState()).isEqualTo(BotState.TIP_CONFIRMATION.name());
         assertThat(outgoing.actions()).containsExactly("SMART_TIP", "TIP_CONFIRMATION");
         verify(mainMenuScenario, never()).supports(any(), any(), any());
-        verify(ollamaClient, never()).ask(any());
+        verify(modelGateway, never()).generateText(any());
         verify(userEventProducer).publishIncomingMessage(incoming, BotState.READY_FOR_DIALOG, outgoing);
     }
 
@@ -406,7 +447,7 @@ class MessageGatewayServiceTest {
         assertThat(outgoing.nextState()).isEqualTo(BotState.DONATION_CONFIRMATION.name());
         assertThat(outgoing.actions()).containsExactly("HIDDEN_HEART", "DONATION_CONFIRMATION", "IMPACT_EVENT_DRAFT");
         verify(mainMenuScenario, never()).supports(any(), any(), any());
-        verify(ollamaClient, never()).ask(any());
+        verify(modelGateway, never()).generateText(any());
         verify(userEventProducer).publishIncomingMessage(incoming, BotState.READY_FOR_DIALOG, outgoing);
     }
 
@@ -454,7 +495,7 @@ class MessageGatewayServiceTest {
         assertThat(outgoing.nextState()).isEqualTo(BotState.AUCTION_WAIT_BID.name());
         assertThat(outgoing.actions()).containsExactly("ART_AUCTION", "VALIDATE_AUCTION_BID", "ASK_EXPLICIT_CONFIRMATION");
         verify(mainMenuScenario, never()).supports(any(), any(), any());
-        verify(ollamaClient, never()).ask(any());
+        verify(modelGateway, never()).generateText(any());
         verify(userEventProducer).publishIncomingMessage(incoming, BotState.READY_FOR_DIALOG, outgoing);
     }
 
@@ -489,7 +530,7 @@ class MessageGatewayServiceTest {
         assertThat(outgoing.adminAlert().required()).isTrue();
         assertThat(outgoing.actions()).containsExactly("MANAGER_HELP", "MANAGER_HELP_DIRECT_REQUEST", "ADMIN_ALERT", "RETURN_MAIN_MENU");
         verify(mainMenuScenario, never()).supports(any(), any(), any());
-        verify(ollamaClient, never()).ask(any());
+        verify(modelGateway, never()).generateText(any());
         verify(userEventProducer).publishIncomingMessage(incoming, BotState.READY_FOR_DIALOG, outgoing);
     }
 
@@ -530,7 +571,7 @@ class MessageGatewayServiceTest {
         assertThat(outgoing.adminAlert().required()).isTrue();
         assertThat(outgoing.actions()).containsExactly("FEEDBACK", "FEEDBACK_DIRECT_TEXT", "ADMIN_ALERT", "RETURN_MAIN_MENU");
         verify(mainMenuScenario, never()).supports(any(), any(), any());
-        verify(ollamaClient, never()).ask(any());
+        verify(modelGateway, never()).generateText(any());
         verify(userEventProducer).publishIncomingMessage(incoming, BotState.READY_FOR_DIALOG, outgoing);
     }
 
@@ -573,7 +614,7 @@ class MessageGatewayServiceTest {
         assertThat(outgoing.adminAlert().required()).isTrue();
         assertThat(outgoing.actions()).containsExactly("MERCH", "MERCH_DIRECT_REQUEST", "ADMIN_ALERT", "RETURN_MAIN_MENU");
         verify(mainMenuScenario, never()).supports(any(), any(), any());
-        verify(ollamaClient, never()).ask(any());
+        verify(modelGateway, never()).generateText(any());
         verify(userEventProducer).publishIncomingMessage(incoming, BotState.READY_FOR_DIALOG, outgoing);
     }
 
@@ -631,7 +672,7 @@ class MessageGatewayServiceTest {
         );
         verify(merchScenario, never()).supports(any(), any(), any());
         verify(mainMenuScenario, never()).supports(any(), any(), any());
-        verify(ollamaClient, never()).ask(any());
+        verify(modelGateway, never()).generateText(any());
         verify(userEventProducer).publishIncomingMessage(incoming, BotState.READY_FOR_DIALOG, outgoing);
     }
 
@@ -666,7 +707,7 @@ class MessageGatewayServiceTest {
         assertThat(outgoing.adminAlert().required()).isTrue();
         assertThat(outgoing.actions()).containsExactly("EVENT_BOOKING", "EVENT_REQUEST_SENT", "ADMIN_ALERT", "RETURN_MAIN_MENU");
         verify(mainMenuScenario, never()).supports(any(), any(), any());
-        verify(ollamaClient, never()).ask(any());
+        verify(modelGateway, never()).generateText(any());
         verify(userEventProducer).publishIncomingMessage(incoming, BotState.READY_FOR_DIALOG, outgoing);
     }
 
@@ -707,7 +748,7 @@ class MessageGatewayServiceTest {
 
         assertThat(outgoing.nextState()).isEqualTo(BotState.READY_FOR_DIALOG.name());
         assertThat(outgoing.actions()).containsExactly("RECOVERY", "CLARIFY_INTENT", "SHOW_MAIN_OPTIONS");
-        verify(ollamaClient, never()).ask(any());
+        verify(modelGateway, never()).generateText(any());
         verify(userEventProducer).publishIncomingMessage(incoming, BotState.READY_FOR_DIALOG, outgoing);
     }
 
@@ -747,7 +788,7 @@ class MessageGatewayServiceTest {
         verify(hiddenHeartScenario, never()).supports(any(), any(), any());
         verify(artAuctionScenario, never()).supports(any(), any(), any());
         verify(mainMenuScenario, never()).supports(any(), any(), any());
-        verify(ollamaClient, never()).ask(any());
+        verify(modelGateway, never()).generateText(any());
         verify(userEventProducer).publishIncomingMessage(incoming, BotState.CONSENT_REQUIRED, outgoing);
         verify(fsmTimelineWriter).append(any(FsmTimelineEvent.class));
     }
@@ -814,7 +855,7 @@ class MessageGatewayServiceTest {
         assertThat(outgoing.metadata()).containsEntry("compositePlan", "PARALLEL_CONTENT");
         assertThat(outgoing.metadata()).containsEntry("videoObjectKey", "content/aeris/interior.mp4");
         assertThat(outgoing.metadata().get("documents")).asList().hasSize(1);
-        verify(ollamaClient, never()).ask(any());
+        verify(modelGateway, never()).generateText(any());
         verify(userEventProducer).publishIncomingMessage(incoming, BotState.READY_FOR_DIALOG, outgoing);
     }
 
@@ -857,7 +898,7 @@ class MessageGatewayServiceTest {
         assertThat(outgoing.metadata().get("pendingIntentPrompts").toString()).contains("покажи винную карту");
         verify(fsmStorage).setPendingIntents(incoming.chatId(), java.util.List.of("MENU_ASSETS::покажи винную карту"));
         verify(menuAssetsScenario, never()).handle(any(), any(), any());
-        verify(ollamaClient, never()).ask(any());
+        verify(modelGateway, never()).generateText(any());
         verify(userEventProducer).publishIncomingMessage(incoming, BotState.READY_FOR_DIALOG, outgoing);
     }
 
@@ -914,7 +955,7 @@ class MessageGatewayServiceTest {
         assertThat(outgoing.metadata()).containsEntry("compositePlan", "RESUME_PENDING_CONTENT");
         assertThat(outgoing.metadata().get("pendingIntentsExecuted")).asList().containsExactly("MENU_ASSETS");
         verify(fsmStorage).clearPendingIntents(incoming.chatId());
-        verify(ollamaClient, never()).ask(any());
+        verify(modelGateway, never()).generateText(any());
         verify(userEventProducer).publishIncomingMessage(incoming, BotState.TIP_CONFIRMATION, outgoing);
     }
 

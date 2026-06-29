@@ -3,8 +3,6 @@ package museon_online.astor_butler.fsm.scenario;
 import museon_online.astor_butler.domain.consent.ConsentVaultService;
 import museon_online.astor_butler.fsm.core.BotState;
 import museon_online.astor_butler.fsm.storage.FSMStorage;
-import museon_online.astor_butler.kafka.UserEventProducer;
-import museon_online.astor_butler.llm.OllamaClient;
 import museon_online.astor_butler.service.message.IncomingMessage;
 import museon_online.astor_butler.service.message.OutgoingMessage;
 import org.junit.jupiter.api.BeforeEach;
@@ -14,9 +12,8 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -26,13 +23,7 @@ class FirstTouchScenarioTest {
     private FSMStorage fsmStorage;
 
     @Mock
-    private OllamaClient ollamaClient;
-
-    @Mock
     private ConsentVaultService consentVaultService;
-
-    @Mock
-    private UserEventProducer userEventProducer;
 
     @Mock
     private TableBookingDraftStorage tableBookingDraftStorage;
@@ -41,7 +32,7 @@ class FirstTouchScenarioTest {
 
     @BeforeEach
     void setUp() {
-        scenario = new FirstTouchScenario(fsmStorage, ollamaClient, consentVaultService, userEventProducer, tableBookingDraftStorage);
+        scenario = new FirstTouchScenario(fsmStorage, consentVaultService, tableBookingDraftStorage);
     }
 
     @Test
@@ -102,7 +93,6 @@ class FirstTouchScenarioTest {
     @Test
     void keepsContactStateWhenGuestWritesBeforeConsent() {
         IncomingMessage incoming = telegram("А можно без контакта?", null);
-        when(ollamaClient.ask(any())).thenReturn("Можно, но сценарий продолжится после кнопки контакта.");
 
         OutgoingMessage outgoing = scenario.handle(incoming, BotState.CONSENT_REQUIRED, "А можно без контакта?");
 
@@ -113,15 +103,8 @@ class FirstTouchScenarioTest {
                 "REQUEST_CONTACT",
                 "CONSENT_REQUIRED"
         );
-        assertThat(outgoing.text()).contains("кнопки контакта");
-        verify(userEventProducer).publishLlmResponse(
-                eq(incoming),
-                eq(BotState.CONSENT_REQUIRED),
-                eq("PRE_AUTH_CONSENT_NUDGE"),
-                any(),
-                eq("Можно, но сценарий продолжится после кнопки контакта."),
-                eq(false)
-        );
+        assertThat(outgoing.text()).contains("контакт");
+        verifyNoInteractions(consentVaultService);
     }
 
     private IncomingMessage telegram(String text, String phone) {

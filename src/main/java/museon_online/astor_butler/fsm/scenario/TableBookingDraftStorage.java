@@ -72,10 +72,41 @@ public class TableBookingDraftStorage {
             LocalDate requestedDate,
             LocalTime requestedTime,
             Integer partySize,
+            String tableCode,
             String preferredZone,
             String seatingPreference,
+            Boolean seatingPreferenceResolved,
             String originalText
     ) {
+        public Draft(
+                String venueCode,
+                Instant requestedStartAt,
+                Instant requestedEndAt,
+                LocalDate requestedDate,
+                LocalTime requestedTime,
+                Integer partySize,
+                String preferredZone,
+                String seatingPreference,
+                String originalText
+        ) {
+            this(venueCode, requestedStartAt, requestedEndAt, requestedDate, requestedTime, partySize, null, preferredZone, seatingPreference, seatingPreference != null && !seatingPreference.isBlank(), originalText);
+        }
+
+        public Draft(
+                String venueCode,
+                Instant requestedStartAt,
+                Instant requestedEndAt,
+                LocalDate requestedDate,
+                LocalTime requestedTime,
+                Integer partySize,
+                String tableCode,
+                String preferredZone,
+                String seatingPreference,
+                String originalText
+        ) {
+            this(venueCode, requestedStartAt, requestedEndAt, requestedDate, requestedTime, partySize, tableCode, preferredZone, seatingPreference, seatingPreference != null && !seatingPreference.isBlank(), originalText);
+        }
+
         public Draft(
                 String venueCode,
                 Instant requestedStartAt,
@@ -83,7 +114,7 @@ public class TableBookingDraftStorage {
                 Integer partySize,
                 String originalText
         ) {
-            this(venueCode, requestedStartAt, requestedEndAt, null, null, partySize, null, null, originalText);
+            this(venueCode, requestedStartAt, requestedEndAt, null, null, partySize, null, null, null, false, originalText);
         }
     }
 }

@@ -245,8 +245,11 @@ public class TelegramRouter {
         if (outgoing.html()) {
             builder.parseMode("HTML");
         }
+        ReplyKeyboardMarkup customKeyboard = customReplyKeyboard(outgoing);
         if (outgoing.requestContact()) {
             builder.replyMarkup(contactKeyboard());
+        } else if (customKeyboard != null) {
+            builder.replyMarkup(customKeyboard);
         } else if (shouldShowGuestMainMenu(outgoing)) {
             builder.replyMarkup(guestMainMenuKeyboard());
         } else if (outgoing.removeKeyboard()) {
@@ -314,6 +317,37 @@ public class TelegramRouter {
                         keyboardRow("🎨 Аукцион", "🎁 Мерч"),
                         keyboardRow("🏠 Главное меню")
                 ))
+                .resizeKeyboard(true)
+                .oneTimeKeyboard(false)
+                .build();
+    }
+
+    private ReplyKeyboardMarkup customReplyKeyboard(OutgoingMessage outgoing) {
+        if (outgoing == null || outgoing.metadata() == null) {
+            return null;
+        }
+        Object rawRows = outgoing.metadata().get("replyKeyboardRows");
+        if (!(rawRows instanceof List<?> rows) || rows.isEmpty()) {
+            return null;
+        }
+        List<KeyboardRow> keyboardRows = new java.util.ArrayList<>();
+        for (Object rowObject : rows) {
+            if (!(rowObject instanceof List<?> rowValues)) {
+                continue;
+            }
+            List<String> labels = rowValues.stream()
+                    .filter(String.class::isInstance)
+                    .map(String.class::cast)
+                    .toList();
+            if (!labels.isEmpty()) {
+                keyboardRows.add(keyboardRow(labels.toArray(String[]::new)));
+            }
+        }
+        if (keyboardRows.isEmpty()) {
+            return null;
+        }
+        return ReplyKeyboardMarkup.builder()
+                .keyboard(keyboardRows)
                 .resizeKeyboard(true)
                 .oneTimeKeyboard(false)
                 .build();

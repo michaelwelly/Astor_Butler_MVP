@@ -26,24 +26,40 @@ public class GuestInputUnderstandingService {
     private static final Pattern EVENING_TIME = Pattern.compile("(?:^|\\s)(?:в\\s*)?([1-9]|1[0-1])\\s*(?:вечера|вечер)(?:\\s|$)");
     private static final Pattern HOUR_TIME = Pattern.compile("(?:^|\\s)(?:в|к)?\\s*([01]?\\d|2[0-3])\\s*(?:час(?:ов|а)?|ч)(?:\\s|$)");
     private static final Pattern AROUND_HOUR_TIME = Pattern.compile("(?:^|\\s)(?:к|около|примерно|часам к)\\s*([1-9]|1[0-1])(?:\\s|$)");
+    private static final Pattern BARE_HOUR_TIME = Pattern.compile("^(?:в\\s+|к\\s+)?([1-9]|1[0-1])$");
     private static final Pattern EXPLICIT_TIME = Pattern.compile("\\b([01]?\\d|2[0-3]):([0-5]\\d)\\b");
+    private static final Pattern SHORT_PARTY_SIZE = Pattern.compile("^(?:на\\s+)?(\\d{1,2})$");
     private static final Pattern TABLE_NUMBER = Pattern.compile("^(?:стол(?:ик)?\\s*)?(1\\d|[1-9])$");
 
     private final IntentExampleRepository intentExampleRepository;
     private final EmbeddingProvider embeddingProvider;
+    private final List<RussianNluAdapter> russianNluAdapters;
 
     public GuestInputUnderstandingService() {
-        this.intentExampleRepository = null;
-        this.embeddingProvider = null;
+        this(null, null, List.of());
     }
 
     @Autowired
     public GuestInputUnderstandingService(
             ObjectProvider<IntentExampleRepository> intentExampleRepository,
-            ObjectProvider<EmbeddingProvider> embeddingProvider
+            ObjectProvider<EmbeddingProvider> embeddingProvider,
+            ObjectProvider<RussianNluAdapter> russianNluAdapters
     ) {
-        this.intentExampleRepository = intentExampleRepository.getIfAvailable();
-        this.embeddingProvider = embeddingProvider.getIfAvailable();
+        this(
+                intentExampleRepository.getIfAvailable(),
+                embeddingProvider.getIfAvailable(),
+                russianNluAdapters.orderedStream().toList()
+        );
+    }
+
+    GuestInputUnderstandingService(
+            IntentExampleRepository intentExampleRepository,
+            EmbeddingProvider embeddingProvider,
+            List<RussianNluAdapter> russianNluAdapters
+    ) {
+        this.intentExampleRepository = intentExampleRepository;
+        this.embeddingProvider = embeddingProvider;
+        this.russianNluAdapters = russianNluAdapters == null ? List.of() : List.copyOf(russianNluAdapters);
     }
 
     public UnderstoodInput understand(String rawText, BotState currentState) {
@@ -53,8 +69,9 @@ public class GuestInputUnderstandingService {
 
         normalized = canonicalMenuPrompt(normalized);
         normalized = normalizeDateShortcut(normalized, slots);
-        normalized = normalizeTime(normalized, slots);
-        normalized = normalizePartySize(normalized, slots);
+        normalized = applyRussianNlu(normalized, currentState, slots);
+        normalized = normalizeTime(normalized, currentState, slots);
+        normalized = normalizePartySize(normalized, currentState, slots);
         captureTableSelection(normalized, slots);
 
         InputIntent primary = detectIntent(normalized, currentState, slots);
@@ -160,7 +177,50 @@ public class GuestInputUnderstandingService {
         return text;
     }
 
-    private String normalizeTime(String text, Map<String, SlotValue> slots) {
+    private String applyRussianNlu(String text, BotState currentState, Map<String, SlotValue> slots) {
+        String normalized = text;
+        for (RussianNluAdapter adapter : russianNluAdapters) {
+            RussianNluResult result = adapter.analyze(text, currentState);
+            for (RussianNluSlot slot : result.slots()) {
+                mergeNluSlot(slots, slot, currentState);
+                if ("time".equals(slot.name()) && !normalized.contains(slot.value())) {
+                    normalized = normalized + " " + slot.value();
+                }
+            }
+        }
+        return normalized.replaceAll("\\s+", " ").trim();
+    }
+
+    private void mergeNluSlot(Map<String, SlotValue> slots, RussianNluSlot slot, BotState currentState) {
+        if (slot == null || slot.name() == null || slot.value() == null || slot.value().isBlank()) {
+            return;
+        }
+        String name = switch (slot.name()) {
+            case "time", "date", "partySize", "tableNumber", "seatingPreference" -> slot.name();
+            case "number" -> nluNumberTarget(currentState);
+            default -> "";
+        };
+        if (name.isBlank()) {
+            return;
+        }
+        SlotValue existing = slots.get(name);
+        if (existing == null || slot.confidence() > existing.confidence()) {
+            slots.put(name, new SlotValue(name, slot.value(), slot.confidence()));
+        }
+    }
+
+    private String nluNumberTarget(BotState currentState) {
+        BotState state = currentState == null ? BotState.UNKNOWN : currentState.canonical();
+        if (state == BotState.TABLE_BOOKING_COLLECT_PARTY_SIZE) {
+            return "partySize";
+        }
+        if (state == BotState.TABLE_BOOKING_WAIT_TABLE_SELECTION) {
+            return "tableNumber";
+        }
+        return "";
+    }
+
+    private String normalizeTime(String text, BotState currentState, Map<String, SlotValue> slots) {
         text = normalizeTimeWords(text);
         Matcher explicit = EXPLICIT_TIME.matcher(text);
         if (explicit.find()) {
@@ -185,17 +245,31 @@ public class GuestInputUnderstandingService {
             int parsedHour = Integer.parseInt(hour.group(1));
             return replaceTime(text, slots, hour, parsedHour);
         }
+        BotState state = currentState == null ? BotState.UNKNOWN : currentState.canonical();
+        if (state == BotState.TABLE_BOOKING_COLLECT_TIME) {
+            Matcher bare = BARE_HOUR_TIME.matcher(text);
+            if (bare.matches()) {
+                int parsedHour = Integer.parseInt(bare.group(1));
+                return replaceTime(text, slots, bare, parsedHour + 12);
+            }
+        }
         return text;
     }
 
     private String normalizeTimeWords(String text) {
         return text
+                .replace("одиннадцати", "11")
+                .replace("одиннадцать", "11")
                 .replace("шести", "6")
-                .replace("семи", "7")
+                .replace("шесть", "6")
                 .replace("восьми", "8")
+                .replace("восемь", "8")
+                .replace("семи", "7")
+                .replace("семь", "7")
                 .replace("девяти", "9")
+                .replace("девять", "9")
                 .replace("десяти", "10")
-                .replace("одиннадцати", "11");
+                .replace("десять", "10");
     }
 
     private String replaceTime(String text, Map<String, SlotValue> slots, Matcher matcher, int hour) {
@@ -205,7 +279,7 @@ public class GuestInputUnderstandingService {
         return matcher.replaceFirst(" " + value + " ").replaceAll("\\s+", " ").trim();
     }
 
-    private String normalizePartySize(String text, Map<String, SlotValue> slots) {
+    private String normalizePartySize(String text, BotState currentState, Map<String, SlotValue> slots) {
         Integer partySize = partySizeFromWords(text);
         if (partySize != null) {
             slots.put("partySize", new SlotValue("partySize", partySize.toString(), 0.95));
@@ -222,6 +296,15 @@ public class GuestInputUnderstandingService {
         Matcher guests = GUEST_PARTY_SIZE.matcher(text);
         if (guests.find()) {
             slots.put("partySize", new SlotValue("partySize", guests.group(1), 0.94));
+        }
+        BotState state = currentState == null ? BotState.UNKNOWN : currentState.canonical();
+        if (state == BotState.TABLE_BOOKING_COLLECT_PARTY_SIZE) {
+            Matcher shortParty = SHORT_PARTY_SIZE.matcher(text);
+            if (shortParty.matches()) {
+                String value = shortParty.group(1);
+                slots.put("partySize", new SlotValue("partySize", value, 0.9));
+                return "на " + value + " гостей";
+            }
         }
         return text;
     }
@@ -291,11 +374,18 @@ public class GuestInputUnderstandingService {
         if (state == BotState.TABLE_BOOKING_COLLECT_PARTY_SIZE && slots.containsKey("partySize")) {
             return InputIntent.PROVIDE_PARTY_SIZE;
         }
+        if (state == BotState.TABLE_BOOKING_COLLECT_SEATING_PREFERENCE
+                && (slots.containsKey("seatingPreference") || isNoSeatingPreference(text))) {
+            return InputIntent.PROVIDE_SEATING_PREFERENCE;
+        }
         if (state == BotState.TABLE_BOOKING_WAIT_TABLE_SELECTION
                 && (slots.containsKey("tableNumber") || slots.containsKey("seatingPreference") || containsAny(text, "выбери сам", "любой"))) {
             return InputIntent.PROVIDE_TABLE_SELECTION;
         }
-        if (containsAny(text, "забронировать стол", "забронировать столик", "бронь стол", "столик", "стол на", "есть места", "нужен стол", "нужен столик", "посадите", "место на")) {
+        if (containsAny(text, "забронировать стол", "забронировать столик", "забронируй стол", "бронь стол", "бронь на", "хочу стол", "хочу столик", "столик", "стол на", "стол завтра", "стол сегодня", "есть места", "нужен стол", "нужен столик", "посадите", "место на")) {
+            return InputIntent.TABLE_BOOKING;
+        }
+        if (looksLikeTableBooking(text, slots)) {
             return InputIntent.TABLE_BOOKING;
         }
         if (containsAny(text, "меню", "винн", "барная карта", "коктей", "поесть")) {
@@ -356,6 +446,28 @@ public class GuestInputUnderstandingService {
             candidates.add(InputIntent.QUIET_GUIDE);
         }
         return candidates;
+    }
+
+    private boolean looksLikeTableBooking(String text, Map<String, SlotValue> slots) {
+        boolean hasBookingSlot = slots.containsKey("date") || slots.containsKey("time") || slots.containsKey("partySize");
+        boolean hasSeatingSignal = slots.containsKey("seatingPreference") || containsAny(text, "стол", "бронь", "место", "посад");
+        return hasBookingSlot && hasSeatingSignal;
+    }
+
+    private boolean isNoSeatingPreference(String text) {
+        return text.equals("нет")
+                || text.equals("не")
+                || text.equals("без")
+                || text.equals("без пожеланий")
+                || text.equals("пожеланий нет")
+                || text.equals("нет пожеланий")
+                || text.equals("любой")
+                || text.equals("любой стол")
+                || text.equals("как удобно")
+                || text.equals("где удобно")
+                || text.equals("на ваше усмотрение")
+                || text.equals("на твой выбор")
+                || text.equals("выбери сам");
     }
 
     private double confidence(InputIntent primary, Map<String, SlotValue> slots) {

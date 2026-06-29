@@ -1,4 +1,6 @@
 astor:
+  model:
+    provider: ${ASTOR_MODEL_PROVIDER:spring-ai}
   redis:
     fsm-ttl-seconds: ${FSM_REDIS_TTL_SECONDS:259200}
     idempotency-ttl-seconds: ${IDEMPOTENCY_REDIS_TTL_SECONDS:86400}
@@ -60,6 +62,17 @@ astor:
     intent-examples:
       ingest-golden-corpus-on-startup: ${ASTOR_INTENT_EXAMPLES_INGEST_ON_STARTUP:false}
       golden-corpus: ${ASTOR_INTENT_EXAMPLES_GOLDEN_CORPUS:classpath:understanding/guest-input-golden-corpus.jsonl}
+  nlu:
+    duckling:
+      enabled: ${ASTOR_NLU_DUCKLING_ENABLED:false}
+      url: ${ASTOR_NLU_DUCKLING_URL:http://localhost:8000/parse}
+      locale: ${ASTOR_NLU_DUCKLING_LOCALE:ru_RU}
+      timezone: ${ASTOR_NLU_DUCKLING_TIMEZONE:Asia/Yekaterinburg}
+      timeout-ms: ${ASTOR_NLU_DUCKLING_TIMEOUT_MS:500}
+    natasha:
+      enabled: ${ASTOR_NLU_NATASHA_ENABLED:false}
+      url: ${ASTOR_NLU_NATASHA_URL:http://localhost:8011/analyze}
+      timeout-ms: ${ASTOR_NLU_NATASHA_TIMEOUT_MS:500}
   timeline:
     scylla:
       enabled: ${ASTOR_TIMELINE_SCYLLA_ENABLED:false}
@@ -164,7 +177,10 @@ telegram:
 llm:
   ollama:
     base-url: ${LLM_OLLAMA_BASE_URL:http://localhost:11434}
-    model: ${LLM_OLLAMA_MODEL:qwen2.5:1.5b}
+    model: ${LLM_OLLAMA_MODEL:${LLM_OLLAMA_FRONTLINE_MODEL:qwen2.5:1.5b}}
+    frontline-model: ${LLM_OLLAMA_FRONTLINE_MODEL:${LLM_OLLAMA_MODEL:qwen2.5:1.5b}}
+    quality-model: ${LLM_OLLAMA_QUALITY_MODEL:qwen2.5:3b}
+    vision-model: ${LLM_OLLAMA_VISION_MODEL:qwen2.5vl:3b}
     keep-alive: ${LLM_OLLAMA_KEEP_ALIVE:30m}
     warmup-enabled: ${LLM_WARMUP_ENABLED:true}
     warmup-interval-seconds: ${LLM_WARMUP_INTERVAL_SECONDS:120}

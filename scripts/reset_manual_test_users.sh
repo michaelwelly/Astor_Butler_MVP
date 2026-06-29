@@ -48,13 +48,16 @@ POSTGRES_DB="${POSTGRES_DB:-aether}"
 POSTGRES_USER="${POSTGRES_USER:-oracle}"
 POSTGRES_PASSWORD="${POSTGRES_PASSWORD:-}"
 
-reset_args=()
-if [[ "$DRY_RUN" == "true" ]]; then
-  reset_args+=(--dry-run)
-fi
+run_reset_user() {
+  if [[ "$DRY_RUN" == "true" ]]; then
+    "$ROOT_DIR/scripts/reset_natalia_test_user.sh" --dry-run "$@"
+  else
+    "$ROOT_DIR/scripts/reset_natalia_test_user.sh" "$@"
+  fi
+}
 
 echo "Resetting Natalia manual-test account..."
-"$ROOT_DIR/scripts/reset_natalia_test_user.sh" "${reset_args[@]}" \
+run_reset_user \
   --telegram-id 1773317437 \
   --chat-id 1773317437
 
@@ -101,7 +104,7 @@ if [[ -z "$sergey_telegram_id" ]]; then
 fi
 
 echo "Resetting Sergey/yziizy manual-test account: telegram_id=$sergey_telegram_id chat_id=$sergey_chat_id"
-"$ROOT_DIR/scripts/reset_natalia_test_user.sh" "${reset_args[@]}" \
+run_reset_user \
   --telegram-id "$sergey_telegram_id" \
   --chat-id "$sergey_chat_id"
 

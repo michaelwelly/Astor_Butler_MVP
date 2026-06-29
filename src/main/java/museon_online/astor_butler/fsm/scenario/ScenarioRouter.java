@@ -53,9 +53,9 @@ public class ScenarioRouter {
         }
 
         for (FsmScenario scenario : orderedRuntimeScenarios()) {
-            if (scenario.supports(incoming, currentState, routeText)) {
+            if (scenario.supports(incoming, currentState, routeText, understood)) {
                 return withUnderstandingMetadata(
-                        withExecutablePendingContent(incoming, scenario.handle(incoming, currentState, routeText)),
+                        withExecutablePendingContent(incoming, scenario.handle(incoming, currentState, routeText, understood)),
                         understood
                 );
             }

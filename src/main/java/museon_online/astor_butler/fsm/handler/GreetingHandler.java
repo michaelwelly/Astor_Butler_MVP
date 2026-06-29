@@ -5,7 +5,9 @@ import lombok.extern.slf4j.Slf4j;
 import museon_online.astor_butler.fsm.core.BotState;
 import museon_online.astor_butler.fsm.core.CommandContext;
 import museon_online.astor_butler.fsm.storage.FSMStorage;
-import museon_online.astor_butler.llm.OllamaClient;
+import museon_online.astor_butler.model.ModelGateway;
+import museon_online.astor_butler.model.ModelTextRequest;
+import museon_online.astor_butler.model.ModelTextResponse;
 import museon_online.astor_butler.telegram.utils.TelegramSender;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardButton;
@@ -25,7 +27,7 @@ import java.util.List;
 
         private final TelegramSender sender;
         private final FSMStorage storage;
-        private final OllamaClient ollamaClient;
+        private final ModelGateway modelGateway;
 
         @Override
         public BotState getState() {
@@ -53,7 +55,13 @@ import java.util.List;
 
                 long startedAt = System.nanoTime();
 
-                String llmResponse = ollamaClient.ask(prompt);
+                ModelTextResponse modelResponse = modelGateway.generateText(ModelTextRequest.of(
+                        prompt,
+                        "Greeting",
+                        BotState.GREETING.name(),
+                        "first-touch-greeting"
+                ));
+                String llmResponse = modelResponse.text();
 
                 long durationMs = (System.nanoTime() - startedAt) / 1_000_000;
 

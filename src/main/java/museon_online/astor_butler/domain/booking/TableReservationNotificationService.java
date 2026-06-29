@@ -8,11 +8,16 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.stereotype.Service;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboard;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardMarkup;
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardButton;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardRow;
 
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
+import java.util.Arrays;
 import java.util.List;
 
 @Service
@@ -21,6 +26,10 @@ import java.util.List;
 public class TableReservationNotificationService {
 
     private static final DateTimeFormatter DATE_TIME = DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm")
+            .withZone(ZoneId.of("Asia/Yekaterinburg"));
+    private static final DateTimeFormatter DATE = DateTimeFormatter.ofPattern("dd.MM.yyyy")
+            .withZone(ZoneId.of("Asia/Yekaterinburg"));
+    private static final DateTimeFormatter TIME = DateTimeFormatter.ofPattern("HH:mm")
             .withZone(ZoneId.of("Asia/Yekaterinburg"));
 
     private final ObjectProvider<TelegramBot> telegramBotProvider;
@@ -67,7 +76,8 @@ public class TableReservationNotificationService {
                 <b>Заказ:</b> #%s
                 <b>Гость:</b> %s
                 <b>Стол:</b> %s
-                <b>Время:</b> %s - %s
+                <b>Дата:</b> %s
+                <b>Время:</b> %s
                 <b>Телефон:</b> %s
 
                 Hold освобожден, статус заявки: <b>CANCELLED</b>.
@@ -75,8 +85,8 @@ public class TableReservationNotificationService {
                 order.id(),
                 escape(blank(order.guestName(), "гость из Telegram")),
                 escape(tableName(order)),
-                format(order.requestedStartAt()),
-                format(order.requestedEndAt()),
+                formatDate(order.requestedStartAt()),
+                formatTimeRange(order),
                 escape(blank(order.guestPhone(), "не указан"))
         ), null, "hostess-guest-cancelled");
     }
@@ -85,7 +95,7 @@ public class TableReservationNotificationService {
         if (order.chatId() == null) {
             return;
         }
-        send(order.chatId().toString(), guestConfirmedText(order), null, "guest-confirmed");
+        send(order.chatId().toString(), guestConfirmedText(order), guestMainMenuKeyboard(), "guest-confirmed");
         pendingIntentService.deliverAfterConfirmation(order);
     }
 
@@ -93,17 +103,17 @@ public class TableReservationNotificationService {
         if (order.chatId() == null) {
             return;
         }
-        send(order.chatId().toString(), guestRejectedText(order), null, "guest-rejected");
+        send(order.chatId().toString(), guestRejectedText(order), guestMainMenuKeyboard(), "guest-rejected");
     }
 
     public void notifyGuestCancelled(TableReservationOrder order) {
         if (order.chatId() == null) {
             return;
         }
-        send(order.chatId().toString(), guestCancelledText(order), null, "guest-cancelled");
+        send(order.chatId().toString(), guestCancelledText(order), guestMainMenuKeyboard(), "guest-cancelled");
     }
 
-    private void send(String chatId, String text, InlineKeyboardMarkup keyboard, String target) {
+    private void send(String chatId, String text, ReplyKeyboard keyboard, String target) {
         if (!telegramEnabled || !notificationsEnabled || chatId == null || chatId.isBlank()) {
             log.debug("Table reservation Telegram notification skipped: target={}, botEnabled={}, notificationsEnabled={}, chatConfigured={}",
                     target,
@@ -141,7 +151,8 @@ public class TableReservationNotificationService {
                 <b>Гость:</b> %s
                 <b>Telegram:</b> chat %s / user %s
                 <b>Стол:</b> %s
-                <b>Время:</b> %s - %s
+                <b>Дата:</b> %s
+                <b>Время:</b> %s
                 <b>Гостей:</b> %s
                 <b>Телефон:</b> %s
                 <b>Зона/пожелание:</b> %s
@@ -163,8 +174,8 @@ public class TableReservationNotificationService {
                 escape(text(order.chatId())),
                 escape(text(order.telegramUserId())),
                 escape(tableName(order)),
-                format(order.requestedStartAt()),
-                format(order.requestedEndAt()),
+                formatDate(order.requestedStartAt()),
+                formatTimeRange(order),
                 order.partySize(),
                 escape(blank(order.guestPhone(), "не указан")),
                 escape(seatingPreference(order)),
@@ -183,7 +194,8 @@ public class TableReservationNotificationService {
                 <b>Гость:</b> %s
                 <b>Telegram:</b> chat %s / user %s
                 <b>Стол:</b> %s
-                <b>Время:</b> %s - %s
+                <b>Дата:</b> %s
+                <b>Время:</b> %s
                 <b>Гостей:</b> %s
                 <b>Телефон:</b> %s
                 <b>Зона/пожелание:</b> %s
@@ -198,8 +210,8 @@ public class TableReservationNotificationService {
                 escape(text(order.chatId())),
                 escape(text(order.telegramUserId())),
                 escape(tableName(order)),
-                format(order.requestedStartAt()),
-                format(order.requestedEndAt()),
+                formatDate(order.requestedStartAt()),
+                formatTimeRange(order),
                 order.partySize(),
                 escape(blank(order.guestPhone(), "не указан")),
                 escape(seatingPreference(order)),
@@ -215,7 +227,8 @@ public class TableReservationNotificationService {
 
                 <b>Заказ:</b> #%s
                 <b>Стол:</b> %s
-                <b>Время:</b> %s - %s
+                <b>Дата:</b> %s
+                <b>Время:</b> %s
                 <b>Гостей:</b> %s
                 <b>Пожелание:</b> %s
 
@@ -223,8 +236,8 @@ public class TableReservationNotificationService {
                 """.formatted(
                 order.id(),
                 escape(tableName(order)),
-                format(order.requestedStartAt()),
-                format(order.requestedEndAt()),
+                formatDate(order.requestedStartAt()),
+                formatTimeRange(order),
                 order.partySize(),
                 escape(seatingPreference(order))
         );
@@ -238,7 +251,8 @@ public class TableReservationNotificationService {
 
                 <b>Заказ:</b> #%s
                 <b>Стол:</b> %s
-                <b>Время:</b> %s - %s
+                <b>Дата:</b> %s
+                <b>Время:</b> %s
                 <b>Гостей:</b> %s
                 <b>Пожелание:</b> %s
 
@@ -246,8 +260,8 @@ public class TableReservationNotificationService {
                 """.formatted(
                 order.id(),
                 escape(tableName(order)),
-                format(order.requestedStartAt()),
-                format(order.requestedEndAt()),
+                formatDate(order.requestedStartAt()),
+                formatTimeRange(order),
                 order.partySize(),
                 escape(seatingPreference(order))
         );
@@ -261,14 +275,15 @@ public class TableReservationNotificationService {
 
                 <b>Заказ:</b> #%s
                 <b>Стол:</b> %s
-                <b>Время:</b> %s - %s
+                <b>Дата:</b> %s
+                <b>Время:</b> %s
 
                 Если хотите выбрать другой стол или время, просто напишите новый запрос.
                 """.formatted(
                 order.id(),
                 escape(tableName(order)),
-                format(order.requestedStartAt()),
-                format(order.requestedEndAt())
+                formatDate(order.requestedStartAt()),
+                formatTimeRange(order)
         );
     }
 
@@ -285,6 +300,29 @@ public class TableReservationNotificationService {
                                 .build()
                 )))
                 .build();
+    }
+
+    private ReplyKeyboardMarkup guestMainMenuKeyboard() {
+        return ReplyKeyboardMarkup.builder()
+                .keyboard(List.of(
+                        keyboardRow("📅 Забронировать стол", "📖 Меню и карты"),
+                        keyboardRow("🥂 Сабраж", "🏛 Видео-тур"),
+                        keyboardRow("🎟 Афиша", "✨ Концепция"),
+                        keyboardRow("🎉 Мероприятие", "🛎 Помощь команды"),
+                        keyboardRow("✏️ Изменить / отменить", "💬 Оставить отзыв"),
+                        keyboardRow("💚 Чаевые", "🤍 Донат"),
+                        keyboardRow("🎨 Аукцион", "🎁 Мерч"),
+                        keyboardRow("🏠 Главное меню")
+                ))
+                .resizeKeyboard(true)
+                .oneTimeKeyboard(false)
+                .build();
+    }
+
+    private KeyboardRow keyboardRow(String... labels) {
+        return new KeyboardRow(Arrays.stream(labels)
+                .map(label -> KeyboardButton.builder().text(label).build())
+                .toList());
     }
 
     private String hostessChatId(TableReservationOrder order) {
@@ -355,6 +393,17 @@ public class TableReservationNotificationService {
 
     private String format(java.time.Instant instant) {
         return instant == null ? "не указано" : DATE_TIME.format(instant);
+    }
+
+    private String formatDate(java.time.Instant instant) {
+        return instant == null ? "не указана" : DATE.format(instant);
+    }
+
+    private String formatTimeRange(TableReservationOrder order) {
+        if (order.requestedStartAt() == null || order.requestedEndAt() == null) {
+            return "не указано";
+        }
+        return TIME.format(order.requestedStartAt()) + " - " + TIME.format(order.requestedEndAt());
     }
 
     private String blank(String value, String fallback) {

@@ -5,7 +5,7 @@ services:
     ports:
       - "${API_GATEWAY_PORT:-8080}:8080"
     environment:
-      ASTOR_BACKEND_UPSTREAM: ${ASTOR_BACKEND_UPSTREAM:-app:8088}
+      ASTOR_BACKEND_UPSTREAM: ${ASTOR_BACKEND_UPSTREAM:-c3flex-astor-butler-bot:8088}
     volumes:
       - ./docker/nginx/nginx.conf.template:/etc/nginx/nginx.conf.template:ro
     command: >
@@ -23,13 +23,13 @@ services:
       timeout: 5s
       retries: 10
 
-  app:
+  c3flex-astor-butler-bot:
     profiles: ["app"]
     build:
       context: .
       dockerfile: Dockerfile
     image: astor-butler-mvp:local
-    container_name: astor_app
+    container_name: c3flex_astor_butler_bot
     dns:
       - 8.8.8.8
       - 8.8.4.4
@@ -53,17 +53,21 @@ services:
       S3_SECRET_KEY: ${S3_SECRET_KEY:-astor_minio_password}
       S3_BUCKET_MEDIA: ${S3_BUCKET_MEDIA:-astor-media}
       S3_BUCKET_DOCUMENTS: ${S3_BUCKET_DOCUMENTS:-astor-documents}
-      TELEGRAM_BOT_ENABLED: ${TELEGRAM_BOT_ENABLED:-false}
-      TELEGRAM_BOT_USERNAME: ${TELEGRAM_BOT_USERNAME:-astor_butler_bot}
-      TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN:-}
-      TELEGRAM_ADMIN_CHAT_ID: ${TELEGRAM_ADMIN_CHAT_ID:-}
-      TELEGRAM_ANALYTICS_CHAT_ID: ${TELEGRAM_ANALYTICS_CHAT_ID:-}
-      TELEGRAM_HOSTESS_CHAT_ID: ${TELEGRAM_HOSTESS_CHAT_ID:-}
-      TELEGRAM_SYSTEM_CHAT_ID: ${TELEGRAM_SYSTEM_CHAT_ID:-}
+      ASTOR_INSTANCE_ROLE: c3flex_astor_butler_bot
+      TELEGRAM_BOT_ENABLED: ${C3FLEX_ASTOR_BUTLER_BOT_ENABLED:-${C3FLEX_TELEGRAM_BOT_ENABLED:-false}}
+      TELEGRAM_BOT_USERNAME: ${C3FLEX_ASTOR_BUTLER_BOT_USERNAME:-${C3FLEX_TELEGRAM_BOT_USERNAME:-${TELEGRAM_BOT_USERNAME:-astor_c3fex_bot}}}
+      TELEGRAM_BOT_TOKEN: ${C3FLEX_ASTOR_BUTLER_BOT_TOKEN:-${C3FLEX_TELEGRAM_BOT_TOKEN:-${TELEGRAM_BOT_TOKEN:-}}}
+      TELEGRAM_ADMIN_CHAT_ID: ${C3FLEX_ASTOR_BUTLER_ADMIN_CHAT_ID:-${C3FLEX_TELEGRAM_ADMIN_CHAT_ID:-}}
+      TELEGRAM_ANALYTICS_CHAT_ID: ${C3FLEX_ASTOR_BUTLER_ANALYTICS_CHAT_ID:-${C3FLEX_TELEGRAM_ANALYTICS_CHAT_ID:-}}
+      TELEGRAM_HOSTESS_CHAT_ID: ${C3FLEX_ASTOR_BUTLER_STAFF_CHAT_ID:-${C3FLEX_TELEGRAM_HOSTESS_CHAT_ID:-}}
+      TELEGRAM_SYSTEM_CHAT_ID: ${C3FLEX_ASTOR_BUTLER_SYSTEM_CHAT_ID:-${C3FLEX_TELEGRAM_SYSTEM_CHAT_ID:-}}
       TELEGRAM_SYSTEM_NOTIFICATIONS_ENABLED: ${TELEGRAM_SYSTEM_NOTIFICATIONS_ENABLED:-false}
-      ASTOR_OPERATIONAL_PREVIEW_ENABLED: ${ASTOR_OPERATIONAL_PREVIEW_ENABLED:-true}
+      ASTOR_OPERATIONAL_PREVIEW_ENABLED: ${C3FLEX_OPERATIONAL_PREVIEW_ENABLED:-false}
       ASTOR_INTENT_EXAMPLES_INGEST_ON_STARTUP: ${ASTOR_INTENT_EXAMPLES_INGEST_ON_STARTUP:-true}
-      ASTOR_SEMANTIC_EMBEDDINGS_PROVIDER: ${ASTOR_SEMANTIC_EMBEDDINGS_PROVIDER:-none}
+      ASTOR_SEMANTIC_EMBEDDINGS_PROVIDER: ${ASTOR_SEMANTIC_EMBEDDINGS_PROVIDER:-model-gateway}
+      ASTOR_SEMANTIC_EMBEDDING_MODEL: ${ASTOR_SEMANTIC_EMBEDDING_MODEL:-nomic-embed-text}
+      ASTOR_NLU_NATASHA_ENABLED: ${ASTOR_NLU_NATASHA_ENABLED:-false}
+      ASTOR_NLU_NATASHA_URL: ${ASTOR_NLU_NATASHA_URL:-http://natasha-nlu:8011/analyze}
       TELEGRAM_UI_CLEANUP_ENABLED: ${TELEGRAM_UI_CLEANUP_ENABLED:-false}
       TELEGRAM_UI_DELETE_USER_MESSAGES_ENABLED: ${TELEGRAM_UI_DELETE_USER_MESSAGES_ENABLED:-false}
       TELEGRAM_QUIET_GUIDE_INTERIOR_VIDEO_OBJECT_KEY: ${TELEGRAM_QUIET_GUIDE_INTERIOR_VIDEO_OBJECT_KEY:-content/aeris/interior/INTERIOR.mp4}
@@ -71,11 +75,15 @@ services:
       TELEGRAM_REDIRECT_URI: ${APP_TELEGRAM_REDIRECT_URI:-http://localhost:8080/auth/telegram/callback}
       LLM_OLLAMA_BASE_URL: ${APP_LLM_OLLAMA_BASE_URL:-http://llm-gateway:11434}
       LLM_OLLAMA_MODEL: ${LLM_OLLAMA_MODEL:-qwen2.5:1.5b}
+      LLM_OLLAMA_FRONTLINE_MODEL: ${LLM_OLLAMA_FRONTLINE_MODEL:-qwen2.5:1.5b}
+      LLM_OLLAMA_QUALITY_MODEL: ${LLM_OLLAMA_QUALITY_MODEL:-qwen2.5:3b}
+      LLM_OLLAMA_VISION_MODEL: ${LLM_OLLAMA_VISION_MODEL:-qwen2.5vl:3b}
+      ASTOR_MODEL_PROVIDER: ${ASTOR_MODEL_PROVIDER:-spring-ai}
       LLM_WARMUP_ENABLED: ${LLM_WARMUP_ENABLED:-false}
       LLM_CONNECT_TIMEOUT_MS: ${LLM_CONNECT_TIMEOUT_MS:-5000}
       LLM_READ_TIMEOUT_MS: ${LLM_READ_TIMEOUT_MS:-45000}
       LLM_OLLAMA_KEEP_ALIVE: ${LLM_OLLAMA_KEEP_ALIVE:-30m}
-      ASTOR_STT_ENABLED: ${ASTOR_STT_ENABLED:-true}
+      ASTOR_STT_ENABLED: ${C3FLEX_STT_ENABLED:-false}
       ASTOR_STT_COMMAND: ${ASTOR_STT_COMMAND:-python3 /app/stt_faster_whisper.py {file}}
       ASTOR_STT_TIMEOUT_SECONDS: ${ASTOR_STT_TIMEOUT_SECONDS:-90}
       ASTOR_STT_RETRY_TTL_SECONDS: ${ASTOR_STT_RETRY_TTL_SECONDS:-1800}
@@ -122,13 +130,13 @@ services:
       retries: 20
       start_period: 60s
 
-  app-dev:
-    profiles: ["dev"]
+  aeris-astor-butler-bot:
+    profiles: ["telegram"]
     build:
       context: .
       dockerfile: Dockerfile
     image: astor-butler-mvp:local
-    container_name: astor_app_dev
+    container_name: aeris_astor_butler_bot
     dns:
       - 8.8.8.8
       - 8.8.4.4
@@ -152,29 +160,44 @@ services:
       S3_SECRET_KEY: ${S3_SECRET_KEY:-astor_minio_password}
       S3_BUCKET_MEDIA: ${S3_BUCKET_MEDIA:-astor-media}
       S3_BUCKET_DOCUMENTS: ${S3_BUCKET_DOCUMENTS:-astor-documents}
-      TELEGRAM_BOT_ENABLED: ${TELEGRAM_BOT_ENABLED_DEV:-true}
-      TELEGRAM_BOT_USERNAME: ${TELEGRAM_BOT_USERNAME_DEV:-astor_butler_dev_bot}
-      TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN_DEV:-}
-      TELEGRAM_ADMIN_CHAT_ID: ${TELEGRAM_ADMIN_CHAT_ID:-}
-      TELEGRAM_ANALYTICS_CHAT_ID: ${TELEGRAM_ANALYTICS_CHAT_ID:-}
-      TELEGRAM_HOSTESS_CHAT_ID: ${TELEGRAM_HOSTESS_CHAT_ID:-}
-      TELEGRAM_SYSTEM_CHAT_ID: ${TELEGRAM_SYSTEM_CHAT_ID:-}
-      TELEGRAM_SYSTEM_NOTIFICATIONS_ENABLED: "false"
-      ASTOR_OPERATIONAL_PREVIEW_ENABLED: "false"
-      ASTOR_INTENT_EXAMPLES_INGEST_ON_STARTUP: "false"
-      ASTOR_SEMANTIC_EMBEDDINGS_PROVIDER: ${ASTOR_SEMANTIC_EMBEDDINGS_PROVIDER:-none}
+      ASTOR_INSTANCE_ROLE: aeris_astor_butler_bot
+      TELEGRAM_BOT_ENABLED: ${AERIS_ASTOR_BUTLER_BOT_ENABLED:-${AERIS_TELEGRAM_BOT_ENABLED:-${TELEGRAM_BOT_ENABLED_DEV:-true}}}
+      TELEGRAM_BOT_USERNAME: ${AERIS_ASTOR_BUTLER_BOT_USERNAME:-${AERIS_TELEGRAM_BOT_USERNAME:-${TELEGRAM_BOT_USERNAME_DEV:-astor_butler_bot}}}
+      TELEGRAM_BOT_TOKEN: ${AERIS_ASTOR_BUTLER_BOT_TOKEN:-${AERIS_TELEGRAM_BOT_TOKEN:-${TELEGRAM_BOT_TOKEN_DEV:-}}}
+      TELEGRAM_ADMIN_CHAT_ID: ${AERIS_ASTOR_BUTLER_ADMIN_CHAT_ID:-${AERIS_TELEGRAM_ADMIN_CHAT_ID:-${TELEGRAM_ADMIN_CHAT_ID:-}}}
+      TELEGRAM_ANALYTICS_CHAT_ID: ${AERIS_ASTOR_BUTLER_ANALYTICS_CHAT_ID:-${AERIS_TELEGRAM_ANALYTICS_CHAT_ID:-${TELEGRAM_ANALYTICS_CHAT_ID:-}}}
+      TELEGRAM_HOSTESS_CHAT_ID: ${AERIS_ASTOR_BUTLER_STAFF_CHAT_ID:-${AERIS_TELEGRAM_HOSTESS_CHAT_ID:-${TELEGRAM_HOSTESS_CHAT_ID:-}}}
+      TELEGRAM_SYSTEM_CHAT_ID: ${AERIS_ASTOR_BUTLER_SYSTEM_CHAT_ID:-${AERIS_TELEGRAM_SYSTEM_CHAT_ID:-${TELEGRAM_SYSTEM_CHAT_ID:-}}}
+      TELEGRAM_SYSTEM_NOTIFICATIONS_ENABLED: ${AERIS_ASTOR_BUTLER_SYSTEM_NOTIFICATIONS_ENABLED:-${AERIS_TELEGRAM_SYSTEM_NOTIFICATIONS_ENABLED:-true}}
+      ASTOR_OPERATIONAL_PREVIEW_ENABLED: ${AERIS_OPERATIONAL_PREVIEW_ENABLED:-true}
+      ASTOR_INTENT_EXAMPLES_INGEST_ON_STARTUP: ${AERIS_INTENT_EXAMPLES_INGEST_ON_STARTUP:-true}
+      ASTOR_SEMANTIC_EMBEDDINGS_PROVIDER: ${ASTOR_SEMANTIC_EMBEDDINGS_PROVIDER:-model-gateway}
+      ASTOR_SEMANTIC_EMBEDDING_MODEL: ${ASTOR_SEMANTIC_EMBEDDING_MODEL:-nomic-embed-text}
+      ASTOR_NLU_NATASHA_ENABLED: ${ASTOR_NLU_NATASHA_ENABLED:-true}
+      ASTOR_NLU_NATASHA_URL: ${ASTOR_NLU_NATASHA_URL:-http://natasha-nlu:8011/analyze}
       TELEGRAM_UI_CLEANUP_ENABLED: "false"
       TELEGRAM_UI_DELETE_USER_MESSAGES_ENABLED: "false"
       TELEGRAM_QUIET_GUIDE_INTERIOR_VIDEO_OBJECT_KEY: ${TELEGRAM_QUIET_GUIDE_INTERIOR_VIDEO_OBJECT_KEY:-content/aeris/interior/INTERIOR.mp4}
       TELEGRAM_CLIENT_ID: ${TELEGRAM_CLIENT_ID:-}
-      TELEGRAM_REDIRECT_URI: http://localhost:8089/auth/telegram/callback
+      TELEGRAM_REDIRECT_URI: ${AERIS_TELEGRAM_REDIRECT_URI:-http://localhost:8089/auth/telegram/callback}
       LLM_OLLAMA_BASE_URL: ${APP_LLM_OLLAMA_BASE_URL:-http://llm-gateway:11434}
       LLM_OLLAMA_MODEL: ${LLM_OLLAMA_MODEL:-qwen2.5:1.5b}
+      LLM_OLLAMA_FRONTLINE_MODEL: ${LLM_OLLAMA_FRONTLINE_MODEL:-qwen2.5:1.5b}
+      LLM_OLLAMA_QUALITY_MODEL: ${LLM_OLLAMA_QUALITY_MODEL:-qwen2.5:3b}
+      LLM_OLLAMA_VISION_MODEL: ${LLM_OLLAMA_VISION_MODEL:-qwen2.5vl:3b}
+      ASTOR_MODEL_PROVIDER: ${ASTOR_MODEL_PROVIDER:-spring-ai}
       LLM_WARMUP_ENABLED: "false"
       LLM_CONNECT_TIMEOUT_MS: "5000"
       LLM_READ_TIMEOUT_MS: "45000"
       LLM_OLLAMA_KEEP_ALIVE: ${LLM_OLLAMA_KEEP_ALIVE:-30m}
-      ASTOR_STT_ENABLED: "false"
+      ASTOR_STT_ENABLED: ${AERIS_STT_ENABLED:-true}
+      ASTOR_STT_COMMAND: ${ASTOR_STT_COMMAND:-python3 /app/stt_faster_whisper.py {file}}
+      ASTOR_STT_TIMEOUT_SECONDS: ${ASTOR_STT_TIMEOUT_SECONDS:-90}
+      ASTOR_STT_RETRY_TTL_SECONDS: ${ASTOR_STT_RETRY_TTL_SECONDS:-1800}
+      ASTOR_STT_MODEL: ${ASTOR_STT_MODEL:-base}
+      ASTOR_STT_LANGUAGE: ${ASTOR_STT_LANGUAGE:-ru}
+      ASTOR_STT_DEVICE: ${ASTOR_STT_DEVICE:-cpu}
+      ASTOR_STT_COMPUTE_TYPE: ${ASTOR_STT_COMPUTE_TYPE:-int8}
       ASTOR_TIMELINE_SCYLLA_ENABLED: ${ASTOR_TIMELINE_SCYLLA_ENABLED:-true}
       ASTOR_TIMELINE_SCYLLA_HOST: scylla
       ASTOR_TIMELINE_SCYLLA_PORT: "9042"
@@ -388,6 +411,25 @@ services:
       postgres:
         condition: service_healthy
 
+  natasha-nlu:
+    profiles: ["nlu"]
+    build:
+      context: .
+      dockerfile: docker/nlu/natasha/Dockerfile
+    image: astor-natasha-nlu:local
+    container_name: astor_natasha_nlu
+    mem_limit: ${NATASHA_NLU_MEMORY_LIMIT:-768m}
+    cpus: ${NATASHA_NLU_CPUS:-0.75}
+    ports:
+      - "${NATASHA_NLU_PORT:-8011}:8011"
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://127.0.0.1:8011/health', timeout=2)\""]
+      interval: 60s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    restart: unless-stopped
+
   llm-gateway:
     profiles: ["ai"]
     image: nginx:1.27-alpine
@@ -400,8 +442,6 @@ services:
       ollama-1:
         condition: service_healthy
       ollama-2:
-        condition: service_healthy
-      ollama-3:
         condition: service_healthy
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:11434/llm/health >/dev/null 2>&1"]
@@ -430,22 +470,6 @@ services:
     profiles: ["ai"]
     image: ollama/ollama:latest
     container_name: astor_ollama_2
-    environment:
-      OLLAMA_KEEP_ALIVE: ${LLM_OLLAMA_KEEP_ALIVE:-30m}
-      OLLAMA_NUM_PARALLEL: ${OLLAMA_NUM_PARALLEL:-1}
-    volumes:
-      - ollama_data:/root/.ollama
-    healthcheck:
-      test: ["CMD", "ollama", "list"]
-      interval: 120s
-      timeout: 10s
-      retries: 5
-    restart: unless-stopped
-
-  ollama-3:
-    profiles: ["ai"]
-    image: ollama/ollama:latest
-    container_name: astor_ollama_3
     environment:
       OLLAMA_KEEP_ALIVE: ${LLM_OLLAMA_KEEP_ALIVE:-30m}
       OLLAMA_NUM_PARALLEL: ${OLLAMA_NUM_PARALLEL:-1}

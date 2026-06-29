@@ -3,50 +3,51 @@ package museon_online.astor_butler.fsm.scenario;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import museon_online.astor_butler.api.common.ApiException;
-import museon_online.astor_butler.domain.media.AerisMediaCatalog;
-import museon_online.astor_butler.domain.media.MediaAsset;
 import museon_online.astor_butler.domain.booking.TableReservationCommand;
 import museon_online.astor_butler.domain.booking.TableReservationOrder;
 import museon_online.astor_butler.domain.booking.TableReservationService;
+import museon_online.astor_butler.domain.media.AerisMediaCatalog;
+import museon_online.astor_butler.domain.media.MediaAsset;
 import museon_online.astor_butler.fsm.core.BotState;
 import museon_online.astor_butler.fsm.storage.FSMStorage;
+import museon_online.astor_butler.fsm.understanding.InputIntent;
+import museon_online.astor_butler.fsm.understanding.UnderstoodInput;
 import museon_online.astor_butler.service.message.AdminAlert;
 import museon_online.astor_butler.service.message.IncomingMessage;
 import museon_online.astor_butler.service.message.OutgoingMessage;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
-import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalTime;
-import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
+import java.time.format.TextStyle;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import java.util.Locale;
 
 @Component
 @RequiredArgsConstructor
 @Slf4j
 public class TableBookingScenario implements FsmScenario {
 
-    private static final Pattern DATE = Pattern.compile("\\b(\\d{1,2})[./-](\\d{1,2})(?:[./-](\\d{2,4}))?\\b");
-    private static final Pattern TIME = Pattern.compile("(?<![./-])\\b([01]?\\d|2[0-3])(?::([0-5]\\d)|\\s*(?:час(?:ов|а)?|ч))?\\b(?![./-])");
-    private static final Pattern TABLE_NUMBER_SELECTION = Pattern.compile("^(?:стол(?:ик)?\\s*)?(?:[1-9]|1\\d)$");
-    private static final Pattern TABLE_NUMBER_IN_TEXT = Pattern.compile(".*\\bстол(?:ик)?\\s*(?:[1-9]|1\\d)\\b.*");
-    private static final ZoneId VENUE_ZONE = ZoneId.of("Asia/Yekaterinburg");
+    private static final DateTimeFormatter DATE_BUTTON = DateTimeFormatter.ofPattern("dd.MM");
+    private static final DateTimeFormatter TIME_BUTTON = DateTimeFormatter.ofPattern("HH:mm");
+    private static final Locale RU = Locale.forLanguageTag("ru-RU");
 
     private final FSMStorage fsmStorage;
     private final TableBookingDraftStorage draftStorage;
     private final TableReservationService tableReservationService;
     private final AerisMediaCatalog mediaCatalog;
+    private final TableBookingDraftMerger draftMerger;
+    private final TableBookingStepRegistry stepRegistry;
+    private final BookingPhraseService phraseService;
+    private final BookingTimeProvider timeProvider;
 
     @Value("${telegram.booking.plan-pdf-asset-code:AERIS_FLOOR_PLAN}")
     private String planPdfAssetCode;
-
-    @Value("${astor.booking.default-venue-code:AERIS}")
-    private String defaultVenueCode;
 
     @Value("${telegram.booking.manager-chat-id:876857557}")
     private Long managerTelegramId;
@@ -63,73 +64,75 @@ public class TableBookingScenario implements FsmScenario {
     }
 
     public boolean supports(IncomingMessage incoming, BotState currentState, String text) {
+        return supports(incoming, currentState, text, null);
+    }
+
+    public boolean supports(IncomingMessage incoming, BotState currentState, String text, UnderstoodInput understood) {
         BotState state = currentState == null ? BotState.UNKNOWN : currentState.canonical();
-        return isTableBookingState(state) || isTableBookingIntent(text);
+        return isTableBookingState(state) || isTableBookingIntent(text, understood);
     }
 
     public OutgoingMessage handle(IncomingMessage incoming, BotState currentState, String text) {
+        return handle(incoming, currentState, text, null);
+    }
+
+    public OutgoingMessage handle(IncomingMessage incoming, BotState currentState, String text, UnderstoodInput understood) {
         String normalized = normalize(text);
         BotState state = currentState == null ? BotState.UNKNOWN : currentState.canonical();
-        if (state == BotState.TABLE_BOOKING_WAIT_TABLE_SELECTION) {
-            if (!looksLikeTableSelection(normalized)) {
-                saveDraftIfComplete(incoming, normalized);
-                return sendHallPlan(incoming);
-            }
-            return tableSelected(incoming, normalized);
-        }
+        TableBookingDraftStorage.Draft draft = draftMerger.merge(incoming, state, normalized, understood);
 
-        TableBookingDraftStorage.Draft draft = mergeDraft(incoming, state, normalized);
-        if (draft.requestedDate() == null) {
-            return askMissingSlot(incoming, state, BotState.TABLE_BOOKING_COLLECT_DATE,
-                    "Конечно. На какую дату бронируем стол?",
-                    "ASK_DATE");
+        Optional<TableBookingStepRegistry.Step> nextStep = stepRegistry.nextMissingStep(draft);
+        if (nextStep.isPresent()) {
+            return askForStep(incoming, state, draft, nextStep.get());
         }
-        if (draft.requestedTime() == null) {
-            return askMissingSlot(incoming, state, BotState.TABLE_BOOKING_COLLECT_TIME,
-                    "Принял дату. На какое время поставить бронь?",
-                    "ASK_TIME");
-        }
-        if (draft.partySize() == null) {
-            return askMissingSlot(incoming, state, BotState.TABLE_BOOKING_COLLECT_PARTY_SIZE,
-                    "На сколько гостей бронируем?",
-                    "ASK_PARTY_SIZE");
-        }
-        return sendHallPlan(incoming, shouldSendPlanBeforeSlotCollection(state));
+        return createReservation(incoming, draft);
     }
 
-    private OutgoingMessage askMissingSlot(IncomingMessage incoming, BotState currentState, BotState nextState, String text, String action) {
-        if (shouldSendPlanBeforeSlotCollection(currentState)) {
-            fsmStorage.setState(incoming.chatId(), nextState);
-            return withHallPlan(
-                    message(
-                            incoming,
-                            "Сначала отправляю план зала AERIS, чтобы вы видели пространство. " + text,
-                            nextState,
-                            "SEND_HALL_PLAN",
-                            action
-                    )
-            );
-        }
+    private OutgoingMessage askForStep(
+            IncomingMessage incoming,
+            BotState currentState,
+            TableBookingDraftStorage.Draft draft,
+            TableBookingStepRegistry.Step step
+    ) {
+        BotState nextState = step.state();
         fsmStorage.setState(incoming.chatId(), nextState);
-        return message(incoming, text, nextState, action);
+
+        if (nextState == BotState.TABLE_BOOKING_WAIT_TABLE_SELECTION) {
+            boolean includeDocument = shouldSendPlan(currentState);
+            OutgoingMessage message = message(
+                    incoming,
+                    includeDocument ? phraseService.ask(step, draft) : existingPlanPrompt(),
+                    nextState,
+                    includeDocument ? "SEND_HALL_PLAN" : "USE_EXISTING_HALL_PLAN",
+                    step.action()
+            );
+            return includeDocument ? withHallPlan(message) : message;
+        }
+
+        OutgoingMessage message = message(incoming, phraseService.ask(step, draft), nextState, step.action());
+        if (nextState == BotState.TABLE_BOOKING_COLLECT_DATE) {
+            return message.withMetadata(Map.of("replyKeyboardRows", dateKeyboardRows()));
+        }
+        if (nextState == BotState.TABLE_BOOKING_COLLECT_TIME) {
+            return message.withMetadata(Map.of("replyKeyboardRows", timeKeyboardRows(draft.requestedDate())));
+        }
+        if (nextState == BotState.TABLE_BOOKING_COLLECT_PARTY_SIZE) {
+            return message.withRemoveKeyboard(true);
+        }
+        return message;
     }
 
-    private OutgoingMessage sendHallPlan(IncomingMessage incoming) {
-        return sendHallPlan(incoming, true);
+    private String existingPlanPrompt() {
+        return "Выберите номер стола или зону на плане: например, «18 стол», «винная комната», «у бара». Можно написать «выбери сам».";
     }
 
-    private OutgoingMessage sendHallPlan(IncomingMessage incoming, boolean includeDocument) {
-        fsmStorage.setState(incoming.chatId(), BotState.TABLE_BOOKING_WAIT_TABLE_SELECTION);
-        OutgoingMessage message = message(
-                incoming,
-                includeDocument
-                        ? "Отправляю план зала AERIS. Выберите, пожалуйста, номер стола или зону. Если хотите, напишите \"выбери сам\" — подберу подходящий вариант."
-                        : "Выберите, пожалуйста, номер стола или зону на плане AERIS. Если хотите, напишите \"выбери сам\" — подберу подходящий вариант.",
-                BotState.TABLE_BOOKING_WAIT_TABLE_SELECTION,
-                includeDocument ? "SEND_HALL_PLAN" : "USE_EXISTING_HALL_PLAN",
-                "ASK_TABLE_SELECTION"
-        );
-        return includeDocument ? withHallPlan(message) : message;
+    private boolean shouldSendPlan(BotState state) {
+        BotState canonical = state == null ? BotState.UNKNOWN : state.canonical();
+        return canonical == BotState.UNKNOWN
+                || canonical == BotState.READY_FOR_DIALOG
+                || canonical == BotState.AI_FALLBACK
+                || canonical == BotState.TABLE_BOOKING_INTENT
+                || canonical == BotState.TABLE_BOOKING_SHOW_PLAN;
     }
 
     private OutgoingMessage withHallPlan(OutgoingMessage message) {
@@ -142,52 +145,91 @@ public class TableBookingScenario implements FsmScenario {
         ));
     }
 
-    private OutgoingMessage tableSelected(IncomingMessage incoming, String normalized) {
-        Optional<TableBookingDraftStorage.Draft> draft = findDraft(incoming.chatId());
-        if (draft.isEmpty() || draft.get().requestedStartAt() == null || draft.get().requestedEndAt() == null) {
-            fsmStorage.setState(incoming.chatId(), BotState.TABLE_BOOKING_COLLECT_DATE);
-            return message(
-                    incoming,
-                    "Стол понял. Напомните, пожалуйста, дату, время и количество гостей одной фразой — например: завтра в 20:00 на двоих.",
-                    BotState.TABLE_BOOKING_COLLECT_DATE,
-                    "ASK_BOOKING_DETAILS"
-            );
+    private List<List<String>> dateKeyboardRows() {
+        LocalDate today = timeProvider.today();
+        List<String> labels = new ArrayList<>();
+        for (int i = 0; i < 21; i++) {
+            LocalDate date = today.plusDays(i);
+            labels.add(dateLabel(date, i));
         }
+        return rows(labels, 3);
+    }
 
+    private String dateLabel(LocalDate date, int offset) {
+        if (offset == 0) {
+            return "Сегодня " + date.format(DATE_BUTTON);
+        }
+        if (offset == 1) {
+            return "Завтра " + date.format(DATE_BUTTON);
+        }
+        String weekday = date.getDayOfWeek().getDisplayName(TextStyle.SHORT, RU);
+        return capitalize(weekday.replace(".", "")) + " " + date.format(DATE_BUTTON);
+    }
+
+    private List<List<String>> timeKeyboardRows(LocalDate requestedDate) {
+        LocalTime start = timeProvider.nextWholeHour();
+        if (requestedDate != null && requestedDate.isAfter(timeProvider.today())) {
+            start = LocalTime.of(12, 0);
+        }
+        List<String> labels = new ArrayList<>();
+        LocalTime time = start;
+        for (int i = 0; i < 12; i++) {
+            labels.add(time.format(TIME_BUTTON));
+            time = time.plusHours(1);
+        }
+        return rows(labels, 4);
+    }
+
+    private List<List<String>> rows(List<String> labels, int columns) {
+        List<List<String>> rows = new ArrayList<>();
+        for (int i = 0; i < labels.size(); i += columns) {
+            rows.add(List.copyOf(labels.subList(i, Math.min(i + columns, labels.size()))));
+        }
+        return rows;
+    }
+
+    private String capitalize(String value) {
+        if (value == null || value.isBlank()) {
+            return "";
+        }
+        return value.substring(0, 1).toUpperCase(RU) + value.substring(1);
+    }
+
+    private OutgoingMessage createReservation(IncomingMessage incoming, TableBookingDraftStorage.Draft draft) {
         try {
             TableReservationOrder order = tableReservationService.createReservation(new TableReservationCommand(
                     incoming.chatId(),
                     incoming.telegramUserId(),
                     null,
-                    draft.get().venueCode(),
-                    tableCode(normalized),
-                    preferredZone(normalized).orElse(draft.get().preferredZone()),
-                    seatingPreference(normalized).orElse(draft.get().seatingPreference()),
-                    draft.get().requestedStartAt(),
-                    draft.get().requestedEndAt(),
-                    draft.get().partySize(),
+                    draft.venueCode(),
+                    draft.tableCode(),
+                    draft.preferredZone(),
+                    draft.seatingPreference(),
+                    draft.requestedStartAt(),
+                    draft.requestedEndAt(),
+                    draft.partySize(),
                     guestName(incoming),
                     incoming.contactPhone(),
-                    draft.get().originalText(),
+                    draft.originalText(),
                     managerTelegramId,
                     hostessChatId
             ));
             draftStorage.clear(incoming.chatId());
-            fsmStorage.setState(incoming.chatId(), BotState.TABLE_BOOKING_WAIT_HOSTESS_CONFIRMATION);
+            fsmStorage.setState(incoming.chatId(), BotState.READY_FOR_DIALOG);
             return message(
                     incoming,
-                    "Заявку #%s отправил хостес на подтверждение. Как только команда нажмет «Да» или «Нет», я сразу вернусь с ответом.".formatted(order.id()),
-                    BotState.TABLE_BOOKING_WAIT_HOSTESS_CONFIRMATION,
-                    "TABLE_SELECTED",
+                    "Готово. Заявку #%s отправил команде AERIS на подтверждение. Как только хостес ответит, я сразу вернусь с финальным статусом.\n\nЯ оставил главное меню: пока бронь подтверждают, можно посмотреть меню, афишу или попросить помощь команды.".formatted(order.id()),
+                    BotState.READY_FOR_DIALOG,
                     "RESERVATION_CREATED",
-                    "WAIT_HOSTESS_CONFIRMATION"
+                    "WAIT_HOSTESS_CONFIRMATION",
+                    "RETURN_MAIN_MENU"
             );
         } catch (ApiException e) {
             log.warn("Table booking reservation was not created: chatId={}, reason={}", incoming.chatId(), e.getMessage());
             fsmStorage.setState(incoming.chatId(), BotState.TABLE_BOOKING_WAIT_TABLE_SELECTION);
             return message(
                     incoming,
-                    "Этот вариант сейчас не получается поставить в бронь. Выберите, пожалуйста, другой стол на плане или напишите «выбери сам».",
+                    "Этот вариант сейчас не получается поставить в бронь. Выберите другой стол на плане или напишите «выбери сам» — подберу свободный вариант.",
                     BotState.TABLE_BOOKING_WAIT_TABLE_SELECTION,
                     "TABLE_SELECTION_REJECTED",
                     "ASK_TABLE_SELECTION"
@@ -209,62 +251,10 @@ public class TableBookingScenario implements FsmScenario {
         );
     }
 
-    private boolean shouldSendPlanBeforeSlotCollection(BotState state) {
-        BotState canonical = state == null ? BotState.UNKNOWN : state.canonical();
-        return canonical == BotState.UNKNOWN
-                || canonical == BotState.READY_FOR_DIALOG
-                || canonical == BotState.AI_FALLBACK
-                || canonical == BotState.TABLE_BOOKING_INTENT
-                || canonical == BotState.TABLE_BOOKING_SHOW_PLAN;
-    }
-
-    private void saveDraftIfComplete(IncomingMessage incoming, String normalized) {
-        if (!hasDate(normalized) || !hasTime(normalized) || !hasPartySize(normalized)) {
-            return;
+    private boolean isTableBookingIntent(String text, UnderstoodInput understood) {
+        if (understood != null && understood.primaryIntent() == InputIntent.TABLE_BOOKING) {
+            return true;
         }
-        Instant startAt = requestedStartAt(normalized);
-        draftStorage.save(incoming.chatId(), new TableBookingDraftStorage.Draft(
-                defaultVenueCode,
-                startAt,
-                startAt.plusSeconds(2 * 60 * 60),
-                requestedDate(normalized),
-                requestedTime(normalized),
-                partySize(normalized),
-                preferredZone(normalized).orElse(null),
-                seatingPreference(normalized).orElse(null),
-                incoming.text()
-        ));
-    }
-
-    private TableBookingDraftStorage.Draft mergeDraft(IncomingMessage incoming, BotState currentState, String normalized) {
-        Optional<TableBookingDraftStorage.Draft> stored = findDraft(incoming.chatId());
-        LocalDate date = extractDate(normalized).or(() -> stored.map(TableBookingDraftStorage.Draft::requestedDate)).orElse(null);
-        Optional<LocalTime> extractedTime = currentState == BotState.TABLE_BOOKING_COLLECT_PARTY_SIZE
-                ? Optional.empty()
-                : extractTime(normalized);
-        LocalTime time = extractedTime.or(() -> stored.map(TableBookingDraftStorage.Draft::requestedTime)).orElse(null);
-        Integer partySize = extractPartySize(normalized).or(() -> stored.map(TableBookingDraftStorage.Draft::partySize)).orElse(null);
-        String preferredZone = preferredZone(normalized).or(() -> stored.map(TableBookingDraftStorage.Draft::preferredZone)).orElse(null);
-        String seatingPreference = seatingPreference(normalized).or(() -> stored.map(TableBookingDraftStorage.Draft::seatingPreference)).orElse(null);
-        String originalText = mergeOriginalText(stored.map(TableBookingDraftStorage.Draft::originalText).orElse(null), incoming.text());
-
-        Instant startAt = date == null || time == null ? null : date.atTime(time).atZone(VENUE_ZONE).toInstant();
-        TableBookingDraftStorage.Draft draft = new TableBookingDraftStorage.Draft(
-                defaultVenueCode,
-                startAt,
-                startAt == null ? null : startAt.plusSeconds(2 * 60 * 60),
-                date,
-                time,
-                partySize,
-                preferredZone,
-                seatingPreference,
-                originalText
-        );
-        draftStorage.save(incoming.chatId(), draft);
-        return draft;
-    }
-
-    private boolean isTableBookingIntent(String text) {
         String value = normalize(text);
         return value.contains("забронировать стол")
                 || value.contains("забронировать столик")
@@ -281,6 +271,7 @@ public class TableBookingScenario implements FsmScenario {
                  TABLE_BOOKING_COLLECT_DATE,
                  TABLE_BOOKING_COLLECT_TIME,
                  TABLE_BOOKING_COLLECT_PARTY_SIZE,
+                 TABLE_BOOKING_COLLECT_SEATING_PREFERENCE,
                  TABLE_BOOKING_SHOW_PLAN,
                  TABLE_BOOKING_WAIT_TABLE_SELECTION,
                  TABLE_BOOKING_CHANGE_REQUESTED -> true;
@@ -296,207 +287,6 @@ public class TableBookingScenario implements FsmScenario {
         return true;
     }
 
-    private boolean hasDate(String text) {
-        return extractDate(text).isPresent();
-    }
-
-    private Optional<LocalDate> extractDate(String text) {
-        if (text.contains("послезавтра")) {
-            return Optional.of(LocalDate.now(VENUE_ZONE).plusDays(2));
-        }
-        if (text.contains("сегодня")
-                || text.contains("завтра")
-                || DATE.matcher(text).find()) {
-            return Optional.of(requestedDate(text));
-        }
-        return Optional.empty();
-    }
-
-    private boolean hasTime(String text) {
-        return extractTime(text).isPresent();
-    }
-
-    private Optional<LocalTime> extractTime(String text) {
-        if (looksLikePartySizeAnswer(text)) {
-            return Optional.empty();
-        }
-        Matcher matcher = TIME.matcher(text);
-        return matcher.find() ? Optional.of(parseTime(matcher, text)) : Optional.empty();
-    }
-
-    private boolean hasPartySize(String text) {
-        return extractPartySize(text).isPresent();
-    }
-
-    private Optional<Integer> extractPartySize(String text) {
-        if (text.contains("двоих") || text.contains("двоем")) {
-            return Optional.of(2);
-        }
-        if (text.contains("двух") || text.contains("двое") || text.contains("двоём")) {
-            return Optional.of(2);
-        }
-        if (text.contains("троих")) {
-            return Optional.of(3);
-        }
-        if (text.contains("трое") || text.contains("трех") || text.contains("трёх")) {
-            return Optional.of(3);
-        }
-        if (text.contains("четверых")) {
-            return Optional.of(4);
-        }
-        if (text.contains("четверо") || text.contains("четырех") || text.contains("четырёх")) {
-            return Optional.of(4);
-        }
-        Matcher compactMatcher = Pattern.compile("(?:^|\\s)на\\s+(\\d{1,2})\\s*(?:x|х|-х|-x)(?:\\s|$)").matcher(text);
-        if (compactMatcher.find()) {
-            return Optional.of(Integer.parseInt(compactMatcher.group(1)));
-        }
-        Matcher guestMatcher = Pattern.compile("\\b(\\d{1,2})\\s*(?:гостей|гостя|человек|персон|чел)\\b").matcher(text);
-        if (guestMatcher.find()) {
-            return Optional.of(Integer.parseInt(guestMatcher.group(1)));
-        }
-        Matcher matcher = Pattern.compile("\\bна\\s+(\\d{1,2})\\b").matcher(text);
-        return matcher.find() ? Optional.of(Integer.parseInt(matcher.group(1))) : Optional.empty();
-    }
-
-    private boolean looksLikePartySizeAnswer(String text) {
-        return extractPartySize(text).isPresent()
-                && !containsAny(text, ":", "вечер", "утр", "дня", "ноч", "час", "ч ")
-                && !hasDate(text);
-    }
-
-    private boolean containsAny(String text, String... variants) {
-        for (String variant : variants) {
-            if (text.contains(variant)) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    private boolean looksLikeTableSelection(String text) {
-        return text.contains("выбери сам")
-                || text.contains("любой стол")
-                || text.contains("любой подходящий")
-                || text.contains("на твой выбор")
-                || text.contains("где удобно")
-                || text.contains("vip")
-                || text.contains("вип")
-                || text.contains("винн")
-                || text.contains("бар")
-                || TABLE_NUMBER_SELECTION.matcher(text).matches()
-                || TABLE_NUMBER_IN_TEXT.matcher(text).matches();
-    }
-
-    private Instant requestedStartAt(String text) {
-        return requestedDate(text).atTime(requestedTime(text)).atZone(VENUE_ZONE).toInstant();
-    }
-
-    private LocalDate requestedDate(String text) {
-        LocalDate today = LocalDate.now(VENUE_ZONE);
-        if (text.contains("послезавтра")) {
-            return today.plusDays(2);
-        }
-        if (text.contains("завтра")) {
-            return today.plusDays(1);
-        }
-        Matcher matcher = DATE.matcher(text);
-        if (matcher.find()) {
-            int day = Integer.parseInt(matcher.group(1));
-            int month = Integer.parseInt(matcher.group(2));
-            int year = matcher.group(3) == null ? today.getYear() : parseYear(matcher.group(3));
-            LocalDate parsed = LocalDate.of(year, month, day);
-            return matcher.group(3) == null && parsed.isBefore(today) ? parsed.plusYears(1) : parsed;
-        }
-        return today;
-    }
-
-    private LocalTime requestedTime(String text) {
-        Matcher matcher = TIME.matcher(text);
-        if (!matcher.find()) {
-            return LocalTime.of(20, 0);
-        }
-        return parseTime(matcher, text);
-    }
-
-    private Integer partySize(String text) {
-        return extractPartySize(text).orElse(2);
-    }
-
-    private String tableCode(String text) {
-        if (text.contains("бар")) {
-            return "BAR";
-        }
-        if (text.contains("vip") || text.contains("вип")) {
-            return "13";
-        }
-        if (text.contains("wine") || text.contains("винн")) {
-            return "7";
-        }
-        if (text.contains("выбери сам") || text.contains("любой") || text.contains("на твой выбор") || text.contains("где удобно")) {
-            return null;
-        }
-        Matcher matcher = Pattern.compile("\\b(?:стол(?:ик)?\\s*)?(1\\d|[1-9])\\b").matcher(text);
-        return matcher.find() ? matcher.group(1) : null;
-    }
-
-    private Optional<String> preferredZone(String text) {
-        if (text.contains("vip") || text.contains("вип")) {
-            return Optional.of("VIP_ZONE");
-        }
-        if (text.contains("wine") || text.contains("винн")) {
-            return Optional.of("WINE_ROOM");
-        }
-        if (text.contains("бар")) {
-            return Optional.of("BAR");
-        }
-        return Optional.empty();
-    }
-
-    private Optional<String> seatingPreference(String text) {
-        if (text == null || text.isBlank()) {
-            return Optional.empty();
-        }
-        if (text.contains("тих")
-                || text.contains("окн")
-                || text.contains("диван")
-                || text.contains("vip")
-                || text.contains("вип")
-                || text.contains("винн")
-                || text.contains("бар")
-                || text.contains("не проход")
-                || text.contains("уют")) {
-            return Optional.of(text);
-        }
-        return Optional.empty();
-    }
-
-    private LocalTime parseTime(Matcher matcher, String text) {
-        int hour = Integer.parseInt(matcher.group(1));
-        int minute = matcher.group(2) == null ? 0 : Integer.parseInt(matcher.group(2));
-        String normalized = normalize(text);
-        if (hour >= 1 && hour <= 11 && containsAny(normalized, "вечера", "вечер", "ночи")) {
-            hour += 12;
-        }
-        return LocalTime.of(hour, minute);
-    }
-
-    private int parseYear(String value) {
-        int year = Integer.parseInt(value);
-        return year < 100 ? 2000 + year : year;
-    }
-
-    private String mergeOriginalText(String existing, String next) {
-        String safeNext = next == null ? "" : next.trim();
-        if (existing == null || existing.isBlank()) {
-            return safeNext;
-        }
-        if (safeNext.isBlank() || existing.contains(safeNext)) {
-            return existing;
-        }
-        return existing + " | " + safeNext;
-    }
-
     private String guestName(IncomingMessage incoming) {
         String firstName = incoming.firstName() == null ? "" : incoming.firstName().trim();
         String lastName = incoming.lastName() == null ? "" : incoming.lastName().trim();
@@ -504,12 +294,7 @@ public class TableBookingScenario implements FsmScenario {
         return fullName.isBlank() ? incoming.username() : fullName;
     }
 
-    private Optional<TableBookingDraftStorage.Draft> findDraft(Long chatId) {
-        Optional<TableBookingDraftStorage.Draft> draft = draftStorage.find(chatId);
-        return draft == null ? Optional.empty() : draft;
-    }
-
     private String normalize(String text) {
-        return text == null ? "" : text.trim().toLowerCase();
+        return text == null ? "" : text.trim().toLowerCase().replace('ё', 'е');
     }
 }
