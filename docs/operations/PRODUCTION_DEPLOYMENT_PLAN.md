@@ -209,6 +209,6 @@ Site consent:
    - video catalog API;
    - Keycloak integration plan;
    - staff/admin/system site notifications.
-3. User launches Claude with `docs/CLAUDE_FRONTEND_TASK.md`.
+3. User launches Claude with `docs/frontend/CLAUDE_FRONTEND_TASK.md`.
 4. Claude returns frontend file/component plan.
 5. Codex reviews boundaries before frontend implementation starts.

@@ -31,7 +31,7 @@ Local CLI path in this workstation:
 
 Краткий контекст проекта:
 
-Astor Butler MVP — Java 21 + Spring Boot монолит для Telegram-бота с FSM-архитектурой. Telegram выступает как транспорт/UI, а FSM является single source of truth. Архитектурная схема лежит в `docs/ARCHITECTURE.md`. В README описана концепция soft-governance tool для HoReCa, с Telegram, PostgreSQL, Redis, Docker и целевой инфраструктурой в Yandex Cloud.
+Astor Butler MVP — Java 21 + Spring Boot монолит для Telegram-бота с FSM-архитектурой. Telegram выступает как транспорт/UI, а FSM является single source of truth. Архитектурная схема лежит в `docs/architecture/ARCHITECTURE.md`. В README описана концепция soft-governance tool для HoReCa, с Telegram, PostgreSQL, Redis, Docker и целевой инфраструктурой в Yandex Cloud.
 
 ## Git Hygiene
 
@@ -56,21 +56,27 @@ Untracked артефакты Codex не являются production-кодом:
 
 ## Project Memory
 
-Локальный Obsidian vault:
+Основная переносимая память проекта для Codex, Claude, сервера и ручной работы:
+
+```text
+docs/obsidian/**
+```
+
+Локальный Obsidian vault остается личной рабочей базой:
 
 ```text
 /Users/michaelwelly/Obsidian/Astor_Butler_Knowledge
 ```
 
-Это не production-репозиторий и не должно попадать в git проекта.
+Внешний vault не является production-репозиторием и не должен попадать в git проекта. Если внешний vault и `docs/obsidian/**` расходятся, для командной работы приоритет у `docs/obsidian/**`, а затем обновляется внешний vault вручную при необходимости.
 
 Перед началом содержательной работы по Astor Butler читать:
 
-- `/Users/michaelwelly/Obsidian/Astor_Butler_Knowledge/01_Project/Project_Context.md`
-- `/Users/michaelwelly/Obsidian/Astor_Butler_Knowledge/01_Project/Work_Plan.md`
-- `/Users/michaelwelly/Obsidian/Astor_Butler_Knowledge/01_Project/NEXT_CHAT_HANDOFF.md`
-- `/Users/michaelwelly/Obsidian/Astor_Butler_Knowledge/04_Tech/Tech_Decisions.md`
-- `/Users/michaelwelly/Obsidian/Astor_Butler_Knowledge/03_FSM/FSM_Index.md`
-- `/Users/michaelwelly/Obsidian/Astor_Butler_Knowledge/05_Yana/Yana_Request_Draft.md`
+- `docs/obsidian/01_Project/Project_Context.md`
+- `docs/obsidian/01_Project/Work_Plan.md`
+- `docs/obsidian/01_Project/NEXT_CHAT_HANDOFF.md`
+- `docs/obsidian/04_Tech/Tech_Decisions.md`
+- `docs/obsidian/03_FSM/FSM_Index.md`
+- `docs/obsidian/05_Yana/Yana_Request_Draft.md`
 
-После важных решений обновлять соответствующие Markdown-заметки в этом vault.
+После важных решений обновлять соответствующие Markdown-заметки в `docs/obsidian/**`. Если решение меняет FSM или архитектуру, сначала обновлять `docs/FSM_SCENARIOS_VIEWER.html` и `docs/architecture/ARCHITECTURE.md`, потом проектную память.

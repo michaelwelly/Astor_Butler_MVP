@@ -15,16 +15,20 @@ Then add these files as high-priority project context:
 ```text
 CLAUDE.md
 README.md
-docs/CLAUDE_PROJECT_PACK.md
-docs/ARCHITECTURE.md
-docs/FSM_SCENARIOS.md
+docs/frontend/CLAUDE_PROJECT_PACK.md
+docs/README.md
+docs/architecture/ARCHITECTURE.md
+docs/fsm/FSM_SCENARIOS.md
 docs/FSM_SCENARIOS_VIEWER.html
-docs/FSM_IMPLEMENTATION_PLAN.md
-docs/KAFKA_TOPICS.md
-docs/TABLE_BOOKING.md
-docs/DATABASE_MODEL.md
-docs/API_CONTRACT.md
-docs/FRONTEND_HANDOFF.md
+docs/fsm/FSM_IMPLEMENTATION_PLAN.md
+docs/contracts/KAFKA_TOPICS.md
+docs/fsm/TABLE_BOOKING.md
+docs/architecture/DATABASE_MODEL.md
+docs/contracts/API_CONTRACT.md
+docs/frontend/FRONTEND_HANDOFF.md
+docs/obsidian/README.md
+docs/obsidian/01_Project/NEXT_CHAT_HANDOFF.md
+docs/obsidian/04_Tech/Tech_Decisions.md
 design-system/c3flex/MASTER.md
 ```
 
@@ -56,12 +60,12 @@ Forbidden without explicit user permission:
 - src/main/**
 - docker-compose.yml
 - .env, .env.*
-- docs/FSM_SCENARIOS.md
+- docs/fsm/FSM_SCENARIOS.md
 - docs/FSM_SCENARIOS_VIEWER.html
-- docs/FSM_WORKING_SCENARIOS_UML.puml
-- docs/ARCHITECTURE.md
-- docs/KAFKA_TOPICS.md
-- docs/TABLE_BOOKING.md
+- docs/architecture/ARCHITECTURE.md
+- docs/contracts/KAFKA_TOPICS.md
+- docs/fsm/TABLE_BOOKING.md
+- docs/obsidian/**
 - Liquibase migrations
 - backend tests
 - database configuration
@@ -94,10 +98,12 @@ If the request is frontend/UX/C3FLEX/design related, work actively.
 ### Astor Butler Context Plan
 
 1. Read `README.md`.
-2. Read `docs/ARCHITECTURE.md`.
-3. Read `docs/FSM_SCENARIOS.md` and use `docs/FSM_SCENARIOS_VIEWER.html` only as visual context.
-4. Do not edit FSM/backend files unless explicitly asked.
-5. If the needed change is backend logic, write a handoff note for Codex.
+2. Read `docs/architecture/ARCHITECTURE.md`.
+3. Read `docs/FSM_SCENARIOS_VIEWER.html` as the visual source of truth.
+4. Read `docs/fsm/FSM_SCENARIOS.md` as the text companion, not as a competing source.
+5. Read `docs/obsidian/README.md` and the listed handoff/context notes when broader product memory is needed.
+6. Do not edit FSM/backend files unless explicitly asked.
+7. If the needed change is backend logic, write a handoff note for Codex.
 
 ### C3FLEX Design Plan
 

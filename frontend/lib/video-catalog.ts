@@ -1,7 +1,7 @@
 /**
  * Contract-aligned video catalog.
  *
- * Field names and shapes follow docs/FRONTEND_BACKEND_CONTRACTS.md §3
+ * Field names and shapes follow docs/contracts/FRONTEND_BACKEND_CONTRACTS.md §3
  * (Video Catalog Contract). This is the MVP local-mock layer: when the
  * backend ships `GET /api/content/c3flex/videos`, the response can replace
  * `catalogVideos` 1:1 without touching UI components.

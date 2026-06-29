@@ -16,6 +16,10 @@ from docx import Document
 from pypdf import PdfReader
 
 
+ROOT = Path(__file__).resolve().parents[1]
+REPO_DOCS = ROOT / "docs"
+
+
 @dataclass(frozen=True)
 class SourceDocument:
     path: Path
@@ -38,12 +42,12 @@ SOURCES = [
     SourceDocument(Path("/Users/michaelwelly/Downloads/astor_butler_speech.txt"), "speech", "Astor Butler speech", ("speech",)),
     SourceDocument(Path("/Users/michaelwelly/Downloads/Astor_Butler_Conference_Paper.docx"), "paper", "Astor Butler conference paper", ("conference", "paper")),
     SourceDocument(Path("/Users/michaelwelly/Downloads/Astor Butler Conf.docx"), "paper", "Astor Butler conference draft", ("conference", "paper")),
-    SourceDocument(Path("/Users/michaelwelly/IdeaProjects/Astor_Butler_MVP/docs/ARCHITECTURE.md"), "architecture", "Astor Butler architecture", ("architecture", "repo")),
-    SourceDocument(Path("/Users/michaelwelly/IdeaProjects/Astor_Butler_MVP/README.md"), "architecture", "Astor Butler README", ("readme", "repo")),
-    SourceDocument(Path("/Users/michaelwelly/Obsidian/Astor_Butler_Knowledge/01_Project/Project_Context.md"), "memory", "Project context", ("obsidian", "context")),
-    SourceDocument(Path("/Users/michaelwelly/Obsidian/Astor_Butler_Knowledge/01_Project/Work_Plan.md"), "memory", "Work plan", ("obsidian", "plan")),
-    SourceDocument(Path("/Users/michaelwelly/Obsidian/Astor_Butler_Knowledge/04_Tech/Tech_Decisions.md"), "memory", "Tech decisions", ("obsidian", "tech")),
-    SourceDocument(Path("/Users/michaelwelly/Obsidian/Astor_Butler_Knowledge/03_FSM/FSM_Index.md"), "memory", "FSM index", ("obsidian", "fsm")),
+    SourceDocument(REPO_DOCS / "architecture" / "ARCHITECTURE.md", "architecture", "Astor Butler architecture", ("architecture", "repo")),
+    SourceDocument(ROOT / "README.md", "architecture", "Astor Butler README", ("readme", "repo")),
+    SourceDocument(REPO_DOCS / "obsidian" / "01_Project" / "Project_Context.md", "memory", "Project context", ("obsidian", "context", "repo")),
+    SourceDocument(REPO_DOCS / "obsidian" / "01_Project" / "Work_Plan.md", "memory", "Work plan", ("obsidian", "plan", "repo")),
+    SourceDocument(REPO_DOCS / "obsidian" / "04_Tech" / "Tech_Decisions.md", "memory", "Tech decisions", ("obsidian", "tech", "repo")),
+    SourceDocument(REPO_DOCS / "obsidian" / "03_FSM" / "FSM_Index.md", "memory", "FSM index", ("obsidian", "fsm", "repo")),
 ]
 
 

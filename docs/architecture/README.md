@@ -1,0 +1,18 @@
+# Architecture Docs
+
+Архитектурный пакет: runtime boundaries, data model, local databases and infrastructure decisions.
+
+Use this folder for:
+
+- backend/system architecture;
+- database topology;
+- local database access;
+- Model Gateway / NLU / RAG / VLM runtime boundaries.
+
+Key files:
+
+- `ARCHITECTURE.md`
+- `DATABASE_MODEL.md`
+- `LOCAL_DATABASES.md`
+
+Do not put scenario walkthroughs here; FSM flow belongs in `docs/fsm/`.

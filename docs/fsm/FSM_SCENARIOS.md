@@ -12,22 +12,18 @@ docs/FSM_SCENARIOS_VIEWER.html
 
 Статус 2026-06-15: `docs/FSM_SCENARIOS_VIEWER.html` утвержден как актуальный визуальный source of truth для сценариев, нумерации, service-chat boundary и предкодового тест-плана. Этот Markdown остается текстовым companion-документом и должен подтягиваться к viewer, а не спорить с ним.
 
-PlantUML-версия текущей карты:
-
-```text
-docs/FSM_WORKING_SCENARIOS_UML.puml
-```
+Историческая PlantUML-карта перенесена в `docs/archive/2026-06-29-docs-cleanup/FSM_WORKING_SCENARIOS_UML.puml` и больше не является source of truth.
 
 Implementation contract перед глубоким кодингом:
 
 ```text
-docs/FSM_IMPLEMENTATION_PLAN.md
+docs/fsm/FSM_IMPLEMENTATION_PLAN.md
 ```
 
 Quiet Guide channel ingest plan:
 
 ```text
-docs/AERIS_CHANNEL_INGEST.md
+docs/content/AERIS_CHANNEL_INGEST.md
 ```
 
 ## Принципы
@@ -46,6 +42,8 @@ docs/AERIS_CHANNEL_INGEST.md
 12. Preview AERIS - постоянный верхний UI-якорь гостя. Runtime-удаление сообщений Telegram временно отключено полностью: диалог не чистим через `DeleteMessage`, пока не будет отдельная Redis/session UX-политика.
 13. Голосовой вход нормализуется на уровне `Transport adapters`: Telegram voice/audio сначала превращается в текст/metadata, затем дальше идет тот же FSM путь, что и обычное текстовое сообщение.
 14. RAG для меню - инфраструктурный слой над menu assets: файлы остаются source of truth, LLM получает извлеченный индекс/чанки и не выдумывает позиции, цены или наличие.
+15. `Model Gateway` - единый сменный слой для LLM, VLM, STT, будущего TTS и embeddings. Локальные модели и cloud API должны подключаться через capability contracts, а не через прямую зависимость сценария от конкретного provider.
+16. Vision/VLM помогает распознавать план зала и фото гостя, но не принимает booking decisions. Результат vision - только candidates/slots/confidence, которые затем проверяет FSM.
 
 ## Общая Карта
 
@@ -86,6 +84,7 @@ flowchart TD
     Hostess["Hostess chat<br/>Да / Нет"]
     Manager["Manager/Admin<br/>ручная работа"]
     LLM["LLM Adapter<br/>intent/entities/text"]
+    ModelGateway["Model Gateway<br/>LLM / VLM / STT / embeddings"]
 
     Guest --> Transport --> Gateway --> Intake
     Intake --> EventTrail --> Admin
@@ -93,6 +92,8 @@ flowchart TD
     Gateway --> MainMenu
     MainMenu --> Router
 
+    Router --> ModelGateway
+    ModelGateway --> Router
     Router --> TableBooking
     Router --> EventBooking
     Router --> MenuAssets
@@ -129,8 +130,8 @@ flowchart TD
     Gateway --> Redis
     Domain --> Postgres
     Domain --> Redis
-    Gateway -. "классификация/текст" .-> LLM
-    LLM -. "не владеет бизнес-логикой" .-> Gateway
+    Gateway -. "язык / уши / глаза / embeddings" .-> ModelGateway
+    ModelGateway -. "candidates / slots / text, без business write" .-> Gateway
 
     TableBooking --> MainMenu
     EventBooking --> MainMenu
@@ -147,6 +148,29 @@ flowchart TD
     Impact --> MainMenu
     Recovery --> MainMenu
 ```
+
+## Model Gateway / органы восприятия
+
+`Model Gateway` - целевой сменный AI-provider слой. Он нужен, чтобы сценарии не зависели напрямую от Ollama, Qwen, OpenAI, STT-команды или VLM-контейнера. Текущий text-generation provider: Spring AI `OllamaChatModel` внутри `SpringAiOllamaModelGateway`; raw Ollama оставлен как fallback. Embeddings идут через `ModelGateway.generateEmbedding(...)`, а vision через `ModelGateway.analyzeImage(...)`.
+
+| Capability | Локальный MVP | Production fallback | Роль в системе |
+| --- | --- | --- | --- |
+| Язык / LLM | Qwen/Ollama text model: `FRONTLINE=qwen2.5:1.5b`, `QUALITY=qwen2.5:3b` | OpenAI или совместимый API | Живые ответы, summary, entity extraction, помощь в неоднозначных intent. |
+| Глаза / VLM | `qwen2.5vl:3b` через Ollama `/api/chat` images; позже OCR/OpenCV для deterministic parts | OpenAI vision или managed VLM | План зала, фото гостя, отметки на изображении, documents understanding. |
+| Уши / STT | faster-whisper | managed STT | Telegram voice/audio -> transcript. |
+| Голос / TTS | выключено в MVP | future TTS provider | Accessibility/voice replies later. |
+| Embeddings | pgvector + approved corpus | cloud embeddings при необходимости | Похожие фразы, RAG по меню, инструкции, сценарные подсказки. |
+
+Правило: Model Gateway возвращает только `candidates`, `slots`, `confidence`, `summary` или `text`. FSM и domain services решают, можно ли двигать state, создавать order, hold, payment, bid или cancellation.
+
+### Vision для плана зала
+
+Vision/VLM подключается к бронированию в два этапа:
+
+1. Offline annotation: `AERIS PLAN.pdf` превращается в структурированную карту `tableCode`, `zone`, `capacity`, `polygon/box`, `tags`. Результат вручную проверяется и сохраняется в PostgreSQL.
+2. Runtime photo understanding: если гость прислал фото/скрин плана с кружком или галочкой, VLM/OCR/OpenCV возвращает top candidates и confidence. FSM заполняет `tableCode` только при высокой уверенности, иначе задает уточнение.
+
+VLM не обещает гостю свободный стол. Доступность, hold и подтверждение остаются в `TableReservationService` и staff chat.
 
 ## Дипломный Product Layer
 
@@ -290,10 +314,12 @@ flowchart LR
 - runtime tables: `intent_examples`, `intent_example_embeddings`, `intent_understanding_misses`;
 - pgvector migration: `db/changelog/2026-06-17-intent-understanding-pgvector.sql`;
 - optional startup ingest: `ASTOR_INTENT_EXAMPLES_INGEST_ON_STARTUP=true`;
-- embeddings provider: `ASTOR_SEMANTIC_EMBEDDINGS_PROVIDER=none|spring-ai|ollama`;
-- Spring AI bridge: `SpringAiEmbeddingProvider` uses a Spring AI `EmbeddingModel` bean when provider is `spring-ai`;
-- local Ollama bridge: `OllamaEmbeddingProvider` uses `/api/embed` when provider is `ollama`;
-- Duckling/Natasha spike: `docs/NLU_TOOLS_SPIKE.md` and `scripts/spike_russian_nlu_tools.py`.
+- embeddings provider: `ASTOR_SEMANTIC_EMBEDDINGS_PROVIDER=none|model-gateway|spring-ai|ollama`;
+- default AERIS runtime provider: `model-gateway`, so embeddings go through the same `ModelGateway` boundary as text generation;
+- `ModelGatewayEmbeddingProvider` calls `ModelGateway.generateEmbedding(...)`; the active Spring AI implementation uses local Ollama `nomic-embed-text` and raw Ollama only as fallback;
+- VLM capability: `ModelGateway.analyzeImage(...)` accepts image base64 + prompt and defaults to `LLM_OLLAMA_VISION_MODEL=qwen2.5vl:3b`; it returns candidates/text for FSM review, not direct orders;
+- legacy diagnostics remain available: `SpringAiEmbeddingProvider` with a direct Spring AI `EmbeddingModel` bean (`spring-ai`) and `OllamaEmbeddingProvider` with direct `/api/embed` (`ollama`);
+- Runtime NLU: state-aware rules + `NatashaRussianNluAdapter` for Russian morphology/noisy STT. `DucklingRussianNluAdapter` remains an archived experimental adapter behind `ASTOR_NLU_DUCKLING_ENABLED=false`, not part of Docker Compose runtime or the default AERIS booking path.
 
 Контракт слоя:
 
@@ -399,7 +425,7 @@ flowchart TD
 
 | Сценарий | Примеры фраз | Entities | Runtime states |
 | --- | --- | --- | --- |
-| `TableBookingScenario` | "стол на завтра", "нас двое в 20", "посади у окна" | date, time, partySize, table/zone preference | `TABLE_BOOKING_COLLECT_DATE`, `TABLE_BOOKING_COLLECT_TIME`, `TABLE_BOOKING_COLLECT_PARTY_SIZE`, `TABLE_BOOKING_WAIT_TABLE_SELECTION`, `TABLE_BOOKING_WAIT_HOSTESS_CONFIRMATION` |
+| `TableBookingScenario` | "стол на завтра", "нас двое в 20", "посади у окна" | table/zone preference, optional seatingPreference, date, time, partySize | `TABLE_BOOKING_WAIT_TABLE_SELECTION`, `TABLE_BOOKING_COLLECT_DATE`, `TABLE_BOOKING_COLLECT_TIME`, `TABLE_BOOKING_COLLECT_PARTY_SIZE`, then `READY_FOR_DIALOG` after order creation |
 | `MenuAssetsScenario` | "скинь меню", "что по вину", "барная карта", "коктейли" | menuCategories, dietary hints, source assets | `MENU_ASSETS_CLARIFY`, `MENU_ASSETS_DELIVERED` |
 | `PreferenceScenario` | "запомни, я не ем острое", "люблю тихий стол", "предпочтения" | preference text, category, confidence, source state | `PREFERENCE_COLLECT_TEXT`, `PREFERENCE_SAVED` |
 | `QuietGuideScenario` | "покажи зал", "что за концепция", "афиша", "как у вас внутри" | contentKind, date range, media asset | `QUIET_GUIDE_CLARIFY`, `QUIET_GUIDE_DELIVERED` |
@@ -432,9 +458,10 @@ flowchart TD
 | `MENU_ASSETS_DELIVERED` | Меню отправлено | Файлы отправлены, RAG/admin event записан, возврат домой. |
 | `QUIET_GUIDE_CLARIFY` | Уточнить справку | Нужно понять: афиша, видео-тур, концепция, правила или менеджер. |
 | `QUIET_GUIDE_DELIVERED` | Справка отправлена | Контент/видео/концепция отправлены, возврат домой. |
-| `TABLE_BOOKING_COLLECT_DATE` | Нужна дата | Сбор даты посадки. |
-| `TABLE_BOOKING_COLLECT_TIME` | Нужно время | Сбор времени посадки. |
+| `TABLE_BOOKING_COLLECT_DATE` | Нужна дата | Сбор даты посадки. Батлер показывает reply-кнопки на 21 день от сегодняшнего дня заведения и принимает текст: "сегодня", "завтра", "на пятницу", `03.07`. |
+| `TABLE_BOOKING_COLLECT_TIME` | Нужно время | Сбор времени посадки. Батлер показывает reply-кнопки времени с шагом 1 час и принимает текст: `20:00`, "в 8 вечера", "к восьми". |
 | `TABLE_BOOKING_COLLECT_PARTY_SIZE` | Нужно число гостей | Сбор party size. |
+| `TABLE_BOOKING_COLLECT_SEATING_PREFERENCE` | Legacy-пожелания по посадке | Совместимый старый state: если runtime попал сюда, текст сохраняется как пожелание и заявка создается. Новый happy path собирает "у окна", "винная комната", "тихий стол" на шаге выбора стола/зоны и не задает финальный вопрос. |
 | `TABLE_BOOKING_WAIT_TABLE_SELECTION` | Ждем стол | План отправлен, ждем стол/зону/автовыбор. |
 | `TABLE_BOOKING_WAIT_HOSTESS_CONFIRMATION` | Ждем хостес | Заявка и hold созданы, хостес решает кнопками. |
 | `TABLE_BOOKING_CONFIRMED` | Подтверждено | Гостю отправлен order, возврат домой. |
@@ -1073,8 +1100,11 @@ LLM не может:
 
 | Given | When | Then |
 | --- | --- | --- |
-| `READY_FOR_DIALOG` | "столик завтра в 20:00 на двоих" | send plan, wait table |
-| `TABLE_BOOKING_WAIT_TABLE_SELECTION` | "17" | create order/hold, send hostess card |
+| `READY_FOR_DIALOG` | "столик завтра в 20:00 на двоих" | send plan first, capture date/time/party, wait table/zone; optional seating preference is captured from table/zone phrase |
+| `READY_FOR_DIALOG` | "хочу забронировать столик" | send plan first, wait table/zone |
+| `TABLE_BOOKING_WAIT_TABLE_SELECTION` | "17" / "винная комната" / "у окна" | capture table/zone/preference, ask only missing date/time/party in FSM order |
+| `TABLE_BOOKING_COLLECT_PARTY_SIZE` | "на троих" | capture party size, create order/hold, send hostess card, return guest to main menu |
+| `TABLE_BOOKING_COLLECT_SEATING_PREFERENCE` | "нет" / "тихий стол" | legacy-compatible: resolve preference slot, create order/hold, send hostess card |
 | `TABLE_BOOKING_WAIT_TABLE_SELECTION` | повтор booking intent | resend plan, не создавать order |
 | `TABLE_BOOKING_WAIT_HOSTESS_CONFIRMATION` | hostess `Да` | confirm order/hold, guest order, return ready |
 | `TABLE_BOOKING_WAIT_HOSTESS_CONFIRMATION` | hostess `Нет` | reject/release, polite guest refusal |

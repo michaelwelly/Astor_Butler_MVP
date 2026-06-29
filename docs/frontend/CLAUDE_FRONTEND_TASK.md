@@ -15,7 +15,7 @@ Codex has confirmed the backend boundaries:
 
 These boundaries are collected in:
 
-- `docs/FRONTEND_BACKEND_CONTRACTS.md`
+- `docs/contracts/FRONTEND_BACKEND_CONTRACTS.md`
 
 After Claude returns the file/component plan and the user approves it, Claude may implement frontend-only changes against this contract.
 
@@ -26,8 +26,8 @@ You work in Astor_Butler_MVP.
 
 Read first:
 - CLAUDE.md
-- docs/CLAUDE_PROJECT_PACK.md
-- docs/FRONTEND_BACKEND_CONTRACTS.md
+- docs/frontend/CLAUDE_PROJECT_PACK.md
+- docs/contracts/FRONTEND_BACKEND_CONTRACTS.md
 - design-system/c3flex/MASTER.md
 - README.md
 
@@ -42,7 +42,7 @@ Do not edit:
 - docker-compose.yml
 - .env, .env.*
 - docs/FSM_*
-- docs/ARCHITECTURE.md
+- docs/architecture/ARCHITECTURE.md
 - backend/database/infra files
 
 Goal:

@@ -74,12 +74,19 @@ This is an API-level FSM and observability test. It does not replace a real Tele
 
 ## Container LLM pool
 
-The weekend container stack starts 3 Ollama workers behind an nginx load balancer:
+The container AI profile starts two Ollama workers behind an nginx load balancer:
 
 - `ollama-1`
 - `ollama-2`
-- `ollama-3`
 - `llm-gateway`
+
+Default local text model:
+
+```text
+qwen2.5:1.5b
+```
+
+The guest-facing `FRONTLINE` profile defaults to `qwen2.5:1.5b`. The `QUALITY` profile defaults to `qwen2.5:3b` and is reserved for shadow/learner experiments or heavier offline analysis; it should not be required for business decisions.
 
 The application talks to:
 

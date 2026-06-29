@@ -15,7 +15,7 @@ Priority order applied:
 
 1. Runtime code in `src/main/java` and Liquibase migrations in `src/main/resources/db/changelog`.
 2. `docs/FSM_SCENARIOS_VIEWER.html`.
-3. `docs/ARCHITECTURE.md`.
+3. `docs/architecture/ARCHITECTURE.md`.
 4. `Obsidian/Astor_Butler_Knowledge/01_Project/Current_Status.md`.
 5. `Obsidian/Astor_Butler_Knowledge/01_Project/Backlog.md`.
 6. Other Markdown documents in `docs/` and the Obsidian vault.

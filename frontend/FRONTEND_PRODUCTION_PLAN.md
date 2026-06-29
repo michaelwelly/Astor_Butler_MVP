@@ -1,8 +1,8 @@
 # C3FLEX / Astor Butler — Frontend Production Plan
 
-Status: implemented (frontend-only). Aligns with `docs/FRONTEND_BACKEND_CONTRACTS.md` (`contract-first v0.1`).
+Status: implemented (frontend-only). Aligns with `docs/contracts/FRONTEND_BACKEND_CONTRACTS.md` (`contract-first v0.1`).
 
-Scope respected: only `frontend/**` and `design-system/**` were touched. No backend endpoints, no `src/main/**`, no `docker-compose.yml`, no `.env*`, no `docs/FSM_*`, no `docs/ARCHITECTURE.md`. No video binaries in git.
+Scope respected: only `frontend/**` and `design-system/**` were touched. No backend endpoints, no `src/main/**`, no `docker-compose.yml`, no `.env*`, no `docs/FSM_*`, no `docs/architecture/ARCHITECTURE.md`. No video binaries in git.
 
 ## What was built
 

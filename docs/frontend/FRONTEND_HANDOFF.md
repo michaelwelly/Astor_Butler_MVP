@@ -95,10 +95,10 @@ Current visual categories:
 
 Read before implementation:
 
-- `docs/C3AG_FRONTEND_TZ.md`
-- `docs/MEDIA_PIPELINE.md`
-- `docs/API_CONTRACT.md`
-- `docs/ARCHITECTURE.md`
+- `docs/frontend/C3AG_FRONTEND_TZ.md`
+- `docs/content/MEDIA_PIPELINE.md`
+- `docs/contracts/API_CONTRACT.md`
+- `docs/architecture/ARCHITECTURE.md`
 
 Expected PR:
 

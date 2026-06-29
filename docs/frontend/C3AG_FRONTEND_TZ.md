@@ -203,10 +203,10 @@ Use this prompt when starting the separate frontend-building Codex account:
 Мы строим C3FLEX.com frontend на основе C3AG материалов внутри проекта Astor Butler MVP.
 
 Открой репозиторий /Users/michaelwelly/IdeaProjects/Astor_Butler_MVP и прочитай:
-- docs/C3AG_FRONTEND_TZ.md
-- docs/ARCHITECTURE.md
-- docs/API_CONTRACT.md
-- docs/MEDIA_PIPELINE.md
+- docs/frontend/C3AG_FRONTEND_TZ.md
+- docs/architecture/ARCHITECTURE.md
+- docs/contracts/API_CONTRACT.md
+- docs/content/MEDIA_PIPELINE.md
 - README.md
 
 Задача следующей сессии: спроектировать и начать frontend как Netflix-like immersive production portfolio:

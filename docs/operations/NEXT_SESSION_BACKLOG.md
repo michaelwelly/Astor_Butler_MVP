@@ -30,6 +30,15 @@ Update the API list to cover backend and infrastructure needs for future microse
 - cache warm-up and invalidation;
 - K6 load-test endpoints and scenarios.
 
+## Runtime Naming And Bot Split
+
+Canonical runtime naming:
+
+- `aeris-astor-butler-bot` / `aeris_astor_butler_bot` - AERIS Telegram guest bot, service chats, FSM and NLU-first hospitality scenarios.
+- `c3flex-astor-butler-bot` / `c3flex_astor_butler_bot` - C3FLEX web/site bot and production lead-gen API; Telegram long polling is disabled until a dedicated site bot contract is ready.
+
+Current priority: stabilize AERIS Telegram bot with state-aware rules + Natasha NLU and end-to-end table booking. Duckling is archived as a spike, not part of the Docker runtime. C3FLEX site bot stays in backlog until the AERIS manual test is stable.
+
 All API endpoints must keep:
 
 - DTO/schema-first OpenAPI contracts;
@@ -37,6 +46,34 @@ All API endpoints must keep:
 - `ApiErrorResponse` for all errors;
 - enum models for statuses, roles, event types and delivery states;
 - test-first development: GDD/TDD before business logic.
+
+## Model Gateway / Local Multimodal Layer
+
+Next backend track after table-booking stabilization:
+
+1. Introduce a provider-neutral `ModelGateway` contract:
+   - `generateText`;
+   - `extractSlots`;
+   - `transcribeAudio`;
+   - `analyzeImage`;
+   - `embedText`.
+2. Move direct Ollama usage behind the text capability and keep FSM/domain code provider-agnostic.
+3. Keep local-first routing:
+   - Qwen/Ollama for text;
+   - faster-whisper for STT;
+   - Qwen2.5-VL or smaller VLM for image/PDF experiments;
+   - OpenAI/API-compatible providers as production fallback, not hard dependency.
+4. Add table-plan vision backlog:
+   - offline annotation for `AERIS PLAN.pdf`;
+   - future `venue_table_plan_regions` schema;
+   - runtime photo/circle/checkmark understanding returning `tableCode` candidates and confidence;
+   - FSM validation before any booking draft/order changes.
+5. Update observability:
+   - provider name;
+   - capability;
+   - latency;
+   - timeout/fallback reason;
+   - confidence and selected route.
 
 ## Test Strategy
 

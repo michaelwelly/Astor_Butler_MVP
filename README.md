@@ -91,7 +91,7 @@ Staff/Admin/System чаты не запускают гостевой FSM. Они
 - Docker Compose
 - Nginx local API gateway
 - Prometheus / Grafana
-- Ollama/local LLM как заменяемый AI Adapter для dev-контура
+- Ollama/local LLM как заменяемый AI Adapter для dev-контура: `qwen2.5:1.5b` для быстрых гостевых ответов и `qwen2.5:3b` для quality/shadow задач
 
 ## Локальный запуск
 
@@ -122,10 +122,35 @@ API Gateway проксирует внешний `localhost:8080` на Spring Boo
 
 Проект поддерживает разделение AERIS/Astor Butler bot и site/C3FLEX bot на уровне application instance/profile, но не разносит их по разным инфраструктурам.
 
+Канонический нейминг runtime-инстансов:
+
+```text
+{client}_astor_butler_bot
+{client}_astor_concierge_bot
+```
+
+Для Docker Compose service name используется kebab-case, для `container_name` и env role - snake_case. Клиент всегда идет первым, потому что Astor Butler остается продуктовой платформой, а заказчик/контур меняется.
+
+Канонические env-префиксы для текущих ботов:
+
+```text
+AERIS_ASTOR_BUTLER_BOT_*
+C3FLEX_ASTOR_BUTLER_BOT_*
+```
+
+Например:
+
+```text
+AERIS_ASTOR_BUTLER_BOT_USERNAME=astor_butler_bot
+C3FLEX_ASTOR_BUTLER_BOT_USERNAME=astor_c3flex_bot
+```
+
+Старые `AERIS_TELEGRAM_*`, `C3FLEX_TELEGRAM_*` и `TELEGRAM_*_DEV` пока поддерживаются как fallback, но новые настройки нужно добавлять уже через канонические префиксы.
+
 Локальная идея:
 
-- основной `app` использует базовые Telegram env-переменные;
-- `app-dev` в Docker Compose profile `dev` использует `*_DEV` Telegram env-переменные и порт `8089`;
+- `c3flex-astor-butler-bot` (`c3flex_astor_butler_bot`) в Docker Compose profile `app` обслуживает сайт, C3FLEX content API и `POST /api/messages` для web-chat; Telegram long polling по умолчанию выключен;
+- `aeris-astor-butler-bot` (`aeris_astor_butler_bot`) в Docker Compose profile `telegram` использует AERIS/Astor Butler Telegram env-переменные, служебные чаты и порт `8089`; именно этот инстанс работает с гостями в Telegram;
 - оба инстанса ходят в один инфраструктурный контур: PostgreSQL, Redis, Kafka, MinIO, MongoDB, ScyllaDB, Neo4j и LLM gateway;
 - сценарии, previews, staff/admin/system notifications и web/site bot routing должны оставаться явно разделенными.
 
@@ -177,7 +202,7 @@ pgvector живет внутри PostgreSQL и используется как s
 
 ScyllaDB добавлена как Cassandra-compatible контур для дальнейшего хранения длинной истории сценариев, timeline-событий и state history по гостю. В MVP это инфраструктурная заготовка: runtime state пока остается в Redis/PostgreSQL.
 
-Neo4j добавлена как graph workbench для визуального анализа сценариев, доменов, capability и связей. Источник истины для кода все еще `docs/FSM_SCENARIOS.md` и `docs/FSM_SCENARIOS_VIEWER.html`, а Neo4j помогает смотреть связи другим углом.
+Neo4j добавлена как graph workbench для визуального анализа сценариев, доменов, capability и связей. Источник истины для FSM - `docs/FSM_SCENARIOS_VIEWER.html`; `docs/fsm/FSM_SCENARIOS.md` остается текстовым companion-документом, а Neo4j помогает смотреть связи другим углом.
 
 MongoDB `aether` используется для document/media metadata и проектной библиотеки.
 
@@ -222,7 +247,7 @@ Swagger уже группирует будущие границы:
 
 ## Production / Frontend Work Split
 
-Production-дорожка зафиксирована в [docs/PRODUCTION_DEPLOYMENT_PLAN.md](docs/PRODUCTION_DEPLOYMENT_PLAN.md).
+Production-дорожка зафиксирована в [docs/operations/PRODUCTION_DEPLOYMENT_PLAN.md](docs/operations/PRODUCTION_DEPLOYMENT_PLAN.md).
 
 Принцип:
 
@@ -234,9 +259,9 @@ Production-дорожка зафиксирована в [docs/PRODUCTION_DEPLOYM
 Claude project onboarding:
 
 - [CLAUDE.md](CLAUDE.md)
-- [docs/CLAUDE_PROJECT_PACK.md](docs/CLAUDE_PROJECT_PACK.md)
-- [docs/CLAUDE_FRONTEND_TASK.md](docs/CLAUDE_FRONTEND_TASK.md)
-- [docs/FRONTEND_BACKEND_CONTRACTS.md](docs/FRONTEND_BACKEND_CONTRACTS.md)
+- [docs/frontend/CLAUDE_PROJECT_PACK.md](docs/frontend/CLAUDE_PROJECT_PACK.md)
+- [docs/frontend/CLAUDE_FRONTEND_TASK.md](docs/frontend/CLAUDE_FRONTEND_TASK.md)
+- [docs/contracts/FRONTEND_BACKEND_CONTRACTS.md](docs/contracts/FRONTEND_BACKEND_CONTRACTS.md)
 
 Claude можно запускать на frontend-планирование сразу. Реализацию frontend запускаем после фиксации backend-контрактов: video metadata, web chat payload, auth/consent payload и object storage URL strategy.
 
@@ -304,18 +329,21 @@ scripts/run_k6_read_load.sh
 
 ## Документация
 
-- [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)
-- [docs/FSM_SCENARIOS.md](docs/FSM_SCENARIOS.md)
-- [docs/MEDIA_PIPELINE.md](docs/MEDIA_PIPELINE.md)
-- [docs/API_CONTRACT.md](docs/API_CONTRACT.md)
-- [docs/LOAD_TESTING.md](docs/LOAD_TESTING.md)
-- [docs/FRONTEND_HANDOFF.md](docs/FRONTEND_HANDOFF.md)
-- [docs/CLAUDE_PROJECT_PACK.md](docs/CLAUDE_PROJECT_PACK.md)
-- [docs/CLAUDE_FRONTEND_TASK.md](docs/CLAUDE_FRONTEND_TASK.md)
-- [docs/FRONTEND_BACKEND_CONTRACTS.md](docs/FRONTEND_BACKEND_CONTRACTS.md)
-- [docs/PRODUCTION_DEPLOYMENT_PLAN.md](docs/PRODUCTION_DEPLOYMENT_PLAN.md)
+- [docs/README.md](docs/README.md)
+- [docs/architecture/ARCHITECTURE.md](docs/architecture/ARCHITECTURE.md)
+- [docs/FSM_SCENARIOS_VIEWER.html](docs/FSM_SCENARIOS_VIEWER.html)
+- [docs/fsm/FSM_SCENARIOS.md](docs/fsm/FSM_SCENARIOS.md)
+- [docs/content/MEDIA_PIPELINE.md](docs/content/MEDIA_PIPELINE.md)
+- [docs/contracts/API_CONTRACT.md](docs/contracts/API_CONTRACT.md)
+- [docs/operations/LOAD_TESTING.md](docs/operations/LOAD_TESTING.md)
+- [docs/frontend/FRONTEND_HANDOFF.md](docs/frontend/FRONTEND_HANDOFF.md)
+- [docs/frontend/CLAUDE_PROJECT_PACK.md](docs/frontend/CLAUDE_PROJECT_PACK.md)
+- [docs/frontend/CLAUDE_FRONTEND_TASK.md](docs/frontend/CLAUDE_FRONTEND_TASK.md)
+- [docs/contracts/FRONTEND_BACKEND_CONTRACTS.md](docs/contracts/FRONTEND_BACKEND_CONTRACTS.md)
+- [docs/operations/PRODUCTION_DEPLOYMENT_PLAN.md](docs/operations/PRODUCTION_DEPLOYMENT_PLAN.md)
+- [docs/obsidian/README.md](docs/obsidian/README.md)
 
-Локальная проектная память ведется отдельно в Obsidian и не является production-репозиторием.
+Локальная проектная память ведется во внешнем Obsidian vault, а переносимый снимок для Codex/Claude/сервера лежит в [docs/obsidian](docs/obsidian/README.md).
 
 ## Научный фундамент
 

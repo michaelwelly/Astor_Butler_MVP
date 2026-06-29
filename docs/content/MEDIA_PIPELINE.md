@@ -229,7 +229,7 @@ Telegram channel_post / edited_channel_post, когда Astor Butler bot доб�
 Подробный план ingest, классификации, хранения в MinIO/PostgreSQL/pgvector и retention:
 
 ```text
-docs/AERIS_CHANNEL_INGEST.md
+docs/content/AERIS_CHANNEL_INGEST.md
 ```
 
 MVP runtime status:

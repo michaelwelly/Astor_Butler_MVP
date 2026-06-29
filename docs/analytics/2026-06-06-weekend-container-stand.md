@@ -10,8 +10,8 @@
 - LLM pool:
   - `astor_ollama_1`
   - `astor_ollama_2`
-  - `astor_ollama_3`
   - `astor_llm_gateway`
+  - default model split after 2026-06-27: `FRONTLINE=qwen2.5:1.5b`, `QUALITY=qwen2.5:3b`
 
 ## Verified
 
@@ -20,7 +20,7 @@
   - `astor_app`: healthy
   - `astor_api_gateway`: healthy
   - `astor_llm_gateway`: healthy
-  - `astor_ollama_1/2/3`: healthy
+  - `astor_ollama_1/2`: healthy
   - PostgreSQL, Redis, Mongo, Kafka, MinIO: healthy
 - Kafka topic `astor.user.events`: 3 partitions.
 - Kafka consumer group `astor-admin-events`: total lag 0.

@@ -3,7 +3,7 @@
 Date: 2026-06-23
 Scope touched: `frontend/**` + `design-system/**` only.
 NOT touched: `src/main/**`, `docker-compose.yml`, `.env*`, `docs/FSM_*`,
-`docs/ARCHITECTURE.md`, backend/DB/infra, Liquibase, backend tests, `.next`, `node_modules`.
+`docs/architecture/ARCHITECTURE.md`, backend/DB/infra, Liquibase, backend tests, `.next`, `node_modules`.
 No video binaries committed.
 
 Verification: `tsc --noEmit` clean; `npm run lint` clean (0 errors, 10 warnings, all
@@ -13,7 +13,7 @@ Mac.
 
 ## What the frontend now expects from the backend
 
-All shapes follow `docs/FRONTEND_BACKEND_CONTRACTS.md`. The frontend is contract-first and
+All shapes follow `docs/contracts/FRONTEND_BACKEND_CONTRACTS.md`. The frontend is contract-first and
 mock-backed; swapping in real endpoints is config-only.
 
 1. **Video catalog — `GET /api/content/c3flex/videos`** (§3)

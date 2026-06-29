@@ -22,7 +22,7 @@
 
 ### Архитектура и проектная память
 
-- `/Users/michaelwelly/IdeaProjects/Astor_Butler_MVP/docs/ARCHITECTURE.md`
+- `/Users/michaelwelly/IdeaProjects/Astor_Butler_MVP/docs/architecture/ARCHITECTURE.md`
 - `/Users/michaelwelly/IdeaProjects/Astor_Butler_MVP/README.md`
 - `/Users/michaelwelly/Obsidian/Astor_Butler_Knowledge/01_Project/Project_Context.md`
 - `/Users/michaelwelly/Obsidian/Astor_Butler_Knowledge/01_Project/Work_Plan.md`

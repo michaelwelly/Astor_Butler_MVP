@@ -2,7 +2,7 @@
 
 Обновлено: после паса «каталог-карусель + хедер-авторизация + eslint + a11y».
 Границы те же: только `frontend/**` и `design-system/**`. Контракт —
-`docs/FRONTEND_BACKEND_CONTRACTS.md`. Backend/FSM/infra/.env/docker — Codex.
+`docs/contracts/FRONTEND_BACKEND_CONTRACTS.md`. Backend/FSM/infra/.env/docker — Codex.
 
 ## Уже сделано (закрыто)
 

@@ -14,12 +14,13 @@ Claude may work without extra approval in:
 
 Claude must treat these files as context/source of truth, but must not edit them unless the user explicitly asks:
 
-- `docs/FSM_SCENARIOS.md`
+- `docs/README.md`
+- `docs/fsm/FSM_SCENARIOS.md`
 - `docs/FSM_SCENARIOS_VIEWER.html`
-- `docs/FSM_WORKING_SCENARIOS_UML.puml`
-- `docs/ARCHITECTURE.md`
-- `docs/KAFKA_TOPICS.md`
-- `docs/TABLE_BOOKING.md`
+- `docs/architecture/ARCHITECTURE.md`
+- `docs/contracts/KAFKA_TOPICS.md`
+- `docs/fsm/TABLE_BOOKING.md`
+- `docs/obsidian/**`
 - `docker-compose.yml`
 - `src/main/**`
 - `.env`, `.env.*`
@@ -39,6 +40,14 @@ Claude must treat these files as context/source of truth, but must not edit them
 
 Astor Butler MVP is a Java 21 + Spring Boot monolith for Telegram/FSM hospitality scenarios.
 FSM is the source of truth. Telegram, website, and future web chat are transport/UI layers.
+
+Documentation priority:
+
+1. `docs/FSM_SCENARIOS_VIEWER.html` - visual source of truth.
+2. `docs/fsm/FSM_SCENARIOS.md` - text companion.
+3. `docs/architecture/ARCHITECTURE.md` - runtime architecture.
+4. `docs/obsidian/**` - repo-owned project memory.
+5. `docs/archive/**` - historical context only.
 
 Current priority:
 

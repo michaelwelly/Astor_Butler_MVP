@@ -226,6 +226,7 @@
     <a href="#guest-input-understanding">1.3 Input Understanding</a>
     <a href="#composite-intent">1.4 Composite</a>
     <a href="#intake-matrix">1.5 Intake Matrix</a>
+    <a href="#model-gateway">1.6 Model Gateway</a>
     <a href="#product-layer">2 8 осей</a>
     <a href="#intake">3 Вход</a>
     <a href="#first-touch">4 Первое касание</a>
@@ -549,6 +550,7 @@ flowchart LR
 flowchart LR
     Raw["Raw guest input<br/>text / STT / menu button"]
     Normalize["Normalizer<br/>case, ё/е, buttons,<br/>date/time/party words"]
+    RussianNlu["Russian NLU adapters<br/>Natasha runtime<br/>Duckling archived spike"]
     Slots["Slot extractors<br/>date, time, partySize,<br/>table, amount, yes/no"]
     Examples["Knowledge corpus<br/>intent_examples + misses"]
     Vector["pgvector<br/>optional embeddings"]
@@ -556,20 +558,61 @@ flowchart LR
     Machine["UnderstoodInput<br/>normalizedText + slots + intent"]
     Router["ScenarioRouter / FSM guard"]
 
-    Raw --> Normalize --> Slots --> Intent --> Machine --> Router
+    Raw --> Normalize --> RussianNlu --> Slots --> Intent --> Machine --> Router
     Examples --> Intent
     Vector --> Intent
     </div>
+    <h3>1.3.1 Russian NLU Toolchain / Natasha Runtime</h3>
+    <p>Чтобы не прописывать тысячи вариантов русских фраз вручную, Astor добавляет bounded open-source слой между нормализацией текста и FSM. Он извлекает машинные slots, но не решает бизнес-действия.</p>
+    <div class="diagram mermaid compact">
+flowchart LR
+    Raw["Text or STT transcript<br/>например: 'завтра к восьми на двоих'"]
+    Clean["Transport cleaner<br/>убрать STT warnings,<br/>ё/е, case, punctuation"]
+    Natasha["Natasha adapter<br/>lemmas, morphology,<br/>names, places, staff refs"]
+    Rules["FSM-aware rules<br/>date / time / numbers by state"]
+    Merge["Slot merge policy<br/>source + confidence + conflicts"]
+    Examples["intent_examples<br/>approved phrase memory"]
+    Vector["pgvector examples<br/>similar noisy phrases"]
+    Decision["UnderstoodInput<br/>intent candidates + slots"]
+    Guard["ScenarioRouter + FSM guard"]
+
+    Raw --> Clean --> Rules --> Merge
+    Clean --> Natasha --> Merge
+    Clean --> Examples --> Decision
+    Clean --> Vector --> Decision
+    Merge --> Decision --> Guard
+    </div>
+    <table>
+      <thead><tr><th>Инструмент</th><th>Что извлекает</th><th>Где полезен</th><th>Граница</th></tr></thead>
+      <tbody>
+      <tr><td><code>Natasha</code></td><td>Runtime-инструмент для русских лемм, морфологии, имен, сущностей и шумного STT.</td><td>"винной комнате", "официанту Сергею", "тихий стол у окна", шумные STT-фразы.</td><td>Не является платежным/booking decision maker.</td></tr>
+      <tr><td><code>FSM-aware rules</code></td><td>Детерминированное извлечение даты, времени, количества гостей и номера стола с учетом текущего state.</td><td>"к восьми", "через час", "20:00", "на троих".</td><td>Все даты считаются через <code>BookingTimeProvider</code>, не через внешнюю библиотеку.</td></tr>
+      <tr><td><code>Duckling</code></td><td>Архивный experimental spike для даты/времени/чисел.</td><td>Может быть возвращен отдельным feature flag после доказанной пользы.</td><td>Удален из Docker Compose runtime, не поднимается стартовым скриптом.</td></tr>
+      <tr><td><code>intent_examples</code></td><td>Approved фразы + expected intent/slots.</td><td>Повторяемые реальные формулировки гостей после review.</td><td>Не учимся на fallback автоматически без человека.</td></tr>
+      <tr><td><code>pgvector</code></td><td>Похожие фразы и context pack.</td><td>"винишко", "покажи тели", voice transcript с ошибками.</td><td>Только повышает/понижает confidence, FSM остается guard.</td></tr>
+      </tbody>
+    </table>
+    <table>
+      <thead><tr><th>Конфликт</th><th>Правило merge</th><th>Пример</th></tr></thead>
+      <tbody>
+      <tr><td>Одно число может быть временем, гостями или столом.</td><td>Текущий FSM state сильнее общего правила.</td><td><code>TABLE_BOOKING_COLLECT_TIME + "8"</code> -> 20:00; <code>WAIT_TABLE_SELECTION + "7"</code> -> table 7.</td></tr>
+      <tr><td>Слово похоже на меню и на зону посадки.</td><td>Side-effect intent и активный scenario приоритетнее content intent.</td><td>"тихий стол в винной комнате" -> table seating preference, не wine menu.</td></tr>
+      <tr><td>External NLU disagrees with golden corpus.</td><td>Golden corpus + state contract побеждают, инструмент дает только candidate.</td><td>"на 2" в party-size state -> 2 гостя, не дата/стол.</td></tr>
+      <tr><td>Confidence ниже порога.</td><td>Один уточняющий вопрос, затем recovery/admin card.</td><td>Шумный STT не запускает неверный сценарий.</td></tr>
+      </tbody>
+    </table>
     <table>
       <thead><tr><th>Компонент</th><th>Что делает</th><th>Где живет сейчас</th><th>Куда масштабируем</th></tr></thead>
       <tbody>
       <tr><td><code>GuestInputUnderstandingService</code></td><td>Нормализует ручной ввод и кнопки, возвращает <code>UnderstoodInput</code>.</td><td>Spring service перед <code>ScenarioRouter</code>.</td><td>Гибрид: rules + DB examples + pgvector + LLM classifier.</td></tr>
       <tr><td><code>UnderstoodInput</code></td><td>Машинный контракт: raw, normalized, intent, confidence, slots, candidates.</td><td>Java record.</td><td>Единый DTO для Telegram, REST и будущих transport adapters.</td></tr>
+      <tr><td><code>NatashaAdapter</code></td><td>Runtime HTTP adapter к local Natasha service для русской морфологии и entities.</td><td>Implemented: <code>NatashaRussianNluAdapter</code> + <code>docker/nlu/natasha</code>.</td><td>Feature flag + timeout + graceful fallback к rules.</td></tr>
+      <tr><td><code>DucklingAdapter</code></td><td>Experimental HTTP adapter к Duckling для дат/времени/чисел.</td><td>Code kept disabled for spike compatibility.</td><td>Не входит в Docker Compose runtime; включать только отдельным решением.</td></tr>
       <tr><td><code>guest-input-golden-corpus.jsonl</code></td><td>Проверяемые примеры живых фраз без ручного Telegram-прогона.</td><td>Repo-owned seed/test corpus.</td><td>Загрузка в Postgres/pgvector как runtime knowledge.</td></tr>
       <tr><td><code>intent_examples</code></td><td>Approved фразы, intent, state и expected slots.</td><td>PostgreSQL + Liquibase.</td><td>Admin review UI и автозагрузка из corpus.</td></tr>
       <tr><td><code>intent_example_embeddings</code></td><td>Векторы approved examples с размерностью конкретной модели.</td><td>pgvector, provider выключен по умолчанию.</td><td><code>spring-ai</code> или <code>ollama</code> embedding provider.</td></tr>
       <tr><td><code>intent_understanding_misses</code></td><td>Фразы, которые сломали тест или ушли в fallback.</td><td>PostgreSQL queue для review.</td><td>Admin review UI + пополнение corpus.</td></tr>
-      <tr><td><code>Duckling / Natasha spike</code></td><td>Отдельно проверяет русские даты, числа, морфологию и шумный STT.</td><td><code>scripts/spike_russian_nlu_tools.py</code>.</td><td>В runtime только после доказанной пользы.</td></tr>
+      <tr><td><code>Natasha runtime</code></td><td>Проверяет русскую морфологию, сущности и шумный STT; даты/время идут через state-aware rules.</td><td><code>docker/nlu/natasha</code>, <code>scripts/start_container_stack.sh</code>.</td><td>Runtime включается через <code>ASTOR_NLU_STACK_ENABLED=true</code>; Duckling не стартует.</td></tr>
       </tbody>
     </table>
     <table>
@@ -587,7 +630,7 @@ flowchart LR
       <div class="card"><strong>FSM still owns truth</strong><span>Understanding говорит "на что похоже", а FSM решает, допустим ли переход в текущем state.</span></div>
       <div class="card"><strong>Corpus before production</strong><span>Новые варианты фраз сначала попадают в golden corpus и unit tests, потом в контейнер и ручной smoke test.</span></div>
       <div class="card"><strong>No code-only knowledge</strong><span>Правила в коде - стартовый fallback. Источник масштабирования - seed/corpus + Postgres/pgvector.</span></div>
-      <div class="card"><strong>Provider flags</strong><span><code>ASTOR_SEMANTIC_EMBEDDINGS_PROVIDER=none|spring-ai|ollama</code>; загрузка corpus включается отдельно.</span></div>
+      <div class="card"><strong>Provider flags</strong><span><code>ASTOR_SEMANTIC_EMBEDDINGS_PROVIDER=none|model-gateway|spring-ai|ollama</code>; AERIS runtime uses <code>model-gateway</code>, corpus loading is controlled separately.</span></div>
     </div>
     <table>
       <thead><tr><th>Шаг наполнения</th><th>Что делаем</th><th>Результат</th></tr></thead>
@@ -679,7 +722,7 @@ flowchart LR
       <tr><td>3</td><td>Intake</td><td>любой Telegram/REST update, voice, callback, service chat</td><td>chat id, source, raw payload, transcript, correlation id</td><td><code>GUEST_MESSAGE_RECEIVED</code>, <code>SERVICE_COMMAND_RECEIVED</code>, service chat skip guest FSM</td></tr>
       <tr><td>4</td><td>FirstTouch</td><td><code>/start</code>, первый вход, повторный старт, contact shared</td><td>telegram id, contact phone, consent evidence</td><td><code>FIRST_TOUCH_SAFE_RESTART</code>, <code>FIRST_TOUCH_PREVIEW_PIN</code>, <code>CONSENT_REQUIRED</code>, <code>READY_FOR_DIALOG</code></td></tr>
       <tr><td>5</td><td>MainMenu</td><td>свободный запрос известного гостя, "главное меню", composite intent</td><td>current state, intent candidates, confidence, composite plan</td><td><code>READY_FOR_DIALOG</code>, route to explicit scenario, <code>pendingIntents</code></td></tr>
-      <tr><td>6</td><td>TableBooking</td><td>хочу стол, забронировать завтра, на двоих, у окна</td><td>date, time, party size, table/zone</td><td><code>TABLE_BOOKING_SEND_PLAN</code>, <code>TABLE_BOOKING_COLLECT_DATE</code>, <code>TABLE_BOOKING_COLLECT_TIME</code>, <code>TABLE_BOOKING_COLLECT_PARTY_SIZE</code>, <code>TABLE_BOOKING_WAIT_HOSTESS_CONFIRMATION</code></td></tr>
+      <tr><td>6</td><td>TableBooking</td><td>хочу стол, забронировать завтра, на двоих, у окна</td><td>date, time, party size, table/zone, optional seating preference</td><td><code>TABLE_BOOKING_SEND_PLAN</code>, <code>TABLE_BOOKING_COLLECT_DATE</code>, <code>TABLE_BOOKING_COLLECT_TIME</code>, <code>TABLE_BOOKING_COLLECT_PARTY_SIZE</code>, <code>READY_FOR_DIALOG</code> after order creation</td></tr>
       <tr><td>7</td><td>EventBooking</td><td>день рождения, корпоратив, закрыть зал, банкет, свадьба</td><td>type, date, guests, budget, wishes</td><td><code>EVENT_BOOKING_SEND_MENU</code>, <code>EVENT_BOOKING_COLLECT_TYPE</code>, <code>EVENT_BOOKING_COLLECT_DATE</code>, <code>EVENT_BOOKING_CONFIRM_ORDER</code>, <code>EVENT_BOOKING_MANAGER_REVIEW</code></td></tr>
       <tr><td>8</td><td>MenuAssets</td><td>меню, вино, барная карта, что поесть, коктейли</td><td>menu category, optional preference, source asset</td><td><code>MENU_ASSETS_INTAKE</code>, <code>MENU_ASSETS_LOOKUP</code>, <code>MENU_ASSETS_CLARIFY</code>, <code>MENU_ASSETS_DELIVER</code></td></tr>
       <tr><td>8.1</td><td>Preference</td><td>запомни, я не ем острое, люблю тихий стол, предпочтения</td><td>preference text, category, confidence, source state</td><td><code>PREFERENCE_COLLECT_TEXT</code>, <code>PREFERENCE_SAVED</code></td></tr>
@@ -696,6 +739,85 @@ flowchart LR
       <tr><td>17</td><td>ChangeCancel</td><td>перенести бронь, отменить, опоздаем, поменять время</td><td>order reference, date/time, action, confirmation</td><td><code>CHANGE_CANCEL_FIND_ORDER</code>, <code>CHANGE_CANCEL_SELECT_ACTION</code>, <code>CHANGE_CANCEL_CANCEL</code>, <code>CHANGE_CANCEL_REVIEW</code></td></tr>
       <tr><td>18</td><td>Recovery</td><td>непонятно, STT noise, LLM timeout, state conflict</td><td>reason, retry count, current state, candidates</td><td><code>RECOVERY_DIAGNOSE</code>, <code>RECOVERY_RESTORE_CONTEXT</code>, <code>RECOVERY_CLARIFY_ONCE</code>, <code>RECOVERY_MANAGER_HANDOFF</code></td></tr>
       <tr><td>18.2</td><td>SafePlay</td><td>сабражный ритуал, открыть шампанское красиво, игристое с ритуалом, dangerous how-to</td><td>table/order context, staff availability, bottle type, age/safety flags, optional merch interest</td><td><code>SAFE_PLAY_SELECT_RITUAL</code>, <code>SAFE_PLAY_SAFETY_CHECK</code>, <code>SAFE_PLAY_TEAM_CONFIRMATION</code>, <code>SAFE_PLAY_MERCH_OFFER</code></td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section id="model-gateway">
+    <h2>1.6 Model Gateway / органы восприятия</h2>
+    <p>Целевой AI-слой Astor Butler строится как набор сменных способностей, а не как прямые вызовы к одной модели. Локально используются Qwen/Ollama, <code>qwen2.5vl:3b</code>, <code>nomic-embed-text</code> и faster-whisper, а в production при необходимости можно включить OpenAI/API-провайдера. FSM остается центром принятия решений.</p>
+    <div class="diagram mermaid wide">
+flowchart TD
+    Guest["Гость<br/>текст / голос / фото / PDF / web"]
+    Transport["Transport adapters<br/>Telegram / Web / REST"]
+    Gateway["MessageGatewayService<br/>normalized input"]
+
+    subgraph Organs["Model Gateway<br/>сменные AI-способности"]
+      Language["Язык<br/>LLM: Qwen/Ollama локально<br/>OpenAI/API в production"]
+      Hearing["Уши<br/>STT: faster-whisper<br/>voice -> transcript"]
+      Vision["Глаза<br/>VLM: qwen2.5vl:3b<br/>ModelGateway.analyzeImage"]
+      Voice["Голос<br/>TTS later"]
+      Embeddings["Ассоциативная память<br/>ModelGateway.generateEmbedding<br/>pgvector / RAG"]
+    end
+
+    NLU["NLU layer<br/>rules + Natasha + corpus + pgvector"]
+    Semantic["Semantic Router<br/>intent, slots, confidence,<br/>active state aware"]
+    FSM["FSM<br/>центр решений<br/>allowed transitions"]
+    Domain["Domain services<br/>booking / media / payment / content"]
+    Memory["Memory stack<br/>PostgreSQL / Redis / MinIO<br/>Scylla / Neo4j / Obsidian docs"]
+    Reply["Response Composer<br/>state-bound text + media + buttons"]
+
+    Guest --> Transport --> Gateway
+    Gateway --> Hearing --> NLU
+    Gateway --> Vision --> NLU
+    Gateway --> Language --> NLU
+    Gateway --> Embeddings --> NLU
+    NLU --> Semantic --> FSM --> Domain --> Memory
+    FSM --> Reply --> Guest
+    Language --> Reply
+    Domain --> Reply
+    </div>
+    <table>
+      <thead><tr><th>Орган / capability</th><th>Локальный MVP</th><th>Production fallback</th><th>Разрешено</th><th>Запрещено</th></tr></thead>
+      <tbody>
+      <tr><td>Язык / LLM</td><td>Spring AI <code>OllamaChatModel</code> через <code>ModelGateway</code>: <code>FRONTLINE=qwen2.5:1.5b</code>, <code>QUALITY=qwen2.5:3b</code>. Raw Ollama - fallback.</td><td>OpenAI или совместимый API через <code>ModelGateway</code></td><td>Живой текст, summary, ambiguous intent help, entity extraction.</td><td>Самостоятельно подтверждать бронь, платеж, ставку, отмену.</td></tr>
+      <tr><td>Глаза / VLM</td><td><code>ModelGateway.analyzeImage(...)</code> -> Ollama <code>/api/chat</code> with images, default <code>LLM_OLLAMA_VISION_MODEL=qwen2.5vl:3b</code>. OCR/OpenCV позже для детерминированных задач.</td><td>OpenAI vision / managed VLM для сложных фото и документов.</td><td>Извлечь table candidates из плана, понять кружок/галочку на фото, вернуть координаты и confidence.</td><td>Решать доступность стола или создавать order.</td></tr>
+      <tr><td>Уши / STT</td><td>faster-whisper command service.</td><td>Managed STT, если локальная скорость/качество не хватает.</td><td>Сделать transcript и metadata.</td><td>Роутить сценарий без NLU/FSM.</td></tr>
+      <tr><td>Голос / TTS</td><td>Выключено в MVP.</td><td>Будущий TTS provider.</td><td>Accessibility / voice reply mode.</td><td>Заменять письменное подтверждение side-effect действий.</td></tr>
+      <tr><td>Embeddings</td><td><code>ModelGateway.generateEmbedding(...)</code> -> local <code>nomic-embed-text</code> -> pgvector + approved corpus.</td><td>Cloud embeddings при необходимости.</td><td>Искать похожие фразы, меню, инструкции, сценарные куски.</td><td>Переписывать FSM transition guard.</td></tr>
+      </tbody>
+    </table>
+    <div class="grid">
+      <div class="card"><strong>Local first</strong><span>Простой FSM-bound ввод, приватные данные и ручные тесты идут локально, чтобы не платить токенами за каждую кнопку.</span></div>
+      <div class="card"><strong>Cloud when quality matters</strong><span>OpenAI/API можно подключать для сложного vision, hard dialog, summary и customer-facing формулировок.</span></div>
+      <div class="card"><strong>Shadow learner</strong><span><code>QUALITY</code> профиль может учиться на промптах и сравнивать ответы, но не блокирует гостевой поток.</span></div>
+      <div class="card"><strong>FSM owns decisions</strong><span>Model Gateway возвращает candidates/slots/text. Решение о переходе, order и side effect принимает только FSM/domain service.</span></div>
+    </div>
+    <h3>Vision для плана зала</h3>
+    <p>План зала не должен оставаться "картинкой для человека". Его нужно один раз превратить в структуру: стол, зона, вместимость, координаты/полигон и теги. Фото гостя с отметкой становится runtime input, который мапится на эту структуру.</p>
+    <div class="diagram mermaid compact">
+flowchart LR
+    Pdf["AERIS PLAN.pdf<br/>MinIO media asset"]
+    Annotate["Offline annotation<br/>VLM/OCR/OpenCV + ручная проверка"]
+    Map["Table map JSON<br/>tableCode, zone, capacity,<br/>polygon, tags"]
+    DB["PostgreSQL<br/>venue_tables + plan_regions"]
+    Photo["Фото гостя<br/>кружок / галочка / скрин"]
+    Vision["Runtime VLM<br/>detect mark + nearest table"]
+    Slots["Slots<br/>tableCode / zone / confidence"]
+    Booking["TableBookingScenario<br/>FSM guard"]
+
+    Pdf --> Annotate --> Map --> DB
+    Photo --> Vision --> Slots --> Booking
+    DB --> Vision
+    DB --> Booking
+    </div>
+    <table>
+      <thead><tr><th>Этап</th><th>Что делаем</th><th>Критерий готовности</th></tr></thead>
+      <tbody>
+      <tr><td>1. Structured plan</td><td>Из <code>AERIS PLAN.pdf</code> получаем таблицу столов: номер, зона, вместимость, polygon/box, теги.</td><td>Можно выбрать стол по "10 стол", "винная комната", "у окна" без LLM-гадания.</td></tr>
+      <tr><td>2. Runtime photo</td><td>Фото гостя сохраняется в MinIO и отправляется в VLM/vision service.</td><td>Возвращается top candidates + confidence, а не готовая бронь.</td></tr>
+      <tr><td>3. FSM validation</td><td>FSM проверяет, допустим ли слот в текущем state и достаточно ли уверенности.</td><td>High confidence заполняет draft; low confidence задает уточнение.</td></tr>
+      <tr><td>4. Hostess control</td><td>Даже найденный стол остается заявкой на подтверждение команды.</td><td>VLM не обещает гостю, что стол уже свободен.</td></tr>
       </tbody>
     </table>
   </section>
@@ -890,46 +1012,124 @@ flowchart TD
 
   <section id="table-booking">
     <h2>6. Бронь стола</h2>
-    <p>Обычная посадка в AERIS начинается с плана зала: гость сначала видит пространство, затем выбирает дату, время, гостей и стол/зону. Итог - <code>table_order</code> и подтверждение хостес кнопками, не автоподтверждение.</p>
-    <div class="diagram mermaid compact">
-flowchart LR
-    Intent["Гость: бронь стола"]
-    Plan["Отправить AERIS PLAN.pdf<br/>первым сообщением"]
-    Collect["Собрать дату / время / гостей<br/>заполнить из composite intent"]
-    Select["Выбор стол / зона / авто<br/>preferredZone + seatingPreference"]
-    Order["table_order<br/>HELD / PENDING_HOSTESS"]
-    Hostess["Hostess card<br/>Да / Нет / Предложить другой"]
-    Yes["CONFIRMED<br/>красивый order гостю"]
-    Alternative["Предложить другой стол/время"]
-    No["REJECTED<br/>вежливый отказ"]
-    Home["READY_FOR_DIALOG"]
+    <p>Обычная посадка в AERIS начинается с плана зала: гость сначала видит пространство и выбирает стол/зону. Пожелания по посадке ("у окна", "винная комната", "тихий стол") относятся к этому же раннему шагу выбора места, а не к финалу алгоритма. Затем Батлер собирает дату, время и количество гостей. Итог - <code>table_order</code> и подтверждение хостес кнопками, не автоподтверждение.</p>
+    <p><strong>Целевой принцип:</strong> гость разговаривает с LLM естественно, но LLM не ведет сценарий сама. FSM держит допустимую дорогу, NLU извлекает намерения и слоты, а LLM отвечает только внутри текущего state-контракта. Если LLM недоступна или ответ не проходит guardrail, Батлер использует короткий deterministic fallback для этого же state, а не общий <code>AI_FALLBACK</code>.</p>
+    <p><strong>Время и дата:</strong> все вычисления идут через единый <code>BookingTimeProvider</code> в зоне AERIS (<code>Asia/Yekaterinburg</code>). Это запрещает случайные <code>LocalDate.now()</code> в сценарии и делает тесты воспроизводимыми. Относительные даты считаются от текущего дня заведения: "на пятницу" означает ближайшую пятницу в текущей неделе, включая сегодня, если сегодня пятница.</p>
+    <div class="diagram mermaid">
+flowchart TB
+    Guest["Гость<br/>текст / голос / кнопка"]
 
-    Intent --> Plan --> Collect --> Select --> Order --> Hostess
-    Hostess -- "Да" --> Yes --> Home
-    Hostess -- "Нет" --> No --> Home
-    Hostess -- "Другой вариант" --> Alternative --> Select
-    Select -- "неясно / повтор" --> Plan
+    subgraph Transport["Транспортные адаптеры"]
+      Tg["TelegramRouter<br/>сообщение / контакт / callback"]
+      Web["REST / Web chat<br/>будущий вход"]
+      Intake["MessageGatewayService<br/>единая точка входа"]
+    end
+
+    subgraph Understanding["Слой понимания ввода"]
+      Normalize["Нормализация ввода<br/>транскрипт голоса / route text"]
+      Nlu["GuestInputUnderstandingService<br/>намерение + слоты + уверенность"]
+      Rules["FSM-aware rules<br/>дата / время / число"]
+      Natasha["Natasha NLU<br/>русские имена, даты, числа"]
+      Vector["pgvector-примеры<br/>похожие фразы / подсказки сценария"]
+      Understood["UnderstoodInput<br/>намерение, слоты, уверенность,<br/>пропуски / неоднозначности"]
+    end
+
+    subgraph Fsm["FSM-оркестрация"]
+      Router["ScenarioRouter<br/>текущий state важнее общего intent"]
+      Booking["TableBookingScenario<br/>тонкий адаптер сценария"]
+      Registry["TableBookingStepRegistry<br/>state -> разрешенные слоты -> следующий state"]
+      Draft["TableBookingDraft<br/>стол / зона / дата / время / гости / пожелание"]
+      Policy{"Все обязательные слоты<br/>текущего шага собраны?"}
+    end
+
+    subgraph Phrase["Слой формулировки ответа через LLM"]
+      Prompt["BookingPromptBuilder<br/>state + draft + разрешенный вопрос"]
+      Llm["LLM через llm-gateway<br/>естественная фраза для гостя"]
+      Guard["PhraseGuard<br/>без обещаний, без неверного слота,<br/>без выдуманного подтверждения"]
+      Deterministic["Детерминированная фраза state<br/>быстрый fallback"]
+    end
+
+    subgraph Domain["Доменная логика и хранилища"]
+      Plan["MediaCatalog / MinIO<br/>AERIS PLAN.pdf"]
+      Reservation["TableReservationService<br/>PostgreSQL table_order + hold"]
+      Staff["Карточка в staff chat<br/>Да / Нет / другой вариант"]
+      Timeline["Scylla timeline / Redis runtime<br/>прогресс гостя"]
+      Events["Kafka outbox + admin/system chat<br/>наблюдаемость"]
+    end
+
+    subgraph Recovery["Политика recovery"]
+      Clarify["Одно уточнение в рамках state<br/>спросить только текущий пропущенный слот"]
+      Manager["ManagerHelpScenario<br/>после повторного непонимания<br/>или технической ошибки"]
+    end
+
+    Guest --> Tg --> Intake
+    Guest --> Web --> Intake
+    Intake --> Normalize --> Nlu
+    Nlu --> Rules --> Understood
+    Nlu --> Natasha --> Understood
+    Nlu --> Vector --> Understood
+    Understood --> Router --> Booking --> Registry
+    Registry --> Draft --> Policy
+    Policy -- "слот не заполнен" --> Prompt --> Llm --> Guard
+    Guard -- "валидно" --> Guest
+    Guard -- "невалидно / timeout" --> Deterministic --> Guest
+    Policy -- "план еще не отправлен" --> Plan --> Guest
+    Policy -- "draft полный" --> Reservation --> Staff
+    Staff -- "подтвердить / отказать / другой вариант" --> Reservation
+    Reservation --> Events
+    Registry --> Timeline
+    Policy -- "низкая уверенность один раз" --> Clarify --> Prompt
+    Clarify -- "повторный сбой / системная ошибка" --> Manager --> Events
+    </div>
+    <div class="grid">
+      <div class="card"><strong>Что сейчас не так в коде</strong><span><code>TableBookingScenario</code> одновременно держит переходы, regex/slot parsing, draft merge и тексты ответов. Поэтому не видно прямой зависимости "state -> разрешенный ввод -> следующий state".</span></div>
+      <div class="card"><strong>Как должно быть</strong><span>Сценарий становится оркестратором: получает <code>UnderstoodInput</code>, применяет контракт state, обновляет draft и просит <code>BookingPhraseService</code> сформулировать ответ.</span></div>
+      <div class="card"><strong>Роль LLM</strong><span>LLM пишет живой текст вопроса/подтверждения, но получает жесткий prompt: текущий state, один разрешенный следующий вопрос, запрещенные обещания и факты из draft.</span></div>
+      <div class="card"><strong>Роль fallback</strong><span>Fallback сначала привязан к state: уточнить текущий слот. Только после повтора или технической ошибки - ручная помощь. Общий <code>AI_FALLBACK</code> не является нормальным шагом брони.</span></div>
     </div>
     <table>
-      <thead><tr><th>Шаг FSM</th><th>Что делает Батлер</th><th>Что храним</th></tr></thead>
+      <thead><tr><th>Шаг FSM</th><th>Контракт state</th><th>Что храним</th></tr></thead>
       <tbody>
-      <tr><td><code>TABLE_BOOKING_SEND_PLAN</code></td><td>Сразу отправляет план зала, чтобы гость выбирал из визуального контекста.</td><td><code>AERIS_PLAN_ASSET</code>, file id, version, sent_at.</td></tr>
-      <tr><td><code>TABLE_BOOKING_COLLECT_DATE</code></td><td>Собирает дату. Если дата уже в первом сообщении, не спрашивает повторно.</td><td><code>requested_date</code>, flexible flag, source text/voice.</td></tr>
-      <tr><td><code>TABLE_BOOKING_COLLECT_TIME</code></td><td>Собирает время и мягко уточняет, если формат неоднозначный.</td><td><code>requested_time</code>, timezone, confidence.</td></tr>
-      <tr><td><code>TABLE_BOOKING_COLLECT_PARTY_SIZE</code></td><td>Собирает количество гостей и особые пожелания по посадке.</td><td><code>party_size</code>, <code>preferred_zone</code>, <code>seating_preference</code>.</td></tr>
-      <tr><td><code>TABLE_BOOKING_WAIT_TABLE_SELECTION</code></td><td>Ждет номер стола, зону или разрешение выбрать подходящий стол автоматически.</td><td><code>table_code</code>, <code>preferred_zone</code>, <code>seating_preference</code>, auto_select flag.</td></tr>
-      <tr><td><code>TABLE_BOOKING_CREATE_ORDER</code></td><td>Создает заявку и короткий hold до решения хостес.</td><td><code>table_order_id</code>, <code>HELD</code>, date/time/party/table/preference.</td></tr>
-      <tr><td><code>TABLE_BOOKING_WAIT_HOSTESS_CONFIRMATION</code></td><td>Отправляет карточку хостес с кнопками: Да, Нет, Предложить другой.</td><td>hostess chat message id, decision, decision_at.</td></tr>
-      <tr><td><code>TABLE_BOOKING_CONFIRMED</code></td><td>Отправляет гостю красивое подтверждение брони.</td><td><code>CONFIRMED</code> event, timeline, Kafka admin event.</td></tr>
-      <tr><td><code>TABLE_BOOKING_REJECTED</code></td><td>Дает вежливый отказ и предлагает другой стол/время.</td><td><code>REJECTED</code> reason, alternatives if any.</td></tr>
+      <tr><td><code>TABLE_BOOKING_SEND_PLAN</code></td><td>Побочный эффект: отправить план зала один раз. Следующий допустимый вопрос только про стол/зону/автоподбор.</td><td><code>AERIS_PLAN_ASSET</code>, file id, version, sent_at.</td></tr>
+      <tr><td><code>TABLE_BOOKING_WAIT_TABLE_SELECTION</code></td><td>Разрешены слоты <code>table_code</code>, <code>preferred_zone</code>, <code>seating_preference</code>, <code>auto_select</code>. Дату/время/гостей из composite intent можно сохранить, но вопрос остается про стол/зону, пока место не решено. "У окна", "винная комната", "тихий стол" интерпретируются здесь и дальше уходят в заявку для хостес.</td><td><code>table_code</code>, <code>preferred_zone</code>, <code>seating_preference</code>, auto_select flag.</td></tr>
+      <tr><td><code>TABLE_BOOKING_COLLECT_DATE</code></td><td>Разрешен слот <code>requested_date</code>. Батлер показывает reply-кнопки на 21 день от сегодняшнего дня с шагом 1 день и параллельно принимает текст: "сегодня", "завтра", "на пятницу", "03.07". Если дата уже есть, state пропускается. LLM не спрашивает гостей/время из этого state.</td><td><code>requested_date</code>, flexible flag, source text/voice/button, confidence.</td></tr>
+      <tr><td><code>TABLE_BOOKING_COLLECT_TIME</code></td><td>Разрешен слот <code>requested_time</code>. Батлер показывает reply-кнопки времени: для сегодняшней даты от ближайшего целого часа, для будущей даты от 12:00, шаг 1 час. Текстом принимаются <code>20:00</code>, "в 8 вечера", "к восьми". Если неоднозначно - один вопрос про время.</td><td><code>requested_time</code>, timezone, source text/voice/button, confidence.</td></tr>
+      <tr><td><code>TABLE_BOOKING_COLLECT_PARTY_SIZE</code></td><td>Разрешен слот <code>party_size</code>. "на троих", "нас будет 3", "для двоих" должны приходить как normalized slot, а не отдельные if в сценарии. После успешного ответа временная клавиатура времени убирается.</td><td><code>party_size</code>, confidence, original phrase.</td></tr>
+      <tr><td><code>TABLE_BOOKING_COLLECT_SEATING_PREFERENCE</code></td><td>Legacy-compatible state: если старый runtime или ручной переход попал сюда, текст сохраняется как пожелание и заявка создается. Новый happy path больше не задает этот вопрос в конце.</td><td><code>seating_preference</code>, <code>seating_preference_resolved</code>.</td></tr>
+      <tr><td><code>TABLE_BOOKING_CREATE_ORDER</code></td><td>Только когда draft полный: стол/зона или автоподбор, дата, время, гости. Пожелание optional и уже собрано на шаге выбора места, если гость его дал. Создает заявку и hold.</td><td><code>table_order_id</code>, <code>HELD</code>, date/time/party/table/preference.</td></tr>
+      <tr><td><code>TABLE_BOOKING_WAIT_HOSTESS_CONFIRMATION</code></td><td>Это статус order lifecycle, а не состояние гостевого runtime. После создания заявки гость возвращается в <code>READY_FOR_DIALOG</code> с главным меню, а решение приходит из staff chat кнопками: Да, Нет, Предложить другой.</td><td>staff chat message id, decision, decision_at.</td></tr>
+      <tr><td><code>TABLE_BOOKING_CONFIRMED</code></td><td>Отправляет гостю красивое подтверждение брони и возвращает в <code>READY_FOR_DIALOG</code>.</td><td><code>CONFIRMED</code> event, timeline, Kafka admin event.</td></tr>
+      <tr><td><code>TABLE_BOOKING_REJECTED</code></td><td>Дает вежливый отказ и предлагает другой стол/время, без обнуления полезного draft.</td><td><code>REJECTED</code> reason, alternatives if any.</td></tr>
+      </tbody>
+    </table>
+    <table>
+      <thead><tr><th>Компонент</th><th>Текущая реализация</th><th>Целевой код после рефакторинга</th></tr></thead>
+      <tbody>
+      <tr><td>Маршрутизация state</td><td><code>TableBookingScenario</code> содержит много <code>if</code> и сам решает следующий вопрос.</td><td><code>TableBookingStepRegistry</code>: декларативная карта <code>BotState -> обязательные слоты -> следующий state -> побочный эффект</code>.</td></tr>
+      <tr><td>Извлечение слотов</td><td>Часть слотов парсится в <code>GuestInputUnderstandingService</code>, часть повторно в сценарии.</td><td>Все распознавание в <code>GuestInputUnderstandingService</code> + state-aware rules/Natasha/pgvector. Сценарий принимает только нормализованные слоты.</td></tr>
+      <tr><td>LLM</td><td>В брони почти не участвует; тексты в основном захардкожены.</td><td><code>BookingPhraseService</code> вызывает LLM для живой формулировки внутри prompt текущего state. Guardrail проверяет, что вопрос соответствует state.</td></tr>
+      <tr><td>Fallback</td><td>Непонятная фраза может быстро уйти в общий fallback/админку.</td><td>Сначала <code>ClarificationPolicy</code> задает один вопрос по текущему пропущенному слоту. Ручная помощь только после повторного непонимания или системной ошибки.</td></tr>
+      <tr><td>Побочные эффекты</td><td>Отправка плана, создание order и staff-card смешаны с вопросами.</td><td>Побочные эффекты шагов отдельны: <code>SendPlanEffect</code>, <code>CreateReservationEffect</code>, <code>NotifyStaffEffect</code>.</td></tr>
       </tbody>
     </table>
     <div class="grid">
-      <div class="card"><strong>Plan first</strong><span>План зала отправляется первым, даже если в сообщении уже есть дата/время. Это снижает вопросы и помогает выбрать стол.</span></div>
-      <div class="card"><strong>Composite intent</strong><span>Фраза "завтра в 20:00 на двоих у окна" заполняет дату, время, гостей, <code>preferredZone</code> и <code>seatingPreference</code> сразу.</span></div>
+      <div class="card"><strong>Сначала план</strong><span>План зала отправляется первым, затем гость выбирает стол/зону. Пожелания по посадке собираются здесь же: "у окна", "винная комната", "тихий стол". После этого остаются дата, время и гости, если они не пришли в composite intent.</span></div>
+      <div class="card"><strong>Составное намерение</strong><span>Фраза "завтра в 20:00 на двоих у окна" заполняет дату, время, гостей, <code>preferredZone</code> и <code>seatingPreference</code> сразу. Если пожеланий нет, отдельный вопрос не задается.</span></div>
+      <div class="card"><strong>Дата и время кнопками</strong><span>Дата: 21 кнопка от сегодня до +20 дней. Время: 12 кнопок от ближайшего целого часа сегодня или от 12:00 для будущей даты. Кнопки не заменяют NLU, а дают быстрый путь без ошибок.</span></div>
       <div class="card"><strong>Hostess кнопки</strong><span>Финальное решение за хостес: Да, Нет или другой вариант. Батлер не обещает подтверждение заранее.</span></div>
-      <div class="card"><strong>Order</strong><span><code>table_order</code> хранит весь след: запрос, план, выбранный стол, hold, решение и сообщение гостю.</span></div>
+      <div class="card"><strong>Заявка</strong><span><code>table_order</code> хранит весь след: запрос, план, выбранный стол, hold, решение и сообщение гостю.</span></div>
     </div>
+    <h3>План реализации FSM</h3>
+    <table>
+      <thead><tr><th>Шаг</th><th>Что меняем в коде</th><th>Как тестируем</th></tr></thead>
+      <tbody>
+      <tr><td>1</td><td>Ввести <code>TableBookingStep</code> / <code>TableBookingStepRegistry</code> и вынести контракт state из цепочки <code>if</code>.</td><td>Unit tests: для каждого <code>BotState</code> разрешен только свой слот и корректный следующий state.</td></tr>
+      <tr><td>2</td><td>Сделать <code>TableBookingDraftMerger</code>: применяет <code>UnderstoodInput.slots</code> к draft без текстового regex в scenario.</td><td>Tests: "на троих", "в 8 вечера", "винная комната", "18 стол" превращаются в slots до сценария.</td></tr>
+      <tr><td>3</td><td>Сделать <code>BookingPhraseService</code>: LLM prompt + guardrail + deterministic fallback.</td><td>Prompt tests: в state <code>COLLECT_TIME</code> нельзя спросить гостей; при timeout ответ быстрый и привязанный к state.</td></tr>
+      <tr><td>4</td><td>Сделать <code>TableBookingScenario</code> тонким: route -> merge -> step policy -> effect -> phrase.</td><td>Integration tests: полный путь Natalia от /start до staff-card без лишних вопросов и без общего fallback.</td></tr>
+      <tr><td>5</td><td>Добавить metadata наблюдаемости: ввод, распознанные слоты, выбранный state, prompt id, причина fallback.</td><td>Admin/system chat и Kafka event показывают, почему сценарий задал именно этот вопрос.</td></tr>
+      </tbody>
+    </table>
   </section>
 
   <section id="event-booking">
@@ -1731,8 +1931,8 @@ flowchart LR
       <tr><td>4</td><td>Первое касание</td><td><code>UNKNOWN</code> + <code>/start</code></td><td><code>CONSENT_REQUIRED</code></td><td>persistent preview sent/pinned, contact button, admin event.</td></tr>
       <tr><td>4</td><td>Первое касание</td><td>known contact + <code>/start</code></td><td><code>READY_FOR_DIALOG</code></td><td>active runtime scenario reset, preview refreshed, durable guest facts kept.</td></tr>
       <tr><td>5</td><td>Главное меню</td><td>"главное меню" / "что умеешь?"</td><td><code>MAIN_MENU</code> projection over <code>READY_FOR_DIALOG</code></td><td>short capabilities message, no scenario draft.</td></tr>
-      <tr><td>6</td><td>Бронь стола</td><td>"столик завтра в 20:00 на двоих"</td><td><code>TABLE_BOOKING_WAIT_TABLE_SELECTION</code></td><td>send hall plan first, collect missing slots, create hold only after table selection.</td></tr>
-      <tr><td>6</td><td>Бронь стола</td><td><code>TABLE_BOOKING_WAIT_TABLE_SELECTION</code> + "17"</td><td><code>TABLE_BOOKING_WAIT_HOSTESS_CONFIRMATION</code></td><td>create booking draft/hold, send hostess card with buttons.</td></tr>
+      <tr><td>6</td><td>Бронь стола</td><td>"столик завтра в 20:00 на двоих"</td><td><code>TABLE_BOOKING_WAIT_TABLE_SELECTION</code></td><td>send hall plan first; if date/time/party were captured, wait only for table/zone; optional seating preference is captured from the same selection phrase.</td></tr>
+      <tr><td>6</td><td>Бронь стола</td><td><code>TABLE_BOOKING_WAIT_TABLE_SELECTION</code> + "17"</td><td><code>TABLE_BOOKING_COLLECT_DATE</code> / <code>TABLE_BOOKING_COLLECT_TIME</code> / <code>TABLE_BOOKING_COLLECT_PARTY_SIZE</code> / <code>READY_FOR_DIALOG</code></td><td>capture table; ask only missing slots in FSM order; create order after table/date/time/party are complete, then return guest to main menu.</td></tr>
       <tr><td>7</td><td>Мероприятие</td><td>"хочу банкет на 20 человек"</td><td><code>EVENT_BOOKING_COLLECT_DETAILS</code></td><td>collect date, guests, budget, occasion; send manager order, no auto-confirmation.</td></tr>
       <tr><td>8</td><td>Меню</td><td>"скинь все меню"</td><td><code>MENU_ASSETS_SEND</code></td><td>send 4 PDFs: кухня, бар, elements, вино; write menu asset event.</td></tr>
       <tr><td>8</td><td>Меню</td><td>voice "покажи коктейли"</td><td><code>MENU_ASSETS_SEND_FILTERED</code></td><td>transport transcript, semantic route, send elements/bar by classification.</td></tr>
