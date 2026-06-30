@@ -4,6 +4,7 @@ import museon_online.astor_butler.domain.semantic.EmbeddingProvider;
 import museon_online.astor_butler.domain.semantic.IntentExampleMatch;
 import museon_online.astor_butler.domain.semantic.IntentExampleRepository;
 import museon_online.astor_butler.fsm.core.BotState;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -19,6 +20,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 @Component
+@Slf4j
 public class GuestInputUnderstandingService {
 
     private static final Pattern COMPACT_PARTY_SIZE = Pattern.compile("(?:^|\\s)на\\s+(\\d{1,2})\\s*(?:x|х|-х|-x)(?:\\s|$)");
@@ -30,6 +32,7 @@ public class GuestInputUnderstandingService {
     private static final Pattern EXPLICIT_TIME = Pattern.compile("\\b([01]?\\d|2[0-3]):([0-5]\\d)\\b");
     private static final Pattern SHORT_PARTY_SIZE = Pattern.compile("^(?:на\\s+)?(\\d{1,2})$");
     private static final Pattern TABLE_NUMBER = Pattern.compile("^(?:стол(?:ик)?\\s*)?(1\\d|[1-9])$");
+    private static final Pattern TABLE_NUMBER_BEFORE_WORD = Pattern.compile("^(1\\d|[1-9])\\s*стол(?:ик)?$");
 
     private final IntentExampleRepository intentExampleRepository;
     private final EmbeddingProvider embeddingProvider;
@@ -113,10 +116,20 @@ public class GuestInputUnderstandingService {
         if (embeddingProvider == null) {
             return Optional.empty();
         }
-        List<Double> embedding = embeddingProvider.embed(normalized);
-        return intentExampleRepository.findNearestByEmbedding("AERIS", state, embedding, 3).stream()
-                .filter(match -> match.score() >= 0.68)
-                .findFirst();
+        try {
+            List<Double> embedding = embeddingProvider.embed(normalized);
+            return intentExampleRepository.findNearestByEmbedding("AERIS", state, embedding, 3).stream()
+                    .filter(match -> match.score() >= 0.68)
+                    .findFirst();
+        } catch (RuntimeException e) {
+            log.warn(
+                    "Semantic intent lookup skipped: state={}, text='{}', reason={}",
+                    state,
+                    normalized,
+                    e.toString()
+            );
+            return Optional.empty();
+        }
     }
 
     private Optional<InputIntent> parseIntent(String value) {
@@ -221,6 +234,10 @@ public class GuestInputUnderstandingService {
     }
 
     private String normalizeTime(String text, BotState currentState, Map<String, SlotValue> slots) {
+        BotState state = currentState == null ? BotState.UNKNOWN : currentState.canonical();
+        if (state == BotState.TABLE_BOOKING_WAIT_TABLE_SELECTION) {
+            return text;
+        }
         text = normalizeTimeWords(text);
         Matcher explicit = EXPLICIT_TIME.matcher(text);
         if (explicit.find()) {
@@ -245,7 +262,6 @@ public class GuestInputUnderstandingService {
             int parsedHour = Integer.parseInt(hour.group(1));
             return replaceTime(text, slots, hour, parsedHour);
         }
-        BotState state = currentState == null ? BotState.UNKNOWN : currentState.canonical();
         if (state == BotState.TABLE_BOOKING_COLLECT_TIME) {
             Matcher bare = BARE_HOUR_TIME.matcher(text);
             if (bare.matches()) {
@@ -310,6 +326,9 @@ public class GuestInputUnderstandingService {
     }
 
     private Integer partySizeFromWords(String text) {
+        if (containsAny(text, "одного", "один", "одна", "одному", "соло", "я один", "я одна", "буду один", "буду одна", "только я")) {
+            return 1;
+        }
         if (containsAny(text, "двоих", "двоем", "двоём", "двое", "двух")) {
             return 2;
         }
@@ -333,6 +352,9 @@ public class GuestInputUnderstandingService {
 
     private String replacePartySizeWords(String text, int partySize) {
         String result = text;
+        if (partySize == 1) {
+            result = replaceVariants(result, "на 1 гостя", "на одного", "одного", "один", "одна", "одному", "соло", "я один", "я одна", "буду один", "буду одна", "только я");
+        }
         if (partySize == 2) {
             result = replaceVariants(result, "на 2 гостей", "на двоих", "двоих", "на двоем", "двоем", "на двоём", "двоём", "двое", "двух", "вдвоем", "вдвоём", "будем вдвоем", "будем вдвоём", "нас двое", "мы вдвоем", "мы вдвоём");
         }
@@ -357,8 +379,13 @@ public class GuestInputUnderstandingService {
         Matcher matcher = TABLE_NUMBER.matcher(text);
         if (matcher.matches()) {
             slots.put("tableNumber", new SlotValue("tableNumber", matcher.group(1), 0.9));
+            return;
         }
-        if (containsAny(text, "винн", "vip", "вип", "бар", "у окна", "окн", "тих", "диван", "не проход", "уют", "выбери сам", "любой")) {
+        Matcher reverseMatcher = TABLE_NUMBER_BEFORE_WORD.matcher(text);
+        if (reverseMatcher.matches()) {
+            slots.put("tableNumber", new SlotValue("tableNumber", reverseMatcher.group(1), 0.9));
+        }
+        if (containsAny(text, "винн", "vip", "вип", "бар", "у окна", "окн", "тих", "диван", "не проход", "уют", "выбери сам", "подбери сам", "сам подбери", "любой")) {
             slots.put("seatingPreference", new SlotValue("seatingPreference", text, 0.78));
         }
     }
@@ -379,7 +406,7 @@ public class GuestInputUnderstandingService {
             return InputIntent.PROVIDE_SEATING_PREFERENCE;
         }
         if (state == BotState.TABLE_BOOKING_WAIT_TABLE_SELECTION
-                && (slots.containsKey("tableNumber") || slots.containsKey("seatingPreference") || containsAny(text, "выбери сам", "любой"))) {
+                && (slots.containsKey("tableNumber") || slots.containsKey("seatingPreference") || containsAny(text, "выбери сам", "подбери сам", "сам подбери", "любой"))) {
             return InputIntent.PROVIDE_TABLE_SELECTION;
         }
         if (containsAny(text, "забронировать стол", "забронировать столик", "забронируй стол", "бронь стол", "бронь на", "хочу стол", "хочу столик", "столик", "стол на", "стол завтра", "стол сегодня", "есть места", "нужен стол", "нужен столик", "посадите", "место на")) {
@@ -391,7 +418,7 @@ public class GuestInputUnderstandingService {
         if (containsAny(text, "меню", "винн", "барная карта", "коктей", "поесть")) {
             return InputIntent.MENU_ASSETS;
         }
-        if (containsAny(text, "видео-тур", "видеотур", "покажи ресторан", "интерьер", "афиша", "концепц", "шеф")) {
+        if (containsAny(text, "видео-тур", "видеотур", "покажи ресторан", "посмотреть ресторан", "расскажи про ресторан", "расскажи о ресторане", "про ресторан", "о ресторане", "про заведение", "о заведении", "что за ресторан", "что за место", "интерьер", "афиша", "концепц", "шеф")) {
             return InputIntent.QUIET_GUIDE;
         }
         if (containsAny(text, "сабраж", "шампан", "игрист")) {
@@ -450,8 +477,11 @@ public class GuestInputUnderstandingService {
 
     private boolean looksLikeTableBooking(String text, Map<String, SlotValue> slots) {
         boolean hasBookingSlot = slots.containsKey("date") || slots.containsKey("time") || slots.containsKey("partySize");
-        boolean hasSeatingSignal = slots.containsKey("seatingPreference") || containsAny(text, "стол", "бронь", "место", "посад");
-        return hasBookingSlot && hasSeatingSignal;
+        boolean hasExplicitBookingSignal = containsAny(
+                text,
+                "заброн", "бронь", "стол", "столик", "посадите", "посадка", "есть места", "нужен стол", "нужен столик"
+        );
+        return hasBookingSlot && hasExplicitBookingSignal;
     }
 
     private boolean isNoSeatingPreference(String text) {
@@ -467,7 +497,9 @@ public class GuestInputUnderstandingService {
                 || text.equals("где удобно")
                 || text.equals("на ваше усмотрение")
                 || text.equals("на твой выбор")
-                || text.equals("выбери сам");
+                || text.equals("выбери сам")
+                || text.equals("подбери сам")
+                || text.equals("сам подбери");
     }
 
     private double confidence(InputIntent primary, Map<String, SlotValue> slots) {

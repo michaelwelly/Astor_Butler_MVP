@@ -9,32 +9,32 @@ import java.util.Optional;
 public class TableBookingStepRegistry {
 
     public Optional<Step> nextMissingStep(TableBookingDraftStorage.Draft draft) {
+        if (draft.partySize() == null) {
+            return Optional.of(new Step(
+                    BotState.TABLE_BOOKING_COLLECT_PARTY_SIZE,
+                    "ASK_PARTY_SIZE",
+                    "С удовольствием помогу с посадкой. Сначала подскажу по размеру стола: на сколько гостей готовим место?"
+            ));
+        }
         if (!hasTableSelection(draft)) {
             return Optional.of(new Step(
                     BotState.TABLE_BOOKING_WAIT_TABLE_SELECTION,
                     "ASK_TABLE_SELECTION",
-                    "Отправляю план зала AERIS. Выберите номер стола или зону: например, «18 стол», «винная комната», «у бара». Если хотите, я сам подберу подходящий вариант."
+                    "Отправляю план зала AERIS. Выберите номер стола или зону: «4 стол у окна», «винная комната», «у бара», «VIP-зона» или «подбери сам». Если доверите выбор мне, пойду по лучшим свободным столам под вашу компанию."
             ));
         }
         if (draft.requestedDate() == null) {
             return Optional.of(new Step(
                     BotState.TABLE_BOOKING_COLLECT_DATE,
                     "ASK_DATE",
-                    "Отлично, стол отметил. На какой день поставить бронь?"
+                    "Принял. На какой день держим стол?"
             ));
         }
         if (draft.requestedTime() == null) {
             return Optional.of(new Step(
                     BotState.TABLE_BOOKING_COLLECT_TIME,
                     "ASK_TIME",
-                    "Принял дату. Во сколько вас ждать?"
-            ));
-        }
-        if (draft.partySize() == null) {
-            return Optional.of(new Step(
-                    BotState.TABLE_BOOKING_COLLECT_PARTY_SIZE,
-                    "ASK_PARTY_SIZE",
-                    "На сколько гостей подготовить стол?"
+                    "Хорошо. Во сколько вас ждать?"
             ));
         }
         return Optional.empty();
@@ -44,7 +44,7 @@ public class TableBookingStepRegistry {
         return draft != null
                 && (hasText(draft.tableCode())
                 || hasText(draft.preferredZone())
-                || containsAny(normalize(draft.seatingPreference()), "выбери сам", "любой", "на твой выбор", "где удобно"));
+                || containsAny(normalize(draft.seatingPreference()), "выбери сам", "подбери сам", "любой", "на твой выбор", "где удобно", "на ваше усмотрение"));
     }
 
     public boolean hasSeatingPreferenceDecision(TableBookingDraftStorage.Draft draft) {

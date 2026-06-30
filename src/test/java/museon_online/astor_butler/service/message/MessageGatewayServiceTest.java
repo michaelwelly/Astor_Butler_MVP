@@ -1,5 +1,6 @@
 package museon_online.astor_butler.service.message;
 
+import museon_online.astor_butler.domain.semantic.IntentExampleRepository;
 import museon_online.astor_butler.domain.telegram.TelegramIntakeService;
 import museon_online.astor_butler.domain.timeline.FsmTimelineEvent;
 import museon_online.astor_butler.domain.timeline.FsmTimelineWriter;
@@ -28,6 +29,8 @@ import museon_online.astor_butler.fsm.storage.FSMStorage;
 import museon_online.astor_butler.fsm.understanding.GuestInputUnderstandingService;
 import museon_online.astor_butler.kafka.UserEventProducer;
 import museon_online.astor_butler.model.ModelGateway;
+import museon_online.astor_butler.model.ModelInteractionAuditRecord;
+import museon_online.astor_butler.model.ModelInteractionAuditRepository;
 import museon_online.astor_butler.telegram.adapter.TelegramSystemNotifier;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -129,6 +132,12 @@ class MessageGatewayServiceTest {
     @Mock
     private TelegramSystemNotifier telegramSystemNotifier;
 
+    @Mock
+    private IntentExampleRepository intentExampleRepository;
+
+    @Mock
+    private ModelInteractionAuditRepository modelInteractionAuditRepository;
+
     private MessageGatewayService service;
 
     @BeforeEach
@@ -172,7 +181,8 @@ class MessageGatewayServiceTest {
                 artAuctionScenario,
                 mainMenuScenario,
                 recoveryScenario,
-                new GuestInputUnderstandingService()
+                new GuestInputUnderstandingService(),
+                intentExampleRepository
         );
         service = new MessageGatewayService(
                 fsmStorage,
@@ -183,7 +193,8 @@ class MessageGatewayServiceTest {
                 llmScenarioPromptCatalog,
                 voiceTranscriptionRetryService,
                 fsmTimelineWriter,
-                telegramSystemNotifier
+                telegramSystemNotifier,
+                modelInteractionAuditRepository
         );
         ReflectionTestUtils.setField(service, "adminChatId", "100500");
         ReflectionTestUtils.setField(service, "analyticsChatId", "100501");
@@ -237,6 +248,7 @@ class MessageGatewayServiceTest {
         verify(fsmStorage).setState(incoming.chatId(), BotState.AI_FALLBACK);
         verify(userEventProducer).publishIncomingMessage(incoming, BotState.READY_FOR_DIALOG, outgoing);
         verify(fsmTimelineWriter).append(any(FsmTimelineEvent.class));
+        verify(modelInteractionAuditRepository).capture(any(ModelInteractionAuditRecord.class));
     }
 
     @Test

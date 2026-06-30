@@ -83,7 +83,7 @@ public class TableBookingScenario implements FsmScenario {
 
         Optional<TableBookingStepRegistry.Step> nextStep = stepRegistry.nextMissingStep(draft);
         if (nextStep.isPresent()) {
-            return askForStep(incoming, state, draft, nextStep.get());
+            return askForStep(incoming, state, draft, nextStep.get(), normalized);
         }
         return createReservation(incoming, draft);
     }
@@ -92,24 +92,26 @@ public class TableBookingScenario implements FsmScenario {
             IncomingMessage incoming,
             BotState currentState,
             TableBookingDraftStorage.Draft draft,
-            TableBookingStepRegistry.Step step
+            TableBookingStepRegistry.Step step,
+            String normalizedText
     ) {
         BotState nextState = step.state();
         fsmStorage.setState(incoming.chatId(), nextState);
+        String text = withAcknowledgement(currentState, nextState, draft, normalizedText, phraseService.ask(step, draft));
 
         if (nextState == BotState.TABLE_BOOKING_WAIT_TABLE_SELECTION) {
             boolean includeDocument = shouldSendPlan(currentState);
             OutgoingMessage message = message(
                     incoming,
-                    includeDocument ? phraseService.ask(step, draft) : existingPlanPrompt(),
+                    includeDocument ? text : withAcknowledgement(currentState, nextState, draft, normalizedText, existingPlanPrompt()),
                     nextState,
                     includeDocument ? "SEND_HALL_PLAN" : "USE_EXISTING_HALL_PLAN",
                     step.action()
-            );
+            ).withRemoveKeyboard(true);
             return includeDocument ? withHallPlan(message) : message;
         }
 
-        OutgoingMessage message = message(incoming, phraseService.ask(step, draft), nextState, step.action());
+        OutgoingMessage message = message(incoming, text, nextState, step.action());
         if (nextState == BotState.TABLE_BOOKING_COLLECT_DATE) {
             return message.withMetadata(Map.of("replyKeyboardRows", dateKeyboardRows()));
         }
@@ -122,17 +124,63 @@ public class TableBookingScenario implements FsmScenario {
         return message;
     }
 
+    private String withAcknowledgement(
+            BotState currentState,
+            BotState nextState,
+            TableBookingDraftStorage.Draft draft,
+            String normalizedText,
+            String prompt
+    ) {
+        String acknowledgement = acknowledgement(currentState, nextState, draft, normalizedText);
+        return acknowledgement.isBlank() ? prompt : acknowledgement + "\n\n" + prompt;
+    }
+
+    private String acknowledgement(
+            BotState currentState,
+            BotState nextState,
+            TableBookingDraftStorage.Draft draft,
+            String normalizedText
+    ) {
+        if (currentState == BotState.TABLE_BOOKING_COLLECT_PARTY_SIZE && draft.partySize() != null) {
+            return "Принял, на " + draft.partySize() + " " + guestWord(draft.partySize()) + ".";
+        }
+        if (currentState == BotState.TABLE_BOOKING_COLLECT_DATE && draft.requestedDate() != null) {
+            return "Принял, держим дату " + draft.requestedDate().format(DateTimeFormatter.ofPattern("dd.MM")) + ".";
+        }
+        if (currentState == BotState.TABLE_BOOKING_COLLECT_TIME) {
+            if (draft.requestedTime() != null) {
+                return "Хорошо, на " + draft.requestedTime().format(TIME_BUTTON) + ".";
+            }
+            if (!normalizedText.isBlank() && nextState == BotState.TABLE_BOOKING_COLLECT_TIME) {
+                return "Не хочу гадать со временем, чтобы не поставить бронь не туда.";
+            }
+        }
+        if (currentState == BotState.TABLE_BOOKING_WAIT_TABLE_SELECTION
+                && (draft.tableCode() != null || draft.preferredZone() != null || draft.seatingPreference() != null)) {
+            return "Отлично, место отметил.";
+        }
+        return "";
+    }
+
+    private String guestWord(int value) {
+        int mod10 = value % 10;
+        int mod100 = value % 100;
+        if (mod10 == 1 && mod100 != 11) {
+            return "гостя";
+        }
+        if (mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14)) {
+            return "гостей";
+        }
+        return "гостей";
+    }
+
     private String existingPlanPrompt() {
-        return "Выберите номер стола или зону на плане: например, «18 стол», «винная комната», «у бара». Можно написать «выбери сам».";
+        return "План уже перед вами. Напишите номер стола, зону или «подбери сам». Я проверю свободные варианты и начну с лучших столов под вашу компанию.";
     }
 
     private boolean shouldSendPlan(BotState state) {
         BotState canonical = state == null ? BotState.UNKNOWN : state.canonical();
-        return canonical == BotState.UNKNOWN
-                || canonical == BotState.READY_FOR_DIALOG
-                || canonical == BotState.AI_FALLBACK
-                || canonical == BotState.TABLE_BOOKING_INTENT
-                || canonical == BotState.TABLE_BOOKING_SHOW_PLAN;
+        return canonical != BotState.TABLE_BOOKING_WAIT_TABLE_SELECTION;
     }
 
     private OutgoingMessage withHallPlan(OutgoingMessage message) {
@@ -218,7 +266,11 @@ public class TableBookingScenario implements FsmScenario {
             fsmStorage.setState(incoming.chatId(), BotState.READY_FOR_DIALOG);
             return message(
                     incoming,
-                    "Готово. Заявку #%s отправил команде AERIS на подтверждение. Как только хостес ответит, я сразу вернусь с финальным статусом.\n\nЯ оставил главное меню: пока бронь подтверждают, можно посмотреть меню, афишу или попросить помощь команды.".formatted(order.id()),
+                    """
+                    Готово. Заявку #%s передал команде AERIS на подтверждение. Как только хостес ответит, я вернусь с финальным статусом.
+
+                    Пока стол держат, могу показать меню или тихо подсказать актуальное: с воскресенья по четверг в AERIS действует винный безлимит за 1700 ₽, а на пятницу и субботу я подскажу ближайшую афишу недели.
+                    """.formatted(order.id()),
                     BotState.READY_FOR_DIALOG,
                     "RESERVATION_CREATED",
                     "WAIT_HOSTESS_CONFIRMATION",

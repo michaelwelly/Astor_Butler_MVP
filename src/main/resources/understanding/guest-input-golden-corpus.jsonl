@@ -35,3 +35,7 @@
 {"state":"READY_FOR_DIALOG","text":"🏛 Видео-тур","intent":"QUIET_GUIDE","normalized":"покажи видео-тур"}
 {"state":"READY_FOR_DIALOG","text":"Можно сразу сделать сабраж?","intent":"SAFE_PLAY"}
 {"state":"READY_FOR_DIALOG","text":"🥂 Сабраж","intent":"SAFE_PLAY","normalized":"сабраж"}
+{"state":"READY_FOR_DIALOG","text":"Какое игристое взять под сабраж?","intent":"SAFE_PLAY","normalized":"сабраж"}
+{"state":"READY_FOR_DIALOG","text":"Что из шампанского можно открыть сабражем?","intent":"SAFE_PLAY","normalized":"сабраж"}
+{"state":"READY_FOR_DIALOG","text":"какое вино под сабраж по цене","intent":"SAFE_PLAY","normalized":"сабраж"}
+{"state":"READY_FOR_DIALOG","text":"33 сабража за вечер","intent":"SAFE_PLAY","normalized":"сабраж"}

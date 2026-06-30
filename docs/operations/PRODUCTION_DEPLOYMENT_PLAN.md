@@ -212,3 +212,125 @@ Site consent:
 3. User launches Claude with `docs/frontend/CLAUDE_FRONTEND_TASK.md`.
 4. Claude returns frontend file/component plan.
 5. Codex reviews boundaries before frontend implementation starts.
+
+## 9. Windows Server Bootstrap Checklist
+
+Если удаленная машина будет Windows и доступ через AnyDesk, backend-runtime лучше поднимать в WSL2 Ubuntu. Docker Desktop можно использовать для UI, но production-like команды выполняются внутри Ubuntu shell.
+
+### 9.1 Enable WSL2 / Ubuntu
+
+Открыть PowerShell от администратора:
+
+```powershell
+wsl --install -d Ubuntu-24.04
+wsl --set-default-version 2
+```
+
+Если Windows попросит reboot - перезагрузить сервер и снова открыть Ubuntu.
+
+### 9.2 Install Docker Engine Inside Ubuntu
+
+```bash
+sudo apt update
+sudo apt install -y ca-certificates curl gnupg git jq unzip
+sudo install -m 0755 -d /etc/apt/keyrings
+curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+sudo apt update
+sudo apt install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+sudo usermod -aG docker "$USER"
+```
+
+Закрыть Ubuntu shell, открыть заново и проверить:
+
+```bash
+docker version
+docker compose version
+```
+
+### 9.3 Clone Project
+
+```bash
+mkdir -p ~/projects
+cd ~/projects
+git clone https://github.com/michaelwelly/Astor_Butler_MVP.git
+cd Astor_Butler_MVP
+git status
+```
+
+Секреты не хранятся в git. `.env` переносится вручную из локальной защищенной копии или собирается по актуальному runbook.
+
+### 9.4 Start Infrastructure
+
+Минимальный production-like стенд для AERIS Telegram bot:
+
+```bash
+docker compose --profile ai up -d postgres redis kafka minio mongo scylla neo4j natasha-nlu ollama-1 ollama-2 llm-gateway
+docker compose ps
+```
+
+Если RAM меньше 24-32 GB, сначала поднять без тяжелых AI/VLM профилей и проверить базовую FSM-инфраструктуру:
+
+```bash
+docker compose up -d postgres redis kafka minio mongo scylla neo4j natasha-nlu
+```
+
+### 9.5 Pull / Verify Local Models
+
+```bash
+docker exec -it astor_ollama_1 ollama pull qwen2.5:1.5b
+docker exec -it astor_ollama_1 ollama pull nomic-embed-text
+docker exec -it astor_ollama_2 ollama pull qwen2.5:3b
+docker exec -it astor_ollama_2 ollama pull nomic-embed-text
+```
+
+VLM is not required for baseline booking/RAG. On a stronger server it can be pulled later:
+
+```bash
+docker exec -it astor_ollama_2 ollama pull qwen2.5vl:3b
+```
+
+### 9.6 Build and Run Backend Bots
+
+```bash
+docker compose build aeris-astor-butler-bot
+docker compose up -d aeris-astor-butler-bot api-gateway
+docker compose logs -f aeris-astor-butler-bot
+```
+
+Health checks:
+
+```bash
+curl -s http://localhost:8088/actuator/health | jq
+curl -s http://localhost:8089/actuator/health | jq
+```
+
+### 9.7 Frontend
+
+Frontend production build should run from `frontend/` or its Docker service after Claude merges the frontend branch:
+
+```bash
+cd frontend
+npm ci
+npm run build
+npm run start
+```
+
+If frontend is containerized in the current compose version, prefer:
+
+```bash
+docker compose build frontend
+docker compose up -d frontend
+```
+
+### 9.8 Resource Target
+
+Recommended for full local AI + infra:
+
+```text
+CPU: 8 vCPU+
+RAM: 32 GB preferred, 24 GB workable
+Disk: 300-500 GB SSD/NVMe
+```
+
+Baseline without VLM can start on 16 GB RAM, but Kafka + Scylla + Neo4j + Ollama will be tight.

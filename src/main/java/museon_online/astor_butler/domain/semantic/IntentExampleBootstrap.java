@@ -30,20 +30,35 @@ public class IntentExampleBootstrap implements ApplicationRunner {
 
     @Override
     public void run(ApplicationArguments args) {
-        Resource corpus = resourceLoader.getResource(corpusLocation);
-        List<IntentExampleSeed> examples = corpusLoader.load(corpus);
-        EmbeddingProvider provider = embeddingProvider.getIfAvailable();
-        int embeddings = 0;
-        for (IntentExampleSeed example : examples) {
-            UUID exampleId = repository.upsert(example);
-            if (provider != null) {
-                List<Double> vector = provider.embed(example.normalizedPhrase());
-                if (!vector.isEmpty()) {
-                    repository.upsertEmbedding(exampleId, provider.model(), vector);
-                    embeddings++;
+        try {
+            Resource corpus = resourceLoader.getResource(corpusLocation);
+            List<IntentExampleSeed> examples = corpusLoader.load(corpus);
+            EmbeddingProvider provider = embeddingProvider.getIfAvailable();
+            boolean embeddingsAvailable = provider != null;
+            int embeddings = 0;
+            for (IntentExampleSeed example : examples) {
+                UUID exampleId = repository.upsert(example);
+                if (embeddingsAvailable) {
+                    try {
+                        List<Double> vector = provider.embed(example.normalizedPhrase());
+                        if (!vector.isEmpty()) {
+                            repository.upsertEmbedding(exampleId, provider.model(), vector);
+                            embeddings++;
+                        }
+                    } catch (RuntimeException e) {
+                        embeddingsAvailable = false;
+                        log.warn(
+                                "Intent examples embeddings disabled for this startup: corpus={} model={} reason={}",
+                                corpusLocation,
+                                provider.model(),
+                                e.toString()
+                        );
+                    }
                 }
             }
+            log.info("Intent examples bootstrapped: examples={}, embeddings={}, corpus={}", examples.size(), embeddings, corpusLocation);
+        } catch (RuntimeException e) {
+            log.warn("Intent examples bootstrap skipped: corpus={} reason={}", corpusLocation, e.toString());
         }
-        log.info("Intent examples bootstrapped: examples={}, embeddings={}, corpus={}", examples.size(), embeddings, corpusLocation);
     }
 }

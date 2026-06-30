@@ -49,6 +49,32 @@ public class TableReservationRepository {
     }
 
     public List<VenueTable> findAvailableTables(String venueCode, Instant startAt, Instant endAt, int partySize, String preferredZone) {
+        String normalizedZone = normalizeZone(preferredZone);
+        if (normalizedZone == null) {
+            return jdbcTemplate.query("""
+                    SELECT vt.*
+                    FROM venue_tables vt
+                    WHERE vt.venue_code = ?
+                      AND vt.active = TRUE
+                      AND vt.bookable = TRUE
+                      AND vt.capacity_max >= ?
+                      AND NOT EXISTS (
+                          SELECT 1
+                          FROM table_reservation_holds h
+                          WHERE h.table_id = vt.id
+                            AND h.status IN ('HELD', 'CONFIRMED')
+                            AND h.start_at < ?
+                            AND h.end_at > ?
+                      )
+                    ORDER BY vt.sort_order, vt.capacity_max, vt.table_code
+                    """,
+                    venueTableMapper(),
+                    normalizeVenue(venueCode),
+                    partySize,
+                    timestamp(endAt),
+                    timestamp(startAt)
+            );
+        }
         return jdbcTemplate.query("""
                 SELECT vt.*
                 FROM venue_tables vt
@@ -56,7 +82,7 @@ public class TableReservationRepository {
                   AND vt.active = TRUE
                   AND vt.bookable = TRUE
                   AND vt.capacity_max >= ?
-                  AND (? IS NULL OR vt.zone = ?)
+                  AND vt.zone = ?
                   AND NOT EXISTS (
                       SELECT 1
                       FROM table_reservation_holds h
@@ -65,13 +91,12 @@ public class TableReservationRepository {
                         AND h.start_at < ?
                         AND h.end_at > ?
                   )
-                ORDER BY vt.capacity_max, vt.sort_order, vt.table_code
+                ORDER BY vt.sort_order, vt.capacity_max, vt.table_code
                 """,
                 venueTableMapper(),
                 normalizeVenue(venueCode),
                 partySize,
-                normalizeZone(preferredZone),
-                normalizeZone(preferredZone),
+                normalizedZone,
                 timestamp(endAt),
                 timestamp(startAt)
         );
@@ -92,6 +117,93 @@ public class TableReservationRepository {
                 timestamp(startAt)
         );
         return count != null && count > 0;
+    }
+
+    public boolean hasActiveConflict(long tableId, Instant startAt, Instant endAt, Long excludedOrderId) {
+        Integer count = jdbcTemplate.queryForObject("""
+                SELECT COUNT(*)
+                FROM table_reservation_holds
+                WHERE table_id = ?
+                  AND status IN ('HELD', 'CONFIRMED')
+                  AND (? IS NULL OR order_id <> ?)
+                  AND start_at < ?
+                  AND end_at > ?
+                """,
+                Integer.class,
+                tableId,
+                excludedOrderId,
+                excludedOrderId,
+                timestamp(endAt),
+                timestamp(startAt)
+        );
+        return count != null && count > 0;
+    }
+
+    public List<VenueTable> findAlternativeTables(
+            String venueCode,
+            Instant startAt,
+            Instant endAt,
+            int partySize,
+            String preferredZone,
+            Long excludedOrderId
+    ) {
+        String normalizedZone = normalizeZone(preferredZone);
+        if (normalizedZone == null) {
+            return jdbcTemplate.query("""
+                    SELECT vt.*
+                    FROM venue_tables vt
+                    WHERE vt.venue_code = ?
+                      AND vt.active = TRUE
+                      AND vt.bookable = TRUE
+                      AND vt.capacity_max >= ?
+                      AND NOT EXISTS (
+                          SELECT 1
+                          FROM table_reservation_holds h
+                          WHERE h.table_id = vt.id
+                            AND h.status IN ('HELD', 'CONFIRMED')
+                            AND (? IS NULL OR h.order_id <> ?)
+                            AND h.start_at < ?
+                            AND h.end_at > ?
+                      )
+                    ORDER BY vt.sort_order, vt.capacity_max, vt.table_code
+                    """,
+                    venueTableMapper(),
+                    normalizeVenue(venueCode),
+                    partySize,
+                    excludedOrderId,
+                    excludedOrderId,
+                    timestamp(endAt),
+                    timestamp(startAt)
+            );
+        }
+        return jdbcTemplate.query("""
+                SELECT vt.*
+                FROM venue_tables vt
+                WHERE vt.venue_code = ?
+                  AND vt.active = TRUE
+                  AND vt.bookable = TRUE
+                  AND vt.capacity_max >= ?
+                  AND vt.zone = ?
+                  AND NOT EXISTS (
+                      SELECT 1
+                      FROM table_reservation_holds h
+                      WHERE h.table_id = vt.id
+                        AND h.status IN ('HELD', 'CONFIRMED')
+                        AND (? IS NULL OR h.order_id <> ?)
+                        AND h.start_at < ?
+                        AND h.end_at > ?
+                  )
+                ORDER BY vt.sort_order, vt.capacity_max, vt.table_code
+                """,
+                venueTableMapper(),
+                normalizeVenue(venueCode),
+                partySize,
+                normalizedZone,
+                excludedOrderId,
+                excludedOrderId,
+                timestamp(endAt),
+                timestamp(startAt)
+        );
     }
 
     public TableReservationOrder createAwaitingManagerOrder(TableReservationCommand command, VenueTable table) {
@@ -273,6 +385,42 @@ public class TableReservationRepository {
                 """,
                 id
         );
+        return findOrder(id).orElseThrow();
+    }
+
+    public TableReservationOrder changeReservation(Long id, TableReservationChangeCommand command, VenueTable table) {
+        jdbcTemplate.update("""
+                UPDATE table_reservation_orders
+                SET table_id = ?,
+                    status = 'AWAITING_MANAGER_CONFIRMATION',
+                    requested_start_at = ?,
+                    requested_end_at = ?,
+                    party_size = ?,
+                    preferred_zone = ?,
+                    seating_preference = ?,
+                    guest_comment = ?,
+                    updated_at = CURRENT_TIMESTAMP
+                WHERE id = ?
+                """,
+                table.id(),
+                timestamp(command.requestedStartAt()),
+                timestamp(command.requestedEndAt()),
+                command.partySize(),
+                normalizeZone(command.preferredZone()),
+                blankToNull(command.seatingPreference()),
+                blankToNull(command.guestComment()),
+                id
+        );
+        jdbcTemplate.update("""
+                UPDATE table_reservation_holds
+                SET status = 'RELEASED',
+                    updated_at = CURRENT_TIMESTAMP
+                WHERE order_id = ?
+                  AND status IN ('HELD', 'CONFIRMED')
+                """,
+                id
+        );
+        createHold(id, table.id(), command.requestedStartAt(), command.requestedEndAt());
         return findOrder(id).orElseThrow();
     }
 

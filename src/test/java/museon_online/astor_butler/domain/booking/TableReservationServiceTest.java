@@ -12,6 +12,9 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentCaptor.forClass;
 
 class TableReservationServiceTest {
 
@@ -117,6 +120,66 @@ class TableReservationServiceTest {
 
         assertThat(result.status()).isEqualTo(TableReservationStatus.CONFIRMED);
         verify(notificationService).notifyHostessConfirmed(confirmed);
+    }
+
+    @Test
+    void changesReservationAndReopensHostessConfirmation() {
+        VenueTable currentTable = table(5L, "5", 4, true, true);
+        VenueTable betterFit = table(11L, "11", 6, true, true);
+        TableReservationOrder current = order(12L, currentTable, TableReservationStatus.CONFIRMED);
+        TableReservationOrder changed = new TableReservationOrder(
+                12L,
+                1773317437L,
+                1773317437L,
+                null,
+                betterFit.id(),
+                betterFit.tableCode(),
+                betterFit.displayName(),
+                null,
+                "Хочу спокойный стол",
+                TableReservationStatus.AWAITING_MANAGER_CONFIRMATION,
+                "TELEGRAM",
+                Instant.parse("2026-06-06T17:00:00Z"),
+                Instant.parse("2026-06-06T19:00:00Z"),
+                5,
+                "Наталья",
+                "+79990000000",
+                "Хочу спокойный стол | Количество гостей изменено: 5",
+                876857557L,
+                null,
+                null,
+                null,
+                Instant.parse("2026-06-05T00:00:00Z"),
+                Instant.parse("2026-06-05T00:00:00Z")
+        );
+        TableReservationChangeCommand command = new TableReservationChangeCommand(
+                "AERIS",
+                null,
+                null,
+                null,
+                current.requestedStartAt(),
+                current.requestedEndAt(),
+                5,
+                "Хочу спокойный стол | Количество гостей изменено: 5"
+        );
+
+        when(repository.findOrder(12L)).thenReturn(Optional.of(current));
+        when(repository.findTableByCode("AERIS", "5")).thenReturn(Optional.of(currentTable));
+        when(repository.findAvailableTables("AERIS", current.requestedStartAt(), current.requestedEndAt(), 5, null))
+                .thenReturn(List.of(betterFit));
+        when(repository.hasActiveConflict(11L, current.requestedStartAt(), current.requestedEndAt(), 12L)).thenReturn(false);
+        when(repository.changeReservation(eq(12L), any(TableReservationChangeCommand.class), eq(betterFit))).thenReturn(changed);
+
+        TableReservationOrder result = service.changeByGuest(12L, command);
+
+        var captor = forClass(TableReservationChangeCommand.class);
+        assertThat(result.status()).isEqualTo(TableReservationStatus.AWAITING_MANAGER_CONFIRMATION);
+        assertThat(result.tableCode()).isEqualTo("11");
+        assertThat(result.partySize()).isEqualTo(5);
+        verify(repository).changeReservation(eq(12L), captor.capture(), eq(betterFit));
+        assertThat(captor.getValue().partySize()).isEqualTo(5);
+        assertThat(captor.getValue().seatingPreference()).isEqualTo("Хочу спокойный стол");
+        verify(notificationService).notifyHostessApprovalRequest(changed);
     }
 
     @Test

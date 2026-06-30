@@ -10,6 +10,8 @@ import museon_online.astor_butler.fsm.scenario.ScenarioRouter;
 import museon_online.astor_butler.fsm.storage.FSMStorage;
 import museon_online.astor_butler.kafka.UserEventProducer;
 import museon_online.astor_butler.model.ModelGateway;
+import museon_online.astor_butler.model.ModelInteractionAuditRecord;
+import museon_online.astor_butler.model.ModelInteractionAuditRepository;
 import museon_online.astor_butler.model.ModelTextRequest;
 import museon_online.astor_butler.model.ModelTextResponse;
 import museon_online.astor_butler.telegram.adapter.TelegramSystemNotifier;
@@ -32,6 +34,7 @@ public class MessageGatewayService {
     private final VoiceTranscriptionRetryService voiceTranscriptionRetryService;
     private final FsmTimelineWriter fsmTimelineWriter;
     private final TelegramSystemNotifier telegramSystemNotifier;
+    private final ModelInteractionAuditRepository modelInteractionAuditRepository;
 
     @Value("${telegram.admin.chat-id:}")
     private String adminChatId;
@@ -166,8 +169,10 @@ public class MessageGatewayService {
             ));
             String aiText = modelResponse.text();
             if (aiText == null || aiText.isBlank()) {
+                auditModelInteraction(incoming, currentState, prompt, "", modelResponse, false, true, true, null);
                 return fallback(incoming, currentState, "LLM returned blank response");
             }
+            auditModelInteraction(incoming, currentState, prompt, aiText, modelResponse, true, modelResponse.fallback(), true, null);
             userEventProducer.publishLlmResponse(
                     incoming,
                     currentState,
@@ -190,6 +195,7 @@ public class MessageGatewayService {
                     List.of("AI_RESPONSE")
             ));
         } catch (Exception e) {
+            auditModelInteraction(incoming, currentState, prompt, "", null, false, true, false, e);
             log.warn(
                     "LLM fallback used for chatId={}, state={}, reason={}: {}",
                     incoming.chatId(),
@@ -199,6 +205,43 @@ public class MessageGatewayService {
             );
             return fallback(incoming, currentState, e.getClass().getSimpleName());
         }
+    }
+
+    private void auditModelInteraction(
+            IncomingMessage incoming,
+            BotState currentState,
+            String prompt,
+            String responseText,
+            ModelTextResponse modelResponse,
+            boolean generated,
+            boolean fallbackUsed,
+            boolean success,
+            Exception error
+    ) {
+        modelInteractionAuditRepository.capture(new ModelInteractionAuditRecord(
+                "AERIS",
+                incoming.channel() == null ? "" : incoming.channel().name(),
+                incoming.chatId(),
+                incoming.telegramUserId(),
+                incoming.correlationId(),
+                "MessageGateway",
+                currentState == null ? "" : currentState.name(),
+                "fallback-reply",
+                modelResponse == null ? "" : modelResponse.provider(),
+                modelResponse == null ? "" : modelResponse.model(),
+                modelResponse == null || modelResponse.metadata() == null ? "" : String.valueOf(modelResponse.metadata().getOrDefault("profile", "")),
+                prompt,
+                text(incoming.text()),
+                "",
+                responseText,
+                generated,
+                fallbackUsed,
+                success,
+                error == null ? "" : error.getClass().getSimpleName(),
+                error == null ? "" : error.getMessage(),
+                modelResponse == null ? null : modelResponse.latency(),
+                java.util.Map.of("source", "MessageGatewayService")
+        ));
     }
 
     private OutgoingMessage fallback(IncomingMessage incoming, BotState currentState, String reason) {

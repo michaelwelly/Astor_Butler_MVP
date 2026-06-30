@@ -100,10 +100,14 @@ public class TableReservationNotificationService {
     }
 
     public void notifyGuestRejected(TableReservationOrder order) {
+        notifyGuestRejected(order, List.of());
+    }
+
+    public void notifyGuestRejected(TableReservationOrder order, List<VenueTable> alternatives) {
         if (order.chatId() == null) {
             return;
         }
-        send(order.chatId().toString(), guestRejectedText(order), guestMainMenuKeyboard(), "guest-rejected");
+        send(order.chatId().toString(), guestRejectedText(order, alternatives), guestMainMenuKeyboard(), "guest-rejected");
     }
 
     public void notifyGuestCancelled(TableReservationOrder order) {
@@ -243,7 +247,7 @@ public class TableReservationNotificationService {
         );
     }
 
-    private String guestRejectedText(TableReservationOrder order) {
+    private String guestRejectedText(TableReservationOrder order, List<VenueTable> alternatives) {
         return """
                 <b>Пока не получилось подтвердить этот стол</b>
 
@@ -256,15 +260,25 @@ public class TableReservationNotificationService {
                 <b>Гостей:</b> %s
                 <b>Пожелание:</b> %s
 
-                Давайте подберем другой стол или время. Напишите, что удобнее изменить: время, количество гостей или зону посадки.
+                %s
                 """.formatted(
                 order.id(),
                 escape(tableName(order)),
                 formatDate(order.requestedStartAt()),
                 formatTimeRange(order),
                 order.partySize(),
-                escape(seatingPreference(order))
+                escape(seatingPreference(order)),
+                escape(rejectionAlternativeText(alternatives))
         );
+    }
+
+    private String rejectionAlternativeText(List<VenueTable> alternatives) {
+        if (alternatives == null || alternatives.isEmpty()) {
+            return "Я не бросаю вас на этом месте: напишите «подбери другой стол» или «перенести время», и я соберу новый вариант без повторной анкеты.";
+        }
+        VenueTable best = alternatives.getFirst();
+        return "Проверил свободные варианты: первым я бы предложил " + humanTableDisplayName(best.displayName())
+                + ". Напишите «да, другой стол» — и я передам команде новый вариант, либо выберите другое время.";
     }
 
     private String guestCancelledText(TableReservationOrder order) {
@@ -336,9 +350,20 @@ public class TableReservationNotificationService {
             return "не выбран";
         }
         if (order.tableDisplayName() == null || order.tableDisplayName().isBlank()) {
-            return order.tableCode();
+            return "Стол " + order.tableCode();
         }
-        return order.tableDisplayName() + " (" + order.tableCode() + ")";
+        return humanTableDisplayName(order.tableDisplayName()) + " (" + order.tableCode() + ")";
+    }
+
+    private String humanTableDisplayName(String displayName) {
+        String value = displayName == null ? "" : displayName.trim();
+        if (value.startsWith("Table ")) {
+            return "Стол " + value.substring("Table ".length());
+        }
+        if (value.startsWith("VIP ")) {
+            return "Стол VIP " + value.substring("VIP ".length());
+        }
+        return value;
     }
 
     private String seatingPreference(TableReservationOrder order) {

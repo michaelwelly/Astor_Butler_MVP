@@ -756,3 +756,42 @@ JAVA_HOME=/Users/michaelwelly/Library/Java/JavaVirtualMachines/temurin-21.0.11/C
 
 - `git diff --check` clean.
 - `graphify update .` выполнен.
+
+## Update 2026-07-01 - Safe Play Wine RAG + Server Handoff
+
+- Local AI stack проверен: `ollama-1`, `ollama-2`, `llm-gateway`, embeddings через `nomic-embed-text`, размерность 768.
+- `ScenarioReplyComposer` имеет short timeout guard: медленная локальная LLM больше не держит гостя минуту; fallback и model audit сохраняются.
+- Booking replay прошел 7/7, заявка создается и гость возвращается в `READY_FOR_DIALOG`.
+- RAG/pgvector работает: `semantic_embeddings` и `intent_embeddings` загружены, retrieval отвечает, качество ranking улучшается seed-текстами.
+- Добавлен Safe Play wine advice:
+  - "какое игристое/шампанское взять под сабраж" -> `SAFE_PLAY_WINE_ADVICE`;
+  - поиск по `AERIS_MENU_WINE_SOURCE` + `AERIS_SAFE_PLAY_SOURCE`;
+  - ответ с позициями/ценами из винной карты;
+  - safety boundary: не давать dangerous how-to, ритуал делает команда AERIS.
+- Операционный запрос "хочу сабраж к столу" остается staff/admin confirmation flow.
+- `ScenarioRouter` теперь уважает confident `primaryIntent`: SAFE_PLAY может обогнать общий table-booking loop, если NLU уже понял намерение.
+- Добавлен `src/main/resources/semantic/aeris/safe-play-sabrage-rag-seed.md`.
+- Обновлены:
+  - `docs/FSM_SCENARIOS_VIEWER.html`;
+  - `docs/fsm/FSM_SCENARIOS.md`;
+  - `docs/architecture/ARCHITECTURE.md`;
+  - `docs/operations/PRODUCTION_DEPLOYMENT_PLAN.md`;
+  - `docs/obsidian/04_Tech/Tech_Decisions.md`.
+- Next smoke after container rebuild:
+
+```bash
+curl -sG http://localhost:8089/internal/semantic/search \
+  --data-urlencode 'q=какое игристое под сабраж цена' \
+  --data-urlencode 'limit=5' | jq
+```
+
+```bash
+curl -s http://localhost:8089/api/messages \
+  -H 'Content-Type: application/json' \
+  -d '{"channel":"TELEGRAM","chatId":990846408,"telegramUserId":990846408,"text":"какое игристое взять под сабраж","firstName":"Smoke","lastName":"Guest","username":"smoke_guest","correlationId":"safe-play-rag-smoke"}' | jq
+```
+
+- Tomorrow server move:
+  - use `docs/operations/PRODUCTION_DEPLOYMENT_PLAN.md` section `Windows Server Bootstrap Checklist`;
+  - start without VLM if RAM is tight;
+  - pull `qwen2.5vl:3b` only after baseline infra/bot are stable.

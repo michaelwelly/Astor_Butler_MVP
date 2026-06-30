@@ -101,7 +101,7 @@ public class FirstTouchScenario implements FsmScenario {
         consentVaultService.grantPrivacyPolicyFromTelegramContact(incoming);
         return OutgoingMessage.of(
                 incoming,
-                "Спасибо, контакт получил. Я на связи: выберите действие кнопкой ниже или напишите запрос своими словами.",
+                "Спасибо, контакт получил. Я на связи: можете выбрать действие кнопкой, написать своими словами или отправить голосовое. Я разберу запрос и аккуратно проведу дальше.",
                 BotState.READY_FOR_DIALOG.name(),
                 false,
                 false,
@@ -115,7 +115,7 @@ public class FirstTouchScenario implements FsmScenario {
     private OutgoingMessage handleConsentNudge(IncomingMessage incoming, BotState currentState, String text) {
         return OutgoingMessage.of(
                 incoming,
-                "Для брони мне нужен контакт, чтобы команда AERIS могла подтвердить детали. Нажмите «Согласиться и поделиться контактом» ниже.",
+                consentNudgeText(incoming),
                 BotState.CONSENT_REQUIRED.name(),
                 false,
                 true,
@@ -124,6 +124,16 @@ public class FirstTouchScenario implements FsmScenario {
                 AdminAlert.none(),
                 List.of("PRE_AUTH_CONSENT_NUDGE", "REQUEST_CONTACT", "CONSENT_REQUIRED")
         );
+    }
+
+    private String consentNudgeText(IncomingMessage incoming) {
+        String[] variants = {
+                "Понимаю. До личных деталей я не тороплюсь, но для брони команде AERIS нужен контакт: так хостес сможет подтвердить стол и не потерять вас в вечернем потоке. Нажмите «Согласиться и поделиться контактом» ниже.",
+                "Могу помочь и дальше, но сначала нужен маленький формальный шаг: поделиться контактом и согласиться с политикой. После этого приму бронь, голосовое или любой запрос обычным сообщением.",
+                "Давайте сделаем надежно: один раз подтвердите контакт кнопкой ниже, и дальше я смогу вести бронь, меню и вопросы без лишней анкеты."
+        };
+        long seed = incoming == null || incoming.chatId() == null ? 0 : Math.abs(incoming.chatId());
+        return variants[(int) (seed % variants.length)];
     }
 
     private boolean hasContact(IncomingMessage incoming) {

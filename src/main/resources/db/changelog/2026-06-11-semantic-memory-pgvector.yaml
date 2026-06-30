@@ -2,6 +2,7 @@ databaseChangeLog:
   - changeSet:
       id: 2026-06-11-semantic-memory-pgvector
       author: codex
+      validCheckSum: 9:6a42eb7bb592cf981c0273d420a71e5f
       dbms: postgresql
       changes:
         - sqlFile:

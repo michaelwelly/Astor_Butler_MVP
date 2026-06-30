@@ -1,0 +1,9 @@
+databaseChangeLog:
+  - changeSet:
+      id: 2026-06-29-model-interaction-audit
+      author: codex
+      changes:
+        - sqlFile:
+            path: db/changelog/2026-06-29-model-interaction-audit.sql
+            splitStatements: true
+            stripComments: true

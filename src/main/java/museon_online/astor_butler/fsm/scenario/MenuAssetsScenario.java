@@ -3,7 +3,12 @@ package museon_online.astor_butler.fsm.scenario;
 import lombok.RequiredArgsConstructor;
 import museon_online.astor_butler.domain.media.AerisMediaCatalog;
 import museon_online.astor_butler.domain.media.MediaAsset;
+import museon_online.astor_butler.domain.semantic.SemanticRetrievalService;
+import museon_online.astor_butler.domain.semantic.SemanticSearchResult;
 import museon_online.astor_butler.fsm.core.BotState;
+import museon_online.astor_butler.fsm.reply.ScenarioReply;
+import museon_online.astor_butler.fsm.reply.ScenarioReplyComposer;
+import museon_online.astor_butler.fsm.reply.ScenarioReplyDraft;
 import museon_online.astor_butler.fsm.storage.FSMStorage;
 import museon_online.astor_butler.service.message.AdminAlert;
 import museon_online.astor_butler.service.message.IncomingMessage;
@@ -22,6 +27,8 @@ public class MenuAssetsScenario implements FsmScenario {
 
     private final FSMStorage fsmStorage;
     private final AerisMediaCatalog mediaCatalog;
+    private final SemanticRetrievalService semanticRetrievalService;
+    private final ScenarioReplyComposer replyComposer;
 
     public String id() {
         return "MENU_ASSETS";
@@ -60,10 +67,21 @@ public class MenuAssetsScenario implements FsmScenario {
         }
 
         fsmStorage.setState(incoming.chatId(), BotState.READY_FOR_DIALOG);
-        String textResponse = responseFor(documents);
+        List<SemanticSearchResult> ragContext = semanticContext(text, documents);
+        String fallbackText = responseFor(documents, ragContext);
+        ScenarioReply reply = replyComposer.compose(ScenarioReplyDraft.of(
+                incoming,
+                "AERIS",
+                id(),
+                BotState.READY_FOR_DIALOG.name(),
+                "MENU_ASSETS_DELIVERED",
+                text,
+                fallbackText,
+                ragContext
+        ));
         return OutgoingMessage.of(
                 incoming,
-                textResponse,
+                reply.text(),
                 BotState.READY_FOR_DIALOG.name(),
                 false,
                 false,
@@ -74,6 +92,10 @@ public class MenuAssetsScenario implements FsmScenario {
         ).withMetadata(Map.of(
                 "documents", documents.stream().map(this::metadata).toList(),
                 "ragSource", mediaCatalog.menuRagSource(),
+                "ragContext", ragContext.stream().map(this::ragMetadata).toList(),
+                "replyGenerated", reply.generated(),
+                "replyProvider", reply.provider(),
+                "replyModel", reply.model(),
                 "scenario", "MenuAssetsScenario"
         ));
     }
@@ -93,7 +115,7 @@ public class MenuAssetsScenario implements FsmScenario {
         }
 
         List<MediaAsset> documents = new ArrayList<>();
-        if (wantsKitchen) {
+        if (wantsKitchen || wantsAll) {
             documents.add(mediaCatalog.kitchenMenu());
         }
         if (wantsBar) {
@@ -111,20 +133,25 @@ public class MenuAssetsScenario implements FsmScenario {
         return List.copyOf(documents);
     }
 
-    private String responseFor(List<MediaAsset> documents) {
+    private String responseFor(List<MediaAsset> documents, List<SemanticSearchResult> ragContext) {
+        String ragHint = ragContext.isEmpty()
+                ? ""
+                : "\n\nЯ подобрал материалы по смыслу запроса и приложил source-карты. Точные позиции, цены и наличие смотрим в PDF.";
         if (documents.size() == 4) {
             return """
                     Конечно. Отправляю актуальные карты AERIS: кухню, бар, коктейли Elements и винную карту.
 
                     Если захотите, я помогу выбрать стол или позову менеджера.
-                    """;
+                    %s
+                    """.formatted(ragHint);
         }
         String names = String.join(", ", documents.stream().map(MediaAsset::title).toList());
         return """
                 Да, отправляю: %s.
 
                 Если нужно, следом могу прислать остальные карты или помочь с бронью стола.
-                """.formatted(names);
+                %s
+                """.formatted(names, ragHint);
     }
 
     private boolean isMenuIntent(String text) {
@@ -176,6 +203,23 @@ public class MenuAssetsScenario implements FsmScenario {
         metadata.put("filename", asset.filename());
         metadata.put("caption", asset.title());
         metadata.put("contentType", asset.contentType());
+        return metadata;
+    }
+
+    private List<SemanticSearchResult> semanticContext(String query, List<MediaAsset> documents) {
+        List<String> sourceCodes = semanticRetrievalService.sourceCodesForAssets(
+                documents.stream().map(MediaAsset::assetCode).toList()
+        );
+        return semanticRetrievalService.search("AERIS", query, sourceCodes, 3);
+    }
+
+    private Map<String, Object> ragMetadata(SemanticSearchResult result) {
+        Map<String, Object> metadata = new LinkedHashMap<>();
+        metadata.put("sourceCode", result.sourceCode());
+        metadata.put("sourceType", result.sourceType());
+        metadata.put("title", result.title());
+        metadata.put("score", result.score());
+        metadata.put("content", result.shortContent(360));
         return metadata;
     }
 }

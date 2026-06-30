@@ -302,6 +302,13 @@ Routing policy:
 
 The Java code depends on `ModelGateway`/capability contracts, not on concrete providers from FSM or message services. Current default text provider is `SpringAiOllamaModelGateway`, which wraps Spring AI `OllamaChatModel` and keeps raw `OllamaClient` as a local fallback. The same boundary now owns embeddings through `ModelGateway.generateEmbedding(...)`: AERIS runtime uses `ASTOR_SEMANTIC_EMBEDDINGS_PROVIDER=model-gateway` with local Ollama `nomic-embed-text`, while direct `spring-ai` and `ollama` embedding providers remain diagnostic/legacy options. Vision now has the same boundary through `ModelGateway.analyzeImage(...)`; the first local adapter calls Ollama `/api/chat` with image payloads and defaults to `LLM_OLLAMA_VISION_MODEL=qwen2.5vl:3b`. `OllamaModelGateway` remains available via `ASTOR_MODEL_PROVIDER=ollama-raw`. STT command service and Natasha adapter are implementation details behind the same boundary.
 
+Future provider adapters must keep the same boundary:
+
+- OpenAI-compatible text/vision/embedding providers can replace local Ollama when quality or latency matters more than local CPU cost.
+- YandexGPT/Alisa integration is a provider adapter, not a direct dependency of FSM scenarios.
+- MAX, Meta Instagram and WhatsApp are transport adapters. They normalize inbound events into the same `MessageGatewayService` contract and must not fork business logic away from Telegram/Web.
+- Provider choice is configuration/runtime policy; scenarios still receive typed text, slots, RAG context and model failure, not vendor SDK objects.
+
 ### Vision pipeline for table booking
 
 Vision is a supporting input layer for `TableBookingScenario`, not a replacement for the table booking domain model.
@@ -589,6 +596,7 @@ Tables:
 First use cases:
 
 - Quiet Guide menu search;
+- Safe Play wine advice: "какое игристое под сабраж" retrieves `AERIS_MENU_WINE_SOURCE` and `AERIS_SAFE_PLAY_SOURCE`, returns positions/prices, and keeps the dangerous-how-to boundary.
 - guest/staff instruction retrieval;
 - FSM/spec-aware semantic routing;
 - future "why did the bot route this request here?" diagnostics.

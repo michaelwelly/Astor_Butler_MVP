@@ -49,3 +49,13 @@ databaseChangeLog:
       file: db/changelog/2026-06-23-web-session-foundation.yaml
   - include:
       file: db/changelog/2026-06-23-web-consent-foundation.yaml
+  - include:
+      file: db/changelog/2026-06-29-semantic-rag-runtime.yaml
+  - include:
+      file: db/changelog/2026-07-01-safe-play-semantic-source.yaml
+  - include:
+      file: db/changelog/2026-06-29-model-interaction-audit.yaml
+  - include:
+      file: db/changelog/2026-06-30-aeris-table-zones-rating.yaml
+  - include:
+      file: db/changelog/2026-06-30-aeris-table-display-names-ru.yaml

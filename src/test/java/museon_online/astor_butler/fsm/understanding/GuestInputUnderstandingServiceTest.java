@@ -2,16 +2,24 @@ package museon_online.astor_butler.fsm.understanding;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import museon_online.astor_butler.domain.semantic.EmbeddingProvider;
+import museon_online.astor_butler.domain.semantic.IntentExampleRepository;
 import museon_online.astor_butler.fsm.core.BotState;
 import org.junit.jupiter.api.Test;
+import org.springframework.web.client.ResourceAccessException;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 class GuestInputUnderstandingServiceTest {
 
@@ -75,6 +83,7 @@ class GuestInputUnderstandingServiceTest {
     void shortNumericRepliesUseCurrentTableBookingState() {
         UnderstoodInput time = service.understand("8", BotState.TABLE_BOOKING_COLLECT_TIME);
         UnderstoodInput party = service.understand("На 2", BotState.TABLE_BOOKING_COLLECT_PARTY_SIZE);
+        UnderstoodInput soloParty = service.understand("На одного", BotState.TABLE_BOOKING_COLLECT_PARTY_SIZE);
         UnderstoodInput wordParty = service.understand("На троих", BotState.TABLE_BOOKING_COLLECT_PARTY_SIZE);
         UnderstoodInput table = service.understand("7", BotState.TABLE_BOOKING_WAIT_TABLE_SELECTION);
 
@@ -82,11 +91,29 @@ class GuestInputUnderstandingServiceTest {
         assertThat(time.slots().get("time").value()).isEqualTo("20:00");
         assertThat(party.primaryIntent()).isEqualTo(InputIntent.PROVIDE_PARTY_SIZE);
         assertThat(party.slots().get("partySize").value()).isEqualTo("2");
+        assertThat(soloParty.primaryIntent()).isEqualTo(InputIntent.PROVIDE_PARTY_SIZE);
+        assertThat(soloParty.slots().get("partySize").value()).isEqualTo("1");
         assertThat(wordParty.primaryIntent()).isEqualTo(InputIntent.PROVIDE_PARTY_SIZE);
         assertThat(wordParty.slots().get("partySize").value()).isEqualTo("3");
         assertThat(wordParty.normalizedText()).contains("3 гостей");
         assertThat(table.primaryIntent()).isEqualTo(InputIntent.PROVIDE_TABLE_SELECTION);
         assertThat(table.slots().get("tableNumber").value()).isEqualTo("7");
+    }
+
+    @Test
+    void vagueEveningWishDoesNotStartSideEffectingTableBooking() {
+        UnderstoodInput understood = service.understand("хочу красиво вечером но не знаю", BotState.READY_FOR_DIALOG);
+
+        assertThat(understood.primaryIntent()).isNotEqualTo(InputIntent.TABLE_BOOKING);
+        assertThat(understood.needsClarification()).isTrue();
+    }
+
+    @Test
+    void restaurantStoryRoutesToQuietGuide() {
+        UnderstoodInput understood = service.understand("Расскажи про ресторан", BotState.READY_FOR_DIALOG);
+
+        assertThat(understood.primaryIntent()).isEqualTo(InputIntent.QUIET_GUIDE);
+        assertThat(understood.needsClarification()).isFalse();
     }
 
     @Test
@@ -116,5 +143,44 @@ class GuestInputUnderstandingServiceTest {
         assertThat(understood.primaryIntent()).isEqualTo(InputIntent.PROVIDE_TIME);
         assertThat(understood.slots().get("time").value()).isEqualTo("20:00");
         assertThat(understood.normalizedText()).contains("20:00");
+    }
+
+    @Test
+    void semanticIntentLookupIsBestEffortWhenEmbeddingsAreUnavailable() {
+        IntentExampleRepository repository = mock(IntentExampleRepository.class);
+        EmbeddingProvider embeddingProvider = mock(EmbeddingProvider.class);
+        when(repository.findBestLexicalMatch(anyString(), anyString(), anyString())).thenReturn(Optional.empty());
+        when(embeddingProvider.embed(anyString())).thenThrow(new ResourceAccessException("llm-gateway"));
+
+        GuestInputUnderstandingService service = new GuestInputUnderstandingService(
+                repository,
+                embeddingProvider,
+                List.of()
+        );
+
+        assertThatCode(() -> service.understand("какая-то непонятная просьба", BotState.READY_FOR_DIALOG))
+                .doesNotThrowAnyException();
+
+        UnderstoodInput unclear = service.understand("какая-то непонятная просьба", BotState.READY_FOR_DIALOG);
+        assertThat(unclear.primaryIntent()).isEqualTo(InputIntent.UNKNOWN);
+    }
+
+    @Test
+    void tableSelectionNumberWithWordIsNotNormalizedAsTime() {
+        UnderstoodInput understood = service.understand("10 стол", BotState.TABLE_BOOKING_WAIT_TABLE_SELECTION);
+
+        assertThat(understood.primaryIntent()).isEqualTo(InputIntent.PROVIDE_TABLE_SELECTION);
+        assertThat(understood.slots()).containsKey("tableNumber");
+        assertThat(understood.slots().get("tableNumber").value()).isEqualTo("10");
+        assertThat(understood.slots()).doesNotContainKey("time");
+    }
+
+    @Test
+    void autoTableSelectionPhraseIsHandledLexically() {
+        UnderstoodInput understood = service.understand("подбери сам", BotState.TABLE_BOOKING_WAIT_TABLE_SELECTION);
+
+        assertThat(understood.primaryIntent()).isEqualTo(InputIntent.PROVIDE_TABLE_SELECTION);
+        assertThat(understood.slots()).containsKey("seatingPreference");
+        assertThat(understood.confidence()).isGreaterThanOrEqualTo(0.72);
     }
 }

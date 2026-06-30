@@ -1,9 +1,12 @@
 package museon_online.astor_butler.fsm.scenario;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import museon_online.astor_butler.domain.semantic.IntentExampleRepository;
 import museon_online.astor_butler.fsm.core.BotState;
 import museon_online.astor_butler.fsm.storage.FSMStorage;
 import museon_online.astor_butler.fsm.understanding.GuestInputUnderstandingService;
+import museon_online.astor_butler.fsm.understanding.InputIntent;
 import museon_online.astor_butler.fsm.understanding.UnderstoodInput;
 import museon_online.astor_butler.service.message.AdminAlert;
 import museon_online.astor_butler.service.message.IncomingMessage;
@@ -17,6 +20,7 @@ import java.util.Map;
 
 @Component
 @RequiredArgsConstructor
+@Slf4j
 public class ScenarioRouter {
 
     private final FSMStorage fsmStorage;
@@ -39,6 +43,7 @@ public class ScenarioRouter {
     private final MainMenuScenario mainMenuScenario;
     private final RecoveryScenario recoveryScenario;
     private final GuestInputUnderstandingService inputUnderstandingService;
+    private final IntentExampleRepository intentExampleRepository;
 
     public OutgoingMessage route(IncomingMessage incoming, BotState currentState, String text) {
         if (firstTouchScenario.supports(incoming, currentState, text)) {
@@ -46,21 +51,117 @@ public class ScenarioRouter {
         }
 
         UnderstoodInput understood = inputUnderstandingService.understand(text, currentState);
+        captureUnderstandingMissIfNeeded(incoming, currentState, understood);
         String routeText = understood.routeText();
         OutgoingMessage composite = tryCompositeIntent(incoming, currentState, routeText);
         if (composite != null) {
             return withUnderstandingMetadata(composite, understood);
         }
 
+        OutgoingMessage primaryIntentRoute = tryPrimaryIntentRoute(incoming, currentState, routeText, understood);
+        if (primaryIntentRoute != null) {
+            return primaryIntentRoute;
+        }
+
         for (FsmScenario scenario : orderedRuntimeScenarios()) {
             if (scenario.supports(incoming, currentState, routeText, understood)) {
-                return withUnderstandingMetadata(
+                OutgoingMessage outgoing = withUnderstandingMetadata(
                         withExecutablePendingContent(incoming, scenario.handle(incoming, currentState, routeText, understood)),
                         understood
                 );
+                captureRecoveryMissIfNeeded(incoming, currentState, understood, outgoing);
+                return outgoing;
             }
         }
         return null;
+    }
+
+    private OutgoingMessage tryPrimaryIntentRoute(
+            IncomingMessage incoming,
+            BotState currentState,
+            String routeText,
+            UnderstoodInput understood
+    ) {
+        if (understood == null || understood.needsClarification() || understood.confidence() < 0.70) {
+            return null;
+        }
+        FsmScenario scenario = scenarioForPrimaryIntent(understood.primaryIntent());
+        if (scenario == null) {
+            return null;
+        }
+        if (!scenario.supports(incoming, currentState, routeText, understood)) {
+            return null;
+        }
+        OutgoingMessage outgoing = withUnderstandingMetadata(
+                withExecutablePendingContent(incoming, scenario.handle(incoming, currentState, routeText, understood)),
+                understood
+        );
+        captureRecoveryMissIfNeeded(incoming, currentState, understood, outgoing);
+        return outgoing;
+    }
+
+    private FsmScenario scenarioForPrimaryIntent(InputIntent intent) {
+        if (intent == null) {
+            return null;
+        }
+        return switch (intent) {
+            case TABLE_BOOKING -> tableBookingScenario;
+            case EVENT_BOOKING -> eventBookingScenario;
+            case CHANGE_CANCEL -> changeCancelScenario;
+            case MANAGER_HELP -> managerHelpScenario;
+            case FEEDBACK -> feedbackScenario;
+            case SAFE_PLAY -> safePlayScenario;
+            case MERCH -> merchScenario;
+            case MENU_ASSETS -> menuAssetsScenario;
+            case QUIET_GUIDE -> quietGuideScenario;
+            case SMART_TIP -> smartTipScenario;
+            case HIDDEN_HEART -> hiddenHeartScenario;
+            case ART_AUCTION -> artAuctionScenario;
+            case MAIN_MENU -> mainMenuScenario;
+            default -> null;
+        };
+    }
+
+    private void captureUnderstandingMissIfNeeded(IncomingMessage incoming, BotState currentState, UnderstoodInput understood) {
+        if (incoming == null || understood == null || !understood.needsClarification()) {
+            return;
+        }
+        captureMiss(incoming, currentState, understood);
+    }
+
+    private void captureRecoveryMissIfNeeded(
+            IncomingMessage incoming,
+            BotState currentState,
+            UnderstoodInput understood,
+            OutgoingMessage outgoing
+    ) {
+        if (incoming == null || understood == null || understood.needsClarification() || outgoing == null || outgoing.actions() == null) {
+            return;
+        }
+        if (!outgoing.actions().contains("RECOVERY")) {
+            return;
+        }
+        captureMiss(incoming, currentState, understood);
+    }
+
+    private void captureMiss(IncomingMessage incoming, BotState currentState, UnderstoodInput understood) {
+        try {
+            intentExampleRepository.captureMiss(
+                    "AERIS",
+                    incoming.chatId(),
+                    incoming.telegramUserId(),
+                    stateName(currentState),
+                    understood.rawText(),
+                    understood.primaryIntent().name(),
+                    understood.confidence()
+            );
+        } catch (RuntimeException ex) {
+            log.warn("Intent understanding miss was not stored: {}", ex.toString());
+        }
+    }
+
+    private String stateName(BotState state) {
+        return state == null ? BotState.UNKNOWN.name() : state.canonical().name();
     }
 
     private List<FsmScenario> orderedRuntimeScenarios() {

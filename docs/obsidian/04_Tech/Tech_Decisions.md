@@ -348,6 +348,55 @@ FSM управляет состоянием диалога, разрешенны
 - Это пока read/observability layer; бизнес-проход Telegram-сценария создания/подтверждения брони остается в существующем `TableBookingScenario` + `TableReservationService`.
 - Container smoke 2026-06-15: `astor_app` healthy; Natalia runtime endpoint returned floor plan, tables and no current reservations in local DB.
 
+## Table Booking / Change-Cancel UX Patch 2026-06-30
+
+- `api-gateway` no longer logs repeated `waiting for c3flex-astor-butler-bot`; the default upstream is the local AERIS app port and the wait loop is silent.
+- Duckling runtime remains archived/disabled; orphan `astor_duckling_nlu` was removed with compose `--remove-orphans`.
+- Booking prompts now acknowledge the previous understood slot before asking the next step:
+  - party size: `Принял, на ... гостей`;
+  - date: `Принял, держим дату ...`;
+  - time: `Хорошо, на ...`;
+  - table/zone: `Отлично, место отметил`.
+- If the guest gives invalid input at the time step, FSM stays in `TABLE_BOOKING_COLLECT_TIME`, answers hospitably and shows the time buttons again instead of guessing.
+- `TableReservationService.reject(...)` now asks the repository for alternatives before releasing the rejected order:
+  - first same-zone alternatives by capacity/rating;
+  - then best global alternatives by rating;
+  - guest rejection copy includes the best alternative without discarding collected context.
+- Staff and guest table labels are localized in runtime text: legacy `Table X` becomes `Стол X`, legacy `VIP X` becomes `Стол VIP X`. A migration updates AERIS display names in `venue_tables`.
+- `ChangeCancelScenario` no longer asks for an order number when only one active booking exists. It shows a full booking card plus action keyboard:
+  - `Отменить стол`;
+  - `Изменить гостей`;
+  - `Изменить стол`;
+  - `Перенести время`;
+  - `Перенести дату`;
+  - `Отменить действие`.
+- Current MVP depth for change actions:
+  - cancel table is implemented end-to-end: releases hold, notifies through existing table reservation service, returns to main menu;
+  - change guests/table/date/time is implemented end-to-end for table reservations: the selected pending action is stored in Redis, the next text/button is parsed through the same booking understanding rules, the order/hold is updated, status returns to `AWAITING_MANAGER_CONFIRMATION`, and staff receives a fresh approval card;
+  - if several active bookings exist, the guest first selects the target order by button; if only one exists, no order number is requested;
+  - invalid values keep the guest inside the same pending action instead of falling into generic fallback.
+
+## Safe Play Wine RAG / Sabrage 2026-07-01
+
+- `SafePlayScenario` теперь разделяет:
+  - справочный запрос "какое игристое/шампанское взять под сабраж";
+  - операционную заявку "хочу сабраж к столу";
+  - dangerous how-to, где бот отказывается давать инструкцию и предлагает безопасный ритуал с командой.
+- Справочный запрос идет через `SemanticRetrievalService` по source codes:
+  - `AERIS_MENU_WINE_SOURCE`;
+  - `AERIS_SAFE_PLAY_SOURCE`.
+- Добавлен seed `src/main/resources/semantic/aeris/safe-play-sabrage-rag-seed.md` с позициями и ценами из винной карты AERIS:
+  - Mont Marcal Cava Brut;
+  - Tenuta Dodici 12 Prosecco;
+  - Cuvée Françoise Crémant;
+  - Bernard Remy Champagne;
+  - Moët & Chandon Brut Imperial;
+  - другие sparkling/champagne options.
+- Safety boundary сохраняется: бот может подобрать стиль/бюджет и приложить винную карту, но не объясняет технику сабража для самостоятельного выполнения.
+- `ScenarioReplyComposer` остается включенным, но ограничен timeout; если локальная LLM медленная, сценарий возвращает approved fallback и сохраняет модельный audit.
+- Future event layer: "33 сабража за вечер" фиксируется как Safe Play / event seed и позже связывается с `ArtAuctionScenario` и media/storytelling layer.
+- `ScenarioRouter` теперь использует уверенный `GuestInputUnderstandingService.primaryIntent` как приоритетный route hint до общего ordered scenario loop. Это устраняет класс багов, где NLU понимал `SAFE_PLAY`, но `TableBookingScenario` перехватывал фразу из-за слов вроде "стол" или времени.
+
 ## Связанные продуктовые заметки
 
 - `/Users/michaelwelly/Obsidian/Astor_Butler_Knowledge/02_Product/Event_Booking_Process.md`

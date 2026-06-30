@@ -5,7 +5,12 @@ import museon_online.astor_butler.domain.content.VenueContentPost;
 import museon_online.astor_butler.domain.content.VenueContentQueryService;
 import museon_online.astor_butler.domain.media.AerisMediaCatalog;
 import museon_online.astor_butler.domain.media.MediaAsset;
+import museon_online.astor_butler.domain.semantic.SemanticRetrievalService;
+import museon_online.astor_butler.domain.semantic.SemanticSearchResult;
 import museon_online.astor_butler.fsm.core.BotState;
+import museon_online.astor_butler.fsm.reply.ScenarioReply;
+import museon_online.astor_butler.fsm.reply.ScenarioReplyComposer;
+import museon_online.astor_butler.fsm.reply.ScenarioReplyDraft;
 import museon_online.astor_butler.fsm.storage.FSMStorage;
 import museon_online.astor_butler.service.message.AdminAlert;
 import museon_online.astor_butler.service.message.IncomingMessage;
@@ -24,6 +29,8 @@ public class QuietGuideScenario implements FsmScenario {
     private final FSMStorage fsmStorage;
     private final AerisMediaCatalog mediaCatalog;
     private final VenueContentQueryService venueContentQueryService;
+    private final SemanticRetrievalService semanticRetrievalService;
+    private final ScenarioReplyComposer replyComposer;
 
     @Value("${telegram.quiet-guide.interior-video-asset-code:AERIS_INTERIOR_TOUR}")
     private String interiorVideoAssetCode;
@@ -53,7 +60,7 @@ public class QuietGuideScenario implements FsmScenario {
             return videoTour(incoming);
         }
         if (isConceptIntent(normalized)) {
-            return concept(incoming);
+            return concept(incoming, text);
         }
         if (isPosterIntent(normalized)) {
             return poster(incoming, text);
@@ -93,10 +100,14 @@ public class QuietGuideScenario implements FsmScenario {
         );
     }
 
-    private OutgoingMessage concept(IncomingMessage incoming) {
-        return ready(
-                incoming,
-                """
+    private OutgoingMessage concept(IncomingMessage incoming, String prompt) {
+        List<SemanticSearchResult> ragContext = semanticRetrievalService.search(
+                "AERIS",
+                prompt,
+                List.of("AERIS_GUEST_GUIDE_SOURCE"),
+                2
+        );
+        String fallbackText = """
                 <b>Гастрономическая экспедиция Георгия Матвеева в AERIS</b>
 
                 AERIS открывает новую главу: кухню 21 страны Средиземноморья в прочтении Георгия Матвеева — шеф-повара с золотым почерком, победителя пятого сезона "Адской кухни" и обладателя Гран-при международных кулинарных чемпионатов.
@@ -106,10 +117,30 @@ public class QuietGuideScenario implements FsmScenario {
                 Философия шефа проста: торжество продукта и чистота вкуса. В фокусе премиальное мясо, свежая рыба, зелень и авторские неклассические соусы.
 
                 Могу следом прислать меню кухни или помочь выбрать стол.
-                """,
-                true,
+                """;
+        ScenarioReply reply = replyComposer.compose(ScenarioReplyDraft.of(
+                incoming,
+                "AERIS",
+                id(),
+                BotState.READY_FOR_DIALOG.name(),
+                "QUIET_GUIDE_CONCEPT_COPY",
+                prompt,
+                fallbackText,
+                ragContext
+        ));
+        return ready(
+                incoming,
+                reply.text(),
+                !reply.generated(),
                 List.of("QUIET_GUIDE", "CONCEPT_COPY", "QUIET_GUIDE_DELIVERED", "RETURN_MAIN_MENU"),
-                Map.of("scenario", "QuietGuideScenario", "contentKind", "CONCEPT")
+                Map.of(
+                        "scenario", "QuietGuideScenario",
+                        "contentKind", "CONCEPT",
+                        "ragContext", ragContext.stream().map(this::ragMetadata).toList(),
+                        "replyGenerated", reply.generated(),
+                        "replyProvider", reply.provider(),
+                        "replyModel", reply.model()
+                )
         );
     }
 
@@ -121,7 +152,9 @@ public class QuietGuideScenario implements FsmScenario {
                     """
                     Афишу держу как тихую справку: без рассылки и лишнего шума.
 
-                    Сейчас не вижу свежей афиши в системе. Могу показать меню, видео-тур или позвать менеджера.
+                    На сейчас могу подсказать постоянный повод заглянуть: с воскресенья по четверг в AERIS действует винный безлимит за 1700 ₽.
+
+                    По пятнице и субботе лучше уточнить афишу недели: как только свежий пост появится в канале AERIS, я подтяну событие сюда. Могу также показать меню, видео-тур или позвать менеджера.
                     """,
                     List.of("QUIET_GUIDE", "POSTER_LOOKUP_EMPTY", "RETURN_MAIN_MENU"),
                     Map.of("scenario", "QuietGuideScenario", "contentKind", "POSTER")
@@ -187,7 +220,7 @@ public class QuietGuideScenario implements FsmScenario {
         return isInteriorIntent(text)
                 || isConceptIntent(text)
                 || isPosterIntent(text)
-                || containsAny(text, "справ", "что сегодня", "что у вас", "как у вас", "расскажи про aeris");
+                || containsAny(text, "справ", "что сегодня", "что у вас", "как у вас", "расскажи про aeris", "расскажи про ресторан", "расскажи о ресторане", "про ресторан", "о ресторане", "про заведение", "о заведении");
     }
 
     private boolean isInteriorIntent(String text) {
@@ -195,11 +228,11 @@ public class QuietGuideScenario implements FsmScenario {
     }
 
     private boolean isConceptIntent(String text) {
-        return containsAny(text, "концепц", "шеф", "георг", "матве", "адская кухня", "что за место", "расскажи про aeris", "философ");
+        return containsAny(text, "концепц", "шеф", "георг", "матве", "адская кухня", "что за место", "что за ресторан", "расскажи про aeris", "расскажи про ресторан", "расскажи о ресторане", "про ресторан", "о ресторане", "про заведение", "о заведении", "философ");
     }
 
     private boolean isPosterIntent(String text) {
-        return containsAny(text, "афиша", "событ", "расписание", "что сегодня", "что будет");
+        return containsAny(text, "афиш", "событ", "расписание", "что сегодня", "что будет");
     }
 
     private boolean containsAny(String text, String... needles) {
@@ -241,5 +274,15 @@ public class QuietGuideScenario implements FsmScenario {
                 .replace("<", "&lt;")
                 .replace(">", "&gt;")
                 .replace("\"", "&quot;");
+    }
+
+    private Map<String, Object> ragMetadata(SemanticSearchResult result) {
+        return Map.of(
+                "sourceCode", result.sourceCode(),
+                "sourceType", result.sourceType(),
+                "title", result.title(),
+                "score", result.score(),
+                "content", result.shortContent(360)
+        );
     }
 }

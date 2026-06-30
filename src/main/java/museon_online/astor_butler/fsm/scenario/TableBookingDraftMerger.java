@@ -27,6 +27,18 @@ public class TableBookingDraftMerger {
     private static final Pattern TABLE_NUMBER_IN_TEXT = Pattern.compile(".*(?:^|\\s)стол(?:ик)?\\s*(?:[1-9]|1\\d)(?:\\s|$).*");
     private static final Pattern TABLE_NUMBER_BEFORE_WORD = Pattern.compile(".*(?:^|\\s)(?:[1-9]|1\\d)\\s*стол(?:ик)?(?:\\s|$).*");
     private static final Pattern SHORT_PARTY_SIZE_ANSWER = Pattern.compile("^(?:на\\s*)?(\\d{1,2})(?:\\s*(?:гостей|гостя|человек|персон|чел))?$");
+    private static final String[] AUTO_SELECTION_PHRASES = {
+            "выбери сам",
+            "подбери сам",
+            "сам подбери",
+            "сам выбери",
+            "любой стол",
+            "любой подходящий",
+            "на твой выбор",
+            "на ваше усмотрение",
+            "на усмотрение",
+            "где удобно"
+    };
     private final TableBookingDraftStorage draftStorage;
     private final BookingTimeProvider timeProvider;
 
@@ -183,7 +195,8 @@ public class TableBookingDraftMerger {
         if (state == BotState.TABLE_BOOKING_WAIT_TABLE_SELECTION || state == BotState.TABLE_BOOKING_SHOW_PLAN) {
             return looksLikeTableSelection(normalized);
         }
-        return containsAny(normalized, "стол", "столик", "винн", "vip", "вип", "бар", "выбери сам", "любой стол", "любой подходящий", "на твой выбор");
+        return containsAny(normalized, "стол", "столик", "винн", "vip", "вип", "бар", "окн", "центр", "угл", "диван")
+                || isAutoSelection(normalized);
     }
 
     private boolean shouldCaptureSeatingPreference(BotState currentState, String normalized, Map<String, SlotValue> slots) {
@@ -192,7 +205,7 @@ public class TableBookingDraftMerger {
         }
         BotState state = currentState == null ? BotState.UNKNOWN : currentState.canonical();
         return state == BotState.TABLE_BOOKING_COLLECT_SEATING_PREFERENCE
-                || containsAny(normalized, "тих", "окн", "диван", "не проход", "уют");
+                || containsAny(normalized, "тих", "окн", "диван", "не проход", "уют", "винн", "vip", "вип", "бар", "центр", "угл");
     }
 
     private Optional<LocalDate> extractDate(String text) {
@@ -248,7 +261,7 @@ public class TableBookingDraftMerger {
     }
 
     private Optional<LocalTime> extractTime(String text) {
-        if (looksLikePartySizeAnswer(text) || looksLikeTableSelection(text) || containsAny(text, "стол", "столик")) {
+        if (looksLikePartySizeAnswer(text) || looksLikeTableSelection(text)) {
             return Optional.empty();
         }
         Matcher matcher = TIME.matcher(text);
@@ -256,6 +269,9 @@ public class TableBookingDraftMerger {
     }
 
     private Optional<Integer> extractPartySize(String text) {
+        if (containsAny(text, "одного", "один", "одна", "одному", "соло", "я один", "я одна", "буду один", "буду одна", "только я")) {
+            return Optional.of(1);
+        }
         if (text.contains("двоих") || text.contains("двоем") || text.contains("двух") || text.contains("двое") || text.contains("двоем")) {
             return Optional.of(2);
         }
@@ -301,15 +317,15 @@ public class TableBookingDraftMerger {
     }
 
     private boolean looksLikeTableSelection(String text) {
-        return text.contains("выбери сам")
-                || text.contains("любой стол")
-                || text.contains("любой подходящий")
-                || text.contains("на твой выбор")
-                || text.contains("где удобно")
+        return isAutoSelection(text)
                 || text.contains("vip")
                 || text.contains("вип")
                 || text.contains("винн")
                 || text.contains("бар")
+                || text.contains("окн")
+                || text.contains("центр")
+                || text.contains("угл")
+                || text.contains("диван")
                 || TABLE_NUMBER_SELECTION.matcher(text).matches()
                 || TABLE_NUMBER_IN_TEXT.matcher(text).matches()
                 || TABLE_NUMBER_BEFORE_WORD.matcher(text).matches();
@@ -335,16 +351,7 @@ public class TableBookingDraftMerger {
     }
 
     private String tableCode(String text) {
-        if (text.contains("бар")) {
-            return "BAR";
-        }
-        if (text.contains("vip") || text.contains("вип")) {
-            return "13";
-        }
-        if (text.contains("wine") || text.contains("винн")) {
-            return "7";
-        }
-        if (text.contains("выбери сам") || text.contains("любой") || text.contains("на твой выбор") || text.contains("где удобно")) {
+        if (isAutoSelection(text)) {
             return null;
         }
         Matcher reverseMatcher = Pattern.compile("(?:^|\\s)(1\\d|[1-9])\\s*стол(?:ик)?(?:\\s|$)").matcher(text);
@@ -365,17 +372,35 @@ public class TableBookingDraftMerger {
         if (text.contains("бар")) {
             return Optional.of("BAR");
         }
+        if (containsAny(text, "окн", "у окна", "возле окна")) {
+            return Optional.of("WINDOW");
+        }
+        if (containsAny(text, "угл", "углов")) {
+            return Optional.of("CORNER");
+        }
+        if (containsAny(text, "центр", "блест", "в центре")) {
+            return Optional.of("CENTER_STAGE");
+        }
+        if (containsAny(text, "диван", "лаунж", "lounge", "11", "12")) {
+            return Optional.of("SOFT_LOUNGE");
+        }
         return Optional.empty();
     }
 
     private Optional<String> seatingPreference(String text, boolean allowFreeText) {
-        if (text == null || text.isBlank() || isNoSeatingPreference(text)) {
+        if (text == null || text.isBlank()) {
+            return Optional.empty();
+        }
+        if (isAutoSelection(text)) {
+            return Optional.of("подбери сам");
+        }
+        if (isNoSeatingPreference(text)) {
             return Optional.empty();
         }
         if (allowFreeText) {
             return Optional.of(text);
         }
-        if (containsAny(text, "тих", "окн", "диван", "vip", "вип", "винн", "бар", "не проход", "уют")) {
+        if (containsAny(text, "тих", "окн", "диван", "vip", "вип", "винн", "бар", "не проход", "уют", "центр", "угл", "блест")) {
             return Optional.of(text);
         }
         return Optional.empty();
@@ -395,7 +420,10 @@ public class TableBookingDraftMerger {
                 || normalized.equals("где удобно")
                 || normalized.equals("на ваше усмотрение")
                 || normalized.equals("на твой выбор")
-                || normalized.equals("выбери сам");
+                || normalized.equals("выбери сам")
+                || normalized.equals("подбери сам")
+                || normalized.equals("сам подбери")
+                || normalized.equals("сам выбери");
     }
 
     private LocalTime parseTime(Matcher matcher, String text) {
@@ -436,6 +464,10 @@ public class TableBookingDraftMerger {
             }
         }
         return false;
+    }
+
+    private boolean isAutoSelection(String text) {
+        return containsAny(text, AUTO_SELECTION_PHRASES);
     }
 
     private String normalize(String text) {

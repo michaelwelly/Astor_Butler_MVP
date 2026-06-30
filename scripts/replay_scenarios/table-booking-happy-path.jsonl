@@ -1,0 +1,7 @@
+{"name":"start","text":"/start","expectNextState":"CONSENT_REQUIRED","expectTextContains":["Согласиться"],"expectActions":["REQUEST_CONTACT"]}
+{"name":"share-contact","text":"","contactPhone":"+79990001122","expectNextState":"READY_FOR_DIALOG","expectTextContains":["контакт получил"]}
+{"name":"open-booking","text":"Забронировать стол","expectNextState":"TABLE_BOOKING_COLLECT_PARTY_SIZE","expectTextContains":["сколько гостей"]}
+{"name":"party-size","text":"На троих","expectNextState":"TABLE_BOOKING_WAIT_TABLE_SELECTION","expectTextContains":["план зала","стол"]}
+{"name":"select-table","text":"подбери сам","expectNextState":"TABLE_BOOKING_COLLECT_DATE","expectTextContains":["место","день"]}
+{"name":"select-date","text":"Завтра","expectNextState":"TABLE_BOOKING_COLLECT_TIME","expectTextContains":["Во сколько"]}
+{"name":"select-time","text":"19:00","expectNextState":"READY_FOR_DIALOG","expectTextContains":["Заявку #","подтверждение"],"expectActions":["RESERVATION_CREATED","WAIT_HOSTESS_CONFIRMATION","RETURN_MAIN_MENU"]}

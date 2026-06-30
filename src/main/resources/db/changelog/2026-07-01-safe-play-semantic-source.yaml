@@ -1,0 +1,10 @@
+databaseChangeLog:
+  - changeSet:
+      id: 2026-07-01-safe-play-semantic-source
+      author: codex
+      changes:
+        - sqlFile:
+            path: db/changelog/2026-07-01-safe-play-semantic-source.sql
+            relativeToChangelogFile: false
+            splitStatements: false
+            stripComments: false

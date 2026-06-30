@@ -722,7 +722,7 @@ flowchart LR
       <tr><td>3</td><td>Intake</td><td>любой Telegram/REST update, voice, callback, service chat</td><td>chat id, source, raw payload, transcript, correlation id</td><td><code>GUEST_MESSAGE_RECEIVED</code>, <code>SERVICE_COMMAND_RECEIVED</code>, service chat skip guest FSM</td></tr>
       <tr><td>4</td><td>FirstTouch</td><td><code>/start</code>, первый вход, повторный старт, contact shared</td><td>telegram id, contact phone, consent evidence</td><td><code>FIRST_TOUCH_SAFE_RESTART</code>, <code>FIRST_TOUCH_PREVIEW_PIN</code>, <code>CONSENT_REQUIRED</code>, <code>READY_FOR_DIALOG</code></td></tr>
       <tr><td>5</td><td>MainMenu</td><td>свободный запрос известного гостя, "главное меню", composite intent</td><td>current state, intent candidates, confidence, composite plan</td><td><code>READY_FOR_DIALOG</code>, route to explicit scenario, <code>pendingIntents</code></td></tr>
-      <tr><td>6</td><td>TableBooking</td><td>хочу стол, забронировать завтра, на двоих, у окна</td><td>date, time, party size, table/zone, optional seating preference</td><td><code>TABLE_BOOKING_SEND_PLAN</code>, <code>TABLE_BOOKING_COLLECT_DATE</code>, <code>TABLE_BOOKING_COLLECT_TIME</code>, <code>TABLE_BOOKING_COLLECT_PARTY_SIZE</code>, <code>READY_FOR_DIALOG</code> after order creation</td></tr>
+      <tr><td>6</td><td>TableBooking</td><td>хочу стол, забронировать завтра, на двоих, у окна</td><td>party size, date, time, table/zone/auto selection, optional seating preference</td><td><code>TABLE_BOOKING_COLLECT_PARTY_SIZE</code>, <code>TABLE_BOOKING_COLLECT_DATE</code>, <code>TABLE_BOOKING_COLLECT_TIME</code>, <code>TABLE_BOOKING_WAIT_TABLE_SELECTION</code>, <code>READY_FOR_DIALOG</code> after order creation</td></tr>
       <tr><td>7</td><td>EventBooking</td><td>день рождения, корпоратив, закрыть зал, банкет, свадьба</td><td>type, date, guests, budget, wishes</td><td><code>EVENT_BOOKING_SEND_MENU</code>, <code>EVENT_BOOKING_COLLECT_TYPE</code>, <code>EVENT_BOOKING_COLLECT_DATE</code>, <code>EVENT_BOOKING_CONFIRM_ORDER</code>, <code>EVENT_BOOKING_MANAGER_REVIEW</code></td></tr>
       <tr><td>8</td><td>MenuAssets</td><td>меню, вино, барная карта, что поесть, коктейли</td><td>menu category, optional preference, source asset</td><td><code>MENU_ASSETS_INTAKE</code>, <code>MENU_ASSETS_LOOKUP</code>, <code>MENU_ASSETS_CLARIFY</code>, <code>MENU_ASSETS_DELIVER</code></td></tr>
       <tr><td>8.1</td><td>Preference</td><td>запомни, я не ем острое, люблю тихий стол, предпочтения</td><td>preference text, category, confidence, source state</td><td><code>PREFERENCE_COLLECT_TEXT</code>, <code>PREFERENCE_SAVED</code></td></tr>
@@ -1090,16 +1090,16 @@ flowchart TB
     <table>
       <thead><tr><th>Шаг FSM</th><th>Контракт state</th><th>Что храним</th></tr></thead>
       <tbody>
-      <tr><td><code>TABLE_BOOKING_SEND_PLAN</code></td><td>Побочный эффект: отправить план зала один раз. Следующий допустимый вопрос только про стол/зону/автоподбор.</td><td><code>AERIS_PLAN_ASSET</code>, file id, version, sent_at.</td></tr>
-      <tr><td><code>TABLE_BOOKING_WAIT_TABLE_SELECTION</code></td><td>Разрешены слоты <code>table_code</code>, <code>preferred_zone</code>, <code>seating_preference</code>, <code>auto_select</code>. Дату/время/гостей из composite intent можно сохранить, но вопрос остается про стол/зону, пока место не решено. "У окна", "винная комната", "тихий стол" интерпретируются здесь и дальше уходят в заявку для хостес.</td><td><code>table_code</code>, <code>preferred_zone</code>, <code>seating_preference</code>, auto_select flag.</td></tr>
+      <tr><td><code>TABLE_BOOKING_COLLECT_PARTY_SIZE</code></td><td>Разрешен слот <code>party_size</code>. "на троих", "нас будет 3", "для двоих" должны приходить как normalized slot, а не отдельные if в сценарии. После успешного ответа временная клавиатура времени убирается.</td><td><code>party_size</code>, confidence, original phrase.</td></tr>
       <tr><td><code>TABLE_BOOKING_COLLECT_DATE</code></td><td>Разрешен слот <code>requested_date</code>. Батлер показывает reply-кнопки на 21 день от сегодняшнего дня с шагом 1 день и параллельно принимает текст: "сегодня", "завтра", "на пятницу", "03.07". Если дата уже есть, state пропускается. LLM не спрашивает гостей/время из этого state.</td><td><code>requested_date</code>, flexible flag, source text/voice/button, confidence.</td></tr>
       <tr><td><code>TABLE_BOOKING_COLLECT_TIME</code></td><td>Разрешен слот <code>requested_time</code>. Батлер показывает reply-кнопки времени: для сегодняшней даты от ближайшего целого часа, для будущей даты от 12:00, шаг 1 час. Текстом принимаются <code>20:00</code>, "в 8 вечера", "к восьми". Если неоднозначно - один вопрос про время.</td><td><code>requested_time</code>, timezone, source text/voice/button, confidence.</td></tr>
-      <tr><td><code>TABLE_BOOKING_COLLECT_PARTY_SIZE</code></td><td>Разрешен слот <code>party_size</code>. "на троих", "нас будет 3", "для двоих" должны приходить как normalized slot, а не отдельные if в сценарии. После успешного ответа временная клавиатура времени убирается.</td><td><code>party_size</code>, confidence, original phrase.</td></tr>
+      <tr><td><code>TABLE_BOOKING_SEND_PLAN</code></td><td>Побочный эффект после гостей/даты/времени: отправить план зала один раз перед выбором места.</td><td><code>AERIS_PLAN_ASSET</code>, file id, version, sent_at.</td></tr>
+      <tr><td><code>TABLE_BOOKING_WAIT_TABLE_SELECTION</code></td><td>Разрешены слоты <code>table_code</code>, <code>preferred_zone</code>, <code>seating_preference</code>, <code>auto_select</code>. "У окна", "винная комната", "тихий стол" интерпретируются здесь; "подбери сам" выбирает лучший свободный стол по вместимости и рейтингу.</td><td><code>table_code</code>, <code>preferred_zone</code>, <code>seating_preference</code>, auto_select flag.</td></tr>
       <tr><td><code>TABLE_BOOKING_COLLECT_SEATING_PREFERENCE</code></td><td>Legacy-compatible state: если старый runtime или ручной переход попал сюда, текст сохраняется как пожелание и заявка создается. Новый happy path больше не задает этот вопрос в конце.</td><td><code>seating_preference</code>, <code>seating_preference_resolved</code>.</td></tr>
       <tr><td><code>TABLE_BOOKING_CREATE_ORDER</code></td><td>Только когда draft полный: стол/зона или автоподбор, дата, время, гости. Пожелание optional и уже собрано на шаге выбора места, если гость его дал. Создает заявку и hold.</td><td><code>table_order_id</code>, <code>HELD</code>, date/time/party/table/preference.</td></tr>
-      <tr><td><code>TABLE_BOOKING_WAIT_HOSTESS_CONFIRMATION</code></td><td>Это статус order lifecycle, а не состояние гостевого runtime. После создания заявки гость возвращается в <code>READY_FOR_DIALOG</code> с главным меню, а решение приходит из staff chat кнопками: Да, Нет, Предложить другой.</td><td>staff chat message id, decision, decision_at.</td></tr>
+      <tr><td><code>TABLE_BOOKING_WAIT_HOSTESS_CONFIRMATION</code></td><td>Это статус order lifecycle, а не состояние гостевого runtime. После создания заявки гость возвращается в <code>READY_FOR_DIALOG</code> с главным меню, а решение приходит из staff chat кнопками: Да, Нет, Предложить другой. В карточках для команды используются русские названия: <code>Стол</code>, <code>Стол VIP</code>, дата и время отдельными строками.</td><td>staff chat message id, decision, decision_at.</td></tr>
       <tr><td><code>TABLE_BOOKING_CONFIRMED</code></td><td>Отправляет гостю красивое подтверждение брони и возвращает в <code>READY_FOR_DIALOG</code>.</td><td><code>CONFIRMED</code> event, timeline, Kafka admin event.</td></tr>
-      <tr><td><code>TABLE_BOOKING_REJECTED</code></td><td>Дает вежливый отказ и предлагает другой стол/время, без обнуления полезного draft.</td><td><code>REJECTED</code> reason, alternatives if any.</td></tr>
+      <tr><td><code>TABLE_BOOKING_REJECTED</code></td><td>Дает вежливый отказ и предлагает другой стол/время, без обнуления полезного draft. Сначала проверяет свободный соседний стол в той же зоне, затем следующий лучший стол по рейтингу и вместимости.</td><td><code>REJECTED</code> reason, alternatives if any, same-zone-first flag.</td></tr>
       </tbody>
     </table>
     <table>
@@ -1736,8 +1736,10 @@ flowchart LR
 flowchart LR
     Intent["Гость: отменить / изменить / перенести"]
     Lookup["Find active orders<br/>table_order + event_order"]
-    Pick{"Найдена одна<br/>или несколько?"}
-    Action{"Отмена или изменение?"}
+    Pick{"Активных заявок<br/>одна или несколько?"}
+    Card["Показать карточку брони<br/>и кнопки действий"]
+    Select["Выбрать заявку кнопкой<br/>если активных несколько"]
+    Action{"Кнопка или понятное<br/>текстовое намерение"}
     Cancel["Cancel order<br/>release holds"]
     Patch["Update requested fields<br/>date/time/guests/table/event brief"]
     Recheck["Recheck availability<br/>new hold if needed"]
@@ -1750,8 +1752,8 @@ flowchart LR
 
     Intent --> Lookup --> Pick
     Pick -- "нет активных" --> None --> Home
-    Pick -- "несколько" --> Action
-    Pick -- "одна" --> Action
+    Pick -- "одна" --> Card --> Action
+    Pick -- "несколько" --> Select --> Card
     Action -- "отмена" --> Cancel --> Done --> Home
     Action -- "изменение" --> Patch --> Recheck --> Review
     Review -- "table_order" --> Hostess --> Done
@@ -1761,12 +1763,12 @@ flowchart LR
     <table>
       <thead><tr><th>Шаг FSM</th><th>Что делает Батлер</th><th>Что храним</th></tr></thead>
       <tbody>
-      <tr><td><code>CHANGE_CANCEL_FIND_ORDER</code></td><td>Ищет активные <code>table_order</code> и <code>event_order</code> гостя.</td><td>order ids, type, status, date/time, short summary.</td></tr>
-      <tr><td><code>CHANGE_CANCEL_SELECT_ORDER</code></td><td>Если активных заявок несколько, просит выбрать конкретную.</td><td>selected_order_id, selection source.</td></tr>
-      <tr><td><code>CHANGE_CANCEL_SELECT_ACTION</code></td><td>Определяет действие: отменить, перенести, изменить гостей, стол, brief мероприятия.</td><td>action type, extracted fields, confidence.</td></tr>
-      <tr><td><code>CHANGE_CANCEL_CANCEL</code></td><td>Отменяет заявку, освобождает holds и уведомляет нужный чат команды.</td><td><code>CANCELLED</code>, released holds, reason, admin/Kafka event.</td></tr>
-      <tr><td><code>CHANGE_CANCEL_PATCH_ORDER</code></td><td>Обновляет поля заявки, но не подтверждает автоматически.</td><td>previous snapshot, requested changes, new draft version.</td></tr>
-      <tr><td><code>CHANGE_CANCEL_RECHECK</code></td><td>Проверяет доступность и создает новый hold, если это бронь стола.</td><td>availability result, new hold id, conflict reason.</td></tr>
+      <tr><td><code>CHANGE_CANCEL_FIND_ORDER</code></td><td>Ищет активные <code>table_order</code> и <code>event_order</code> гостя. Если заявка одна, номер заявки не спрашивает.</td><td>order ids, type, status, date/time, short summary.</td></tr>
+      <tr><td><code>CHANGE_CANCEL_SELECT_ORDER</code></td><td>Если активных заявок несколько, просит выбрать конкретную кнопкой.</td><td>selected_order_id, selection source.</td></tr>
+      <tr><td><code>CHANGE_CANCEL_SELECT_ACTION</code></td><td>Показывает кнопки: отменить стол, изменить гостей, изменить стол, перенести время, перенести дату, отменить действие. Тот же выбор распознается из текста: "перенеси на 17:30", "нас будет пятеро", "хочу у окна".</td><td>action type, extracted fields, confidence.</td></tr>
+      <tr><td><code>CHANGE_CANCEL_CANCEL</code></td><td>Отменяет заявку, освобождает holds, уведомляет staff/admin chat и возвращает гостя в главное меню.</td><td><code>CANCELLED</code>, released holds, reason, admin/Kafka event.</td></tr>
+      <tr><td><code>CHANGE_CANCEL_PATCH_ORDER</code></td><td>Сохраняет pending action в Redis, принимает следующее сообщение/кнопку как новое значение и обновляет гостей/стол/дату/время по тем же state-aware правилам, что первичная бронь; не подтверждает автоматически.</td><td>previous snapshot, requested changes, Redis pending action, new draft version.</td></tr>
+      <tr><td><code>CHANGE_CANCEL_RECHECK</code></td><td>Проверяет доступность и создает новый hold, если это бронь стола. Для отказа хостес предлагает same-zone альтернативу, иначе следующий лучший стол по рейтингу.</td><td>availability result, new hold id, conflict reason, alternatives.</td></tr>
       <tr><td><code>CHANGE_CANCEL_REVIEW</code></td><td>Для стола снова отправляет хостес, для мероприятия - менеджеру.</td><td>review chat message id, decision, decision_at.</td></tr>
       <tr><td><code>CHANGE_CANCEL_DONE</code></td><td>Сообщает гостю итог и возвращает в главное меню.</td><td>timeline event, final status, current state.</td></tr>
       </tbody>
@@ -1775,7 +1777,10 @@ flowchart LR
       <div class="card"><strong>Два типа order</strong><span>Один сценарий обслуживает и обычную бронь стола, и заявку на мероприятие, но review route разный.</span></div>
       <div class="card"><strong>Cancel releases holds</strong><span>Любая отмена освобождает временные holds и пишет событие в админ/аналитику.</span></div>
       <div class="card"><strong>Change is not confirm</strong><span>Изменение даты/времени/стола/brief всегда заново проходит хостес или менеджера.</span></div>
-      <div class="card"><strong>Several active orders</strong><span>Если у гостя несколько заявок, Батлер сначала показывает короткий список и просит выбрать одну.</span></div>
+      <div class="card"><strong>Одна активная бронь</strong><span>Батлер показывает полную карточку: заказ, стол, дата, время, гостей, пожелание, затем кнопки действий. Номер заявки гость не пишет.</span></div>
+      <div class="card"><strong>Several active orders</strong><span>Если у гостя несколько заявок, Батлер сначала показывает короткий список и просит выбрать одну кнопкой.</span></div>
+      <div class="card"><strong>Pending action</strong><span>После выбора "перенести время" или "изменить гостей" Батлер ждет только значение этого слота. Невалидный ввод возвращает к тому же шагу с полезными кнопками, без общего fallback.</span></div>
+      <div class="card"><strong>Re-review</strong><span>Любое изменение активной брони обновляет hold, переводит заявку обратно в ожидание решения и отправляет staff-card на повторное подтверждение.</span></div>
     </div>
   </section>
 
@@ -1834,6 +1839,9 @@ flowchart LR
     <div class="diagram mermaid compact">
 flowchart LR
     Intent["Гость: сабраж / шампанское<br/>игристое / ритуал / игра"]
+    Advice{"Это вопрос<br/>какое вино/цена?"}
+    Rag["SAFE_PLAY_WINE_ADVICE<br/>pgvector: wine card + safety seed"]
+    Wine["Гостю: список игристого/Champagne<br/>цены + винная карта"]
     Context["Check context<br/>table/order + guests + staff availability"]
     Safety{"Safety allowed?<br/>age + venue + trained staff"}
     Options["Show ritual options<br/>игристое / шампанское / цепь-merch"]
@@ -1846,7 +1854,9 @@ flowchart LR
     Reject["Polite fallback<br/>offer menu/manager"]
     Home["READY_FOR_DIALOG"]
 
-    Intent --> Context --> Safety
+    Intent --> Advice
+    Advice -- "да" --> Rag --> Wine --> Home
+    Advice -- "нет, нужен ритуал" --> Context --> Safety
     Safety -- "yes" --> Options --> Confirm
     Safety -- "no" --> Reject --> Home
     Confirm -- "yes" --> Team --> Perform --> Merch
@@ -1859,6 +1869,7 @@ flowchart LR
       <tbody>
       <tr><td><code>SAFE_PLAY_SELECT_RITUAL</code></td><td>Понимает запрос на сабражный ритуал, игристое/шампанское или игровой момент для стола.</td><td>ritual type, source message, confidence, active table/order refs.</td></tr>
       <tr><td><code>SAFE_PLAY_SAFETY_CHECK</code></td><td>Проверяет safety boundary: возрастной контекст, наличие обученного staff, допустимость площадки и время.</td><td>age/safety flags, staff availability, venue policy, risk status.</td></tr>
+      <tr><td><code>SAFE_PLAY_WINE_ADVICE</code></td><td>Если гость спрашивает, какое игристое/шампанское взять под сабраж, ищет по pgvector seed винной карты и возвращает список позиций с ценами. Не создает заявку команде.</td><td>rag source codes: <code>AERIS_MENU_WINE_SOURCE</code>, <code>AERIS_SAFE_PLAY_SOURCE</code>; wine menu asset id; model audit.</td></tr>
       <tr><td><code>SAFE_PLAY_SHOW_OPTIONS</code></td><td>Показывает гостю опыт как сервис: ритуал, подача, фото/видео-память later, сабражная цепь как merch.</td><td>option ids, media asset ids, merch item id, no-how-to guard.</td></tr>
       <tr><td><code>SAFE_PLAY_GUEST_CONFIRM</code></td><td>Просит подтвердить именно запрос на ритуал, не выполнение гостем опасного действия.</td><td>confirmation message id, selected option, guest note.</td></tr>
       <tr><td><code>SAFE_PLAY_TEAM_CONFIRMATION</code></td><td>Отправляет карточку команде/менеджеру: стол, бутылка/категория, желаемое время, safety flags.</td><td>team message id, decision, assigned staff, status.</td></tr>
@@ -1871,6 +1882,7 @@ flowchart LR
       <tbody>
       <tr><td>Безопасность важнее игры</td><td>Если нет обученного staff или venue policy запрещает, Батлер вежливо предлагает альтернативу: подачу, бокалы, меню или менеджера.</td></tr>
       <tr><td>Без dangerous how-to</td><td>Батлер не объясняет гостю технику сабража и не инструктирует выполнять действие самостоятельно.</td></tr>
+      <tr><td>Wine RAG</td><td>Подбор бутылки под сабраж - справочный сценарий: можно назвать актуальные позиции и цены из винной карты, но наличие и сам ритуал подтверждает команда.</td></tr>
       <tr><td>Alcohol boundary</td><td>Не продвигаем алкоголь несовершеннолетним и не превращаем сценарий в pressure-sale.</td></tr>
       <tr><td>Merch link</td><td>Покупка сабражной цепи не запускает Safe Play: она сразу роутится в <code>MerchScenario</code>, где есть draft, явное "да/нет" гостя и подтверждение команды.</td></tr>
       <tr><td>Observability</td><td>Каждый запрос и отказ пишет reason/status, чтобы команда видела интерес к ритуалу и merch.</td></tr>
@@ -1878,6 +1890,7 @@ flowchart LR
     </table>
     <div class="grid">
       <div class="card"><strong>Hospitality ritual</strong><span>Сабраж подается как опыт AERIS: красиво, контролируемо, командой, без самодеятельности гостя.</span></div>
+      <div class="card"><strong>Wine advice</strong><span>Вопрос "что взять под сабраж" идет через RAG: винная карта, цены, стиль, затем мягкое "наличие подтвердит команда".</span></div>
       <div class="card"><strong>Staff game</strong><span>Команда и менеджер видят карточку, могут подтвердить, назначить staff и превратить подачу в маленький спектакль.</span></div>
       <div class="card"><strong>Merch bridge</strong><span>Сабражная цепь становится понятным merch item: купить/подарить цепь - это MerchScenario, заказать ритуал - SafePlayScenario.</span></div>
       <div class="card"><strong>Assets later</strong><span>Фото цепи, подачи и карточки ритуала будут managed media assets в MinIO/catalog, когда ты приложишь файлы.</span></div>
@@ -1931,8 +1944,8 @@ flowchart LR
       <tr><td>4</td><td>Первое касание</td><td><code>UNKNOWN</code> + <code>/start</code></td><td><code>CONSENT_REQUIRED</code></td><td>persistent preview sent/pinned, contact button, admin event.</td></tr>
       <tr><td>4</td><td>Первое касание</td><td>known contact + <code>/start</code></td><td><code>READY_FOR_DIALOG</code></td><td>active runtime scenario reset, preview refreshed, durable guest facts kept.</td></tr>
       <tr><td>5</td><td>Главное меню</td><td>"главное меню" / "что умеешь?"</td><td><code>MAIN_MENU</code> projection over <code>READY_FOR_DIALOG</code></td><td>short capabilities message, no scenario draft.</td></tr>
-      <tr><td>6</td><td>Бронь стола</td><td>"столик завтра в 20:00 на двоих"</td><td><code>TABLE_BOOKING_WAIT_TABLE_SELECTION</code></td><td>send hall plan first; if date/time/party were captured, wait only for table/zone; optional seating preference is captured from the same selection phrase.</td></tr>
-      <tr><td>6</td><td>Бронь стола</td><td><code>TABLE_BOOKING_WAIT_TABLE_SELECTION</code> + "17"</td><td><code>TABLE_BOOKING_COLLECT_DATE</code> / <code>TABLE_BOOKING_COLLECT_TIME</code> / <code>TABLE_BOOKING_COLLECT_PARTY_SIZE</code> / <code>READY_FOR_DIALOG</code></td><td>capture table; ask only missing slots in FSM order; create order after table/date/time/party are complete, then return guest to main menu.</td></tr>
+      <tr><td>6</td><td>Бронь стола</td><td>"столик завтра в 20:00 на двоих"</td><td><code>TABLE_BOOKING_WAIT_TABLE_SELECTION</code></td><td>сохранить гостей/дату/время, отправить план и ждать только стол/зону/автоподбор; пожелание по посадке сохраняется из той же фразы.</td></tr>
+      <tr><td>6</td><td>Бронь стола</td><td><code>TABLE_BOOKING_COLLECT_PARTY_SIZE</code> + "на троих"</td><td><code>TABLE_BOOKING_COLLECT_DATE</code> / <code>TABLE_BOOKING_COLLECT_TIME</code> / <code>TABLE_BOOKING_WAIT_TABLE_SELECTION</code> / <code>READY_FOR_DIALOG</code></td><td>собирать слоты в порядке гости -> дата -> время -> план -> стол/зона; после создания заявки вернуть гостя в главное меню.</td></tr>
       <tr><td>7</td><td>Мероприятие</td><td>"хочу банкет на 20 человек"</td><td><code>EVENT_BOOKING_COLLECT_DETAILS</code></td><td>collect date, guests, budget, occasion; send manager order, no auto-confirmation.</td></tr>
       <tr><td>8</td><td>Меню</td><td>"скинь все меню"</td><td><code>MENU_ASSETS_SEND</code></td><td>send 4 PDFs: кухня, бар, elements, вино; write menu asset event.</td></tr>
       <tr><td>8</td><td>Меню</td><td>voice "покажи коктейли"</td><td><code>MENU_ASSETS_SEND_FILTERED</code></td><td>transport transcript, semantic route, send elements/bar by classification.</td></tr>

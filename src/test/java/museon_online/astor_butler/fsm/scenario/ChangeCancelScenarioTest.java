@@ -20,8 +20,14 @@ import org.springframework.test.util.ReflectionTestUtils;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentCaptor.forClass;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -37,11 +43,22 @@ class ChangeCancelScenarioTest {
     @Mock
     private EventBookingService eventBookingService;
 
+    @Mock
+    private ChangeCancelDraftStorage changeDraftStorage;
+
     private ChangeCancelScenario scenario;
 
     @BeforeEach
     void setUp() {
-        scenario = new ChangeCancelScenario(fsmStorage, tableReservationService, eventBookingService);
+        lenient().when(changeDraftStorage.find(anyLong())).thenReturn(Optional.empty());
+        scenario = new ChangeCancelScenario(
+                fsmStorage,
+                tableReservationService,
+                eventBookingService,
+                changeDraftStorage,
+                new museon_online.astor_butler.fsm.understanding.GuestInputUnderstandingService(),
+                new BookingTimeProvider()
+        );
         ReflectionTestUtils.setField(scenario, "adminChatId", "100500");
     }
 
@@ -76,8 +93,16 @@ class ChangeCancelScenarioTest {
                 "ACTIVE_RESERVATIONS_FOUND",
                 "ASK_ACTIVE_ORDER_REFERENCE"
         );
-        assertThat(outgoing.text()).contains("стол #44", "Окно у бара (A7)", "18.06 20:00", "Я не сниму бронь");
+        assertThat(outgoing.text()).contains(
+                "Бронь подтверждена",
+                "Заказ: #44",
+                "Стол: Окно у бара (A7)",
+                "Дата: 18.06.2026",
+                "Время: 20:00 - 22:00",
+                "Выберите действие кнопкой"
+        );
         assertThat(outgoing.metadata()).containsEntry("activeReservationIds", List.of(44L));
+        assertThat(outgoing.metadata()).containsKey("replyKeyboardRows");
         verify(fsmStorage).setState(incoming.chatId(), BotState.TABLE_BOOKING_CHANGE_REQUESTED);
     }
 
@@ -97,8 +122,9 @@ class ChangeCancelScenarioTest {
                 "ACTIVE_RESERVATIONS_FOUND",
                 "ASK_ACTIVE_ORDER_REFERENCE"
         );
-        assertThat(outgoing.text()).contains("мероприятие #88", "CORPORATE", "2026-06-21", "brief мероприятия");
+        assertThat(outgoing.text()).contains("мероприятие #88", "CORPORATE", "2026-06-21", "Выберите действие кнопкой");
         assertThat(outgoing.metadata()).containsEntry("activeEventOrderIds", List.of(88L));
+        assertThat(outgoing.metadata()).containsKey("replyKeyboardRows");
         verify(fsmStorage).setState(incoming.chatId(), BotState.TABLE_BOOKING_CHANGE_REQUESTED);
     }
 
@@ -142,6 +168,31 @@ class ChangeCancelScenarioTest {
     }
 
     @Test
+    void cancelsSingleActiveTableReservationFromActionButton() {
+        IncomingMessage incoming = telegram("❌ Отменить стол");
+        TableReservationOrder active = activeReservation();
+        TableReservationOrder cancelled = cancelledReservation();
+        when(tableReservationService.listActiveReservationsByChatId(incoming.chatId()))
+                .thenReturn(List.of(active));
+        when(eventBookingService.listActiveOrdersByChatId(incoming.chatId())).thenReturn(List.of());
+        when(tableReservationService.cancelByGuest(44L)).thenReturn(cancelled);
+
+        OutgoingMessage outgoing = scenario.handle(incoming, BotState.TABLE_BOOKING_CHANGE_REQUESTED, incoming.text());
+
+        assertThat(outgoing.nextState()).isEqualTo(BotState.READY_FOR_DIALOG.name());
+        assertThat(outgoing.text()).contains("бронь #44 отменил", "освободил стол", "Главное меню");
+        assertThat(outgoing.actions()).containsExactly(
+                "CHANGE_CANCEL",
+                "TABLE_RESERVATION_CANCELLED",
+                "HOLD_RELEASED",
+                "RETURN_MAIN_MENU"
+        );
+        assertThat(outgoing.metadata()).containsEntry("cancelledTableReservationId", 44L);
+        verify(tableReservationService).cancelByGuest(44L);
+        verify(fsmStorage).setState(incoming.chatId(), BotState.READY_FOR_DIALOG);
+    }
+
+    @Test
     void cancelsReferencedActiveEventBooking() {
         IncomingMessage incoming = telegram("отмени заявку #88");
         EventBookingOrder active = activeEvent();
@@ -167,6 +218,61 @@ class ChangeCancelScenarioTest {
         assertThat(outgoing.metadata()).containsEntry("cancelledEventBookingId", 88L);
         verify(eventBookingService).cancelByGuest(88L);
         verify(fsmStorage).setState(incoming.chatId(), BotState.READY_FOR_DIALOG);
+    }
+
+    @Test
+    void changesTimeFromPendingActionAndReturnsToMainMenu() {
+        IncomingMessage incoming = telegram("17:30");
+        TableReservationOrder active = activeReservation();
+        TableReservationOrder changed = changedReservation(
+                Instant.parse("2026-06-18T12:30:00Z"),
+                Instant.parse("2026-06-18T14:30:00Z"),
+                2,
+                "A7",
+                "Окно у бара"
+        );
+        when(changeDraftStorage.find(incoming.chatId()))
+                .thenReturn(Optional.of(new ChangeCancelDraftStorage.Draft(44L, "CHANGE_TIME")));
+        when(tableReservationService.getReservation(44L)).thenReturn(active);
+        when(tableReservationService.changeByGuest(eq(44L), any())).thenReturn(changed);
+
+        OutgoingMessage outgoing = scenario.handle(incoming, BotState.TABLE_BOOKING_CHANGE_REQUESTED, incoming.text());
+
+        var captor = forClass(museon_online.astor_butler.domain.booking.TableReservationChangeCommand.class);
+        verify(tableReservationService).changeByGuest(eq(44L), captor.capture());
+        assertThat(captor.getValue().requestedStartAt()).isEqualTo(Instant.parse("2026-06-18T12:30:00Z"));
+        assertThat(captor.getValue().requestedEndAt()).isEqualTo(Instant.parse("2026-06-18T14:30:00Z"));
+        assertThat(outgoing.nextState()).isEqualTo(BotState.READY_FOR_DIALOG.name());
+        assertThat(outgoing.text()).contains("Принял", "повторное подтверждение", "17:30 - 19:30");
+        assertThat(outgoing.removeKeyboard()).isTrue();
+        verify(changeDraftStorage).clear(incoming.chatId());
+        verify(fsmStorage).setState(incoming.chatId(), BotState.READY_FOR_DIALOG);
+    }
+
+    @Test
+    void changesPartySizeFromPendingActionAndReturnsToMainMenu() {
+        IncomingMessage incoming = telegram("на пятерых");
+        TableReservationOrder active = activeReservation();
+        TableReservationOrder changed = changedReservation(
+                active.requestedStartAt(),
+                active.requestedEndAt(),
+                5,
+                "11",
+                "Стол 11 · камерная гостиная"
+        );
+        when(changeDraftStorage.find(incoming.chatId()))
+                .thenReturn(Optional.of(new ChangeCancelDraftStorage.Draft(44L, "CHANGE_PARTY_SIZE")));
+        when(tableReservationService.getReservation(44L)).thenReturn(active);
+        when(tableReservationService.changeByGuest(eq(44L), any())).thenReturn(changed);
+
+        OutgoingMessage outgoing = scenario.handle(incoming, BotState.TABLE_BOOKING_CHANGE_REQUESTED, incoming.text());
+
+        var captor = forClass(museon_online.astor_butler.domain.booking.TableReservationChangeCommand.class);
+        verify(tableReservationService).changeByGuest(eq(44L), captor.capture());
+        assertThat(captor.getValue().partySize()).isEqualTo(5);
+        assertThat(outgoing.text()).contains("Гостей: 5", "Стол 11");
+        assertThat(outgoing.actions()).contains("RESERVATION_CHANGED");
+        verify(changeDraftStorage).clear(incoming.chatId());
     }
 
     @Test
@@ -239,6 +345,40 @@ class ChangeCancelScenarioTest {
                 Instant.parse("2026-06-18T15:00:00Z"),
                 Instant.parse("2026-06-18T17:00:00Z"),
                 2,
+                "Наталья Поединенко",
+                "+79991234567",
+                null,
+                876857557L,
+                null,
+                "-1004291419562",
+                null,
+                Instant.parse("2026-06-15T10:00:00Z"),
+                Instant.parse("2026-06-15T10:00:00Z")
+        );
+    }
+
+    private TableReservationOrder changedReservation(
+            Instant startAt,
+            Instant endAt,
+            Integer partySize,
+            String tableCode,
+            String displayName
+    ) {
+        return new TableReservationOrder(
+                44L,
+                1773317437L,
+                1773317437L,
+                777L,
+                7L,
+                tableCode,
+                displayName,
+                null,
+                null,
+                TableReservationStatus.AWAITING_MANAGER_CONFIRMATION,
+                "TELEGRAM",
+                startAt,
+                endAt,
+                partySize,
                 "Наталья Поединенко",
                 "+79991234567",
                 null,

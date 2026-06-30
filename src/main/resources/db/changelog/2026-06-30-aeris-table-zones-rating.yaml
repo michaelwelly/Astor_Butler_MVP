@@ -1,0 +1,11 @@
+databaseChangeLog:
+  - changeSet:
+      id: 2026-06-30-aeris-table-zones-rating
+      author: codex
+      validCheckSum:
+        - 9:ae1258d50144bc31a1db059702016129
+        - 9:4570a1cac197fa0532c2e7988fc3857c
+      changes:
+        - sqlFile:
+            path: db/changelog/2026-06-30-aeris-table-zones-rating.sql
+            relativeToChangelogFile: false

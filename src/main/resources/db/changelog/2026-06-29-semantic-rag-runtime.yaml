@@ -1,0 +1,10 @@
+databaseChangeLog:
+  - changeSet:
+      id: 2026-06-29-semantic-rag-runtime
+      author: codex
+      changes:
+        - sqlFile:
+            path: db/changelog/2026-06-29-semantic-rag-runtime.sql
+            relativeToChangelogFile: false
+            splitStatements: false
+            stripComments: false

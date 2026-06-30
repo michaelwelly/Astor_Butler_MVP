@@ -6,8 +6,11 @@ import museon_online.astor_butler.domain.content.VenueContentPost;
 import museon_online.astor_butler.domain.content.VenueContentQueryService;
 import museon_online.astor_butler.domain.content.VenueContentStatus;
 import museon_online.astor_butler.domain.content.VenueContentType;
+import museon_online.astor_butler.domain.semantic.SemanticRetrievalService;
 import museon_online.astor_butler.fsm.core.BotState;
+import museon_online.astor_butler.fsm.reply.ScenarioReplyComposer;
 import museon_online.astor_butler.fsm.storage.FSMStorage;
+import museon_online.astor_butler.model.ModelGateway;
 import museon_online.astor_butler.service.message.IncomingMessage;
 import museon_online.astor_butler.service.message.OutgoingMessage;
 import org.junit.jupiter.api.BeforeEach;
@@ -38,11 +41,23 @@ class QuietGuideScenarioTest {
     @Mock
     private VenueContentQueryService venueContentQueryService;
 
+    @Mock
+    private SemanticRetrievalService semanticRetrievalService;
+
+    @Mock
+    private ModelGateway modelGateway;
+
     private QuietGuideScenario scenario;
 
     @BeforeEach
     void setUp() {
-        scenario = new QuietGuideScenario(fsmStorage, mediaCatalog, venueContentQueryService);
+        scenario = new QuietGuideScenario(
+                fsmStorage,
+                mediaCatalog,
+                venueContentQueryService,
+                semanticRetrievalService,
+                new ScenarioReplyComposer(modelGateway, false, 900)
+        );
         lenient().when(mediaCatalog.interiorTour()).thenReturn(new MediaAsset(
                 "AERIS_INTERIOR_TOUR",
                 "AERIS",
@@ -116,6 +131,20 @@ class QuietGuideScenarioTest {
         assertThat(outgoing.metadata()).containsEntry("contentKind", "POSTER");
         assertThat(outgoing.metadata().get("contentPostIds")).asList()
                 .containsExactly("11111111-1111-1111-1111-111111111111");
+        verify(fsmStorage).setState(incoming.chatId(), BotState.READY_FOR_DIALOG);
+    }
+
+    @Test
+    void answersPosterRequestWithStandingWinePromoWhenChannelContentIsEmpty() {
+        IncomingMessage incoming = telegram("что по афише?");
+        when(venueContentQueryService.activeQuietGuidePosts("AERIS", incoming.text()))
+                .thenReturn(List.of());
+
+        OutgoingMessage outgoing = scenario.handle(incoming, BotState.READY_FOR_DIALOG, incoming.text());
+
+        assertThat(outgoing.text()).contains("винный безлимит", "1700");
+        assertThat(outgoing.actions()).contains("POSTER_LOOKUP_EMPTY", "RETURN_MAIN_MENU");
+        assertThat(outgoing.metadata()).containsEntry("contentKind", "POSTER");
         verify(fsmStorage).setState(incoming.chatId(), BotState.READY_FOR_DIALOG);
     }
 

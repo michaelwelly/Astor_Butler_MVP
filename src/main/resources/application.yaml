@@ -62,6 +62,14 @@ astor:
     intent-examples:
       ingest-golden-corpus-on-startup: ${ASTOR_INTENT_EXAMPLES_INGEST_ON_STARTUP:false}
       golden-corpus: ${ASTOR_INTENT_EXAMPLES_GOLDEN_CORPUS:classpath:understanding/guest-input-golden-corpus.jsonl}
+    chunks:
+      ingest-on-startup: ${ASTOR_SEMANTIC_CHUNKS_INGEST_ON_STARTUP:false}
+      seed-location: ${ASTOR_SEMANTIC_CHUNKS_SEED_LOCATION:classpath*:semantic/**/*.md}
+  scenario-replies:
+    llm:
+      enabled: ${ASTOR_SCENARIO_REPLY_LLM_ENABLED:false}
+      max-rag-chars: ${ASTOR_SCENARIO_REPLY_MAX_RAG_CHARS:900}
+      timeout-ms: ${ASTOR_SCENARIO_REPLY_LLM_TIMEOUT_MS:6500}
   nlu:
     duckling:
       enabled: ${ASTOR_NLU_DUCKLING_ENABLED:false}
