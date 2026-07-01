@@ -158,7 +158,7 @@ telegram:
     preview-enabled: ${TELEGRAM_UI_PREVIEW_ENABLED:true}
     cleanup-enabled: ${TELEGRAM_UI_CLEANUP_ENABLED:false}
     delete-user-messages-enabled: ${TELEGRAM_UI_DELETE_USER_MESSAGES_ENABLED:false}
-    preview-version: ${TELEGRAM_UI_PREVIEW_VERSION:2026-06-17-weekend-rc}
+    preview-version: ${TELEGRAM_UI_PREVIEW_VERSION:2026-07-01-system-trace-preview}
     preview-avatar-path: ${TELEGRAM_UI_PREVIEW_AVATAR_PATH:classpath:telegram/aeris-butler-preview.png}
   voice:
     download-enabled: ${TELEGRAM_VOICE_DOWNLOAD_ENABLED:true}

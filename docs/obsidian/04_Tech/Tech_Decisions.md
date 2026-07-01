@@ -397,6 +397,26 @@ FSM управляет состоянием диалога, разрешенны
 - Future event layer: "33 сабража за вечер" фиксируется как Safe Play / event seed и позже связывается с `ArtAuctionScenario` и media/storytelling layer.
 - `ScenarioRouter` теперь использует уверенный `GuestInputUnderstandingService.primaryIntent` как приоритетный route hint до общего ordered scenario loop. Это устраняет класс багов, где NLU понимал `SAFE_PLAY`, но `TableBookingScenario` перехватывал фразу из-за слов вроде "стол" или времени.
 
+## System Trace / Semantic Cache 2026-07-01
+
+- `TelegramSystemNotifier` расширен с простого FSM transition до dialog trace card:
+  - stable `#dialog_*` tag;
+  - guest input;
+  - app reply;
+  - previous/next state;
+  - actions;
+  - Kafka outbox status;
+  - correlation id.
+- `UserEventFactory.USER_MESSAGE_RECEIVED` теперь сохраняет `outgoingText` и `dialogKey` в outbox payload, чтобы диалог можно было восстанавливать из Kafka/PostgreSQL, а не только глазами в Telegram.
+- `UserEventProducer.publishIncomingMessage(...)` возвращает boolean `kafkaOutboxQueued`, чтобы system chat видел, ушло ли событие в outbox.
+- Redis semantic response cache принят как следующий performance/ML слой:
+  - Redis хранит горячие проверенные ответы на частые вопросы;
+  - pgvector ищет похожие вопросы и source chunks;
+  - PostgreSQL/Kafka остаются durable audit/dataset;
+  - learner/shadow model и OpenAI teacher/evaluator готовят улучшенные кандидаты, но не блокируют гостя;
+  - cache не имеет права обходить FSM/domain validation.
+- Guest pinned preview обновлен до версии `2026-07-01-system-trace-preview`.
+
 ## Связанные продуктовые заметки
 
 - `/Users/michaelwelly/Obsidian/Astor_Butler_Knowledge/02_Product/Event_Booking_Process.md`

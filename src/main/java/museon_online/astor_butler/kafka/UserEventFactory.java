@@ -109,6 +109,8 @@ public class UserEventFactory {
         payload.put("nextState", outgoing == null ? null : outgoing.nextState());
         payload.put("actions", outgoing == null ? List.of() : outgoing.actions());
         payload.put("fallback", outgoing != null && outgoing.fallback());
+        payload.put("outgoingText", outgoing == null ? null : outgoing.text());
+        payload.put("dialogKey", dialogKey(incoming));
         return payload;
     }
 
@@ -147,5 +149,18 @@ public class UserEventFactory {
         }
         Object value = incoming.payload().get(key);
         return value == null ? null : String.valueOf(value);
+    }
+
+    private String dialogKey(IncomingMessage incoming) {
+        if (incoming == null) {
+            return "dialog:unknown";
+        }
+        if (incoming.channel() != null && incoming.chatId() != null) {
+            return incoming.channel().name().toLowerCase() + ":chat:" + incoming.chatId();
+        }
+        if (incoming.telegramUserId() != null) {
+            return "telegram:user:" + incoming.telegramUserId();
+        }
+        return "dialog:" + eventId(incoming);
     }
 }

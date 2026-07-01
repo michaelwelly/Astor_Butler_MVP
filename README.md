@@ -9,12 +9,12 @@ Astor Butler — backend MVP для Telegram/FSM-сценариев, где ме
 ## Что уже есть
 
 - Telegram bot long polling как первый UI.
-- AERIS preview-карточка с изображением цифрового дворецкого, ссылками на guest guide и Notion knowledge base.
+- AERIS preview-карточка с изображением цифрового дворецкого, короткой инструкцией и входом через кнопки, текст или голос.
 - Role previews для служебных Telegram-чатов: Staff Chat, Admin Chat и System Chat.
 - First-touch flow: `/start` -> Consent Vault -> контакт -> режим свободного диалога.
 - PostgreSQL persistence для пользователей, Telegram-профилей, сообщений, контактов и согласий.
 - Redis FSM hot state с TTL для сценариев.
-- Kafka/Redpanda user event trail и admin-chat projection.
+- Kafka/Redpanda user event trail, admin-chat projection и system-chat dialog trace.
 - Voice/audio intake: Telegram voice -> MinIO/S3 -> STT boundary -> transcript в Postgres/Kafka.
 - MinIO lifecycle для временных voice-бинарей: `transient/telegram-voice/...`, TTL 3 дня.
 - Admin Telegram chat видит user events, AI responses, voice transcript/status и object key.
@@ -59,15 +59,18 @@ https://auspicious-kryptops-863.notion.site/Astor-Butler-380a7c019f1980d78b68d8b
 | Guest chat | Диалог гостя с Astor Butler: меню, бронь, видео-тур, афиша, концепция, менеджер, предпочтения | `https://michaelwelly.github.io/Astor_Butler_MVP/docs/guest-guide.html` |
 | Astor Butler Staff Chat | Операционный чат команды: брони, service requests, safe-play, merch/tip/donation/auction карточки | `https://app.notion.com/p/381a7c019f1981b08ca4ed4146e630e4` |
 | Astor Butler Admin Chat | Ручной контроль, fallback/recovery, feedback, manager help и спорные решения | `https://app.notion.com/p/381a7c019f1981988530d1464d567af4` |
-| Astor Butler System Chat | Техническая наблюдаемость: startup, FSM transitions, action tags, correlation ids | `https://app.notion.com/p/382a7c019f198148b78aef491ceee4f6` |
+| Astor Butler System Chat | Техническая наблюдаемость: guest input, app reply, Kafka/outbox status, FSM transitions, action tags, correlation ids | `https://app.notion.com/p/382a7c019f198148b78aef491ceee4f6` |
 
 Staff/Admin/System чаты не запускают гостевой FSM. Они получают pinned preview при старте приложения, если включен `ASTOR_OPERATIONAL_PREVIEW_ENABLED=true`.
+
+System Chat пишет каждую обработанную карточку с единым `#dialog_*`: так один диалог гостя можно быстро найти в Telegram, а тот же `USER_MESSAGE_RECEIVED` лежит в PostgreSQL outbox/Kafka payload вместе с входом гостя, ответом приложения, state/actions и correlation.
 
 ## Архитектурные принципы
 
 - FSM является source of truth для сценариев.
 - Telegram, будущий web chat и другие мессенджеры не содержат бизнес-логики.
 - AI Adapter помогает интерпретировать ввод, но не принимает доменные решения.
+- Redis semantic response cache может отдавать проверенные частые ответы без повторного долгого LLM-вызова; LLM/shadow/OpenAI teacher используются для улучшения кандидатов и future eval/fine-tune datasets.
 - Consent Vault фиксирует согласие, источник, версию политики и evidence.
 - Voice binaries хранятся временно в object storage; смысл и аудит хранятся долго.
 - Kafka event trail нужен для аналитики, admin projection и будущих read models.

@@ -309,6 +309,42 @@ Future provider adapters must keep the same boundary:
 - MAX, Meta Instagram and WhatsApp are transport adapters. They normalize inbound events into the same `MessageGatewayService` contract and must not fork business logic away from Telegram/Web.
 - Provider choice is configuration/runtime policy; scenarios still receive typed text, slots, RAG context and model failure, not vendor SDK objects.
 
+### Semantic Response Cache and Learning Loop
+
+LLM latency is allowed to be high only on the first useful generation. Repeated guest questions must be answered through a semantic response cache before the system spends another long local inference call.
+
+```mermaid
+flowchart LR
+    GuestQ["Guest question<br/>text / voice transcript"]
+    Normalize["Normalize + state context<br/>scenario, slots, venue"]
+    ExactRedis["Redis exact cache<br/>normalized key"]
+    Vector["pgvector semantic cache<br/>similar question/context"]
+    Answer["Best known answer<br/>rated response + source"]
+    LLM["Frontline LLM<br/>generate if cache miss"]
+    Audit["PostgreSQL + Kafka<br/>prompt, answer, outcome"]
+    Learner["Shadow learner<br/>local Qwen quality profile / OpenAI teacher"]
+    Review["Human/test review<br/>rating + approval"]
+
+    GuestQ --> Normalize --> ExactRedis
+    ExactRedis -- hit --> Answer
+    ExactRedis -- miss --> Vector
+    Vector -- confident hit --> Answer
+    Vector -- miss/low confidence --> LLM --> Answer
+    Answer --> Audit --> Learner --> Review --> ExactRedis
+    Review --> Vector
+```
+
+Cache policy:
+
+- `Redis` stores hot exact/semantic response candidates: normalized question, scenario/state, answer text, source chunks, rating, TTL and version.
+- `pgvector` retrieves similar questions, menu chunks and approved response examples when exact Redis cache misses.
+- `PostgreSQL` and `Kafka` remain durable truth for prompts, LLM responses, guest outcome, fallback flags and later analytics.
+- The `learner/shadow` model may compare answers, suggest better wording and prepare fine-tune/eval datasets. It must not block guest flow.
+- Cloud APIs such as OpenAI can be used as a teacher/evaluator for hard Russian dialog, VLM reasoning or quality scoring. Production policy decides whether to pay tokens for quality or stay local for privacy/cost.
+- No cache entry may bypass FSM/domain validation. Cached answers can phrase information faster, but bookings, payments, cancellations and bids still go through domain services and explicit state transitions.
+
+This creates a narrow ML case for the diploma/story: Astor Butler learns not by silently changing business rules, but by turning real audited dialogs into rated examples, RAG chunks, cache entries and future fine-tune/evaluation corpora.
+
 ### Vision pipeline for table booking
 
 Vision is a supporting input layer for `TableBookingScenario`, not a replacement for the table booking domain model.
@@ -624,6 +660,7 @@ Redis используется для:
 - processed event IDs;
 - краткоживущих booking drafts;
 - краткосрочных очередей;
+- semantic response cache для популярных вопросов и проверенных LLM-ответов;
 - кеша меню, справочников и публичного контента;
 - feature flags/cache для landing blocks.
 
@@ -634,6 +671,7 @@ Redis используется для:
 - будущие booking drafts - `3` дня;
 - будущие menu/reference caches - `6-12` часов;
 - future rate limit keys - секунды/минуты.
+- future semantic response cache keys - от минут до дней, в зависимости от freshness контента и human rating.
 
 Redis не является единственным источником правды. Важные факты пишутся в PostgreSQL и Kafka: user/profile/consent/messages, timeline/domain events and LLM responses. Если Redis потерян или ключ истек, backend должен восстановить safe state из PostgreSQL/timeline и продолжить сценарий без привязки к конкретному Java instance.
 

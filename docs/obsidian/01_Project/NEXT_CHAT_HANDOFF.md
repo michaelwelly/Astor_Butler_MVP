@@ -795,3 +795,29 @@ curl -s http://localhost:8089/api/messages \
   - use `docs/operations/PRODUCTION_DEPLOYMENT_PLAN.md` section `Windows Server Bootstrap Checklist`;
   - start without VLM if RAM is tight;
   - pull `qwen2.5vl:3b` only after baseline infra/bot are stable.
+
+## Update 2026-07-01 - System Trace + Bot Profile Copy
+
+- System Chat теперь должен показывать full dialog trace для каждого обработанного сообщения:
+  - `#dialog_*`;
+  - guest input;
+  - app reply;
+  - FSM state transition;
+  - actions;
+  - Kafka outbox status;
+  - correlation id.
+- Kafka/PostgreSQL outbox payload `USER_MESSAGE_RECEIVED` дополнен `outgoingText` и `dialogKey`.
+- После контейнерной сборки проверить:
+
+```bash
+docker compose -p astor_butler_mvp --profile telegram up -d --build aeris-astor-butler-bot
+```
+
+1. Написать Натальей `/start` или короткий запрос.
+2. Убедиться, что System Chat получил карточку `Astor Butler / system trace`.
+3. Найти тот же диалог по `#dialog_telegram_1773317437`.
+4. Проверить outbox/Kafka через Redpanda Console или SQL по `outbox_events`.
+
+- Guest preview text обновлен в `TelegramRouter.previewText()`, версия поднята до `2026-07-01-system-trace-preview`.
+- BotFather profile copy лежит в `docs/operations/TELEGRAM_BOT_PROFILE.md`; его нужно применить вручную через `/setabouttext` и `/setdescription`.
+- Redis semantic response cache принят как следующий слой: быстрые ответы на повторяющиеся вопросы + накопление quality dataset для learner/OpenAI teacher/eval.

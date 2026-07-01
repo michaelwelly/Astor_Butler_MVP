@@ -27,7 +27,7 @@ public class TelegramSystemNotifier {
     @Value("${telegram.system.notifications-enabled:false}")
     private boolean notificationsEnabled;
 
-    public void sendTransition(IncomingMessage incoming, BotState previousState, OutgoingMessage outgoing) {
+    public void sendTransition(IncomingMessage incoming, BotState previousState, OutgoingMessage outgoing, boolean kafkaOutboxQueued) {
         if (!telegramEnabled || !notificationsEnabled || systemChatId == null || systemChatId.isBlank()) {
             return;
         }
@@ -40,7 +40,7 @@ public class TelegramSystemNotifier {
         try {
             telegramBot.execute(SendMessage.builder()
                     .chatId(systemChatId)
-                    .text(systemText(incoming, previousState, outgoing))
+                    .text(systemText(incoming, previousState, outgoing, kafkaOutboxQueued))
                     .parseMode("HTML")
                     .build());
         } catch (Exception e) {
@@ -48,26 +48,33 @@ public class TelegramSystemNotifier {
         }
     }
 
-    private String systemText(IncomingMessage incoming, BotState previousState, OutgoingMessage outgoing) {
+    private String systemText(IncomingMessage incoming, BotState previousState, OutgoingMessage outgoing, boolean kafkaOutboxQueued) {
         return """
-                <b>Astor Butler / system</b>
-                FSM transition
-
-                <b>Guest</b>
-                chat %s / user %s%s
-
-                <b>State</b>
-                %s -> %s
-
-                <b>Actions</b>
+                <b>Astor Butler / system trace</b>
                 %s
 
-                <b>Text</b>
+                <b>Диалог</b>
+                %s
+                chat %s / user %s%s
+
+                <b>FSM</b>
+                %s -> %s
+
+                <b>Actions / Kafka</b>
+                %s
+                Kafka outbox: %s
+
+                <b>Guest input</b>
+                <blockquote>%s</blockquote>
+
+                <b>App reply</b>
                 <blockquote>%s</blockquote>
 
                 <b>Correlation</b>
                 %s
                 """.formatted(
+                html(displayName(incoming)),
+                html(dialogTag(incoming)),
                 html(text(incoming == null ? null : incoming.chatId())),
                 html(text(incoming == null ? null : incoming.telegramUserId())),
                 incoming == null || incoming.username() == null || incoming.username().isBlank()
@@ -76,9 +83,35 @@ public class TelegramSystemNotifier {
                 html(text(previousState)),
                 html(outgoing == null ? "" : outgoing.nextState()),
                 html(outgoing == null || outgoing.actions() == null ? "" : String.join(", ", outgoing.actions())),
+                kafkaOutboxQueued ? "queued USER_MESSAGE_RECEIVED" : "not queued / disabled / failed",
                 html(blank(incoming == null ? null : incoming.text())),
+                html(blank(outgoing == null ? null : outgoing.text())),
                 html(blank(incoming == null ? null : incoming.correlationId()))
         );
+    }
+
+    private String displayName(IncomingMessage incoming) {
+        if (incoming == null) {
+            return "unknown guest";
+        }
+        String firstName = incoming.firstName() == null ? "" : incoming.firstName().trim();
+        String lastName = incoming.lastName() == null ? "" : incoming.lastName().trim();
+        String fullName = (firstName + " " + lastName).trim();
+        if (!fullName.isBlank()) {
+            return fullName;
+        }
+        if (incoming.username() != null && !incoming.username().isBlank()) {
+            return "@" + incoming.username();
+        }
+        return "unknown guest";
+    }
+
+    private String dialogTag(IncomingMessage incoming) {
+        if (incoming == null || incoming.channel() == null || incoming.chatId() == null) {
+            return "#dialog_unknown";
+        }
+        String chat = incoming.chatId().toString().replace("-", "m");
+        return "#dialog_" + incoming.channel().name().toLowerCase() + "_" + chat;
     }
 
     private String blank(String value) {

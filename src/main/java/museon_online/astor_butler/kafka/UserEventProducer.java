@@ -38,15 +38,15 @@ public class UserEventProducer {
         log.info("Kafka events use PostgreSQL outbox only: topic={}", outboxTopic);
     }
 
-    public void publishIncomingMessage(IncomingMessage incoming, BotState previousState, OutgoingMessage outgoing) {
+    public boolean publishIncomingMessage(IncomingMessage incoming, BotState previousState, OutgoingMessage outgoing) {
         if (!enabled || incoming == null) {
-            return;
+            return false;
         }
 
         String eventId = userEventFactory.eventId(incoming);
         String partitionKey = userEventFactory.partitionKey(incoming);
         Map<String, Object> event = userEventFactory.userMessageReceived(incoming, previousState, outgoing);
-        appendOutbox(partitionKey, "USER_MESSAGE_RECEIVED", event, eventId);
+        return appendOutbox(partitionKey, "USER_MESSAGE_RECEIVED", event, eventId);
     }
 
     public void publishLlmResponse(
@@ -74,12 +74,13 @@ public class UserEventProducer {
         appendOutbox(partitionKey, "LLM_RESPONSE_GENERATED", event, eventId);
     }
 
-    private void appendOutbox(String partitionKey, String eventType, Map<String, Object> event, String eventId) {
+    private boolean appendOutbox(String partitionKey, String eventType, Map<String, Object> event, String eventId) {
         if (!outboxEnabled) {
-            return;
+            return false;
         }
         try {
             outboxEventRepository.append(outboxTopic, partitionKey, eventType, event);
+            return true;
         } catch (Exception e) {
             log.warn(
                     "Kafka outbox append failed: topic={}, partitionKey={}, eventId={}, reason={}",
@@ -88,6 +89,7 @@ public class UserEventProducer {
                     eventId,
                     e.getMessage()
             );
+            return false;
         }
     }
 }

@@ -262,9 +262,9 @@ public class MessageGatewayService {
     }
 
     private OutgoingMessage finish(IncomingMessage incoming, BotState previousState, OutgoingMessage outgoing) {
-        userEventProducer.publishIncomingMessage(incoming, previousState, outgoing);
+        boolean kafkaOutboxQueued = userEventProducer.publishIncomingMessage(incoming, previousState, outgoing);
         fsmTimelineWriter.append(FsmTimelineEvent.from(incoming, previousState, outgoing));
-        telegramSystemNotifier.sendTransition(incoming, previousState, outgoing);
+        telegramSystemNotifier.sendTransition(incoming, previousState, outgoing, kafkaOutboxQueued);
         return outgoing;
     }
 

@@ -145,12 +145,15 @@ public class OperationalChatPreviewNotifier {
     private String systemPreview() {
         return """
                 <b>Astor Butler System Chat</b>
-                Служебный канал наблюдаемости: startup, FSM transitions, action tags, correlation ids.
+                Служебный канал наблюдаемости: dialog trace, startup, FSM transitions, action tags, Kafka/outbox и correlation ids.
 
                 <b>Читать как telemetry</b>
+                • guest input → app reply в одной карточке
                 • previous state → next state
                 • action tags
+                • Kafka outbox status
                 • chat/user/correlation
+                • #dialog_* для быстрого поиска диалога одного гостя
                 • признаки fallback/recovery
 
                 <b>Правило</b>

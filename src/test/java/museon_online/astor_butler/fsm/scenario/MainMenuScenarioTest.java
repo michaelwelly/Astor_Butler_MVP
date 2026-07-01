@@ -34,9 +34,9 @@ class MainMenuScenarioTest {
 
         assertThat(outgoing.nextState()).isEqualTo(BotState.READY_FOR_DIALOG.name());
         assertThat(outgoing.text()).contains(
-                "Забронировать стол",
-                "Благотворительность / аукцион",
-                "Мерч / сабражная цепь"
+                "забронировать стол",
+                "сабраж",
+                "чаевые, донат, аукцион или мерч"
         );
         assertThat(outgoing.actions()).containsExactly("MAIN_MENU", "SHOW_MENU");
         verify(fsmStorage).setState(incoming.chatId(), BotState.READY_FOR_DIALOG);
