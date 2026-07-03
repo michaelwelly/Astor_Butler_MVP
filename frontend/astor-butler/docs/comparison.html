@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Сравнение с аналогами — Astor Butler</title>
+<meta name="description" content="Astor Butler рядом с простым Telegram-ботом и enterprise AI-платформой: сценарии, память, staff context, event trail.">
+<link rel="icon" type="image/svg+xml" href="../assets/favicon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&family=Playfair+Display:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="docs.css">
+</head>
+<body>
+<div class="doc-wrap">
+  <a class="doc-back" href="../index.html">← Astor Butler</a>
+  <p class="doc-kicker">Коммерческий пакет · 2/3</p>
+  <h1>Сравнение с простым ботом и enterprise AI</h1>
+  <p class="dim">Это коммерческая рамка сравнения. Числа по времени и токенам являются оценочными и должны быть подтверждены отдельным прогоном.</p>
+
+  <h2>Сравниваемые варианты</h2>
+  <ol>
+    <li>Простой Telegram-бот за 5 000 рублей.</li>
+    <li>Astor Butler MVP.</li>
+    <li>Enterprise AI-платформа уровня «миллионы рублей», включая большие провайдерские решения.</li>
+  </ol>
+
+  <blockquote>Простой бот отвечает кнопками. Enterprise AI отвечает моделью. Astor Butler управляет гостевым сценарием.</blockquote>
+
+  <h2>Таблица</h2>
+  <div class="table-scroll">
+  <table>
+    <thead>
+      <tr><th>Критерий</th><th>Бот за 5 000 ₽</th><th>Astor Butler MVP</th><th>Enterprise AI</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Telegram entry</td><td>Да</td><td>Да</td><td>Обычно через интеграцию</td></tr>
+      <tr><td>FSM-сценарии</td><td>Минимальные</td><td>Да, source of truth</td><td>Не всегда</td></tr>
+      <tr><td>Consent/contact</td><td>Часто вручную</td><td>Да</td><td>Да, но дорого</td></tr>
+      <tr><td>Бронирование</td><td>Форма/заявка</td><td>Controlled flow + hostess context</td><td>Требует интеграции</td></tr>
+      <tr><td>Память предпочтений</td><td>Нет</td><td>Preference Map</td><td>Да, зависит от DMP/CRM</td></tr>
+      <tr><td>Staff/admin/system chats</td><td>Нет</td><td>Да</td><td>Через отдельные панели</td></tr>
+      <tr><td>Event trail</td><td>Нет</td><td>PostgreSQL/Kafka/outbox</td><td>Да</td></tr>
+      <tr><td>AI boundary</td><td>Нет</td><td>AI outside business authority</td><td>Часто размыта</td></tr>
+      <tr><td>Медиа/меню</td><td>Статичные ссылки</td><td>PostgreSQL + MinIO catalog</td><td>Да</td></tr>
+      <tr><td>Draft confirmations</td><td>Нет</td><td>Merch/Tip/Donation/Auction</td><td>Настраивается</td></tr>
+      <tr><td>Стоимость запуска</td><td>Низкая</td><td>Средняя</td><td>Высокая</td></tr>
+      <tr><td>Скорость адаптации</td><td>Быстро, но поверхностно</td><td>Быстро при наличии контента</td><td>Долго</td></tr>
+      <tr><td>Риск «бот сказал лишнее»</td><td>Средний</td><td>Низкий из-за FSM</td><td>Зависит от guardrails</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <h2>Сколько стоит повторить</h2>
+  <p class="dim">Чтобы повторить Astor Butler с нуля, нужно воспроизвести: Telegram transport, FSM runtime, Redis hot state, PostgreSQL durable facts, Kafka/outbox trail, media pipeline, preference memory, booking domain, staff/admin/system projection, AI gateway, документацию, тесты и операционные правила.</p>
+  <div class="price-block">
+    <strong>6–10 недель</strong>
+    <span>один сильный инженер с AI-помощником — до сопоставимого MVP</span>
+  </div>
+  <div class="price-block">
+    <strong>2–4 месяца</strong>
+    <span>команда без накопленного контекста — до устойчивого MVP</span>
+  </div>
+  <p class="dim">Оценка токенов для AI-повторения без готовой базы знаний: <code>1.5M–4M</code> токенов проектирования, кода, ревью, тестов и документации. С текущим репозиторием и knowledge base: <code>300k–900k</code> токенов на адаптацию под новый ресторан.</p>
+
+  <h2>Вывод</h2>
+  <p>Astor Butler не конкурирует с «ботом за 5 тысяч» по цене кнопки. Он конкурирует по цене потерянного гостя, потерянной брони и потерянного контекста.</p>
+  <p>С enterprise AI он конкурирует не размером модели, а тем, что ресторану нужен управляемый сценарий, а не свободная генерация.</p>
+
+  <nav class="doc-nav" aria-label="Другие документы">
+    <a href="offer.html">← Коммерческое предложение</a>
+    <a href="brand.html">Бренд-гайд →</a>
+  </nav>
+  <p class="doc-note">Astor Butler · коммерческий пакет · 2026</p>
+</div>
+</body>
+</html>
