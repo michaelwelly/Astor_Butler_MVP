@@ -1,0 +1,64 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T2A]{fontenc}
+\usepackage[english,russian]{babel}
+\usepackage{geometry}
+\usepackage{hyperref}
+\usepackage{booktabs}
+\usepackage{amsmath}
+\geometry{margin=2.2cm}
+
+\title{Astor Butler: FSM-First Hospitality Governance Runtime}
+\author{Michael Poedinenko}
+\date{July 2026}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+Astor Butler is a hospitality runtime that treats Telegram and future web-chat channels as transport adapters, while business authority remains inside a finite-state machine and domain services. The system is designed for restaurants, hotels and event venues where guest requests must be remembered, routed and confirmed without turning AI into an uncontrolled decision-maker.
+\end{abstract}
+
+\section{Problem}
+Hospitality teams lose value when guest intent is fragmented across chat messages, voice notes, staff memory and manual follow-up. A simple chatbot can answer frequently asked questions, but it cannot reliably own reservation state, consent evidence, service escalation and operational context.
+
+\section{Principle}
+The central invariant is:
+\[
+BusinessAuthority \subset FSM \cup DomainServices
+\]
+AI adapters may classify, summarize and draft responses, but they do not confirm reservations, payments, bids or staff actions.
+
+\section{Runtime Layers}
+\begin{itemize}
+  \item Transport adapters: Telegram, REST and future web chat.
+  \item Message gateway: normalized entry point.
+  \item Scenario router: explicit scenario selection.
+  \item FSM runtime: state, transitions and recovery.
+  \item Domain services: booking, preference, concierge, merch, tip, donation and auction.
+  \item Storage: PostgreSQL, Redis, Kafka/Redpanda and MinIO/S3.
+\end{itemize}
+
+\section{Commercial Baseline}
+The first commercial package targets the RU hospitality segment: ten restaurants and one hotel. The first AERIS subscription is specified as 30,000 RUB per month for one year, with hosting and infrastructure pass-through costs handled separately.
+
+\section{Benchmark Frame}
+\begin{table}[h]
+\centering
+\begin{tabular}{llll}
+\toprule
+Capability & Simple Bot & Astor Butler & Enterprise AI \\
+\midrule
+FSM authority & weak & strong & variable \\
+Consent evidence & weak & built-in & strong \\
+Staff context & weak & built-in & configurable \\
+AI guardrails & weak & FSM/domain & vendor-specific \\
+Cost & low & medium & high \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{Conclusion}
+Astor Butler should be evaluated not as a Telegram bot, but as a controlled hospitality governance layer: it reduces ambiguity, preserves consent-aware memory and gives staff the context needed to act.
+
+\end{document}

@@ -20,6 +20,7 @@
 - `docs/architecture/` - архитектурные решения, модель данных, локальные БД и runtime-слои.
 - `docs/contracts/` - API, Kafka/outbox, платежные и frontend/backend-контракты.
 - `docs/content/` - медиа, MinIO, RAG-источники, AERIS channel ingest.
+- `docs/commercial/` - брендовая книга, КП, договор AERIS, съемочный день и benchmarking.
 - `docs/frontend/` - handoff/ТЗ/пакеты задач для Claude и фронтенд-ветки.
 - `docs/fsm/` - текстовые FSM companion-документы, implementation plan и доменные сценарии.
 - `docs/operations/` - запуск, деплой, нагрузка, командный workflow и ближайший backlog.
@@ -47,6 +48,20 @@
 - `docs/guest-guide.html`
 - `docs/staff-guide.html`
 - `docs/public/notion-knowledge-base-refresh-2026-06-15.md`
+- `docs/commercial/BRAND_GUIDE_RU.md`
+- `docs/commercial/COMMERCIAL_OFFER_RU.md`
+- `docs/commercial/VIDEO_SHOOTING_DAY_TZ_RU.md`
+
+## Commercial Docs
+
+- `docs/commercial/README.md` - коммерческий индекс.
+- `docs/commercial/BRAND_GUIDE_RU.md` - инструкция/brand book для ресторанов.
+- `docs/commercial/COMMERCIAL_OFFER_RU.md` - структура КП.
+- `docs/commercial/AERIS_SERVICE_AGREEMENT_DRAFT_RU.md` - черновик договора AERIS на 30 000 рублей в месяц.
+- `docs/commercial/VIDEO_SHOOTING_DAY_TZ_RU.md` - ТЗ на один съемочный день.
+- `docs/commercial/BENCHMARK_COMPARISON_RU.md` - сравнение с простым Telegram-ботом и enterprise AI.
+- `docs/commercial/INFRA_DNS_NOTES_RU.md` - заметка по VCG/DNS/hosting для первого коммерческого размещения.
+- `docs/research/ASTOR_BUTLER_TECHNICAL_NOTE.tex` - LaTeX technical note для научно-технической упаковки.
 
 ## Analytics
 

@@ -1,5 +1,13 @@
 # Research Docs
 
+Исследовательские, академические и spike-документы.
+
+## Current Notes
+
+- `ASTOR_BUTLER_TECHNICAL_NOTE.tex` - LaTeX technical note for academic-style positioning.
+- `DIPLOMA_TZ_DRAFT.md` - diploma/product thesis draft.
+- `NLU_TOOLS_SPIKE.md` - NLU tooling spike.
+
 Research and spike package.
 
 Use this folder for:
