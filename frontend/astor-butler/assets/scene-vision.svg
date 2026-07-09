@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 620" role="img" aria-labelledby="title desc">
+  <title id="title">AI Vision under FSM authority</title>
+  <desc id="desc">Menu, dish photo, interior and event poster routed into controlled scenario.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0" stop-color="#16110c"/>
+      <stop offset="1" stop-color="#050404"/>
+    </linearGradient>
+    <linearGradient id="scan" x1="0" x2="1">
+      <stop offset="0" stop-color="#c9a227" stop-opacity="0"/>
+      <stop offset=".5" stop-color="#e8cf7a" stop-opacity=".65"/>
+      <stop offset="1" stop-color="#c9a227" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+  <rect width="900" height="620" fill="url(#bg)"/>
+  <g transform="translate(92 88)">
+    <rect width="300" height="190" rx="18" fill="#211910" stroke="#c9a227" stroke-opacity=".34"/>
+    <path d="M42 52h150M42 90h220M42 126h170" stroke="#f5efe4" stroke-opacity=".27" stroke-width="12" stroke-linecap="round"/>
+    <circle cx="238" cy="62" r="24" fill="#c9a227" opacity=".35"/>
+  </g>
+  <g transform="translate(508 88)">
+    <rect width="300" height="190" rx="18" fill="#1b140f" stroke="#c9a227" stroke-opacity=".34"/>
+    <ellipse cx="150" cy="116" rx="92" ry="34" fill="#c9a227" opacity=".25"/>
+    <ellipse cx="150" cy="116" rx="56" ry="20" fill="#e8cf7a" opacity=".34"/>
+    <path d="M90 70c28-26 90-30 126 0" stroke="#f5efe4" stroke-opacity=".2" stroke-width="10" stroke-linecap="round"/>
+  </g>
+  <g transform="translate(92 342)">
+    <rect width="300" height="190" rx="18" fill="#1a130e" stroke="#c9a227" stroke-opacity=".34"/>
+    <path d="M34 145h232M60 110h180M82 72h136" stroke="#f5efe4" stroke-opacity=".12" stroke-width="32" stroke-linecap="round"/>
+    <circle cx="66" cy="58" r="11" fill="#e8cf7a" opacity=".5"/>
+    <circle cx="232" cy="62" r="8" fill="#e8cf7a" opacity=".35"/>
+  </g>
+  <g transform="translate(508 342)">
+    <rect width="300" height="190" rx="18" fill="#231a10" stroke="#c9a227" stroke-opacity=".34"/>
+    <rect x="42" y="38" width="216" height="114" rx="10" fill="#0d0b08" stroke="#f5efe4" stroke-opacity=".08"/>
+    <path d="M74 76h142M74 112h112" stroke="#e8cf7a" stroke-opacity=".74" stroke-width="12" stroke-linecap="round"/>
+  </g>
+  <path d="M450 88v444" stroke="url(#scan)" stroke-width="4"/>
+  <path d="M392 183h116M392 437h116" stroke="#c9a227" stroke-opacity=".5" stroke-width="3"/>
+  <circle cx="450" cy="310" r="54" fill="#0b0a08" stroke="#e8cf7a" stroke-width="5"/>
+  <path d="M426 310h48M450 286v48" stroke="#e8cf7a" stroke-width="6" stroke-linecap="round"/>
+</svg>

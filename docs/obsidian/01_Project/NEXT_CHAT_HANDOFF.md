@@ -1,5 +1,92 @@
 # Next Chat Handoff
 
+## Update 2026-07-08 - Yandex AI Studio Gateway Prep
+
+- Подготовлен cloud-provider для realtime LLM-understanding:
+  - `src/main/java/museon_online/astor_butler/model/YandexModelGateway.java`;
+  - включается через `ASTOR_MODEL_PROVIDER=yandex`;
+  - использует Yandex AI Studio Completion API `/foundationModels/v1/completion`.
+- Env для live-запуска:
+  - `YANDEX_FOLDER_ID`;
+  - `YANDEX_API_KEY` или `YANDEX_IAM_TOKEN`;
+  - `YANDEX_MODEL=yandexgpt-5-lite`;
+  - `YANDEX_QUALITY_MODEL=yandexgpt-5.1`;
+  - `YANDEX_TIMEOUT_MS=8000`.
+- `intent-slots-json` requests автоматически отправляются с `jsonObject=true`, чтобы YandexGPT возвращал валидный JSON для `LlmUnderstandingService`.
+- Embeddings/vision через Yandex пока не реализованы: provider возвращает safe fallback для этих capability, чтобы приложение не падало при text-only пилоте.
+- Добавлен probe для первого живого замера без запуска Spring:
+  - `scripts/probe_yandex_understanding.mjs`;
+  - пример запуска: `YANDEX_FOLDER_ID=... YANDEX_API_KEY=... node scripts/probe_yandex_understanding.mjs`.
+- Focused provider tests green:
+  - `mvn -q -Dtest=ModelGatewayProviderTest,YandexModelGatewayTest test`.
+- Следующий шаг после звонка/получения ключей: выполнить probe, посмотреть latency/usage/JSON, затем включить `ASTOR_UNDERSTANDING_LLM_ENABLED=true` и `ASTOR_MODEL_PROVIDER=yandex` на AERIS runtime.
+
+## Update 2026-07-08 - Table Booking Understanding Corpus + Runtime Check
+
+- Добавлен target corpus для table booking understanding:
+  - `src/test/resources/understanding/table-booking-target-corpus.jsonl`;
+  - 30 живых фраз: 14 текущих baseline-pass и 16 `KNOWN_GAP`;
+  - `KNOWN_GAP` фиксирует желаемое поведение будущего LLM-understanding слоя, но не ломает текущую сборку.
+- `GuestInputUnderstandingServiceTest` теперь читает этот corpus и проверяет:
+  - `PASS` cases должны распознаваться текущим rule-based/Natasha/fallback пониманием;
+  - `KNOWN_GAP` cases документируются как целевые сценарии для следующего слоя.
+- Focused tests green:
+  - `mvn -Dtest=GuestInputUnderstandingServiceTest test`;
+  - result: `13` tests, `0` failures, `BUILD SUCCESS`;
+  - `mvn -Dtest=GuestInputUnderstandingServiceTest,FirstTouchScenarioTest,TableBookingScenarioTest,ChangeCancelScenarioTest,MessageGatewayServiceTest test`;
+  - result: `67` tests, `0` failures, `BUILD SUCCESS`.
+- AERIS runtime rebuilt and restarted:
+  - `docker compose --profile telegram up -d --build aeris-astor-butler-bot`;
+  - image built: `astor-butler-mvp:local`;
+  - container: `aeris_astor_butler_bot`;
+  - health: `http://localhost:8089/actuator/health` returns `UP`.
+- Runtime caveat: `LLM Warm-up disabled`; `llm-gateway:11434` is not available in this profile, so semantic embeddings/RAG bootstrap were skipped with warnings. Core FSM/Telegram runtime is up.
+- Следующий шаг: подключить LLM-understanding в shadow/enrich mode на локальном стенде, прогнать тот же corpus и сравнить `current rule result` vs `LLM JSON result` before FSM.
+
+## Update 2026-07-08 - LLM Understanding First Slice
+
+- Начат переход от rule-based-only понимания к LLM-assisted understanding без ломки текущего FSM:
+  - добавлен `LlmUnderstandingService`;
+  - добавлен `LlmUnderstandingResult`;
+  - `GuestInputUnderstandingService` теперь может, при включенном `ASTOR_UNDERSTANDING_LLM_ENABLED`/`astor.understanding.llm.enabled`, принять structured JSON от LLM и обогатить intent/slots;
+  - по умолчанию слой выключен, текущие regex/rules/Natasha/pgvector остаются рабочим fallback.
+- Новый LLM contract:
+  - LLM возвращает только JSON;
+  - поля: `intent`, `confidence`, `slots`, `missingSlots`, `replyDraft`;
+  - FSM/domain layer остаются единственным местом для брони, отмены, hold, платежей и подтверждений.
+- Добавлен `/restart` как безопасный выход из сломанного ручного теста:
+  - очищает FSM state/pending intents через `fsmStorage.clear`;
+  - очищает `TableBookingDraftStorage`;
+  - очищает `ChangeCancelDraftStorage`;
+  - для гостя с consent возвращает `READY_FOR_DIALOG` и главное меню.
+- Focused tests green:
+  - `mvn -Dtest=GuestInputUnderstandingServiceTest,FirstTouchScenarioTest,TableBookingScenarioTest,ChangeCancelScenarioTest,MessageGatewayServiceTest test`;
+  - result: `66` tests, `0` failures, `BUILD SUCCESS`.
+- Следующий шаг: вынести 30-50 живых фраз в отдельный corpus для table booking understanding, включить LLM-understanding в shadow/enrich mode на локальном стенде и сравнить rule-based vs LLM JSON before FSM.
+
+## Update 2026-07-08 - Graduation E2E Demo Prep
+
+- Подготовлен короткий graduation/demo package для сценария table booking voice E2E:
+  - `docs/demo/ASTOR_BUTLER_GRADUATION_E2E_RU.md`;
+  - `docs/demo/TABLE_BOOKING_VOICE_E2E_MANUAL_TEST_RU.md`.
+- Зафиксирована честная демо-граница: STT/LLM помогают понять вход, но order/hold/confirm/change/cancel выполняют FSM и domain services.
+- Проверены ключевые классы маршрута:
+  - `TelegramRouter`;
+  - `TelegramVoiceTranscriptionService`;
+  - `MessageGatewayService`;
+  - `ScenarioRouter`;
+  - `GuestInputUnderstandingService`;
+  - `TableBookingScenario`;
+  - `TableReservationService`;
+  - `TableReservationNotificationService`;
+  - `HostessReservationApprovalService`;
+  - `ChangeCancelScenario`.
+- Focused Maven tests green:
+  - `mvn -Dtest=TableBookingScenarioTest,ChangeCancelScenarioTest,ExternalCommandSpeechToTextServiceTest test`;
+  - result: `30` tests, `0` failures, `BUILD SUCCESS`.
+- Для живого Telegram-прогона все еще нужно проверить runtime окружение: bot token, `TELEGRAM_HOSTESS_CHAT_ID`, права бота в staff chat, `ASTOR_STT_ENABLED=true`, доступность faster-whisper/STT command и health на AERIS profile.
+- Добавлен черновик сообщения организаторам Zodiaque для пилота Astor Concierge: без implementation fee, с покрытием прямых расходов и правом оформить кейс.
+
 ## Update 2026-06-27 - Spring AI ModelGateway + Embeddings/RAG Boundary
 
 - Spring AI переведен в основной text provider за `ModelGateway`:

@@ -2,7 +2,7 @@
 
 ## Назначение
 
-Astor Butler - soft-governance tool для HoReCa. Система объединяет Telegram UI, manager/staff/admin web app и публичную promo/lead-gen витрину. Telegram остается транспортом для гостя, web app - рабочим местом команды, promo frontend - витриной для production story, System Design/JavaGuru-материалов и сбора лидов.
+Astor Butler - soft-governance tool для HoReCa. Система объединяет guest-facing каналы, manager/staff/admin web app и публичную promo/lead-gen витрину. Telegram остается первым рабочим транспортом MVP, но целевая архитектура строится как omnichannel agent: Telegram, web-chat, телефония, WhatsApp, MAX, Instagram Direct и REST/API-клиенты нормализуются в единый Message Gateway. Web app - рабочее место команды, promo frontend - витрина для production story, System Design/JavaGuru-материалов и сбора лидов.
 
 Главный архитектурный принцип: FSM является single source of truth для сценариев взаимодействия. UI-слои не содержат бизнес-логики.
 
@@ -10,11 +10,11 @@ Astor Butler - soft-governance tool для HoReCa. Система объедин
 
 ```mermaid
 flowchart LR
-    Guest["Guest / Telegram user"]
+    Guest["Guest / omnichannel user"]
     Staff["Staff / Manager / Admin"]
     Visitor["Promo visitor / Lead"]
 
-    Telegram["Telegram Bot API"]
+    Channels["Guest Channels<br/>Telegram / Web Chat / Telephony / WhatsApp / MAX / Instagram Direct"]
     Web["Manager Web App<br/>Next.js / React"]
     Promo["Promo Lead-Gen Frontend<br/>Next.js / React / GSAP / Framer Motion / Lenis"]
 
@@ -49,7 +49,7 @@ flowchart LR
     Obs["Observability<br/>Prometheus / Grafana / ELK / Jaeger / OpenTelemetry"]
     CICD["CI/CD<br/>GitHub Actions / TeamCity / Jenkins / Nexus / Registry"]
 
-    Guest --> Telegram --> Gateway
+    Guest --> Channels --> Gateway
     Staff --> Web --> Gateway
     Visitor --> Promo --> Gateway
 
@@ -111,9 +111,9 @@ flowchart LR
 
 ## Входные каналы
 
-### Telegram
+### Guest Channels / Transport Adapters
 
-Telegram используется как первый guest-facing UI:
+Telegram используется как первый guest-facing UI MVP:
 
 - сообщения;
 - callbacks;
@@ -124,6 +124,51 @@ Telegram используется как первый guest-facing UI:
 Telegram adapter только нормализует входящие события в `InboundEvent` и отправляет ответы. Он не принимает бизнес-решений.
 
 Service chats внутри Telegram (`TELEGRAM_ADMIN_CHAT_ID`, `TELEGRAM_ANALYTICS_CHAT_ID`, `TELEGRAM_HOSTESS_CHAT_ID`, `TELEGRAM_SYSTEM_CHAT_ID=-5403153261`) относятся к control plane: сообщения сохраняются, попадают в audit/timeline/event trail и могут запускать служебные команды, но не запускают guest FSM. Runtime-удаление сообщений через Telegram `DeleteMessage` временно отключено; будущая UX-чистка проектируется как session policy поверх Redis/timeline.
+
+Целевая transport-модель не привязана к Telegram. Каждый внешний канал должен иметь adapter, который приводит вход в общий контракт `MessageGatewayService`: canonical text, attachments/media references, channel identity, correlation id, consent metadata, source timestamp and raw payload reference. Бизнес-сценарии не ветвятся под каждый мессенджер.
+
+Целевые guest-facing adapters:
+
+- Telegram Bot API;
+- web-chat на сайте заведения;
+- телефония через SIP/виртуальную АТС;
+- WhatsApp Business API;
+- MAX bot/API, когда публичный официальный контур доступен;
+- Instagram Direct через Meta Messaging API, когда доступ разрешен и доступен заказчику;
+- REST API для будущих мобильных приложений, CRM и внутренних систем.
+
+Каналы с региональными, юридическими или сетевыми ограничениями подключаются только через официальные API/интеграционные контуры, доступные заказчику и инфраструктуре проекта. Если провайдер требует отдельный egress region, это решается на уровне integration gateway, а не внутри FSM.
+
+### Telephony Intake
+
+Телефония рассматривается как отдельный transport adapter, а не как отдельная бизнес-логика.
+
+Целевой поток:
+
+1. SIP/виртуальная АТС принимает звонок и создает call session.
+2. Audio stream или запись попадает в STT adapter.
+3. STT возвращает transcript + confidence + timing metadata.
+4. `MessageGatewayService` создает normalized inbound event с channel=`telephony`.
+5. `GuestInputUnderstandingService` и FSM ведут тот же сценарий, что и для текста/голоса в мессенджере.
+6. Ответ может уйти голосом через TTS/call playback, SMS, мессенджер, web-chat или карточкой команде.
+
+MVP-level телефонии может быть read/assist mode: расшифровка звонка, summary, карточка действия для хостес/менеджера. Следующий уровень - guided voice assistant для коротких сценариев. Автоматическое подтверждение по телефону включается только после validation policy, интеграции с booking/availability domain и явных лимитов.
+
+### Network / Integration Gateway
+
+Astor Butler должен уметь работать параллельно с российскими каналами, внешними API и инфраструктурой заказчика.
+
+Сетевой принцип:
+
+- публичные каналы РФ, сайт заведения и web-chat обращаются к обычным HTTPS endpoints без VPN со стороны гостя;
+- backend не должен требовать VPN от гостя;
+- outbound-доступ к внешним API, которые требуют другого региона или отдельного маршрута, идет через controlled integration gateway;
+- integration gateway может жить вне РФ или в нужном регионе провайдера;
+- связь между backend, integration gateway и инфраструктурой заказчика закрывается через WireGuard, IPsec или managed private connectivity;
+- маршрутизация по провайдерам настраивается как egress policy: Telegram/WhatsApp/Instagram/OpenAI/YandexGPT/SBIS/iiko/r_keeper могут иметь разные outbound routes;
+- secrets, API tokens and webhooks хранятся отдельно от application code и ротируются через secret manager/runtime env.
+
+Эта схема не меняет business authority: все каналы и API приходят в Message Gateway, проходят normalization, idempotency, consent checks and FSM/domain validation.
 
 ### Manager Web App
 
@@ -241,6 +286,15 @@ AI Adapter - заменяемый модуль для первого поним�
 
 AI Adapter не является источником бизнес-правил. Он помогает понять, что пользователь хочет, после чего сценарий продолжает FSM.
 
+Confirmation policy имеет несколько уровней зрелости:
+
+- `human approval`: важное действие подтверждает хостес/менеджер;
+- `assisted approval`: Astor готовит решение и карточку, человек подтверждает одним действием;
+- `trusted automation`: после проверок, лимитов и интеграции с учетной системой Astor выполняет действие сам в рамках правил;
+- `human oversight`: команда видит поток событий, исключения и спорные случаи, но не подтверждает каждый типовой шаг.
+
+Целевой термин для коммерческого текста: "поточный режим". Это означает, что сценарий становится быстрым, повторяемым и контролируемым, а не "магическим". Переход в поточный режим возможен только для сценариев с понятными правилами, observability, audit trail, rollback/override policy and domain validation.
+
 Local LLM topology is intentionally small:
 
 - `ollama-1` is the frontline inference instance behind `llm-gateway`;
@@ -254,8 +308,8 @@ Astor Butler должен расти не как набор прямых выз�
 
 ```mermaid
 flowchart TD
-    Guest["Гость<br/>текст / голос / фото / PDF / web"]
-    Transport["Transport adapters<br/>Telegram / Web / REST"]
+    Guest["Гость<br/>текст / голос / звонок / фото / PDF / web"]
+    Transport["Transport adapters<br/>Telegram / Web / Telephony / WhatsApp / MAX / Instagram / REST"]
     Gateway["MessageGatewayService<br/>normalized input"]
 
     subgraph ModelGateway["Model Gateway<br/>сменный AI provider layer"]
@@ -286,7 +340,7 @@ Capability mapping:
 
 | Capability | Local MVP | Production fallback | What it may do | What it must not do |
 | --- | --- | --- | --- | --- |
-| Language / "язык" | Qwen/Ollama text model | OpenAI or compatible API | phrase generation, summaries, entity extraction, ambiguous intent help | confirm bookings, payments, cancellations, bids |
+| Language / "язык" | Qwen/Ollama text model | OpenAI, YandexGPT or compatible API | phrase generation, summaries, entity extraction, ambiguous intent help | confirm bookings, payments, cancellations, bids |
 | Vision / "глаза" | Qwen2.5-VL or smaller local VLM; OCR/OpenCV for deterministic parts | OpenAI vision or managed VLM | read floor plan, extract table map candidates, understand guest image marks | decide table availability or create orders |
 | Hearing / "уши" | faster-whisper | managed STT | transcribe Telegram voice/audio into normalized text | route business scenario without NLU/FSM |
 | Voice / "голос" | disabled for MVP | future TTS | speak confirmations or accessibility mode | replace written confirmation for side effects |
@@ -307,6 +361,7 @@ Future provider adapters must keep the same boundary:
 - OpenAI-compatible text/vision/embedding providers can replace local Ollama when quality or latency matters more than local CPU cost.
 - YandexGPT/Alisa integration is a provider adapter, not a direct dependency of FSM scenarios.
 - MAX, Meta Instagram and WhatsApp are transport adapters. They normalize inbound events into the same `MessageGatewayService` contract and must not fork business logic away from Telegram/Web.
+- Telephony/SIP providers are transport adapters. STT/TTS live behind Model Gateway capability contracts; call control lives behind telephony adapter/domain ports.
 - Provider choice is configuration/runtime policy; scenarios still receive typed text, slots, RAG context and model failure, not vendor SDK objects.
 
 ### Semantic Response Cache and Learning Loop

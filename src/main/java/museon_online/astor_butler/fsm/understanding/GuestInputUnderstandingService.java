@@ -37,21 +37,24 @@ public class GuestInputUnderstandingService {
     private final IntentExampleRepository intentExampleRepository;
     private final EmbeddingProvider embeddingProvider;
     private final List<RussianNluAdapter> russianNluAdapters;
+    private final LlmUnderstandingService llmUnderstandingService;
 
     public GuestInputUnderstandingService() {
-        this(null, null, List.of());
+        this(null, null, List.of(), null);
     }
 
     @Autowired
     public GuestInputUnderstandingService(
             ObjectProvider<IntentExampleRepository> intentExampleRepository,
             ObjectProvider<EmbeddingProvider> embeddingProvider,
-            ObjectProvider<RussianNluAdapter> russianNluAdapters
+            ObjectProvider<RussianNluAdapter> russianNluAdapters,
+            ObjectProvider<LlmUnderstandingService> llmUnderstandingService
     ) {
         this(
                 intentExampleRepository.getIfAvailable(),
                 embeddingProvider.getIfAvailable(),
-                russianNluAdapters.orderedStream().toList()
+                russianNluAdapters.orderedStream().toList(),
+                llmUnderstandingService.getIfAvailable()
         );
     }
 
@@ -60,9 +63,19 @@ public class GuestInputUnderstandingService {
             EmbeddingProvider embeddingProvider,
             List<RussianNluAdapter> russianNluAdapters
     ) {
+        this(intentExampleRepository, embeddingProvider, russianNluAdapters, null);
+    }
+
+    GuestInputUnderstandingService(
+            IntentExampleRepository intentExampleRepository,
+            EmbeddingProvider embeddingProvider,
+            List<RussianNluAdapter> russianNluAdapters,
+            LlmUnderstandingService llmUnderstandingService
+    ) {
         this.intentExampleRepository = intentExampleRepository;
         this.embeddingProvider = embeddingProvider;
         this.russianNluAdapters = russianNluAdapters == null ? List.of() : List.copyOf(russianNluAdapters);
+        this.llmUnderstandingService = llmUnderstandingService;
     }
 
     public UnderstoodInput understand(String rawText, BotState currentState) {
@@ -77,9 +90,20 @@ public class GuestInputUnderstandingService {
         normalized = normalizePartySize(normalized, currentState, slots);
         captureTableSelection(normalized, slots);
 
+        LlmUnderstandingResult llmUnderstanding = understandWithLlm(raw, currentState, normalized, slots);
+        mergeLlmSlots(slots, llmUnderstanding);
+
         InputIntent primary = detectIntent(normalized, currentState, slots);
         List<InputIntent> candidates = detectCandidates(normalized, primary, slots);
         double confidence = confidence(primary, slots);
+        if (llmUnderstanding.usable(llmUnderstandingService == null ? 1.0 : llmUnderstandingService.minConfidence())) {
+            if (llmUnderstanding.intent() != primary) {
+                candidates = prependCandidate(candidates, primary);
+            }
+            primary = llmUnderstanding.intent();
+            confidence = Math.max(confidence, llmUnderstanding.confidence());
+            candidates = prependCandidate(candidates, primary);
+        }
         IntentExampleMatch semanticMatch = findSemanticMatch(normalized, currentState, confidence).orElse(null);
         if (semanticMatch != null) {
             InputIntent matchedIntent = parseIntent(semanticMatch.intent()).orElse(primary);
@@ -101,6 +125,33 @@ public class GuestInputUnderstandingService {
                 confidence < 0.55,
                 confidence < 0.55 ? "Уточните, пожалуйста: бронь, меню, афиша, видео-тур или помощь команды?" : null
         );
+    }
+
+    private LlmUnderstandingResult understandWithLlm(
+            String raw,
+            BotState currentState,
+            String normalized,
+            Map<String, SlotValue> slots
+    ) {
+        if (llmUnderstandingService == null) {
+            return LlmUnderstandingResult.empty();
+        }
+        return llmUnderstandingService.understand(raw, currentState, normalized, Map.copyOf(slots));
+    }
+
+    private void mergeLlmSlots(Map<String, SlotValue> slots, LlmUnderstandingResult llmUnderstanding) {
+        if (llmUnderstanding == null || llmUnderstanding.slots() == null || llmUnderstanding.slots().isEmpty()) {
+            return;
+        }
+        for (SlotValue slot : llmUnderstanding.slots()) {
+            if (slot == null || slot.name() == null || slot.value() == null || slot.value().isBlank()) {
+                continue;
+            }
+            SlotValue existing = slots.get(slot.name());
+            if (existing == null || slot.confidence() > existing.confidence()) {
+                slots.put(slot.name(), slot);
+            }
+        }
     }
 
     private Optional<IntentExampleMatch> findSemanticMatch(String normalized, BotState currentState, double currentConfidence) {

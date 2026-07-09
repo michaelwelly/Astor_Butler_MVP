@@ -1,15 +1,24 @@
-# Astor Butler — Presentation Site
+# Astor — Presentation Site
 
-Анимированный презентационный сайт Astor Butler: брендовая книга + демонстрация сценариев.
+Анимированный презентационный сайт Astor: общая титульная страница и два продуктовых направления.
 Чистая статика: HTML/CSS/vanilla JS, без сборки и зависимостей. Отдельный бренд, не смешан с C3FLEX Next.js-приложением (`frontend/`).
+
+Продуктовая логика:
+
+- `Astor` - общий бренд системы гостевого внимания.
+- `Astor Butler` - продукт для ресторанов и отелей.
+- `Astor Concierge` - продукт для событий, фестивалей и городских программ.
+- Внешний слой персонализируется под бренд заказчика: `AERIS Butler`, `Gastreet Concierge` и т.д.
 
 ## Структура
 
 ```
 frontend/astor-butler/
-├── index.html          # основной сайт (11 глав: hook → story → scenarios → comparison → CTA)
+├── index.html          # общая титулка Astor: выбор Butler / Concierge
+├── astor_butler/       # продуктовая страница для ресторанов и отелей
+├── astor_concierge/    # продуктовая страница для событий и городских программ
 ├── css/style.css       # вся стилистика (dark + gold, Playfair Display + Inter — синхронно с C3FLEX)
-├── js/main.js          # курсор-ключ, рябь, дверь, scroll reveal, маскот Butler, chat UI
+├── js/main.js          # курсор-ключ, рябь, дверь, scroll reveal, optional chat UI
 ├── js/widget.js        # transport layer виджета: submitMessage(payload), mock/backend режимы
 ├── assets/             # favicon.svg, og-image.png
 └── docs/               # коммерческий пакет как HTML-страницы
@@ -57,7 +66,7 @@ Chat widget сейчас работает в mock-режиме. Для боев�
 window.AstorChatConfig = {
   endpoint: "https://<backend-host>/api/messages",
   channel: "WEB",
-  site: "astor-butler-commercial",
+  site: "astor-commercial",
 };
 ```
 
@@ -69,7 +78,7 @@ window.AstorChatConfig = {
   "text": "…",
   "payload": {
     "sessionId": "web-…",
-    "site": "astor-butler-commercial",
+    "site": "astor-commercial",
     "pageContext": "commercial_landing",
     "sentAt": "ISO-8601"
   }
@@ -85,8 +94,9 @@ window.AstorChatConfig = {
 - [ ] Hero открывается «дверью», ключ-курсор на desktop
 - [ ] Рябь при движении мыши
 - [ ] Маскот Butler появляется после hero и меняет позу/подпись по главам
-- [ ] Guest journey читается как история (9 шагов, живые фрагменты диалога)
-- [ ] Сравнение — 3 колонки, Astor Butler по центру
+- [ ] Главная ведет в `Astor Butler` и `Astor Concierge`
+- [ ] На странице Butler ясно видны: заведения, хостес, менеджер, внедрение, поддержка
+- [ ] На странице Concierge ясно видны: события, программа, карта, VIP, поток гостей, отчет
 - [ ] Chat widget появляется на финальной секции, mock-ответы работают
 - [ ] Telegram CTA в hero и в финале
 - [ ] Ссылки на docs/offer.html, comparison.html, brand.html работают

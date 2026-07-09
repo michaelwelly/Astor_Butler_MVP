@@ -28,11 +28,14 @@ class FirstTouchScenarioTest {
     @Mock
     private TableBookingDraftStorage tableBookingDraftStorage;
 
+    @Mock
+    private ChangeCancelDraftStorage changeCancelDraftStorage;
+
     private FirstTouchScenario scenario;
 
     @BeforeEach
     void setUp() {
-        scenario = new FirstTouchScenario(fsmStorage, consentVaultService, tableBookingDraftStorage);
+        scenario = new FirstTouchScenario(fsmStorage, consentVaultService, tableBookingDraftStorage, changeCancelDraftStorage);
     }
 
     @Test
@@ -46,8 +49,10 @@ class FirstTouchScenarioTest {
         assertThat(outgoing.html()).isTrue();
         assertThat(outgoing.text()).contains("Согласиться и поделиться контактом");
         assertThat(outgoing.actions()).containsExactly("SAFE_RESTART", "REQUEST_CONTACT", "CONSENT_REQUIRED");
+        verify(fsmStorage).clear(incoming.chatId());
         verify(fsmStorage).setState(421441838L, BotState.CONSENT_REQUIRED);
         verify(tableBookingDraftStorage).clear(incoming.chatId());
+        verify(changeCancelDraftStorage).clear(incoming.chatId());
     }
 
     @Test
@@ -61,7 +66,26 @@ class FirstTouchScenarioTest {
         assertThat(outgoing.removeKeyboard()).isTrue();
         assertThat(outgoing.text()).isBlank();
         assertThat(outgoing.actions()).containsExactly("SAFE_RESTART", "PREVIEW_REFRESHED", "OPEN_MENU");
+        verify(fsmStorage).clear(incoming.chatId());
         verify(tableBookingDraftStorage).clear(incoming.chatId());
+        verify(changeCancelDraftStorage).clear(incoming.chatId());
+        verify(fsmStorage).setState(incoming.chatId(), BotState.READY_FOR_DIALOG);
+    }
+
+    @Test
+    void restartForKnownGuestClearsRuntimeDraftsAndShowsMainMenuText() {
+        IncomingMessage incoming = telegram("/restart", null);
+        when(consentVaultService.hasGrantedPrivacyPolicy(incoming.telegramUserId())).thenReturn(true);
+
+        OutgoingMessage outgoing = scenario.handle(incoming, BotState.TABLE_BOOKING_WAIT_TABLE_SELECTION, "/restart");
+
+        assertThat(outgoing.nextState()).isEqualTo(BotState.READY_FOR_DIALOG.name());
+        assertThat(outgoing.removeKeyboard()).isTrue();
+        assertThat(outgoing.text()).contains("Перезапустил диалог", "главное меню");
+        assertThat(outgoing.actions()).containsExactly("SAFE_RESTART", "PREVIEW_REFRESHED", "OPEN_MENU");
+        verify(fsmStorage).clear(incoming.chatId());
+        verify(tableBookingDraftStorage).clear(incoming.chatId());
+        verify(changeCancelDraftStorage).clear(incoming.chatId());
         verify(fsmStorage).setState(incoming.chatId(), BotState.READY_FOR_DIALOG);
     }
 
@@ -74,6 +98,7 @@ class FirstTouchScenarioTest {
         assertThat(outgoing.nextState()).isEqualTo(BotState.CONSENT_REQUIRED.name());
         assertThat(outgoing.requestContact()).isTrue();
         assertThat(outgoing.actions()).containsExactly("SAFE_RESTART", "REQUEST_CONTACT", "CONSENT_REQUIRED");
+        verify(fsmStorage).clear(incoming.chatId());
         verify(fsmStorage).setState(421441838L, BotState.CONSENT_REQUIRED);
     }
 

@@ -1,0 +1,61 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1400 840" role="img" aria-labelledby="title desc">
+  <title id="title">Evening restaurant with digital butler key</title>
+  <desc id="desc">Warm restaurant interior, host stand, tablet and brass key light.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0" stop-color="#20160d"/>
+      <stop offset=".45" stop-color="#0f0c09"/>
+      <stop offset="1" stop-color="#050404"/>
+    </linearGradient>
+    <radialGradient id="lamp" cx=".52" cy=".24" r=".55">
+      <stop offset="0" stop-color="#f4d56d" stop-opacity=".85"/>
+      <stop offset=".2" stop-color="#c9a227" stop-opacity=".35"/>
+      <stop offset=".7" stop-color="#c9a227" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="tableGlow" cx=".5" cy=".5" r=".5">
+      <stop offset="0" stop-color="#e8cf7a" stop-opacity=".65"/>
+      <stop offset=".5" stop-color="#8a6d14" stop-opacity=".18"/>
+      <stop offset="1" stop-color="#000" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="soft" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="18"/>
+    </filter>
+  </defs>
+  <rect width="1400" height="840" fill="url(#bg)"/>
+  <rect width="1400" height="840" fill="url(#lamp)"/>
+  <g opacity=".32">
+    <path d="M0 218h1400" stroke="#c9a227" stroke-opacity=".25"/>
+    <path d="M0 244h1400" stroke="#f5efe4" stroke-opacity=".06"/>
+    <path d="M140 0v520M360 0v520M580 0v520M800 0v520M1020 0v520M1240 0v520" stroke="#f5efe4" stroke-opacity=".055"/>
+  </g>
+  <g filter="url(#soft)" opacity=".8">
+    <ellipse cx="242" cy="640" rx="210" ry="76" fill="url(#tableGlow)"/>
+    <ellipse cx="700" cy="665" rx="260" ry="90" fill="url(#tableGlow)"/>
+    <ellipse cx="1150" cy="628" rx="190" ry="70" fill="url(#tableGlow)"/>
+  </g>
+  <g opacity=".92">
+    <ellipse cx="242" cy="642" rx="160" ry="36" fill="#1e1710" stroke="#7a6118"/>
+    <ellipse cx="700" cy="664" rx="210" ry="45" fill="#211910" stroke="#9a7a1a"/>
+    <ellipse cx="1150" cy="630" rx="145" ry="32" fill="#1c150f" stroke="#735b16"/>
+    <path d="M130 666h224l-26 128H156zM525 694h350l-34 138H559zM1030 654h240l-20 126h-198z" fill="#090807" opacity=".9"/>
+  </g>
+  <g>
+    <rect x="1000" y="310" width="210" height="250" rx="8" fill="#15110c" stroke="#c9a227" stroke-opacity=".38"/>
+    <rect x="1026" y="338" width="158" height="92" rx="8" fill="#221b12" stroke="#e8cf7a" stroke-opacity=".24"/>
+    <path d="M1050 366h96M1050 390h74M1050 414h112" stroke="#e8cf7a" stroke-opacity=".72" stroke-width="5" stroke-linecap="round"/>
+    <rect x="1048" y="468" width="116" height="12" rx="6" fill="#c9a227" opacity=".7"/>
+    <rect x="1048" y="496" width="78" height="9" rx="5" fill="#f5efe4" opacity=".25"/>
+  </g>
+  <g transform="translate(690 416) rotate(-14)">
+    <circle cx="0" cy="0" r="46" fill="none" stroke="#e8cf7a" stroke-width="9"/>
+    <circle cx="0" cy="0" r="22" fill="#0b0a08" stroke="#8a6d14" stroke-width="4"/>
+    <path d="M40 34l190 190" stroke="#e8cf7a" stroke-width="16" stroke-linecap="round"/>
+    <path d="M146 140l40-40M184 178l38-38M220 214l30-30" stroke="#e8cf7a" stroke-width="13" stroke-linecap="round"/>
+  </g>
+  <g opacity=".5">
+    <circle cx="210" cy="282" r="5" fill="#f5efe4"/>
+    <circle cx="430" cy="326" r="4" fill="#f5efe4"/>
+    <circle cx="735" cy="260" r="6" fill="#f5efe4"/>
+    <circle cx="1180" cy="260" r="5" fill="#f5efe4"/>
+  </g>
+</svg>

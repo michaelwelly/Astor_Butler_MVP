@@ -3,25 +3,39 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Astor Butler — цифровой дворецкий для ресторана</title>
-<meta name="description" content="Astor Butler — цифровой дворецкий для ресторана, отеля или площадки. Сценарии, память, контекст для команды. Ресторан не проигрывает из-за еды — он проигрывает, когда гостя не распознали.">
-<meta property="og:title" content="Astor Butler — цифровой дворецкий для ресторана">
-<meta property="og:description" content="Не бот. Цифровой дворецкий. Сценарии, память гостя, контекст для команды — без давления на гостя.">
+<title>Astor Assist — система гостевого внимания</title>
+<meta name="description" content="Astor помогает ресторанам, отелям и событиям внимательнее работать с гостями: принимать запросы, помнить контекст и передавать команде понятные действия.">
+<meta property="og:title" content="Astor Assist — система гостевого внимания">
+<meta property="og:description" content="Сервис, понятные сценарии и бережная работа с гостевыми запросами.">
 <meta property="og:type" content="website">
-<meta property="og:image" content="assets/og-image.png">
+<meta property="og:image" content="https://astor-assist.vercel.app/assets/og-astor-assist.png">
+<meta property="og:image:secure_url" content="https://astor-assist.vercel.app/assets/og-astor-assist.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Astor Assist — система гостевого внимания">
 <meta property="og:locale" content="ru_RU">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://astor-assist.vercel.app/assets/og-astor-assist.png">
 <meta name="theme-color" content="#0b0a08">
-<link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
+<link rel="icon" type="image/svg+xml" href="assets/favicon.svg?v=20260707-aa">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/style.css">
+<noscript><style>
+  .reveal, .rise, .title-word { opacity: 1 !important; transform: none !important; filter: none !important; }
+  .letterbox, .grain, .film-progress, .hero-dust { display: none !important; }
+</style></noscript>
 </head>
 <body>
 
 <a class="skip-link" href="#main">Перейти к содержанию</a>
 
-<!-- Custom cursor: key -->
+<div class="letterbox letterbox-top" aria-hidden="true"></div>
+<div class="letterbox letterbox-bottom" aria-hidden="true"></div>
+<div class="grain" aria-hidden="true"></div>
+<div class="film-progress" aria-hidden="true"><span id="filmProgressBar"></span></div>
+
 <div class="cursor-key" id="cursorKey" aria-hidden="true">
   <svg viewBox="0 0 48 48" width="34" height="34">
     <g fill="none" stroke="var(--gold)" stroke-width="2.2" stroke-linecap="round">
@@ -33,516 +47,156 @@
   </svg>
 </div>
 <div class="ripple-layer" id="rippleLayer" aria-hidden="true"></div>
+<button class="theme-toggle" id="themeToggle" type="button" aria-label="Переключить тему" aria-pressed="false">
+  <span class="theme-toggle-icon" aria-hidden="true"></span>
+  <span class="theme-toggle-text">Светлая тема</span>
+</button>
 
-<!-- Butler mascot (fixed, changes with scroll) -->
-<div class="butler" id="butler" aria-hidden="true">
-  <svg viewBox="0 0 120 160" width="120" height="160">
-    <g id="butlerBody">
-      <!-- head -->
-      <ellipse cx="60" cy="34" rx="17" ry="19" fill="var(--ink-3)"/>
-      <!-- collar -->
-      <path d="M44 56 L60 66 L76 56 L76 64 L60 74 L44 64 Z" fill="var(--paper)" opacity="0.85"/>
-      <!-- bow tie -->
-      <g id="butlerBow">
-        <path d="M52 62 L60 66 L52 70 Z" fill="var(--gold)"/>
-        <path d="M68 62 L60 66 L68 70 Z" fill="var(--gold)"/>
-        <circle cx="60" cy="66" r="2" fill="var(--gold-deep)"/>
-      </g>
-      <!-- torso / tailcoat -->
-      <path d="M40 60 C36 84 34 116 36 148 L52 148 L56 90 L60 78 L64 90 L68 148 L84 148 C86 116 84 84 80 60 C72 68 48 68 40 60 Z" fill="var(--ink-3)"/>
-      <!-- tray arm -->
-      <g id="butlerTray">
-        <path d="M80 78 C92 82 100 88 104 96" stroke="var(--ink-3)" stroke-width="7" fill="none" stroke-linecap="round"/>
-        <ellipse cx="104" cy="94" rx="14" ry="3.5" fill="var(--gold)"/>
-        <path id="trayItem" d="M104 80 a5 8 0 0 1 0 14 a5 8 0 0 1 0 -14" fill="var(--gold-soft)"/>
-      </g>
-      <!-- monocle glint -->
-      <circle id="butlerEye" cx="67" cy="32" r="5" fill="none" stroke="var(--gold)" stroke-width="1.4" opacity="0.9"/>
-      <path d="M72 35 L76 44" stroke="var(--gold)" stroke-width="1" opacity="0.5"/>
-    </g>
-  </svg>
-  <div class="butler-caption" id="butlerCaption">Butler</div>
-</div>
-
-<!-- ===================== 1. HERO ===================== -->
-<header class="hero" id="hero">
-  <div class="hero-door" id="heroDoor" aria-hidden="true">
-    <div class="door-panel door-left"></div>
-    <div class="door-panel door-right"></div>
-    <div class="door-light"></div>
-    <div class="door-keyhole">
-      <svg viewBox="0 0 60 90" width="44" height="66">
-        <circle cx="30" cy="30" r="16" fill="none" stroke="var(--gold)" stroke-width="2"/>
-        <path d="M24 42 L20 78 L40 78 L36 42 Z" fill="none" stroke="var(--gold)" stroke-width="2"/>
-      </svg>
-    </div>
-  </div>
-
+<header class="hero hero-platform" id="hero">
+  <div class="hero-bg" aria-hidden="true"></div>
+  <canvas class="hero-dust" id="heroDust" aria-hidden="true"></canvas>
   <div class="hero-inner">
-    <div class="hero-logo" aria-label="ASTOR BUTLER">
-      <span class="logo-word">ASTOR</span><span class="logo-key" aria-hidden="true">
-        <svg viewBox="0 0 24 60" width="16" height="42">
-          <g fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round">
-            <circle cx="12" cy="12" r="8"/>
-            <path d="M12 20 L12 52"/>
-            <path d="M12 40 L19 40"/>
-            <path d="M12 48 L17 48"/>
-          </g>
-        </svg>
-      </span><span class="logo-word">BUTLER</span>
+    <div class="hero-brand rise" style="--d:0" aria-label="Astor Assist">
+      <span class="brand-monogram" aria-hidden="true">AA</span>
+      <span class="hero-brand-name">Astor Assist</span>
     </div>
 
     <h1 class="hero-hook">
-      <span class="hook-line">Ресторан не проигрывает из-за еды.</span>
-      <span class="hook-line hook-accent">Ресторан проигрывает в моменте, когда гостя не&nbsp;распознали.</span>
+      <span class="hook-line rise" style="--d:1">Гостеприимство начинается</span>
+      <span class="hook-line hook-accent rise" style="--d:2">до первого слова гостя.</span>
     </h1>
 
-    <p class="hero-sub">Цифровой дворецкий для ресторана, отеля и площадки. Он помнит гостя спокойно, действует вовремя и не превращает сервис в шум.</p>
+    <p class="hero-sub rise" style="--d:3">Astor помогает ресторанам, отелям и организаторам событий внимательнее принимать гостей: вести запросы, помнить контекст и передавать команде то, что уже можно делать.</p>
 
-    <div class="hero-cta">
-      <a href="#journey" class="btn btn-gold">Смотреть сценарии</a>
-      <a href="https://t.me/astor_butler_bot" class="btn btn-telegram" target="_blank" rel="noopener">
-        <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path fill="currentColor" d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/></svg>
-        Telegram
-      </a>
-      <a href="docs/offer.html" class="btn btn-ghost">Открыть коммерческий пакет</a>
+    <div class="hero-cta rise" style="--d:4">
+      <a href="astor_butler/" class="btn btn-quiet">Для заведений</a>
+      <a href="astor_concierge/" class="btn btn-quiet">Для событий</a>
     </div>
-
-    <button class="hero-scroll-hint" id="scrollHint" aria-label="Прокрутить вниз">
-      <span>Ключ уже в двери</span>
-      <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" d="M6 9l6 6 6-6"/></svg>
-    </button>
   </div>
+
+  <button class="hero-scroll-hint rise" style="--d:5" id="scrollHint" aria-label="Прокрутить вниз">
+    <span>Выбрать направление</span>
+    <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" d="M6 9l6 6 6-6"/></svg>
+  </button>
 </header>
 
 <main id="main">
 
-<!-- ===================== 2. WHAT ===================== -->
-<section class="section section-what reveal-group" id="what" aria-labelledby="what-title">
-  <p class="chapter">Глава I · Кто он</p>
-  <h2 class="section-title" id="what-title">Не бот. Дворецкий.</h2>
-  <p class="lede">Astor Butler — цифровой дворецкий для ресторана, отеля или площадки. Он не заменяет людей. Он помогает команде видеть, что происходит.</p>
-  <div class="what-grid">
-    <div class="what-item reveal"><span class="what-num">01</span><p>Кто гость</p></div>
-    <div class="what-item reveal"><span class="what-num">02</span><p>Что он просит</p></div>
-    <div class="what-item reveal"><span class="what-num">03</span><p>Что уже подтверждено</p></div>
-    <div class="what-item reveal"><span class="what-num">04</span><p>Что нельзя обещать</p></div>
-    <div class="what-item reveal"><span class="what-num">05</span><p>Что нужно передать человеку</p></div>
-  </div>
-  <p class="aside reveal">Гость видит простой диалог. Команда видит управляемую работу.</p>
-</section>
+<section class="section astor-choice" id="what" aria-labelledby="choice-title">
+  <p class="chapter">Два направления</p>
+  <h2 class="section-title" id="choice-title">Один стандарт сервиса для разных задач.</h2>
+  <p class="lede">У ресторана и фестиваля разный ритм. Заведение работает каждый день, а событие собирает большой поток гостей за короткое время. Поэтому у Astor есть два направления.</p>
 
-<!-- ===================== 3. GUEST JOURNEY ===================== -->
-<section class="section section-journey" id="journey" aria-labelledby="journey-title">
-  <p class="chapter">Глава II · Путь гостя</p>
-  <h2 class="section-title" id="journey-title">Один вечер. Одна история.</h2>
-  <p class="lede">Каждое сообщение гостя — не запись в таблице, а момент вечера. Вот как он проходит.</p>
-
-  <div class="journey-track">
-    <div class="journey-step reveal" data-step="start">
-      <div class="j-label">/start</div>
-      <div class="chat-frag">
-        <div class="bubble guest">/start</div>
-        <div class="bubble butler-msg">Добрый вечер. Я — дворецкий AERIS. Показать вам зал, меню или сразу забронировать стол?</div>
-      </div>
-    </div>
-
-    <div class="journey-step reveal" data-step="consent">
-      <div class="j-label">Согласие и контакт</div>
-      <div class="chat-frag">
-        <div class="bubble butler-msg">Чтобы я мог держать вашу бронь и пожелания, мне нужно ваше согласие и контакт. Ничего лишнего не запоминаю.</div>
-        <div class="bubble guest">Согласен ✓</div>
-      </div>
-    </div>
-
-    <div class="journey-step reveal" data-step="menu">
-      <div class="j-label">Меню</div>
-      <div class="chat-frag">
-        <div class="bubble guest">Покажи меню</div>
-        <div class="bubble butler-msg has-media"><span class="media-chip">Меню</span><span class="media-chip">Бар</span><span class="media-chip">Винная карта</span><br>Сегодня рекомендую сет от шефа. Показать афишу вечера?</div>
-      </div>
-    </div>
-
-    <div class="journey-step reveal" data-step="booking">
-      <div class="j-label">Бронь</div>
-      <div class="chat-frag">
-        <div class="bubble guest">Стол на двоих, в пятницу в 20:00</div>
-        <div class="bubble butler-msg">Держу стол на двоих, пятница, 20:00. Есть пожелания к посадке?</div>
-      </div>
-    </div>
-
-    <div class="journey-step reveal" data-step="window">
-      <div class="j-label">«Тихий стол у окна»</div>
-      <div class="chat-frag">
-        <div class="bubble guest">Хотелось бы тихий стол у окна</div>
-        <div class="bubble butler-msg">Записал: тихая зона, у окна. Передаю хостес вместе с вашей бронью — она подтвердит стол.</div>
-      </div>
-    </div>
-
-    <div class="journey-step reveal" data-step="candle">
-      <div class="j-label">Service request</div>
-      <div class="chat-frag">
-        <div class="bubble guest">Подготовьте свечу к десерту, у нас годовщина</div>
-        <div class="bubble butler-msg">Прекрасный повод. Передаю команде: свеча к десерту. Подтвердят перед вашим приходом.</div>
-      </div>
-    </div>
-
-    <div class="journey-step reveal" data-step="cancel">
-      <div class="j-label">Отмена брони</div>
-      <div class="chat-frag">
-        <div class="bubble guest">Отмени бронь #12</div>
-        <div class="bubble butler-msg">Бронь #12 отменена, стол освобожден. Будем рады видеть вас в другой вечер.</div>
-      </div>
-    </div>
-
-    <div class="journey-step reveal" data-step="preference">
-      <div class="j-label">Предпочтение</div>
-      <div class="chat-frag">
-        <div class="bubble guest">Я не ем острое</div>
-        <div class="bubble butler-msg">Запомнил: без острого. Кухня будет знать об этом при каждом вашем визите.</div>
-      </div>
-    </div>
-
-    <div class="journey-step reveal" data-step="draft">
-      <div class="j-label">Merch · Tip · Donation · Auction</div>
-      <div class="chat-frag">
-        <div class="bubble guest">Хочу оставить чаевые команде</div>
-        <div class="bubble butler-msg">Подготовил черновик: чаевые 10%. Ничего не спишется, пока вы не подтвердите.<br><span class="draft-chip">Черновик · ждет подтверждения</span></div>
-        <div class="bubble guest">Подтверждаю ✓</div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- ===================== 4. BRAIN ===================== -->
-<section class="section section-brain" id="brain" aria-labelledby="brain-title">
-  <p class="chapter">Глава III · Понимание</p>
-  <h2 class="section-title" id="brain-title">Он слышит не слова. Он слышит намерение.</h2>
-  <p class="lede">Гость пишет как человек. Дворецкий понимает, что за этим стоит, и превращает фразу в управляемое действие.</p>
-
-  <div class="brain-stage">
-    <div class="brain-phrases" aria-hidden="true">
-      <span class="phrase reveal">«можно у окна?»</span>
-      <span class="phrase reveal">«мы опоздаем»</span>
-      <span class="phrase reveal">«я не ем острое»</span>
-      <span class="phrase reveal">«хочу красиво поздравить»</span>
-      <span class="phrase reveal">«отмени бронь 12»</span>
-    </div>
-
-    <div class="brain-flow">
-      <div class="brain-node reveal">
-        <div class="waveform" aria-hidden="true">
-          <span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span>
-        </div>
-        <p class="node-label">Голос или текст</p>
-      </div>
-      <div class="brain-arrow" aria-hidden="true">→</div>
-      <div class="brain-node reveal">
-        <div class="intent-badge">intent: seating_preference</div>
-        <p class="node-label">Распознанное намерение</p>
-      </div>
-      <div class="brain-arrow" aria-hidden="true">→</div>
-      <div class="brain-node reveal">
-        <div class="fsm-route"><span class="fsm-dot"></span> BOOKING → SEATING_WISH → HOSTESS</div>
-        <p class="node-label">Маршрут сценария</p>
-      </div>
-      <div class="brain-arrow" aria-hidden="true">→</div>
-      <div class="brain-node reveal">
-        <div class="mini-card">
-          <div class="mini-card-title">Карточка для хостес</div>
-          <div class="mini-card-row">Гость: Анна · стол 7 · 20:00</div>
-          <div class="mini-card-row">Пожелание: тихо, у окна</div>
-        </div>
-        <p class="node-label">Действие для команды</p>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- ===================== 5. VOICE & AI VISION ===================== -->
-<section class="section section-voice" id="voice" aria-labelledby="voice-title">
-  <p class="chapter">Глава IV · Голос и зрение</p>
-  <h2 class="section-title" id="voice-title">AI видит. FSM решает.</h2>
-
-  <div class="voice-cols">
-    <div class="voice-col reveal">
-      <h3>Голос</h3>
-      <ol class="voice-steps">
-        <li>Гость говорит голосом — как удобно ему.</li>
-        <li>Система получает точный transcript.</li>
-        <li>Видит контекст: кто гость, какая бронь, какой вечер.</li>
-        <li>Не принимает бизнес-решение сама.</li>
-        <li>Передает команде только управляемое действие.</li>
-      </ol>
-    </div>
-    <div class="voice-col reveal">
-      <h3>AI Vision</h3>
-      <div class="vision-grid" aria-hidden="true">
-        <div class="vision-tile">Меню</div>
-        <div class="vision-tile">Фото блюд</div>
-        <div class="vision-tile">Интерьер</div>
-        <div class="vision-tile">Афиша</div>
-      </div>
-      <p>AI помогает понять, что перед ним. Но он не подтверждает бронь и не обещает оплату. Границу держит сценарий, а не модель.</p>
-    </div>
-  </div>
-  <p class="voice-motto reveal">«AI sees, FSM decides»</p>
-</section>
-
-<!-- ===================== 6. ROLES ===================== -->
-<section class="section section-roles" id="roles" aria-labelledby="roles-title">
-  <p class="chapter">Глава V · Три взгляда</p>
-  <h2 class="section-title" id="roles-title">Один вечер — три экрана.</h2>
-
-  <div class="roles-grid">
-    <div class="role-card reveal">
-      <h3>Гость</h3>
-      <p class="role-sub">видит простой диалог</p>
-      <div class="role-demo">
-        <div class="bubble guest small">Тихий стол у окна, пожалуйста</div>
-        <div class="bubble butler-msg small">Передал хостес. Она подтвердит стол.</div>
-      </div>
-    </div>
-
-    <div class="role-card reveal role-card-hostess">
-      <h3>Staff / Хостес</h3>
-      <p class="role-sub">видит карточку действия</p>
-      <div class="hostess-card" role="img" aria-label="Карточка хостес: гость Анна, стол 7, 20:00, пожелание — тихо у окна, последние сообщения, кнопки подтвердить и отклонить">
-        <div class="hc-head">Бронь #12 · сегодня 20:00</div>
-        <div class="hc-row"><span>Гость</span><strong>Анна · @anna</strong></div>
-        <div class="hc-row"><span>Стол</span><strong>№ 7 · двое</strong></div>
-        <div class="hc-row"><span>Посадка</span><strong>тихо, у окна</strong></div>
-        <div class="hc-msgs">
-          <div class="hc-msg">«мы можем опоздать минут на 10»</div>
-          <div class="hc-msg">«подготовьте свечу к десерту»</div>
-        </div>
-        <div class="hc-actions">
-          <span class="hc-btn hc-ok">Подтвердить</span>
-          <span class="hc-btn hc-no">Отклонить</span>
-        </div>
-      </div>
-    </div>
-
-    <div class="role-card reveal">
-      <h3>Менеджер</h3>
-      <p class="role-sub">видит контекст и спорные решения</p>
-      <div class="role-demo manager-demo">
-        <div class="mgr-row"><span class="mgr-dot warn"></span>Гость просит перенос — стол уже занят</div>
-        <div class="mgr-row"><span class="mgr-dot ok"></span>7 броней подтверждено сегодня</div>
-        <div class="mgr-row"><span class="mgr-dot"></span>3 service request за вечер</div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- ===================== 7. KILLER FEATURES ===================== -->
-<section class="section section-features" id="features" aria-labelledby="features-title">
-  <p class="chapter">Глава VI · Принципы</p>
-  <h2 class="section-title" id="features-title">Почему ему можно доверить зал.</h2>
-
-  <div class="features-list">
-    <div class="feature reveal">
-      <h3>FSM is business authority</h3>
-      <p>Каждое действие идет по явному сценарию. Никакой импровизации там, где на кону бронь и деньги.</p>
-    </div>
-    <div class="feature reveal">
-      <h3>AI outside business authority</h3>
-      <p>AI помогает понять и сформулировать — но не подтверждает брони, платежи и обещания.</p>
-    </div>
-    <div class="feature reveal">
-      <h3>Preference Map без скрытого профилирования</h3>
-      <p>Запоминается только то, что гость сказал сам и после согласия. «Не ем острое» — да. Слежка — нет.</p>
-    </div>
-    <div class="feature reveal">
-      <h3>Draft confirmation boundary</h3>
-      <p>Мерч, чаевые, donation и аукцион — всегда черновик, пока гость явно не подтвердил.</p>
-    </div>
-    <div class="feature reveal">
-      <h3>Hostess context pack</h3>
-      <p>Хостес получает не «заявку», а контекст: кто, когда, какое пожелание и что гость писал последним.</p>
-    </div>
-    <div class="feature reveal">
-      <h3>Staff / Admin / System projections</h3>
-      <p>Команда видит человеческие карточки в своих чатах — не сырой лог и не гостевой сценарий.</p>
-    </div>
-    <div class="feature reveal">
-      <h3>Media fidelity</h3>
-      <p>Меню, фото, видео и документы приходят гостю красиво и из управляемого каталога, а не «ссылкой на диск».</p>
-    </div>
-    <div class="feature reveal">
-      <h3>Guided question tail</h3>
-      <p>Каждый ответ мягко ведет дальше: «вам удобнее у окна или в тихой зоне?» — вместо «купите».</p>
-    </div>
-  </div>
-</section>
-
-<!-- ===================== 8. COMPARISON ===================== -->
-<section class="section section-compare" id="compare" aria-labelledby="compare-title">
-  <p class="chapter">Глава VII · Рядом с другими</p>
-  <h2 class="section-title" id="compare-title">Кнопки. Дворецкий. Платформа.</h2>
-  <p class="lede">Без агрессии: у каждого инструмента свое место. Вопрос в том, что нужно вашему залу.</p>
-
-  <div class="compare-grid">
-    <div class="compare-col reveal">
-      <div class="compare-icon" aria-hidden="true">
-        <svg viewBox="0 0 48 48" width="40" height="40"><g fill="none" stroke="currentColor" stroke-width="2"><rect x="10" y="14" width="28" height="20" rx="4"/><circle cx="19" cy="24" r="2" fill="currentColor"/><circle cx="29" cy="24" r="2" fill="currentColor"/><path d="M24 8 L24 14"/></g></svg>
-      </div>
-      <h3>Простой бот<span class="compare-price">≈ 5 000 ₽</span></h3>
-      <ul>
-        <li>Кнопки и FAQ</li>
-        <li>Нет памяти гостя</li>
-        <li>Нет сценарной власти</li>
-        <li>Заявка уходит «в никуда»</li>
-      </ul>
-      <p class="compare-verdict">Отвечает. Но не помнит и не ведет.</p>
-    </div>
-
-    <div class="compare-col compare-hero reveal">
-      <div class="compare-icon" aria-hidden="true">
-        <svg viewBox="0 0 48 48" width="40" height="40"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="18" cy="14" r="6"/><path d="M23 19 L36 32"/><path d="M31 27 L35 23"/><path d="M34 30 L38 26"/></g></svg>
-      </div>
+  <div class="product-split">
+    <article class="product-panel reveal">
+      <p class="product-kicker">Рестораны и отели</p>
       <h3>Astor Butler</h3>
+      <p>Дворецкий для заведения: принимает брони, отвечает по меню и правилам, собирает заявки на мероприятия, передает хостес и менеджеру понятные карточки действий.</p>
       <ul>
-        <li>Сценарии как источник истины</li>
-        <li>Память предпочтений после согласия</li>
-        <li>Staff context: хостес видит вечер</li>
-        <li>Event trail: каждый шаг наблюдаем</li>
+        <li>Брони столов и пожелания к посадке</li>
+        <li>Банкеты, корпоративы и частные мероприятия</li>
+        <li>Меню, винная карта, афиша и правила заведения</li>
+        <li>Интеграции с учетными и сервисными системами</li>
       </ul>
-      <p class="compare-verdict">Ведет гостя и дает команде контекст.</p>
-    </div>
+      <a href="astor_butler/" class="btn btn-quiet">Открыть Astor Butler</a>
+    </article>
 
-    <div class="compare-col reveal">
-      <div class="compare-icon" aria-hidden="true">
-        <svg viewBox="0 0 48 48" width="40" height="40"><g fill="none" stroke="currentColor" stroke-width="2"><rect x="8" y="10" width="32" height="22" rx="3"/><path d="M8 18 h32 M16 10 v22 M24 10 v22 M32 10 v22"/><path d="M18 38 h12"/></g></svg>
-      </div>
-      <h3>Enterprise AI<span class="compare-price">миллионы ₽</span></h3>
+    <article class="product-panel product-panel-accent reveal">
+      <p class="product-kicker">События и городские программы</p>
+      <h3>Astor Concierge</h3>
+      <p>Консьерж для события: помогает гостям разобраться с программой, площадкой, билетами, партнерами, закрытыми зонами и обращениями к организаторам.</p>
       <ul>
-        <li>Мощно и масштабно</li>
-        <li>Долгая интеграция</li>
-        <li>Не всегда держит ресторанный сценарий</li>
-        <li>Граница AI бывает размыта</li>
+        <li>Расписание, карта, зоны и правила доступа</li>
+        <li>Вопросы гостей за 1-2 пиковых дня</li>
+        <li>Закрытые зоны, столы, отели, партнерские предложения</li>
+        <li>Сбор обращений, контактов и итоговая аналитика</li>
       </ul>
-      <p class="compare-verdict">Сильная платформа — не всегда про ваш зал.</p>
-    </div>
+      <a href="astor_concierge/" class="btn btn-quiet">Открыть Astor Concierge</a>
+    </article>
   </div>
-
-  <p class="aside reveal">Astor Butler конкурирует не ценой кнопки, а ценой потерянного гостя, потерянной брони и потерянного контекста. <a href="docs/comparison.html" class="text-link">Полное сравнение →</a></p>
 </section>
 
-<!-- ===================== 9. BUSINESS ===================== -->
-<section class="section section-business" id="business" aria-labelledby="business-title">
-  <p class="chapter">Глава VIII · Модель</p>
-  <h2 class="section-title" id="business-title">Кто покупает. Кто пользуется.</h2>
+<section class="section" aria-labelledby="personal-title">
+  <p class="chapter">Персонализация</p>
+  <h2 class="section-title" id="personal-title">Astor принимает имя заказчика.</h2>
+  <p class="lede">Внутри работает общий Astor, а снаружи гость видит сервис знакомого бренда: заведения, отеля, фестиваля или городской программы.</p>
 
-  <div class="biz-cols">
-    <div class="biz-col reveal">
-      <h3>Покупатель</h3>
-      <p>Ресторатор. Отельер. Управляющая компания.</p>
+  <div class="identity-grid">
+    <div class="identity-card reveal">
+      <span>AERIS Butler</span>
+      <p>Дворецкий ресторана: бронь, меню, посадка, хостес, банкеты.</p>
     </div>
-    <div class="biz-col reveal">
-      <h3>Пользователь</h3>
-      <p>Гость ресторатора — в Telegram и будущем web-чате.</p>
+    <div class="identity-card reveal">
+      <span>Gastreet Concierge</span>
+      <p>Консьерж события: программа, карта, доступы, проживание, партнеры.</p>
     </div>
-  </div>
-
-  <div class="biz-stage reveal">
-    <h3>Первый этап</h3>
-    <div class="biz-numbers">
-      <div class="biz-num"><strong>RU</strong><span>первый рынок</span></div>
-      <div class="biz-num"><strong>10</strong><span>ресторанов</span></div>
-      <div class="biz-num"><strong>1</strong><span>отель</span></div>
-      <div class="biz-num"><strong>AERIS</strong><span>первый кейс</span></div>
-    </div>
-  </div>
-
-  <p class="next-chapter reveal">Города, стадионы и большие hospitality-контуры — <em>next chapter</em>.</p>
-</section>
-
-<!-- ===================== 10. FOUNDER STORY ===================== -->
-<section class="section section-story" id="story" aria-labelledby="story-title">
-  <p class="chapter">Глава IX · История</p>
-  <h2 class="section-title" id="story-title">Один съемочный день. Одна история основателя.</h2>
-
-  <div class="story-frame reveal">
-    <div class="story-screen" aria-hidden="true">
-      <div class="story-rec"><span class="rec-dot"></span>REC</div>
-      <div class="story-scene">AERIS · интерьер · вечерний свет</div>
-    </div>
-    <div class="story-text">
-      <p>Не рекламный ролик «про бота», а интервью-история: почему продукт родился из ресторанного опыта и что теряется между сообщением гостя и действием команды.</p>
-      <ul class="story-list">
-        <li>Интервью основателя — спокойно, без жаргона.</li>
-        <li>AERIS как живая площадка: сценарии показываются вживую, не на слайдах.</li>
-        <li>Ангельские инвестиции в Минске — уже случившийся этап истории.</li>
-        <li>Команда растет до 7 человек.</li>
-      </ul>
+    <div class="identity-card reveal">
+      <span>The Carlton Butler</span>
+      <p>Гостевой помощник отеля: заселение, услуги, ресторан, запросы гостя.</p>
     </div>
   </div>
 </section>
 
-<!-- ===================== 11. CTA / CHAT REVEAL ===================== -->
+<section class="section" aria-labelledby="service-title">
+  <p class="chapter">Принцип</p>
+  <h2 class="section-title" id="service-title">Сначала сервис, потом технология.</h2>
+  <p class="lede">Astor продается через понятную работу с гостем: принять запрос, уточнить детали, обещать только то, что можно выполнить, передать ответственному человеку и сохранить контекст.</p>
+
+  <div class="features-list compact-features">
+    <div class="feature reveal">
+      <h3>Гость говорит свободно</h3>
+      <p>Система принимает текст и голос, а ответы остаются в рамках правил сервиса.</p>
+    </div>
+    <div class="feature reveal">
+      <h3>Команда видит действие</h3>
+      <p>Хостес, менеджер или координатор получают карточку с сутью запроса вместо сырого чата.</p>
+    </div>
+    <div class="feature reveal">
+      <h3>Спорное подтверждает человек</h3>
+      <p>Бронь, перенос, отказ, платеж или особое условие уходят гостю после подтверждения ответственного человека.</p>
+    </div>
+    <div class="feature reveal">
+      <h3>Контекст остается в системе</h3>
+      <p>История запросов, согласия, предпочтения и решения доступны для разбора и улучшения сервиса.</p>
+    </div>
+  </div>
+</section>
+
+<section class="section" aria-labelledby="axes-title">
+  <p class="chapter">Восемь осей развития</p>
+  <h2 class="section-title" id="axes-title">Astor начинается с гостя и постепенно закрывает весь контур сервиса.</h2>
+  <p class="lede">Будущие возможности описаны как план развития. Они растут из того же основания: понятные сценарии, подтверждения, память контекста и ответственность команды.</p>
+
+  <div class="axis-grid">
+    <div class="axis-card reveal"><strong>Бронирование и загрузка</strong><span>столы, зоны, окна посещения, подтверждения хостес</span></div>
+    <div class="axis-card reveal"><strong>Предпочтения гостя</strong><span>явно названные привычки, ограничения, любимые места</span></div>
+    <div class="axis-card reveal"><strong>Тихий гид</strong><span>меню, афиша, рекомендации без давления и лишней рекламы</span></div>
+    <div class="axis-card reveal"><strong>Чаевые</strong><span>благодарность команде после явного подтверждения гостя</span></div>
+    <div class="axis-card reveal"><strong>Благотворительные взносы</strong><span>прозрачные сборы и отчеты по культурным или социальным инициативам</span></div>
+    <div class="axis-card reveal"><strong>Показатель вклада</strong><span>агрегированная польза события, команды и гостей без раскрытия личного</span></div>
+    <div class="axis-card reveal"><strong>Безопасные активности</strong><span>ритуалы, дегустации и специальные просьбы только через команду</span></div>
+    <div class="axis-card reveal"><strong>Канал прямой связи</strong><span>гость, команда, организаторы и партнеры в одном управляемом контуре</span></div>
+  </div>
+</section>
+
 <section class="section section-final" id="final" aria-labelledby="final-title">
-  <p class="chapter">Финал</p>
-  <h2 class="section-title" id="final-title">Что сегодня теряется между сообщением гостя и действием команды?</h2>
-  <p class="lede">Astor Butler нужен, чтобы это больше не терялось.</p>
+  <p class="chapter">Следующий шаг</p>
+  <h2 class="section-title" id="final-title">С чего начнем: заведение или событие?</h2>
+  <p class="lede">В заведении чаще всего начинают с брони, меню, банкетов и пожеланий к столу. На событии - с расписания, карты, доступов, потока вопросов и обращений к организаторам.</p>
 
   <div class="final-cta">
-    <button class="btn btn-gold btn-lg" id="openChatBtn">Поговорить с дворецким</button>
-    <a href="https://t.me/astor_butler_bot" class="btn btn-telegram" target="_blank" rel="noopener">
-      <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path fill="currentColor" d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/></svg>
-      Написать в Telegram
-    </a>
+    <a href="astor_butler/" class="btn btn-quiet btn-lg">Для ресторана или отеля</a>
+    <a href="astor_concierge/" class="btn btn-quiet btn-lg">Для события</a>
   </div>
 
-  <nav class="doc-links" aria-label="Коммерческие документы">
-    <a href="docs/offer.html">Коммерческое предложение</a>
-    <a href="docs/comparison.html">Сравнение с аналогами</a>
-    <a href="docs/brand.html">Бренд-гайд</a>
-  </nav>
-
   <footer class="footer">
-    <div class="footer-logo">ASTOR<span class="footer-key" aria-hidden="true">⚿</span>BUTLER</div>
-    <p>Цифровой дворецкий для ресторана · AERIS — первый кейс · © 2026</p>
+    <div class="footer-logo">ASTOR ASSIST</div>
+    <p>Система гостевого внимания для заведений, событий и городских программ · 2026</p>
   </footer>
 </section>
 
 </main>
 
-<!-- ===================== CHAT WIDGET ===================== -->
-<div class="chat-widget" id="chatWidget" aria-hidden="true">
-  <div class="chat-panel" role="dialog" aria-label="Чат с дворецким Astor Butler">
-    <div class="chat-head">
-      <div class="chat-head-title">
-        <span class="chat-avatar" aria-hidden="true">⚿</span>
-        <div>
-          <strong>Astor Butler</strong>
-          <span class="chat-status">дворецкий на связи</span>
-        </div>
-      </div>
-      <button class="chat-close" id="chatCloseBtn" aria-label="Закрыть чат">×</button>
-    </div>
-    <div class="chat-log" id="chatLog" aria-live="polite"></div>
-    <form class="chat-form" id="chatForm">
-      <label class="visually-hidden" for="chatInput">Ваше сообщение</label>
-      <input type="text" id="chatInput" placeholder="Например: стол на двоих в пятницу…" autocomplete="off" maxlength="500">
-      <button type="submit" aria-label="Отправить">
-        <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path fill="currentColor" d="M2 21l21-9L2 3v7l15 2-15 2z"/></svg>
-      </button>
-    </form>
-  </div>
-  <button class="chat-fab" id="chatFab" aria-label="Открыть чат с дворецким">
-    <svg viewBox="0 0 24 60" width="14" height="34" aria-hidden="true">
-      <g fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round">
-        <circle cx="12" cy="12" r="8"/>
-        <path d="M12 20 L12 52"/>
-        <path d="M12 40 L19 40"/>
-        <path d="M12 48 L17 48"/>
-      </g>
-    </svg>
-  </button>
-</div>
-
-<script src="js/widget.js" defer></script>
 <script src="js/main.js" defer></script>
 </body>
 </html>

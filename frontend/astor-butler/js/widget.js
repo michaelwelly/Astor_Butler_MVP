@@ -12,7 +12,9 @@
    ============================================================ */
 
 window.AstorChatConfig = {
-  endpoint: isLocalhost() ? "http://localhost:8080/api/messages" : null,
+  endpoint: isLocalhost()
+    ? "http://localhost:8080/api/messages"
+    : "https://excess-magnet-ultimately-highways.trycloudflare.com/api/messages",
   channel: "WEB",
   site: "astor-butler-commercial",
 };

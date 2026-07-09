@@ -10,6 +10,47 @@
 - Telegram Bot API как транспорт/UI
 - FSM как single source of truth для диалогов
 
+## LLM Understanding Boundary 2026-07-08
+
+- Table booking moves toward LLM-assisted understanding, but FSM remains the authority.
+- `LlmUnderstandingService` is the first structured understanding slice:
+  - input: raw guest text, current FSM state, normalized local text, local slots;
+  - output: strict JSON parsed into `LlmUnderstandingResult`;
+  - fields: `intent`, `confidence`, `slots`, `missingSlots`, `replyDraft`;
+  - no business side effects are allowed in the LLM layer.
+- `GuestInputUnderstandingService` can merge LLM slots and intent only behind feature flag:
+  - property: `astor.understanding.llm.enabled`;
+  - default: `false`;
+  - minimum confidence property: `astor.understanding.llm.min-confidence`, default `0.70`.
+- Current rule-based/Natasha/pgvector path stays as fallback and regression baseline.
+- Product direction:
+  - keep target corpora as executable regression contracts;
+  - `src/test/resources/understanding/table-booking-target-corpus.jsonl` stores table booking phrases with `PASS` and `KNOWN_GAP` status;
+  - run current rules and LLM-understanding against the same corpus;
+  - persist uncertain/failed cases into review queue later;
+  - promote reviewed examples into pgvector/few-shot prompts;
+  - use fine-tuning only after enough reviewed data exists.
+- Operational safety rule: LLM may classify and draft wording, but order creation, hold, cancel, change, payment and confirmation stay in FSM/domain services.
+
+## Yandex AI Studio Provider Prep 2026-07-08
+
+- Local Ollama/Qwen is no longer treated as the realtime understanding baseline on CPU-only development hardware.
+- `YandexModelGateway` is introduced as a cloud text-generation provider behind the existing `ModelGateway` contract.
+- Runtime switch:
+  - `ASTOR_MODEL_PROVIDER=yandex`;
+  - `YANDEX_FOLDER_ID=<folder>`;
+  - `YANDEX_API_KEY=<api-key>` or `YANDEX_IAM_TOKEN=<iam-token>`;
+  - `YANDEX_MODEL=yandexgpt-5-lite` for frontline understanding;
+  - `YANDEX_QUALITY_MODEL=yandexgpt-5.1` for heavier quality calls.
+- Yandex Completion API contract:
+  - endpoint: `POST /foundationModels/v1/completion`;
+  - auth: `Authorization: Api-Key ...` or `Authorization: Bearer ...`;
+  - model URI: `gpt://<folder_ID>/<model>`;
+  - `jsonObject=true` is enabled for JSON-oriented requests such as `intent-slots-json`.
+- `ModelGateway` still owns provider choice; FSM/domain services remain provider-agnostic.
+- Current Yandex provider scope is text generation only. `generateEmbedding` and `analyzeImage` return safe empty fallback responses until dedicated Yandex embeddings/vision adapters are wired.
+- Probe script for first live measurement: `scripts/probe_yandex_understanding.mjs`.
+
 ## Архитектурный принцип
 
 FSM управляет состоянием диалога, разрешенными переходами и структурой сбора данных. Telegram не содержит бизнес-логики и работает как транспорт.
@@ -150,6 +191,21 @@ FSM управляет состоянием диалога, разрешенны
 - VLM подключен как первый vision capability contract: `ModelGateway.analyzeImage(...)` -> Ollama `/api/chat` with `images`, default `LLM_OLLAMA_VISION_MODEL=qwen2.5vl:3b`.
 - Runtime note: `qwen2.5vl:3b` скачан локально, но текущий Docker Desktop memory limit не дает выполнить smoke (`requires 10.1 GiB`, available `9.5 GiB`). Для Qwen2.5-VL нужен больший лимит памяти или отдельный lighter dev fallback; это не меняет gateway-контракт.
 - Future STT/TTS/cloud vision/cloud embeddings подключаются тем же способом: модель возвращает candidates/slots/text/summary/confidence, а state transition, order, hold, payment и confirmation решает FSM/domain layer.
+
+## Omnichannel / Telephony / Network Boundary 2026-07-07
+
+- Astor Butler product page may describe the product as an omnichannel personal AI agent, not only a Telegram bot.
+- Telegram remains the first MVP transport, but target adapters include web-chat, telephony/SIP, WhatsApp Business API, MAX official bot/API, Instagram Direct through Meta Messaging API where available, and REST API clients.
+- Every channel must normalize inbound data into the same `MessageGatewayService` contract: canonical text, media references, channel identity, correlation id, consent metadata, timestamp and raw payload reference.
+- Telephony is a transport adapter: SIP/virtual PBX -> call session -> STT transcript -> Message Gateway -> GuestInputUnderstandingService -> FSM. Voice response/TTS is future capability; first production slice may be assist mode with transcript, summary and staff card.
+- Business logic must not fork per messenger. FSM/domain services remain the business authority.
+- Confirmation policy now has maturity levels: `human approval`, `assisted approval`, `trusted automation`, `human oversight`.
+- Commercial wording should use "поточный режим" for validated automation: typical actions execute within rules and limits while staff supervises exceptions.
+- `trusted automation` requires domain validation, integration with availability/booking/payment system, audit trail, observability, rollback/override policy and explicit operational limits.
+- Model Gateway production provider examples include local Qwen/Ollama, OpenAI-compatible APIs and YandexGPT as a Russian provider adapter. Provider choice is runtime policy, not scenario logic.
+- Network boundary: guests and Russian public channels reach normal HTTPS endpoints without VPN. Provider-specific outbound access goes through controlled integration gateways and egress policy.
+- Integration gateway may run in a required region outside/inside RF depending on provider requirements. Backend-to-gateway and venue-to-backend links use WireGuard/IPsec/managed private connectivity.
+- This is an integration architecture, not a business-logic bypass: official APIs, customer-available access and legal constraints remain part of adapter acceptance criteria.
 
 ## Support Ticket System Design Draft 2026-06-23
 

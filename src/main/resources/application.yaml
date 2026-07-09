@@ -70,6 +70,11 @@ astor:
       enabled: ${ASTOR_SCENARIO_REPLY_LLM_ENABLED:false}
       max-rag-chars: ${ASTOR_SCENARIO_REPLY_MAX_RAG_CHARS:900}
       timeout-ms: ${ASTOR_SCENARIO_REPLY_LLM_TIMEOUT_MS:6500}
+  understanding:
+    llm:
+      enabled: ${ASTOR_UNDERSTANDING_LLM_ENABLED:false}
+      min-confidence: ${ASTOR_UNDERSTANDING_LLM_MIN_CONFIDENCE:0.70}
+      timeout-ms: ${ASTOR_UNDERSTANDING_LLM_TIMEOUT_MS:6500}
   nlu:
     duckling:
       enabled: ${ASTOR_NLU_DUCKLING_ENABLED:false}
@@ -197,9 +202,16 @@ llm:
 
 yandex:
   ai:
+    base-url: ${YANDEX_AI_BASE_URL:https://llm.api.cloud.yandex.net}
     agent-endpoint: ${YANDEX_AGENT_ENDPOINT:https://ai.api.cloud.yandex.net/v1/agents/fvt51f9cslgi648vvg35:execute}
     folder-id: ${YANDEX_FOLDER_ID:}
+    api-key: ${YANDEX_API_KEY:}
     iam-token: ${YANDEX_IAM_TOKEN:}
+    model: ${YANDEX_MODEL:yandexgpt-5-lite}
+    quality-model: ${YANDEX_QUALITY_MODEL:yandexgpt-5.1}
+    timeout-ms: ${YANDEX_TIMEOUT_MS:8000}
+    max-tokens: ${YANDEX_MAX_TOKENS:256}
+    temperature: ${YANDEX_TEMPERATURE:0.1}
 
 server:
   port: ${SERVER_PORT:8088}

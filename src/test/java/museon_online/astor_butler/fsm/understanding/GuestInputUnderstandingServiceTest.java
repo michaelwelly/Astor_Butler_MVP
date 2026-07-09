@@ -5,19 +5,27 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import museon_online.astor_butler.domain.semantic.EmbeddingProvider;
 import museon_online.astor_butler.domain.semantic.IntentExampleRepository;
 import museon_online.astor_butler.fsm.core.BotState;
+import museon_online.astor_butler.model.ModelCapability;
+import museon_online.astor_butler.model.ModelGateway;
+import museon_online.astor_butler.model.ModelTextRequest;
+import museon_online.astor_butler.model.ModelTextResponse;
 import org.junit.jupiter.api.Test;
+import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.web.client.ResourceAccessException;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -182,5 +190,113 @@ class GuestInputUnderstandingServiceTest {
         assertThat(understood.primaryIntent()).isEqualTo(InputIntent.PROVIDE_TABLE_SELECTION);
         assertThat(understood.slots()).containsKey("seatingPreference");
         assertThat(understood.confidence()).isGreaterThanOrEqualTo(0.72);
+    }
+
+    @Test
+    void llmUnderstandingCanSupplyIntentAndSlotsBehindFeatureFlag() {
+        ModelGateway modelGateway = mock(ModelGateway.class);
+        when(modelGateway.generateText(any(ModelTextRequest.class))).thenReturn(new ModelTextResponse(
+                """
+                {
+                  "intent": "TABLE_BOOKING",
+                  "confidence": 0.91,
+                  "slots": {
+                    "date": "завтра",
+                    "time": "20:00",
+                    "partySize": "4",
+                    "seatingPreference": "спокойное место"
+                  },
+                  "missingSlots": [],
+                  "replyDraft": "Понял, завтра после восьми на четверых, место поспокойнее."
+                }
+                """,
+                "test-llm",
+                "structured-test",
+                ModelCapability.TEXT_GENERATION,
+                Duration.ofMillis(12),
+                false,
+                Map.of()
+        ));
+        LlmUnderstandingService llm = new LlmUnderstandingService(modelGateway, objectMapper);
+        ReflectionTestUtils.setField(llm, "enabled", true);
+        ReflectionTestUtils.setField(llm, "minConfidence", 0.70);
+        GuestInputUnderstandingService withLlm = new GuestInputUnderstandingService(
+                null,
+                null,
+                List.of(),
+                llm
+        );
+
+        UnderstoodInput understood = withLlm.understand(
+                "мы завтра после восьми будем где-то вчетвером, можно место поспокойнее?",
+                BotState.READY_FOR_DIALOG
+        );
+
+        assertThat(understood.primaryIntent()).isEqualTo(InputIntent.TABLE_BOOKING);
+        assertThat(understood.slots()).containsKeys("date", "time", "partySize", "seatingPreference");
+        assertThat(understood.slots().get("time").value()).isEqualTo("20:00");
+        assertThat(understood.slots().get("partySize").value()).isEqualTo("4");
+        assertThat(understood.slots().get("seatingPreference").value()).contains("спокойное");
+    }
+
+    @Test
+    void llmUnderstandingTimeoutFallsBackToLocalPipeline() {
+        ModelGateway modelGateway = mock(ModelGateway.class);
+        when(modelGateway.generateText(any(ModelTextRequest.class))).thenAnswer(invocation -> {
+            Thread.sleep(200);
+            return ModelTextResponse.text("", "slow-test", "slow-model", Duration.ofMillis(200));
+        });
+        LlmUnderstandingService llm = new LlmUnderstandingService(modelGateway, objectMapper);
+        ReflectionTestUtils.setField(llm, "enabled", true);
+        ReflectionTestUtils.setField(llm, "timeoutMs", 30L);
+        GuestInputUnderstandingService withLlm = new GuestInputUnderstandingService(
+                null,
+                null,
+                List.of(),
+                llm
+        );
+
+        UnderstoodInput understood = withLlm.understand(
+                "Хочу стол завтра в 20:00 на двоих у окна",
+                BotState.READY_FOR_DIALOG
+        );
+
+        assertThat(understood.primaryIntent()).isEqualTo(InputIntent.TABLE_BOOKING);
+        assertThat(understood.slots()).containsKeys("date", "time", "partySize", "seatingPreference");
+    }
+
+    @Test
+    void tableBookingTargetCorpusDocumentsCurrentBaselineAndKnownGaps() throws Exception {
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(
+                Objects.requireNonNull(getClass().getResourceAsStream("/understanding/table-booking-target-corpus.jsonl")),
+                StandardCharsets.UTF_8
+        ))) {
+            String line;
+            int passCases = 0;
+            int knownGaps = 0;
+            while ((line = reader.readLine()) != null) {
+                JsonNode testCase = objectMapper.readTree(line);
+                String status = testCase.path("status").asText();
+                UnderstoodInput understood = service.understand(
+                        testCase.get("text").asText(),
+                        BotState.valueOf(testCase.get("state").asText())
+                );
+                if ("KNOWN_GAP".equals(status)) {
+                    knownGaps++;
+                    continue;
+                }
+                passCases++;
+                assertThat(understood.primaryIntent())
+                        .as(testCase.path("id").asText() + " " + testCase.path("text").asText())
+                        .isEqualTo(InputIntent.valueOf(testCase.get("intent").asText()));
+                JsonNode slots = testCase.path("slots");
+                slots.fields().forEachRemaining(entry -> assertThat(understood.slots())
+                        .as(testCase.path("id").asText() + " slot " + entry.getKey())
+                        .containsKey(entry.getKey()));
+            }
+
+            assertThat(passCases).isGreaterThanOrEqualTo(10);
+            assertThat(knownGaps).isGreaterThanOrEqualTo(10);
+        }
     }
 }

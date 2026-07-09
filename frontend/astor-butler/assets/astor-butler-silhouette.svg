@@ -1,0 +1,81 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 620" role="img" aria-labelledby="title desc">
+  <title id="title">Astor Butler silhouette</title>
+  <desc id="desc">Monochrome butler mascot silhouette in a tailored suit with glasses, tie, sneakers and a key chain.</desc>
+  <defs>
+    <linearGradient id="suit" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0" stop-color="#5f5f60"/>
+      <stop offset="0.48" stop-color="#2f3032"/>
+      <stop offset="1" stop-color="#101113"/>
+    </linearGradient>
+    <linearGradient id="shirt" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0" stop-color="#f2eee4"/>
+      <stop offset="1" stop-color="#bcb5a6"/>
+    </linearGradient>
+    <filter id="shadow" x="-30%" y="-20%" width="160%" height="150%">
+      <feDropShadow dx="0" dy="28" stdDeviation="24" flood-color="#000000" flood-opacity="0.55"/>
+    </filter>
+    <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="3" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <g filter="url(#shadow)">
+    <ellipse cx="180" cy="590" rx="84" ry="12" fill="#000" opacity="0.42"/>
+
+    <!-- legs -->
+    <path d="M132 330 C126 389 123 466 118 550 C136 558 151 557 164 550 C170 479 176 418 180 358 C184 418 191 479 197 550 C211 558 228 558 244 550 C239 466 234 389 228 330 Z" fill="#141516"/>
+    <path d="M119 552 C111 560 105 571 101 586 C124 594 148 591 169 583 C168 570 166 560 164 550 C149 557 135 558 119 552 Z" fill="#090909"/>
+    <path d="M197 550 C195 560 193 570 192 583 C213 591 237 594 260 586 C256 571 250 560 243 552 C228 558 211 558 197 550 Z" fill="#090909"/>
+    <path d="M104 580 C124 585 146 583 168 575" fill="none" stroke="#d5d0c4" stroke-width="3" opacity="0.55"/>
+    <path d="M192 575 C214 583 236 585 256 580" fill="none" stroke="#d5d0c4" stroke-width="3" opacity="0.55"/>
+
+    <!-- jacket -->
+    <path d="M93 168 C72 226 64 301 75 392 C94 405 118 412 147 413 L176 266 L185 266 L214 413 C242 412 266 405 286 392 C296 302 288 226 267 168 C241 148 211 139 180 139 C149 139 119 148 93 168 Z" fill="url(#suit)"/>
+    <path d="M93 168 C119 187 145 217 171 264 C151 315 135 363 124 410 C105 407 88 401 75 392 C64 302 72 226 93 168 Z" fill="#171819" opacity="0.78"/>
+    <path d="M267 168 C241 187 215 217 189 264 C210 315 225 363 236 410 C255 407 273 401 286 392 C296 302 288 226 267 168 Z" fill="#202124" opacity="0.82"/>
+
+    <!-- shirt and tie -->
+    <path d="M144 152 L180 268 L216 152 C205 145 193 141 180 141 C167 141 155 145 144 152 Z" fill="url(#shirt)"/>
+    <path d="M169 178 L180 160 L191 178 L186 245 L180 269 L174 245 Z" fill="#090909"/>
+    <path d="M144 152 L165 180 L180 145 C166 143 154 145 144 152 Z" fill="#f5efe4" opacity="0.86"/>
+    <path d="M216 152 L195 180 L180 145 C194 143 206 145 216 152 Z" fill="#f5efe4" opacity="0.8"/>
+    <path d="M148 229 C164 237 196 237 212 229" fill="none" stroke="#d7b84c" stroke-width="3" opacity="0.32"/>
+
+    <!-- lapels and buttons -->
+    <path d="M112 171 C133 201 151 235 169 267 C148 283 130 300 116 318 C118 267 115 219 112 171 Z" fill="#3e3f41" opacity="0.84"/>
+    <path d="M248 171 C227 201 209 235 191 267 C212 283 230 300 244 318 C242 267 245 219 248 171 Z" fill="#343537" opacity="0.86"/>
+    <circle cx="198" cy="284" r="4" fill="#d7b84c" opacity="0.75"/>
+    <circle cx="201" cy="313" r="4" fill="#d7b84c" opacity="0.64"/>
+    <circle cx="199" cy="342" r="4" fill="#d7b84c" opacity="0.58"/>
+
+    <!-- arms -->
+    <path d="M94 176 C67 224 48 287 47 355 C58 363 70 367 84 366 C91 306 105 258 124 213 Z" fill="#171819"/>
+    <path d="M266 176 C293 224 312 287 313 355 C302 363 290 367 276 366 C269 306 255 258 236 213 Z" fill="#171819"/>
+    <path d="M48 352 C45 373 51 388 66 394 C82 388 88 378 84 364 C70 367 58 363 48 352 Z" fill="#0f1011"/>
+    <path d="M312 352 C315 373 309 388 294 394 C278 388 272 378 276 364 C290 367 302 363 312 352 Z" fill="#0f1011"/>
+
+    <!-- key chain -->
+    <path d="M215 331 C233 342 248 349 263 351" fill="none" stroke="#d7b84c" stroke-width="3" stroke-linecap="round" opacity="0.75" filter="url(#glow)"/>
+    <circle cx="270" cy="352" r="10" fill="none" stroke="#d7b84c" stroke-width="3" opacity="0.8"/>
+    <path d="M278 352 L300 352 M291 352 L291 360 M297 352 L297 358" fill="none" stroke="#d7b84c" stroke-width="3" stroke-linecap="round" opacity="0.78"/>
+
+    <!-- neck and head -->
+    <path d="M160 123 L160 150 C170 158 190 158 200 150 L200 123 Z" fill="#d6c8b6"/>
+    <path d="M138 82 C138 49 157 28 181 28 C205 28 224 49 224 82 C224 116 204 139 181 139 C157 139 138 116 138 82 Z" fill="#d7c9b8"/>
+    <path d="M137 76 C138 37 160 18 185 18 C211 18 229 42 224 77 C206 55 176 51 144 69 Z" fill="#d9d9d9"/>
+    <path d="M152 110 C169 124 193 124 209 110 C202 139 159 139 152 110 Z" fill="#24201d" opacity="0.55"/>
+    <path d="M160 100 C172 107 190 107 202 100" fill="none" stroke="#4b4038" stroke-width="5" stroke-linecap="round" opacity="0.7"/>
+    <path d="M153 80 H177 M184 80 H209" fill="none" stroke="#111" stroke-width="6" stroke-linecap="round"/>
+    <path d="M177 80 C180 77 181 77 184 80" fill="none" stroke="#111" stroke-width="3" stroke-linecap="round"/>
+    <circle cx="165" cy="80" r="12" fill="none" stroke="#111" stroke-width="3"/>
+    <circle cx="197" cy="80" r="12" fill="none" stroke="#111" stroke-width="3"/>
+
+    <!-- posture highlight -->
+    <path d="M91 390 C119 410 151 419 180 419 C209 419 241 410 269 390" fill="none" stroke="#f5efe4" stroke-width="2" opacity="0.12"/>
+    <path d="M92 168 C123 144 153 132 180 132 C207 132 237 144 268 168" fill="none" stroke="#f5efe4" stroke-width="2" opacity="0.16"/>
+  </g>
+</svg>

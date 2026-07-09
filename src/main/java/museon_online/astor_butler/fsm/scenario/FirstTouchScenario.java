@@ -20,6 +20,7 @@ public class FirstTouchScenario implements FsmScenario {
     private final FSMStorage fsmStorage;
     private final ConsentVaultService consentVaultService;
     private final TableBookingDraftStorage tableBookingDraftStorage;
+    private final ChangeCancelDraftStorage changeCancelDraftStorage;
 
     public String id() {
         return "FIRST_TOUCH";
@@ -50,7 +51,7 @@ public class FirstTouchScenario implements FsmScenario {
         if (hasContact(incoming)) {
             return FirstTouchSignal.CONTACT_SHARED;
         }
-        if ("/start".equalsIgnoreCase(text)) {
+        if ("/start".equalsIgnoreCase(text) || "/restart".equalsIgnoreCase(text)) {
             return FirstTouchSignal.START_COMMAND;
         }
         if (currentState == BotState.UNKNOWN && incoming.telegramUserId() != null) {
@@ -63,12 +64,14 @@ public class FirstTouchScenario implements FsmScenario {
     }
 
     private OutgoingMessage handleStart(IncomingMessage incoming) {
+        fsmStorage.clear(incoming.chatId());
         tableBookingDraftStorage.clear(incoming.chatId());
+        changeCancelDraftStorage.clear(incoming.chatId());
         if (consentVaultService.hasGrantedPrivacyPolicy(incoming.telegramUserId())) {
             fsmStorage.setState(incoming.chatId(), BotState.READY_FOR_DIALOG);
             return OutgoingMessage.of(
                     incoming,
-                    "",
+                    restartText(incoming),
                     BotState.READY_FOR_DIALOG.name(),
                     false,
                     false,
@@ -94,6 +97,14 @@ public class FirstTouchScenario implements FsmScenario {
                 AdminAlert.none(),
                 List.of("SAFE_RESTART", "REQUEST_CONTACT", "CONSENT_REQUIRED")
         );
+    }
+
+    private String restartText(IncomingMessage incoming) {
+        String text = incoming == null ? "" : incoming.text();
+        if ("/restart".equalsIgnoreCase(text == null ? "" : text.trim())) {
+            return "Перезапустил диалог и вернул главное меню. Можно начать заново: стол, меню, афиша, мероприятие или помощь команды.";
+        }
+        return "";
     }
 
     private OutgoingMessage handleContact(IncomingMessage incoming) {

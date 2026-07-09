@@ -3,6 +3,7 @@
 config/env/
 .DS_Store
 target/
+build/
 frontend/node_modules/
 frontend/.next/
 frontend/out/

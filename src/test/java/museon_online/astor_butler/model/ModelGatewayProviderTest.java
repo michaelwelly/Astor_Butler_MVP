@@ -3,6 +3,7 @@ package museon_online.astor_butler.model;
 import museon_online.astor_butler.llm.OllamaClient;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.runner.ApplicationContextRunner;
+import org.springframework.boot.web.client.RestTemplateBuilder;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
@@ -14,13 +15,16 @@ class ModelGatewayProviderTest {
                 OllamaClient client = mock(OllamaClient.class);
                 return client;
             })
-            .withUserConfiguration(SpringAiOllamaModelGateway.class, OllamaModelGateway.class)
+            .withBean(RestTemplateBuilder.class, RestTemplateBuilder::new)
+            .withUserConfiguration(SpringAiOllamaModelGateway.class, OllamaModelGateway.class, YandexModelGateway.class)
             .withPropertyValues(
                     "llm.ollama.base-url=http://localhost:11434",
                     "llm.ollama.model=qwen2.5:1.5b",
                     "llm.ollama.frontline-model=qwen2.5:1.5b",
                     "llm.ollama.quality-model=qwen2.5:3b",
-                    "llm.ollama.keep-alive=30m"
+                    "llm.ollama.keep-alive=30m",
+                    "yandex.ai.folder-id=test-folder",
+                    "yandex.ai.api-key=test-key"
             );
 
     @Test
@@ -38,6 +42,16 @@ class ModelGatewayProviderTest {
                 .run(context -> {
                     assertThat(context).hasSingleBean(ModelGateway.class);
                     assertThat(context.getBean(ModelGateway.class)).isInstanceOf(OllamaModelGateway.class);
+                });
+    }
+
+    @Test
+    void yandexProviderCanBeSelectedExplicitly() {
+        contextRunner
+                .withPropertyValues("astor.model.provider=yandex")
+                .run(context -> {
+                    assertThat(context).hasSingleBean(ModelGateway.class);
+                    assertThat(context.getBean(ModelGateway.class)).isInstanceOf(YandexModelGateway.class);
                 });
     }
 }
