@@ -7,7 +7,8 @@ import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.ai.ollama.OllamaChatModel;
 import org.springframework.ai.ollama.OllamaEmbeddingModel;
 import org.springframework.ai.ollama.api.OllamaApi;
-import org.springframework.ai.ollama.api.OllamaOptions;
+import org.springframework.ai.ollama.api.OllamaChatOptions;
+import org.springframework.ai.ollama.api.OllamaEmbeddingOptions;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
@@ -39,20 +40,16 @@ public class SpringAiOllamaModelGateway implements ModelGateway {
         this.defaultEmbeddingModel = defaultEmbeddingModel == null || defaultEmbeddingModel.isBlank()
                 ? "nomic-embed-text"
                 : defaultEmbeddingModel;
-        OllamaApi ollamaApi = new OllamaApi(baseUrl);
+        OllamaApi ollamaApi = OllamaApi.builder()
+                .baseUrl(baseUrl)
+                .build();
         this.chatModel = OllamaChatModel.builder()
                 .ollamaApi(ollamaApi)
-                .defaultOptions(OllamaOptions.builder()
-                        .model(defaultModel)
-                        .keepAlive(keepAlive)
-                        .numPredict(50)
-                        .temperature(0.2)
-                        .topP(0.9)
-                        .build())
+                .options(chatOptions(defaultModel))
                 .build();
         this.embeddingModel = OllamaEmbeddingModel.builder()
                 .ollamaApi(ollamaApi)
-                .defaultOptions(OllamaOptions.builder()
+                .options(OllamaEmbeddingOptions.builder()
                         .model(this.defaultEmbeddingModel)
                         .keepAlive(keepAlive)
                         .build())
@@ -70,13 +67,7 @@ public class SpringAiOllamaModelGateway implements ModelGateway {
         try {
             ChatResponse response = chatModel.call(new Prompt(
                     request.prompt(),
-                    OllamaOptions.builder()
-                            .model(modelName)
-                            .keepAlive(keepAlive)
-                            .numPredict(50)
-                            .temperature(0.2)
-                            .topP(0.9)
-                            .build()
+                    chatOptions(modelName)
             ));
             Duration latency = Duration.ofNanos(System.nanoTime() - startedAt);
             String text = response != null && response.getResult() != null
@@ -220,5 +211,15 @@ public class SpringAiOllamaModelGateway implements ModelGateway {
             result.add((double) value);
         }
         return result;
+    }
+
+    private OllamaChatOptions chatOptions(String modelName) {
+        OllamaChatOptions.Builder builder = OllamaChatOptions.builder()
+                .keepAlive(keepAlive)
+                .numPredict(50)
+                .temperature(0.2)
+                .topP(0.9);
+        builder.model(modelName);
+        return builder.build();
     }
 }

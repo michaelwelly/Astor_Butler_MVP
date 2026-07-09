@@ -118,8 +118,8 @@ See:
 
 ## Runtime Stack
 
-- Java 21
-- Spring Boot 3
+- Java 25
+- Spring Boot 4
 - JDBC and Liquibase
 - PostgreSQL and pgvector
 - Redis

@@ -2,7 +2,7 @@
 
 ## Коротко
 
-Astor Butler MVP - Java 21 + Spring Boot монолит для Telegram-бота с FSM-архитектурой.
+Astor Butler MVP - Java 25 + Spring Boot 4 монолит для Telegram-бота с FSM-архитектурой.
 
 Telegram - транспорт и UI. FSM - single source of truth для сценариев общения.
 

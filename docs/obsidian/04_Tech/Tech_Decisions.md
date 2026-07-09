@@ -2,13 +2,22 @@
 
 ## Базовый стек
 
-- Java 21
-- Spring Boot
+- Java 25
+- Spring Boot 4
 - PostgreSQL для пользователей и основной бизнес-структуры
 - Redis для быстрых операций, кеша и ускорения загрузки
 - MongoDB для хранения файлов/документов и связанных метаданных
 - Telegram Bot API как транспорт/UI
 - FSM как single source of truth для диалогов
+
+## Java 25 / Spring Boot 4 Baseline 2026-07-09
+
+- Backend baseline обновлен до Java 25 и Spring Boot 4.1.
+- Локальная машина пока может не иметь установленный JDK 25; проверочный путь для миграции - Docker image `maven:3.9-eclipse-temurin-25`.
+- Docker runtime base обновлен на `eclipse-temurin:25-jre`.
+- Spring AI обновлен до 2.0.0; Ollama adapter использует `spring-ai-starter-model-ollama`, `OllamaChatOptions` и `OllamaEmbeddingOptions`.
+- Spring Boot 4 перенес `RestTemplateBuilder` в `org.springframework.boot.restclient` и заменил `setConnectTimeout`/`setReadTimeout` на `connectTimeout`/`readTimeout`.
+- Проверка миграции: `docker run --rm -v "$PWD":/workspace -v "$HOME/.m2":/root/.m2 -w /workspace maven:3.9-eclipse-temurin-25 mvn -q test`.
 
 ## LLM Understanding Boundary 2026-07-08
 

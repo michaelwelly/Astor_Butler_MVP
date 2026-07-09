@@ -7,7 +7,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.boot.web.client.RestTemplateBuilder;
+import org.springframework.boot.restclient.RestTemplateBuilder;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -43,8 +43,8 @@ public class DucklingRussianNluAdapter implements RussianNluAdapter {
             @Value("${astor.nlu.duckling.timeout-ms:500}") int timeoutMs
     ) {
         this.restTemplate = restTemplateBuilder
-                .setConnectTimeout(Duration.ofMillis(timeoutMs))
-                .setReadTimeout(Duration.ofMillis(timeoutMs))
+                .connectTimeout(Duration.ofMillis(timeoutMs))
+                .readTimeout(Duration.ofMillis(timeoutMs))
                 .build();
         this.objectMapper = objectMapper;
         this.url = url;

@@ -3,7 +3,7 @@ package museon_online.astor_butler.model;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.boot.web.client.RestTemplateBuilder;
+import org.springframework.boot.restclient.RestTemplateBuilder;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -44,8 +44,8 @@ public class YandexModelGateway implements ModelGateway {
             @Value("${yandex.ai.temperature:0.1}") double temperature
     ) {
         this.restTemplate = restTemplateBuilder
-                .setConnectTimeout(Duration.ofMillis(Math.max(1, timeoutMs)))
-                .setReadTimeout(Duration.ofMillis(Math.max(1, timeoutMs)))
+                .connectTimeout(Duration.ofMillis(Math.max(1, timeoutMs)))
+                .readTimeout(Duration.ofMillis(Math.max(1, timeoutMs)))
                 .build();
         this.baseUrl = trimTrailingSlash(baseUrl);
         this.folderId = blankToNull(folderId);

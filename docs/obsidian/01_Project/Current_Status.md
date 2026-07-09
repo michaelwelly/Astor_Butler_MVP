@@ -80,7 +80,7 @@ Telegram preview хранится через `telegram_profiles.preview_message_
 
 ## Один экран
 
-Astor Butler MVP сейчас строится как Java 21 + Spring Boot backend для Telegram/FSM сценариев с локальной инфраструктурой вокруг PostgreSQL, Redis, MongoDB, MinIO, Kafka, Redpanda Console, Prometheus и Grafana.
+Astor Butler MVP сейчас строится как Java 25 + Spring Boot 4 backend для Telegram/FSM сценариев с локальной инфраструктурой вокруг PostgreSQL, Redis, MongoDB, MinIO, Kafka, Redpanda Console, Prometheus и Grafana.
 
 Главный рабочий контур:
 

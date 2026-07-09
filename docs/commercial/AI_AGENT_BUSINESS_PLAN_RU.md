@@ -165,8 +165,8 @@ SAFETY_OR_CONFLICT    -> flagship + human handoff
 
 Уже сильная база проекта:
 
-- Java 21;
-- Spring Boot;
+- Java 25;
+- Spring Boot 4;
 - Telegram transport;
 - FSM как single source of truth;
 - PostgreSQL;
@@ -925,4 +925,3 @@ Event:             150 000-250 000 руб за 2000 человек
 Astor Butler - не дешевый бот и не универсальная AI-панель.
 Это внедрение AI-host в операционную работу ресторана или события.
 ```
-

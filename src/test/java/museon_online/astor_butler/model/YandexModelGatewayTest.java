@@ -1,13 +1,13 @@
 package museon_online.astor_butler.model;
 
 import org.junit.jupiter.api.Test;
-import org.springframework.boot.test.web.client.MockServerRestTemplateCustomizer;
-import org.springframework.boot.web.client.RestTemplateBuilder;
+import org.springframework.boot.restclient.RestTemplateBuilder;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.client.MockRestServiceServer;
 
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.client.ExpectedCount.once;
@@ -21,9 +21,10 @@ class YandexModelGatewayTest {
 
     @Test
     void generateTextUsesYandexCompletionContractAndParsesFirstAlternative() {
-        MockServerRestTemplateCustomizer customizer = new MockServerRestTemplateCustomizer();
+        AtomicReference<MockRestServiceServer> serverRef = new AtomicReference<>();
         YandexModelGateway gateway = new YandexModelGateway(
-                new RestTemplateBuilder(customizer),
+                new RestTemplateBuilder(restTemplate ->
+                        serverRef.set(MockRestServiceServer.bindTo(restTemplate).build())),
                 "https://llm.test",
                 "folder-123",
                 "api-key-123",
@@ -34,7 +35,7 @@ class YandexModelGatewayTest {
                 128,
                 0.0
         );
-        MockRestServiceServer server = customizer.getServer();
+        MockRestServiceServer server = serverRef.get();
 
         server.expect(once(), requestTo("https://llm.test/foundationModels/v1/completion"))
                 .andExpect(method(HttpMethod.POST))

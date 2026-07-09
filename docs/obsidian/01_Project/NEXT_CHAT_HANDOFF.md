@@ -1,5 +1,30 @@
 # Next Chat Handoff
 
+## Update 2026-07-09 - Java 25 / Spring Boot 4 Migration
+
+- Перед миграцией текущие изменения были закоммичены и запушены в `main`:
+  - commit `2a3c467` - `Prepare Astor Assist site and Yandex AI gateway`.
+- Для миграции создана ветка `codex/java25-boot4-upgrade`.
+- Backend baseline обновлен:
+  - Java `21` -> `25`;
+  - Spring Boot `3.2.6` -> `4.1.0`;
+  - Spring AI `1.0.0-M6` -> `2.0.0`;
+  - Docker build/runtime images -> Eclipse Temurin 25.
+- Boot 4 API updates:
+  - `RestTemplateBuilder` переехал в `org.springframework.boot.restclient`;
+  - timeout methods теперь `connectTimeout(...)` и `readTimeout(...)`.
+- Spring AI 2 Ollama updates:
+  - используется `spring-ai-starter-model-ollama`;
+  - `OllamaOptions` заменен на `OllamaChatOptions` и `OllamaEmbeddingOptions`;
+  - `OllamaApi` создается через builder.
+- Проверка green:
+  - `docker run --rm -v "$PWD":/workspace -v "$HOME/.m2":/root/.m2 -w /workspace maven:3.9-eclipse-temurin-25 mvn -q -DskipTests compile`;
+  - `docker run --rm -v "$PWD":/workspace -v "$HOME/.m2":/root/.m2 -w /workspace maven:3.9-eclipse-temurin-25 mvn -q test`.
+- Known warnings:
+  - Lombok вызывает JDK warning про deprecated `sun.misc.Unsafe`;
+  - Mockito inline mock-maker self-attach предупреждает, что в будущих JDK лучше подключить Mockito как javaagent;
+  - `GenericJackson2JsonRedisSerializer` помечен deprecated/for removal.
+
 ## Update 2026-07-08 - Yandex AI Studio Gateway Prep
 
 - Подготовлен cloud-provider для realtime LLM-understanding:
