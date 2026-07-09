@@ -68,6 +68,8 @@ and human confirmation remain visible and auditable.
 - Kafka/Redpanda event trail.
 - MinIO/S3 media storage.
 - Local STT boundary for voice/audio.
+- LLM-understanding boundary for intent and slot extraction.
+- Yandex AI Studio text gateway for cloud Russian-language understanding.
 - Semantic RAG runtime and response cache.
 - Table booking with hostess confirmation.
 - Seating preferences and guest cancellation.
@@ -133,7 +135,44 @@ See:
 - Docker Compose
 - Nginx local API gateway
 - Prometheus and Grafana
-- Replaceable local/remote LLM gateway
+- Replaceable local/remote LLM gateway: Spring AI/Ollama, raw Ollama fallback,
+  Yandex AI Studio provider
+
+## AI Boundary
+
+Astor Butler can use local or cloud models for understanding guest messages, but
+business state stays outside the model.
+
+The model layer may:
+
+- classify intent;
+- extract slots such as date, time, party size and seating preference;
+- summarize context for staff;
+- draft a reply inside scenario rules.
+
+The model layer must not:
+
+- create or cancel a booking by itself;
+- approve a payment, tip, donation or bid;
+- change staff tasks without FSM/domain validation;
+- hide uncertainty from the operator.
+
+Runtime provider choice is configuration, not scenario logic:
+
+```text
+ASTOR_MODEL_PROVIDER=spring-ai     # default local Spring AI / Ollama path
+ASTOR_MODEL_PROVIDER=ollama-raw    # direct Ollama fallback/diagnostics
+ASTOR_MODEL_PROVIDER=yandex        # Yandex AI Studio Completion API
+```
+
+For Yandex AI Studio:
+
+```text
+YANDEX_FOLDER_ID=<folder-id>
+YANDEX_API_KEY=<api-key>
+YANDEX_MODEL=yandexgpt-5-lite
+YANDEX_QUALITY_MODEL=yandexgpt-5.1
+```
 
 ## API Surface
 
@@ -211,6 +250,18 @@ The `.env` file is local-only and must never be committed.
 
 ```bash
 mvn test
+```
+
+The current baseline is Java 25. If local JDK 25 is not installed yet, use the
+same Docker image as the migration check:
+
+```bash
+docker run --rm \
+  -v "$PWD":/workspace \
+  -v "$HOME/.m2":/root/.m2 \
+  -w /workspace \
+  maven:3.9-eclipse-temurin-25 \
+  mvn -q test
 ```
 
 Smoke/load helpers:
