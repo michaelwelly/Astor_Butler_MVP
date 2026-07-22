@@ -10,6 +10,17 @@
 - Compose validation found duplicate Yandex env keys for `c3flex-astor-butler-bot`; duplicates were removed so `docker compose ... config` renders cleanly.
 - Local verification requires Java 25. The default shell Java 21 fails Maven with `release version 25 not supported`; use the local JDK 25 path from the handoff.
 
+## Smart Solution Ops CRM Boundary 2026-07-23
+
+- Astor Butler backend expands into an internal Smart Solution project CRM while keeping Telegram as transport/UI.
+- `ops_projects` stores structured project launch state: vertical, pipeline stage, status, owner, deadline, next call, progress, launch status and definition of done.
+- `ops_tasks` stores project tasks with owner, priority, status, deadline and deliverable link.
+- REST API `/api/ops/**` is the first shared boundary for future Telegram commands and dashboard/frontend use.
+- `OpsTelegramCommandService` handles service-chat commands before guest FSM: `/ops`, `/projects`, `/project CODE`, `/tasks CODE`, `/summary CODE`, `/status CODE STATUS 90% text`, `/task CODE "title" @owner 25.07`.
+- `telegram.ops.chat-id` is configured through `TELEGRAM_OPS_CHAT_ID` and defaults to `TELEGRAM_HOSTESS_CHAT_ID`.
+- Telegram write commands still go through `OpsProjectService`; Telegram never mutates CRM state directly.
+- AI may summarize and draft status updates, but final project status, deadlines, owners and task lifecycle transitions go through domain services.
+
 ## Базовый стек
 
 - Java 25

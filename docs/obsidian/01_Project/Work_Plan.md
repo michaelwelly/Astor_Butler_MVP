@@ -212,3 +212,32 @@ Redis:
 1. Закончить cleanup: удалить sandbox/Codex-мусор, проверить git status, сборку и отсутствие `.env`/`target` в tracked files.
 2. Довести Table Booking слой: реализовать `TableBookingScenario` поверх описанной FSM-спеки, связать slot extraction с `TableReservationService`, отправлять AERIS plan и создавать hold только после сбора date/time/party/table.
 3. После стабилизации первого контакта и посадки перейти к `EVENT_BOOKING`/Slot Keeper и подготовить System Design ДЗ на базе реального API/FSM flow.
+
+## Дополнение 2026-07-23. Smart Solution Ops CRM через Telegram
+
+Продуктовый фокус расширяется: Telegram-бот становится внутренним операционным центром Smart Solution для управления проектами и командой.
+
+Цель: через бота выгружать команде статусы по проектам, расписание коллов, задачи, презентации, ответственных, сроки, этапы пайплайна и статусы запусков в разных вертикалях.
+
+Вертикали:
+
+- рестораны и HoReCa;
+- типографии;
+- video production;
+- медицина;
+- сайты и AI-проекты Smart Solution.
+
+Первый backend slice:
+
+- `ops_projects` - карточка проекта/запуска;
+- `ops_tasks` - задачи, ответственные, сроки, deliverables;
+- `/api/ops/**` - REST-контур для dashboard/Telegram-команд;
+- `/api/ops/projects/{id}/digest` - Telegram-ready статус проекта.
+- Telegram-команды для service chat: `/ops`, `/projects`, `/project CODE`, `/tasks CODE`, `/summary CODE`, `/status CODE STATUS 90% text`, `/task CODE "title" @owner 25.07`.
+
+Ключевой принцип остается прежним:
+
+- Telegram - транспорт и быстрый UI;
+- FSM/status lifecycle - источник истины по процессам;
+- AI помогает с формулировками, суммаризацией, поиском и подготовкой материалов;
+- финальные бизнес-статусы, сроки, ответственные и переходы по пайплайну должны храниться структурно.
