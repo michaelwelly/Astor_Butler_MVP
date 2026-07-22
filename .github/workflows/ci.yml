@@ -1,0 +1,47 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+      - "codex/**"
+      - "feature/**"
+      - "task/**"
+
+permissions:
+  contents: read
+
+jobs:
+  backend:
+    name: Backend tests and image build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Guard tracked secrets and artifacts
+        run: |
+          set -euo pipefail
+          tracked="$(git ls-files '.env' '.env.*' 'target/**' '.codex*' || true)"
+          if [ -n "$tracked" ]; then
+            echo "Forbidden tracked files detected:"
+            echo "$tracked"
+            exit 1
+          fi
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "25"
+          cache: maven
+
+      - name: Run tests
+        run: mvn -B test
+
+      - name: Package
+        run: mvn -B -DskipTests package
+
+      - name: Build Docker image
+        run: docker build -t astor-butler-mvp:ci .
