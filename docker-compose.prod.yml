@@ -1,0 +1,71 @@
+services:
+  api-gateway:
+    restart: unless-stopped
+    ports:
+      - "${API_GATEWAY_PUBLIC_PORT:-80}:8080"
+
+  aeris-astor-butler-bot:
+    restart: unless-stopped
+    environment:
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-prod}
+      ASTOR_MODEL_PROVIDER: ${ASTOR_MODEL_PROVIDER:-yandex}
+      ASTOR_SEMANTIC_EMBEDDINGS_PROVIDER: ${ASTOR_SEMANTIC_EMBEDDINGS_PROVIDER:-none}
+      ASTOR_GRAPH_NEO4J_ENABLED: ${ASTOR_GRAPH_NEO4J_ENABLED:-false}
+      ASTOR_TIMELINE_SCYLLA_ENABLED: ${ASTOR_TIMELINE_SCYLLA_ENABLED:-false}
+      ASTOR_STT_ENABLED: ${ASTOR_STT_ENABLED:-true}
+      TELEGRAM_BOT_ENABLED: ${TELEGRAM_BOT_ENABLED:-true}
+      TELEGRAM_UI_CLEANUP_ENABLED: ${TELEGRAM_UI_CLEANUP_ENABLED:-false}
+      TELEGRAM_UI_DELETE_USER_MESSAGES_ENABLED: ${TELEGRAM_UI_DELETE_USER_MESSAGES_ENABLED:-false}
+      YANDEX_AI_BASE_URL: ${YANDEX_AI_BASE_URL:-https://llm.api.cloud.yandex.net}
+      YANDEX_FOLDER_ID: ${YANDEX_FOLDER_ID:?set YANDEX_FOLDER_ID in .env.production}
+      YANDEX_API_KEY: ${YANDEX_API_KEY:-}
+      YANDEX_IAM_TOKEN: ${YANDEX_IAM_TOKEN:-}
+      YANDEX_MODEL: ${YANDEX_MODEL:-yandexgpt-5-lite}
+      YANDEX_QUALITY_MODEL: ${YANDEX_QUALITY_MODEL:-yandexgpt-5.1}
+      JWT_SECRET: ${JWT_SECRET:?set JWT_SECRET in .env.production}
+    ports:
+      - "${AERIS_BOT_PUBLIC_PORT:-8089}:8089"
+
+  c3flex-astor-butler-bot:
+    restart: unless-stopped
+    environment:
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-prod}
+      ASTOR_MODEL_PROVIDER: ${ASTOR_MODEL_PROVIDER:-yandex}
+      ASTOR_SEMANTIC_EMBEDDINGS_PROVIDER: ${ASTOR_SEMANTIC_EMBEDDINGS_PROVIDER:-none}
+      ASTOR_GRAPH_NEO4J_ENABLED: ${ASTOR_GRAPH_NEO4J_ENABLED:-false}
+      ASTOR_TIMELINE_SCYLLA_ENABLED: ${ASTOR_TIMELINE_SCYLLA_ENABLED:-false}
+      TELEGRAM_BOT_ENABLED: ${C3FLEX_ASTOR_BUTLER_BOT_ENABLED:-false}
+      YANDEX_AI_BASE_URL: ${YANDEX_AI_BASE_URL:-https://llm.api.cloud.yandex.net}
+      YANDEX_FOLDER_ID: ${YANDEX_FOLDER_ID:?set YANDEX_FOLDER_ID in .env.production}
+      YANDEX_API_KEY: ${YANDEX_API_KEY:-}
+      YANDEX_IAM_TOKEN: ${YANDEX_IAM_TOKEN:-}
+      YANDEX_MODEL: ${YANDEX_MODEL:-yandexgpt-5-lite}
+      YANDEX_QUALITY_MODEL: ${YANDEX_QUALITY_MODEL:-yandexgpt-5.1}
+      JWT_SECRET: ${JWT_SECRET:?set JWT_SECRET in .env.production}
+
+  postgres:
+    restart: unless-stopped
+
+  redis:
+    restart: unless-stopped
+
+  mongo:
+    restart: unless-stopped
+
+  kafka:
+    restart: unless-stopped
+
+  minio:
+    restart: unless-stopped
+
+  minio-init:
+    restart: "no"
+
+  natasha-nlu:
+    restart: unless-stopped
+
+  prometheus:
+    restart: unless-stopped
+
+  grafana:
+    restart: unless-stopped

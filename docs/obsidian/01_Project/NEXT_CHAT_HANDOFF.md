@@ -1,5 +1,25 @@
 # Next Chat Handoff
 
+## Update 2026-07-22 - Yandex VM CI/CD Prep + Astor DDD Review Pack
+
+- Созданы рабочие ветки:
+  - Astor Butler: `codex/yandex-vm-cicd`;
+  - rpm-ddd: `codex/astor-ddd-agent-rules`.
+- В `rpm-ddd` добавлен Astor Butler DDD agent playbook:
+  - implementer/admin writes;
+  - DDD reviewer challenges FSM/domain/AI boundary;
+  - RF marketer reviews Russian HoReCa offer;
+  - US marketer reviews international SaaS positioning.
+- В Astor Butler добавлен первый CI/CD контур:
+  - `.github/workflows/ci.yml` runs Maven tests/package + Docker build;
+  - `.github/workflows/deploy-yandex-vm.yml` manual SSH/rsync deploy to prepared VM;
+  - `docker-compose.prod.yml` production override for VM runtime.
+- Добавлен runbook: `docs/operations/YANDEX_VM_DEPLOYMENT.md`.
+- Compose validation found and fixed duplicate Yandex env keys in `docker-compose.yml` for `c3flex-astor-butler-bot`.
+- Yandex Cloud console/billing/VM creation remains manual until a checked `yc` service account, budget guard and secrets policy are available.
+- Local Maven caveat: default shell Java is 21 and fails with `release version 25 not supported`; use:
+  - `JAVA_HOME=/Users/michaelwelly/Library/Java/JavaVirtualMachines/loom-ea-25-loom+1-11/Contents/Home mvn -B test`.
+
 ## Update 2026-07-09 - Java 25 / Spring Boot 4 Migration
 
 - Перед миграцией текущие изменения были закоммичены и запушены в `main`:

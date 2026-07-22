@@ -213,6 +213,26 @@ Site consent:
 4. Claude returns frontend file/component plan.
 5. Codex reviews boundaries before frontend implementation starts.
 
+## 8.1 Yandex VM CI/CD Path
+
+The first concrete CI/CD path is now documented in
+`docs/operations/YANDEX_VM_DEPLOYMENT.md`.
+
+Current decision:
+
+- GitHub Actions `CI` runs Maven tests, packages the app, builds the Docker
+  image, and blocks tracked `.env`, `.env.*`, `target/**`, and `.codex*` files.
+- GitHub Actions `Deploy to Yandex VM` is manual (`workflow_dispatch`) and uses
+  SSH/rsync to update a prepared VM.
+- Runtime secrets stay in `/opt/astor-butler/.env.production` on the VM and in
+  GitHub Secrets for SSH connection data only.
+- `docker-compose.prod.yml` is an override for the existing local compose file:
+  it enables restart policies, production profile defaults, and the YandexGPT
+  provider mode.
+
+Yandex Cloud resource creation remains a human-console step until a checked
+`yc` service account and budget guard are available.
+
 ## 9. Windows Server Bootstrap Checklist
 
 Если удаленная машина будет Windows и доступ через AnyDesk, backend-runtime лучше поднимать в WSL2 Ubuntu. Docker Desktop можно использовать для UI, но production-like команды выполняются внутри Ubuntu shell.

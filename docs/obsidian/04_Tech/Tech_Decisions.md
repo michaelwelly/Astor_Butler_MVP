@@ -1,5 +1,15 @@
 # Tech Decisions
 
+## Yandex VM CI/CD Boundary 2026-07-22
+
+- First production-like deploy path is GitHub Actions -> SSH/rsync -> Docker Compose on a prepared Yandex Cloud VM.
+- CI gate blocks tracked `.env`, `.env.*`, `target/**`, and `.codex*` files before build/deploy.
+- `docker-compose.prod.yml` is an override on top of local `docker-compose.yml`; it sets restart policies, production profile defaults, and `ASTOR_MODEL_PROVIDER=yandex`.
+- Runtime secrets live in `/opt/astor-butler/.env.production` on the VM and GitHub Secrets for SSH connection data. Secrets are not committed.
+- Yandex Cloud resource creation remains manual until a service account, `yc` profile, budget guard and rollback policy are explicitly configured.
+- Compose validation found duplicate Yandex env keys for `c3flex-astor-butler-bot`; duplicates were removed so `docker compose ... config` renders cleanly.
+- Local verification requires Java 25. The default shell Java 21 fails Maven with `release version 25 not supported`; use the local JDK 25 path from the handoff.
+
 ## Базовый стек
 
 - Java 25
