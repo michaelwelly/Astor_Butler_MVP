@@ -11,6 +11,7 @@ Use this folder for:
 
 Key files:
 
+- `EGOR_FRONTEND_HANDOFF.md`
 - `CLAUDE_PROJECT_PACK.md`
 - `CLAUDE_FRONTEND_TASK.md`
 - `FRONTEND_HANDOFF.md`
