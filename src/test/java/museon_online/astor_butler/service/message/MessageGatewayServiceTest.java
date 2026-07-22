@@ -138,6 +138,9 @@ class MessageGatewayServiceTest {
     @Mock
     private ModelInteractionAuditRepository modelInteractionAuditRepository;
 
+    @Mock
+    private OpsTelegramCommandService opsTelegramCommandService;
+
     private MessageGatewayService service;
 
     @BeforeEach
@@ -194,11 +197,13 @@ class MessageGatewayServiceTest {
                 voiceTranscriptionRetryService,
                 fsmTimelineWriter,
                 telegramSystemNotifier,
-                modelInteractionAuditRepository
+                modelInteractionAuditRepository,
+                opsTelegramCommandService
         );
         ReflectionTestUtils.setField(service, "adminChatId", "100500");
         ReflectionTestUtils.setField(service, "analyticsChatId", "100501");
         ReflectionTestUtils.setField(service, "systemChatId", "-5403153261");
+        ReflectionTestUtils.setField(service, "opsChatId", "-100900");
         ReflectionTestUtils.setField(service, "logConversationsEnabled", true);
     }
 
@@ -249,6 +254,48 @@ class MessageGatewayServiceTest {
         verify(userEventProducer).publishIncomingMessage(incoming, BotState.READY_FOR_DIALOG, outgoing);
         verify(fsmTimelineWriter).append(any(FsmTimelineEvent.class));
         verify(modelInteractionAuditRepository).capture(any(ModelInteractionAuditRecord.class));
+    }
+
+    @Test
+    void handlesOpsCommandInsideOpsServiceChatBeforeGuestFsm() {
+        IncomingMessage incoming = IncomingMessage.telegram(
+                -100900L,
+                1773317437L,
+                1,
+                100,
+                "/projects",
+                null,
+                "Michael",
+                null,
+                "michaelwelly",
+                "ru",
+                false,
+                "100"
+        );
+        OutgoingMessage opsResponse = OutgoingMessage.of(
+                incoming,
+                "<b>Smart Solution Ops / active projects</b>",
+                BotState.READY_FOR_DIALOG.name(),
+                true,
+                false,
+                false,
+                false,
+                AdminAlert.none(),
+                java.util.List.of("OPS_TELEGRAM_COMMAND", "SKIP_GUEST_FSM")
+        );
+
+        when(fsmStorage.getState(incoming.chatId())).thenReturn(BotState.READY_FOR_DIALOG);
+        when(opsTelegramCommandService.handle(incoming, BotState.READY_FOR_DIALOG, "/projects"))
+                .thenReturn(java.util.Optional.of(opsResponse));
+
+        OutgoingMessage outgoing = service.handle(incoming);
+
+        assertThat(outgoing.text()).contains("Smart Solution Ops");
+        assertThat(outgoing.html()).isTrue();
+        verify(opsTelegramCommandService).handle(incoming, BotState.READY_FOR_DIALOG, "/projects");
+        verify(firstTouchScenario, never()).supports(any(), any(), any());
+        verify(modelGateway, never()).generateText(any());
+        verify(userEventProducer).publishIncomingMessage(incoming, BotState.READY_FOR_DIALOG, outgoing);
     }
 
     @Test

@@ -176,6 +176,8 @@ telegram:
   system:
     chat-id: ${TELEGRAM_SYSTEM_CHAT_ID:}
     notifications-enabled: ${TELEGRAM_SYSTEM_NOTIFICATIONS_ENABLED:false}
+  ops:
+    chat-id: ${TELEGRAM_OPS_CHAT_ID:${TELEGRAM_HOSTESS_CHAT_ID:}}
   booking:
     notifications-enabled: ${TELEGRAM_BOOKING_NOTIFICATIONS_ENABLED:true}
     manager-chat-id: ${TELEGRAM_BOOKING_MANAGER_CHAT_ID:876857557}

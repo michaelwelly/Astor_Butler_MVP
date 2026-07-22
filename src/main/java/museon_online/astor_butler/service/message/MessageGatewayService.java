@@ -35,6 +35,7 @@ public class MessageGatewayService {
     private final FsmTimelineWriter fsmTimelineWriter;
     private final TelegramSystemNotifier telegramSystemNotifier;
     private final ModelInteractionAuditRepository modelInteractionAuditRepository;
+    private final OpsTelegramCommandService opsTelegramCommandService;
 
     @Value("${telegram.admin.chat-id:}")
     private String adminChatId;
@@ -44,6 +45,9 @@ public class MessageGatewayService {
 
     @Value("${telegram.system.chat-id:}")
     private String systemChatId;
+
+    @Value("${telegram.ops.chat-id:}")
+    private String opsChatId;
 
     @Value("${astor.message.log-conversations-enabled:true}")
     private boolean logConversationsEnabled;
@@ -75,6 +79,11 @@ public class MessageGatewayService {
         }
 
         if (isServiceChat(incoming.chatId())) {
+            OutgoingMessage opsCommand = opsTelegramCommandService.handle(incoming, currentState, text)
+                    .orElse(null);
+            if (opsCommand != null) {
+                return finish(incoming, currentState, opsCommand);
+            }
             return finish(incoming, currentState, OutgoingMessage.of(
                     incoming,
                     """
@@ -356,7 +365,7 @@ public class MessageGatewayService {
             return false;
         }
         String value = chatId.toString();
-        return value.equals(adminChatId) || value.equals(analyticsChatId) || value.equals(systemChatId);
+        return value.equals(adminChatId) || value.equals(analyticsChatId) || value.equals(systemChatId) || value.equals(opsChatId);
     }
 
     private String normalize(String text) {
