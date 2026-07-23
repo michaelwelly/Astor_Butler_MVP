@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { startLogin, type OAuthProvider } from "@/lib/auth-api";
+import { writeLocalSession } from "@/lib/local-session";
 import { ProviderButton } from "./ProviderButton";
 
 type Props = {
@@ -19,6 +20,15 @@ type Props = {
 export function LoginPanel({ compact }: Props) {
   const [pending, setPending] = useState<OAuthProvider | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [email, setEmail] = useState("");
+
+  const handleEmailLogin = (e: React.FormEvent) => {
+    e.preventDefault();
+    const value = email.trim();
+    if (!value) return;
+    writeLocalSession(value);
+    setEmail("");
+  };
 
   const handle = async (provider: OAuthProvider) => {
     setPending(provider);
@@ -35,7 +45,22 @@ export function LoginPanel({ compact }: Props) {
 
   return (
     <div className={`login-panel${compact ? " login-panel--compact" : ""}`}>
-      {!compact && <p className="login-panel-hint">Войти, чтобы сохранить историю обращений</p>}
+      {!compact && (
+        <form className="auth-email-form" onSubmit={handleEmailLogin}>
+          <input
+            type="email"
+            required
+            inputMode="email"
+            autoComplete="email"
+            placeholder="you@studio.com"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            aria-label="Email"
+          />
+          <button type="submit">Войти</button>
+        </form>
+      )}
+      {!compact && <div className="auth-divider"><span>или через</span></div>}
       <div className="login-panel-buttons">
         <ProviderButton provider="google" onClick={handle} disabled={pending !== null} />
         <ProviderButton provider="yandex" onClick={handle} disabled={pending !== null} />

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { ArrowUpRight, Check, Send } from "lucide-react";
 import { submitLead, type LeadRequest } from "@/lib/lead-api";
+import { RevealLines } from "@/components/ui/RevealLines";
 
 const EMPTY_LEAD: LeadRequest = {
   projectType: "",
@@ -40,7 +41,9 @@ export function Contact() {
     <section className="contact" id="contact">
       <div className="contact-copy">
         <p className="section-label">Начать проект</p>
-        <h2>Расскажите, что вы хотите,<br />чтобы люди<br /><i>почувствовали.</i></h2>
+        <RevealLines
+          lines={["Расскажите, что вы хотите,", "чтобы люди", <><i>почувствовали.</i></>]}
+        />
         <p>Поделитесь главным. Мы вернёмся с правильной производственной формой.</p>
         <a href="https://t.me/" target="_blank" rel="noreferrer">
           Предпочитаете Telegram? Напишите напрямую <ArrowUpRight size={15} />

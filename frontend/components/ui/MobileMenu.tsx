@@ -2,10 +2,10 @@ import { AnimatePresence, motion } from "framer-motion";
 import { X } from "lucide-react";
 
 const NAV_ITEMS = [
-  { label: "Работы", href: "#work" },
-  { label: "Направления", href: "#directions" },
+  { label: "Работы", href: "#catalog" },
   { label: "Услуги", href: "#services" },
-  { label: "Написать нам", href: "#contact" },
+  { label: "О студии", href: "#about" },
+  { label: "Контакт", href: "#contact" },
 ];
 
 type Props = {

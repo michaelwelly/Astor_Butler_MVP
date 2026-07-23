@@ -6,7 +6,14 @@ import { useLenis } from "@/hooks/useLenis";
 import { Navigation } from "@/components/layout/Navigation";
 import { Footer } from "@/components/layout/Footer";
 import { HeroBanner } from "@/components/sections/HeroBanner";
+import { Marquee } from "@/components/sections/Marquee";
 import { FeaturedCatalog } from "@/components/sections/FeaturedCatalog";
+import { Services } from "@/components/sections/Services";
+import { Manifesto } from "@/components/sections/Manifesto";
+import { Contact } from "@/components/sections/Contact";
+import { CinemaCursor } from "@/components/ui/CinemaCursor";
+import { ScrollProgress } from "@/components/ui/ScrollProgress";
+import { Reveal } from "@/components/ui/Reveal";
 import { VideoOverlay } from "@/components/ui/VideoOverlay";
 import { VideoPlayer } from "@/components/ui/VideoPlayer";
 import { SplashGate } from "@/components/ui/SplashGate";
@@ -45,6 +52,9 @@ export function HomePage() {
 
   return (
     <MotionConfig reducedMotion="user">
+      <CinemaCursor />
+      <ScrollProgress />
+      <div className="film-overlay" aria-hidden="true" />
       <AnimatePresence>
         {!introComplete && (
           <SplashGate key="splash" onComplete={() => { window.scrollTo({ top: 0, behavior: "instant" }); setIntroComplete(true); }} />
@@ -54,12 +64,17 @@ export function HomePage() {
       <main className="netflix-main" id="top">
         <Navigation onMenuOpen={() => setMenuOpen(true)} />
         <HeroBanner />
+        <Marquee />
         <FeaturedCatalog onSelect={setSelectedCase} />
-        <section className="chat-section">
-          <h2 className="chat-section-heading">Обсудим ваш проект</h2>
-          <p className="chat-section-sub">Astor Butler подберёт формат и команду под вашу задачу</p>
-          <ChatWidget inline selectedVideo={toRef(watchingCase ?? selectedCase)} />
-        </section>
+        <Reveal>
+          <Services />
+        </Reveal>
+        <Reveal>
+          <Manifesto />
+        </Reveal>
+        <Reveal>
+          <Contact />
+        </Reveal>
         <Footer />
 
         <VideoOverlay

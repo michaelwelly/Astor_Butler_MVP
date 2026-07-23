@@ -7,8 +7,9 @@ export function Footer() {
       </a>
       <p>Независимая продакшн-студия / {year}</p>
       <div>
-        <a href="#work">Работы</a>
+        <a href="#catalog">Работы</a>
         <a href="#contact">Контакт</a>
+        <a href="/studio">Приёмка</a>
       </div>
     </footer>
   );

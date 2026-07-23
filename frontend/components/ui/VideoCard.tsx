@@ -1,9 +1,9 @@
 "use client";
 
-import { useMemo } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import type { PortfolioCase } from "@/lib/portfolio";
-import { catalogVideos, POSTER_FALLBACK } from "@/lib/video-catalog";
+import { catalogVideos, selectSources, POSTER_FALLBACK } from "@/lib/video-catalog";
 
 type Props = {
   item: PortfolioCase;
@@ -22,6 +22,41 @@ export function VideoCard({ item, onClick }: Props) {
     [item],
   );
 
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const [canPreview, setCanPreview] = useState(false);
+  const [previewing, setPreviewing] = useState(false);
+
+  // Netflix-style hover preview, but only where it belongs: a precise pointer
+  // and no reduced-motion request. Touch devices never fire hover anyway.
+  useEffect(() => {
+    const fine = window.matchMedia("(pointer: fine)").matches;
+    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    setCanPreview(fine && !reduce);
+  }, []);
+
+  // Light preview: the mobile rendition, WebM→MP4. preload="none" keeps it off
+  // the wire until the first hover.
+  const previewSources = meta ? selectSources(meta, 640) : [];
+  const poster = meta?.poster.publicUrl ?? item.image;
+
+  const startPreview = () => {
+    const v = videoRef.current;
+    if (!canPreview || !v || !previewSources.length) return;
+    setPreviewing(true);
+    void v.play().catch(() => setPreviewing(false));
+  };
+  const stopPreview = () => {
+    setPreviewing(false);
+    const v = videoRef.current;
+    if (!v) return;
+    v.pause();
+    try {
+      v.currentTime = 0;
+    } catch {
+      /* not seekable yet — ignore */
+    }
+  };
+
   const tags = meta?.tags.slice(0, 3) ?? [];
   const shortDescription = meta?.shortDescription ?? item.kicker;
   const statusLabel = meta ? STATUS_LABEL[meta.status] : "";
@@ -31,12 +66,15 @@ export function VideoCard({ item, onClick }: Props) {
       className="video-card"
       type="button"
       onClick={() => onClick(item)}
-      whileHover={{ scale: 1.06, zIndex: 10 }}
-      transition={{ duration: 0.2 }}
+      onMouseEnter={startPreview}
+      onMouseLeave={stopPreview}
+      data-cursor="play"
+      whileHover={{ y: -6 }}
+      transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
       aria-label={`${item.category}: ${item.title}`}
     >
       <img
-        src={meta?.poster.publicUrl ?? item.image}
+        src={poster}
         alt={item.title}
         className="video-card-img"
         loading="lazy"
@@ -46,6 +84,23 @@ export function VideoCard({ item, onClick }: Props) {
           img.src = POSTER_FALLBACK;
         }}
       />
+
+      {canPreview && previewSources.length > 0 && (
+        <video
+          ref={videoRef}
+          className={`video-card-preview${previewing ? " is-playing" : ""}`}
+          muted
+          loop
+          playsInline
+          preload="none"
+          tabIndex={-1}
+          aria-hidden="true"
+        >
+          {previewSources.map((s) => (
+            <source key={`${s.variant}-${s.contentType}`} src={s.publicUrl} type={s.contentType} />
+          ))}
+        </video>
+      )}
 
       <div className="video-card-badges">
         {item.featured && <span className="video-badge video-badge--featured">Избранное</span>}
