@@ -1,18 +1,12 @@
 import type { Metadata } from "next";
-import { Cormorant_Garamond, Inter } from "next/font/google";
+import { Inter } from "next/font/google";
 import "./globals.css";
 
-const cormorant = Cormorant_Garamond({
-  subsets: ["cyrillic", "latin"],
-  weight: ["300", "400", "600"],
-  style: ["normal", "italic"],
-  variable: "--font-heading",
-  display: "swap",
-});
-
+// One family for the whole site — headings differ by weight and tracking,
+// not by typeface. See the "Minimal skin" block in globals.css.
 const inter = Inter({
   subsets: ["cyrillic", "latin"],
-  weight: ["400", "500"],
+  weight: ["300", "400", "500", "600"],
   variable: "--font-body",
   display: "swap",
 });
@@ -63,7 +57,7 @@ export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="ru" className={`${cormorant.variable} ${inter.variable}`}>
+    <html lang="ru" className={inter.variable}>
       <body>{children}</body>
     </html>
   );

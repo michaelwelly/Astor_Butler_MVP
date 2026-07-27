@@ -1,10 +1,13 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { Wordmark } from "@/components/ui/Wordmark";
 
 type Props = { onComplete: () => void };
 type Phase = "idle" | "animating";
+
+const EASE = [0.4, 0, 0.2, 1] as const;
 
 function synthesizeTadum() {
   try {
@@ -58,6 +61,16 @@ export function SplashGate({ onComplete }: Props) {
     setPhase("animating");
   }, [phase]);
 
+  // The gate is released by the logo's onAnimationComplete. If that callback
+  // never arrives — a throttled tab, a background window, anything that stalls
+  // the animation loop — the visitor is stranded on a black screen with no way
+  // in. This is the floor: once the click happened, the site opens.
+  useEffect(() => {
+    if (phase !== "animating") return;
+    const id = setTimeout(onComplete, 2200);
+    return () => clearTimeout(id);
+  }, [phase, onComplete]);
+
   return (
     <motion.div
       className="splash-gate"
@@ -75,41 +88,39 @@ export function SplashGate({ onComplete }: Props) {
             className="splash-idle"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            exit={{ opacity: 0, scale: 1.05 }}
-            transition={{ duration: 0.5 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.45, ease: EASE }}
           >
-            <img src="/c3flex-logo.png" className="splash-logo-still" alt="C3FLEX" />
+            {/* The mark breathes on luminance only — see .splash-logo-still. */}
+            <img src="/c3flex-logo.png" className="splash-logo-still" alt="" />
+            <Wordmark className="splash-wordmark" />
             <motion.p
               className="splash-hint"
-              animate={{ opacity: [0.3, 0.8, 0.3] }}
-              transition={{ repeat: Infinity, duration: 2.4, ease: "easeInOut" }}
+              animate={{ opacity: [0.35, 0.85, 0.35] }}
+              transition={{ repeat: Infinity, duration: 3.2, ease: EASE }}
             >
-              нажми чтобы войти
+              нажмите, чтобы войти
             </motion.p>
           </motion.div>
         ) : (
+          // Entry punch, restyled: no white flash, no radial glow. The mark
+          // fades up and the wordmark wipes open from its own centre.
           <motion.div key="anim" className="splash-anim">
-            <motion.div
-              className="intro-flash"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: [0, 0.92, 0] }}
-              transition={{ duration: 0.45, times: [0, 0.18, 1] }}
-            />
             <div className="intro-logo-wrap">
-              <motion.div
-                className="intro-glow"
-                initial={{ opacity: 0, scale: 0.35 }}
-                animate={{ opacity: [0, 1, 0.15], scale: [0.35, 1.6, 1] }}
-                transition={{ duration: 1.3, times: [0, 0.28, 1], ease: [0.16, 1, 0.3, 1] }}
-              />
               <motion.img
                 src="/c3flex-logo.png"
                 alt="C3FLEX"
                 className="intro-logo"
-                initial={{ opacity: 0, scale: 0.48 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.38, ease: [0.16, 1, 0.3, 1] }}
-                onAnimationComplete={() => setTimeout(onComplete, 1050)}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.5, ease: EASE }}
+                onAnimationComplete={() => setTimeout(onComplete, 900)}
+              />
+              <motion.span
+                className="intro-wipe"
+                initial={{ scaleX: 0 }}
+                animate={{ scaleX: 1 }}
+                transition={{ duration: 0.7, delay: 0.18, ease: EASE }}
               />
             </div>
           </motion.div>

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Menu } from "lucide-react";
-import { AuthMenu } from "@/components/auth/AuthMenu";
+import { Wordmark } from "@/components/ui/Wordmark";
 
 type Props = {
   onMenuOpen: () => void;
@@ -45,8 +45,8 @@ export function Navigation({ onMenuOpen }: Props) {
 
   return (
     <header className={`site-header${scrolled ? " site-header--scrolled" : ""}`}>
-      <a className="brand" href="#top" aria-label="C3FLEX home">
-        C3<span>FLEX</span><sup>.com</sup>
+      <a className="brand" href="#top">
+        <Wordmark />
       </a>
       <nav className="desktop-nav" aria-label="Main navigation">
         {PILLS.map((p) => (
@@ -61,7 +61,6 @@ export function Navigation({ onMenuOpen }: Props) {
         ))}
       </nav>
       <div className="header-actions">
-        <AuthMenu />
         <button className="menu-button" type="button" onClick={onMenuOpen} aria-label="Открыть меню">
           <Menu size={20} />
         </button>

@@ -1,3 +1,7 @@
+import { resolveMediaRef } from "./media-ref";
+import { CATALOG_CLIPS, type CatalogClip } from "./catalog-clips";
+import { publishedClips } from "./video-db";
+
 export type DirectionId = "events" | "reels" | "commercials";
 
 /**
@@ -64,7 +68,7 @@ const V1 = "https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBla
 const V2 = "https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4";
 const V3 = "https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4";
 
-export const portfolioCases: PortfolioCase[] = [
+const SAMPLE_CASES: PortfolioCase[] = [
   // ─── Event Stories ───────────────────────────────────────────────────────
   {
     id: "segreto",
@@ -464,6 +468,52 @@ export const portfolioCases: PortfolioCase[] = [
     statement: "Лонч-фильм для бренда, который только начинается.",
   },
 ];
+
+function slugify(s: string): string {
+  return s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+}
+
+/** Map the friendly catalog manifest to full PortfolioCases, filling defaults. */
+function buildCases(clips: CatalogClip[]): PortfolioCase[] {
+  const seen = new Set<string>();
+  return clips.map((c, i) => {
+    let slug = slugify(c.title) || `clip-${i + 1}`;
+    while (seen.has(slug)) slug = `${slug}-${i + 1}`;
+    seen.add(slug);
+    const meta = directions.find((d) => d.id === c.direction);
+    return {
+      id: slug,
+      slug,
+      direction: c.direction,
+      category: meta?.shortTitle ?? c.direction,
+      title: c.title,
+      kicker: c.kicker ?? "",
+      year: c.year ?? "2025",
+      duration: c.duration ?? "00:30",
+      accent: c.accent ?? "#d76f49",
+      image: resolveMediaRef(c.poster) ?? "/portfolio/_poster-fallback.svg",
+      video: resolveMediaRef(c.src),
+      statement: c.statement ?? c.kicker ?? "",
+      featured: c.featured,
+      tags: c.tags,
+      orientation: c.orientation,
+    };
+  });
+}
+
+/**
+ * The single source for every case on the site (grid, player, hero fallback,
+ * studio), in priority order:
+ *   1. hosted records in the video DB (data/videos.json — the real archive);
+ *   2. the hand-edited catalog manifest (lib/catalog-clips.ts);
+ *   3. the 30 curated samples, so the site is never blank while content lands.
+ */
+const DB_CLIPS = publishedClips();
+export const portfolioCases: PortfolioCase[] = DB_CLIPS.length
+  ? buildCases(DB_CLIPS)
+  : CATALOG_CLIPS.length
+    ? buildCases(CATALOG_CLIPS)
+    : SAMPLE_CASES;
 
 export function getByDirection(dir: DirectionId, limit?: number): PortfolioCase[] {
   const filtered = portfolioCases.filter((c) => c.direction === dir);

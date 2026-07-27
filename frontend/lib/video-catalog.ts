@@ -74,7 +74,7 @@ const MEDIA_BASE_URL = (
 export const POSTER_FALLBACK = "/portfolio/_poster-fallback.svg";
 
 // Per-direction defaults used when an item has no explicit override.
-const DIRECTION_ORIENTATION: Record<DirectionId, VideoOrientation> = {
+export const DIRECTION_ORIENTATION: Record<DirectionId, VideoOrientation> = {
   events: "landscape",
   reels: "portrait",
   commercials: "landscape",

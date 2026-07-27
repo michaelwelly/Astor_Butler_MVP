@@ -6,12 +6,12 @@ import {
   ArrowLeft,
   ArrowRight,
   FileText,
+  Film,
   LayoutDashboard,
   LogOut,
   Play,
   UploadCloud,
 } from "lucide-react";
-import { LoginPanel } from "@/components/auth/LoginPanel";
 import { ReelsPlayer } from "@/components/ui/ReelsPlayer";
 import { portfolioCases } from "@/lib/portfolio";
 import {
@@ -24,12 +24,14 @@ import {
   type StudioUser,
 } from "@/lib/studio";
 import { StudioUpload } from "./StudioUpload";
+import { StudioCatalog } from "./StudioCatalog";
 import { ChatDock } from "./ChatDock";
 
-type TabId = "overview" | "upload";
+type TabId = "overview" | "catalog" | "upload";
 
 const TABS: { id: TabId; label: string; icon: typeof LayoutDashboard }[] = [
   { id: "overview", label: "Обзор", icon: LayoutDashboard },
+  { id: "catalog", label: "Каталог", icon: Film },
   { id: "upload", label: "Загрузка", icon: UploadCloud },
 ];
 
@@ -73,6 +75,7 @@ export function StudioCabinet() {
 
       <main className="cab-main">
         {tab === "overview" && <Overview user={user} onUpload={() => setTab("upload")} />}
+        {tab === "catalog" && <StudioCatalog />}
         {tab === "upload" && <UploadTab />}
       </main>
 
@@ -96,14 +99,12 @@ function StudioGate({ onDemo }: { onDemo: () => void }) {
           <i>команды.</i>
         </h1>
         <p className="cab-gate-lede">
-          Войдите тем же аккаунтом, что и на сайте (кнопка «Войти»). Доступ к кабинету
-          выдаётся по роли монтажёра.
+          Доступ к кабинету выдаётся по роли монтажёра. Пока бэкенд авторизации
+          поднимается, кабинет открыт в demo-режиме.
         </p>
-        <LoginPanel />
         <div className="cab-gate-demo">
-          <span>Бэкенд авторизации ещё поднимается —</span>
           <button type="button" onClick={onDemo}>
-            войти в demo-режиме <ArrowRight size={14} />
+            Войти в demo-режиме <ArrowRight size={14} />
           </button>
         </div>
       </div>
