@@ -10,6 +10,37 @@
 - Compose validation found duplicate Yandex env keys for `c3flex-astor-butler-bot`; duplicates were removed so `docker compose ... config` renders cleanly.
 - Local verification requires Java 25. The default shell Java 21 fails Maven with `release version 25 not supported`; use the local JDK 25 path from the handoff.
 
+## AERIS VM Runtime Smoke 2026-07-30
+
+- VM `astor-butler-aeris-mvp` is reachable over SSH port `2222` with key `~/.ssh/astor_yandex_vm_ed25519`.
+- AERIS backend is running on public IP `51.250.31.97`, direct backend port `8089`.
+- Runtime keeps Telegram disabled until external proxy is ready: `TELEGRAM_BOT_ENABLED=false`.
+- Runtime Yandex layer is active: `ASTOR_MODEL_PROVIDER=yandex`, `ASTOR_UNDERSTANDING_LLM_ENABLED=true`, Lite model `gpt://b1gug0tmrgmsq5pfsvhs/yandexgpt-5-lite/latest`.
+- Production smoke on 2026-07-30 confirmed health/readiness, Swagger/OpenAPI, YandexGPT Lite completion and `/api/messages` contact+booking flow.
+- Booking smoke created `table_reservation_orders` order `#1` for chat `777033` and persisted profile/messages in PostgreSQL database `aether`.
+- Regression decision: composite booking routes must pass `UnderstoodInput` to the side-effecting scenario, otherwise LLM slots are visible in metadata but lost before draft merge.
+- Regression decision: explicit `time` slots from understanding have priority over the guard that prevents table numbers from being parsed as times.
+- Smart Solution Ops `RESTO` is now `READY_TO_LAUNCH` at `85%`; remaining launch blockers are external Telegram proxy, C3 frontend/domain rollout, and SABY/SBIS integration.
+
+## Smart Solution Ops CRM Boundary 2026-07-23
+
+- Astor Butler backend expands into an internal Smart Solution project CRM while keeping Telegram as transport/UI.
+- `ops_projects` stores structured project launch state: vertical, pipeline stage, status, owner, deadline, next call, progress, launch status and definition of done.
+- `ops_tasks` stores project tasks with owner, priority, status, deadline and deliverable link.
+- `ops_calls` stores project call schedule with owner, start time and lifecycle status.
+- `ops_artifacts` stores links to presentations, briefs, contracts, video, design, reports and other deliverables.
+- REST API `/api/ops/**` is the first shared boundary for future Telegram commands and dashboard/frontend use.
+- `OpsTelegramCommandService` handles service-chat commands before guest FSM: `/ops`, `/newproject`, `/projects`, `/project CODE`, `/tasks CODE`, `/summary CODE`, `/status CODE STATUS 90% text`, `/task CODE "title" @owner 25.07`, `/call CODE "title" 24.07 15:00 @owner`, `/calls CODE`, `/artifact CODE "title" https://... PRESENTATION @owner`, `/artifacts CODE`.
+- `2026-07-23-smart-solution-ops-seed` seeds the first operational map for the Telegram bot: `VIDEO`, `MED`, `IZI`, `RESTO`, `PRINT`, `SITE`, `ADS`.
+- `smart-solution-bot` is deployed as a separate runtime from AERIS: distinct BotFather token, port `8090`, compose profile `smart-solution`, Redis key prefix `smart-solution`, and `TELEGRAM_OPS_GROUP_QA_ENABLED=true`.
+- `OpsGroupQuestionAnswerService` handles Smart Solution group Q&A before guest FSM: CRM/RAG answer first, owner mention fallback, owner reply persisted into `ops_group_questions` and `SMART_SOLUTION_GROUP_MEMORY`.
+- `telegram.ops.chat-id` is configured through `TELEGRAM_OPS_CHAT_ID` and defaults to `TELEGRAM_HOSTESS_CHAT_ID`.
+- Telegram write commands still go through `OpsProjectService`; Telegram never mutates CRM state directly.
+- AI may summarize and draft status updates, but final project status, deadlines, owners and task lifecycle transitions go through domain services.
+- `ADS` is the dedicated Smart Solution growth/adtech project for Yandex Business, Direct, Maps promotion, UTM/KPI reporting and official external demand generation.
+- Reverse RAG boundary: owned assistants may use project memory to rank partner restaurants when relevant and transparent; public Yandex Search/Maps/Alice ranking is not affected by prompt/RAG enrichment and must be handled through official Yandex advertising products.
+- Yandex Direct API is a future integration boundary for campaign operations and statistics after OAuth/API access. Yandex Business/Maps promotion remains an official cabinet/product flow unless account-approved APIs are available.
+
 ## Базовый стек
 
 - Java 25
@@ -491,6 +522,22 @@ FSM управляет состоянием диалога, разрешенны
   - learner/shadow model и OpenAI teacher/evaluator готовят улучшенные кандидаты, но не блокируют гостя;
   - cache не имеет права обходить FSM/domain validation.
 - Guest pinned preview обновлен до версии `2026-07-01-system-trace-preview`.
+
+## Yandex AI Studio Runtime Rollout 2026-07-23
+
+- Для первого AERIS production-теста отдельный Yandex AI Studio Agent не создается.
+- Причина: Astor Butler уже имеет `YandexModelGateway`, который вызывает Yandex Foundation Models напрямую по `gpt://...` model URI, а FSM остается single source of truth.
+- Agent Atelier/managed agent runtime остается future option для managed tools, threads, RAG/search indexes и независимых агентских сценариев, но не должен владеть booking state.
+- Frontline understanding модель: `gpt://b1gug0tmrgmsq5pfsvhs/yandexgpt-5-lite/latest`.
+- Quality модель для сложных non-FSM запросов: `gpt://b1gug0tmrgmsq5pfsvhs/yandexgpt-5.1/latest`.
+- Speech realtime модель `gpt://b1gug0tmrgmsq5pfsvhs/speech-realtime-260528/latest` не подключается через текущий `YandexModelGateway`; для нее нужен отдельный speech adapter/path.
+- Production runtime env должен включать `ASTOR_MODEL_PROVIDER=yandex`, `YANDEX_MODEL`, `YANDEX_QUALITY_MODEL`, `YANDEX_API_KEY` и `ASTOR_UNDERSTANDING_LLM_ENABLED=true`; секреты живут только в `/opt/astor-butler/.env.production` или secret vault.
+- `ScenarioReplyComposer`/mass creative replies не включать массово до proxy + corpus smoke, чтобы контролировать стоимость и поведение.
+- Production budget guard считает экономику по гостевому диалогу, не только по одному сообщению: baseline 8 guest messages, Lean около 1.63 RUB на гостя, Standard с 10% Pro escalation около 3.68 RUB на гостя.
+- Для ООО «Счастье» рабочая коммерческая граница: 60 000 рублей с учетом налогов за запуск Astor Butler / AERIS и 20 000 рублей в месяц с учетом налогов за сопровождение после тестового месяца. Первый тестовый месяц сопровождения отражается как 20 000 рублей со скидкой 100% для Заказчика. Yandex Cloud рублевые цены у провайдера уже включают НДС, но перевыставление клиенту зависит от налогового режима Исполнителя.
+- Полный rollout/runbook: `docs/operations/CALLIOPE_TO_AERIS_YANDEX_AI_ROLLOUT.md`.
+- Коммерческая смета: `docs/commercial/OOO_SCHASTYE_AERIS_PROD_BUDGET_RU.md`.
+- Пакет к печати: `docs/commercial/OOO_SCHASTYE_AERIS_PRINT_PACKAGE_RU.md`.
 
 ## Связанные продуктовые заметки
 

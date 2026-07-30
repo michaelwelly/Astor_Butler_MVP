@@ -11,6 +11,10 @@ on:
         description: "Health URL reachable from the VM"
         required: true
         default: "http://127.0.0.1:8089/actuator/health"
+      extra_smoke_urls:
+        description: "Optional extra health URLs, one per line"
+        required: false
+        default: ""
 
 permissions:
   contents: read
@@ -79,6 +83,7 @@ jobs:
           YANDEX_VM_DEPLOY_PATH: ${{ secrets.YANDEX_VM_DEPLOY_PATH }}
           COMPOSE_PROFILES: ${{ inputs.compose_profiles }}
           SMOKE_URL: ${{ inputs.smoke_url }}
+          EXTRA_SMOKE_URLS: ${{ inputs.extra_smoke_urls }}
         run: |
           set -euo pipefail
           deploy_path="${YANDEX_VM_DEPLOY_PATH:-/opt/astor-butler}"
@@ -86,6 +91,7 @@ jobs:
           for profile in $COMPOSE_PROFILES; do
             profile_args="$profile_args --profile $profile"
           done
+          extra_smoke_urls_b64="$(printf '%s' "$EXTRA_SMOKE_URLS" | base64 | tr -d '\n')"
           ssh -i ~/.ssh/yandex_vm_key -p "${YANDEX_VM_SSH_PORT:-22}" \
             "$YANDEX_VM_USER@$YANDEX_VM_HOST" \
             "set -euo pipefail
@@ -93,4 +99,8 @@ jobs:
              test -f .env.production
              docker compose --env-file .env.production -f docker-compose.yml -f docker-compose.prod.yml $profile_args up -d --build
              docker compose --env-file .env.production -f docker-compose.yml -f docker-compose.prod.yml $profile_args ps
-             curl -fsS '$SMOKE_URL'"
+             if [ -n '$SMOKE_URL' ]; then curl -fsS '$SMOKE_URL'; fi
+             printf '%s' '$extra_smoke_urls_b64' | base64 -d | while IFS= read -r url; do
+               [ -z \"\$url\" ] && continue
+               curl -fsS \"\$url\"
+             done"

@@ -36,8 +36,9 @@ Canonical runtime naming:
 
 - `aeris-astor-butler-bot` / `aeris_astor_butler_bot` - AERIS Telegram guest bot, service chats, FSM and NLU-first hospitality scenarios.
 - `c3flex-astor-butler-bot` / `c3flex_astor_butler_bot` - C3FLEX web/site bot and production lead-gen API; Telegram long polling is disabled until a dedicated site bot contract is ready.
+- `smart-solution-bot` / `smart_solution_bot` - separate Smart Solution Telegram ops bot with its own BotFather token, Redis prefix `smart-solution`, port `8090`, profile `smart-solution`, Ops CRM commands and group Q&A memory loop.
 
-Current priority: stabilize AERIS Telegram bot with state-aware rules + Natasha NLU and end-to-end table booking. Duckling is archived as a spike, not part of the Docker runtime. C3FLEX site bot stays in backlog until the AERIS manual test is stable.
+Current priority: keep AERIS Telegram bot isolated while Smart Solution bot runs project CRM/Q&A in team groups. Duckling is archived as a spike, not part of the Docker runtime. C3FLEX site bot stays in backlog until the AERIS manual test is stable.
 
 All API endpoints must keep:
 
@@ -46,6 +47,22 @@ All API endpoints must keep:
 - `ApiErrorResponse` for all errors;
 - enum models for statuses, roles, event types and delivery states;
 - test-first development: GDD/TDD before business logic.
+
+## Smart Solution Yandex Growth / Adtech
+
+`ADS` is the Smart Solution project for official external growth channels:
+
+- Yandex Business profile and promotion: restaurant card, photos, menu, booking link, reviews, рекламная подписка and priority placement where applicable;
+- Yandex Direct: campaigns, geo, keywords, creatives, UTM, budgets and statistics;
+- Yandex Maps API: maps/routes/organization context for site and CRM when needed;
+- reporting loop: impressions, clicks, calls, routes, bookings, CPL and conversion to project launch statuses.
+
+Next implementation step after credentials:
+
+1. Add a provider-neutral `AdsGateway` port.
+2. Add a `YandexDirectGateway` adapter for campaign/status/statistics read paths first.
+3. Keep write operations approval-gated until budget guard, account/client login and rollback rules are documented.
+4. Store reports and campaign briefs in `ADS` project artifacts/RAG memory, never secrets.
 
 ## Model Gateway / Local Multimodal Layer
 
@@ -131,6 +148,35 @@ Prepare frontend contract for the next launch session:
 - System Design/JavaGuru promo section if it supports sales narrative.
 
 Frontend should use generated API clients from Swagger once DTO contracts stabilize.
+
+## Domain / Public Edge Preparation 2026-07-30
+
+Next public domain target:
+
+```text
+c3ag.ru
+```
+
+Runbook:
+
+```text
+docs/operations/C3AG_DOMAIN_RUNBOOK.md
+```
+
+DNS target:
+
+- `@ A 51.250.31.97`;
+- `www CNAME c3ag.ru.`;
+- `api A 51.250.31.97`.
+
+Telegram proxy is postponed until the call with Egor. Domain and frontend edge work can continue independently.
+
+Current VM preview:
+
+- C3 Agency frontend container is running as `c3_agency_frontend`.
+- Temporary public URL: `http://51.250.31.97:3001`.
+- Security group has temporary public ingress TCP `3001`.
+- Close direct `3001` after `c3ag.ru` is routed through `80/443` with TLS.
 
 ## Notion / Homework Delivery
 

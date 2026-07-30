@@ -53,7 +53,7 @@ public class ScenarioRouter {
         UnderstoodInput understood = inputUnderstandingService.understand(text, currentState);
         captureUnderstandingMissIfNeeded(incoming, currentState, understood);
         String routeText = understood.routeText();
-        OutgoingMessage composite = tryCompositeIntent(incoming, currentState, routeText);
+        OutgoingMessage composite = tryCompositeIntent(incoming, currentState, routeText, understood);
         if (composite != null) {
             return withUnderstandingMetadata(composite, understood);
         }
@@ -186,7 +186,12 @@ public class ScenarioRouter {
         );
     }
 
-    private OutgoingMessage tryCompositeIntent(IncomingMessage incoming, BotState currentState, String text) {
+    private OutgoingMessage tryCompositeIntent(
+            IncomingMessage incoming,
+            BotState currentState,
+            String text,
+            UnderstoodInput understood
+    ) {
         BotState state = currentState == null ? BotState.UNKNOWN : currentState.canonical();
         if (state != BotState.READY_FOR_DIALOG && state != BotState.AI_FALLBACK) {
             return null;
@@ -195,16 +200,16 @@ public class ScenarioRouter {
             return null;
         }
 
-        boolean table = tableBookingScenario.supports(incoming, state, text);
-        boolean menu = menuAssetsScenario.supports(incoming, state, text);
-        boolean guide = quietGuideScenario.supports(incoming, state, text);
+        boolean table = tableBookingScenario.supports(incoming, state, text, understood);
+        boolean menu = menuAssetsScenario.supports(incoming, state, text, understood);
+        boolean guide = quietGuideScenario.supports(incoming, state, text, understood);
         int intentCount = (table ? 1 : 0) + (menu ? 1 : 0) + (guide ? 1 : 0);
         if (intentCount < 2) {
             return null;
         }
 
         if (table) {
-            OutgoingMessage primary = tableBookingScenario.handle(incoming, state, text);
+            OutgoingMessage primary = tableBookingScenario.handle(incoming, state, text, understood);
             List<String> pending = new ArrayList<>();
             if (menu) {
                 pending.add(encodePendingIntent("MENU_ASSETS", pendingMenuPrompt(text)));
@@ -238,10 +243,10 @@ public class ScenarioRouter {
 
         List<OutgoingMessage> responses = new ArrayList<>();
         if (menu) {
-            responses.add(menuAssetsScenario.handle(incoming, state, text));
+            responses.add(menuAssetsScenario.handle(incoming, state, text, understood));
         }
         if (guide) {
-            responses.add(quietGuideScenario.handle(incoming, state, text));
+            responses.add(quietGuideScenario.handle(incoming, state, text, understood));
         }
         if (responses.size() < 2) {
             return null;

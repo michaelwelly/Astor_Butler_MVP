@@ -34,6 +34,7 @@ flowchart LR
     Media["Media Domain"]
     Timeline["Timeline Domain"]
     Manager["Manager Domain"]
+    Ops["Smart Solution Ops CRM<br/>projects / tasks / launches"]
     Notify["Notifications Domain"]
     Capability["Capability Extensions<br/>Memory / Preference / Tips / Guide / Play / Safety"]
 
@@ -66,6 +67,7 @@ flowchart LR
     Services --> Media
     Services --> Timeline
     Services --> Manager
+    Services --> Ops
     Services --> Notify
     Services --> Capability
 
@@ -81,6 +83,7 @@ flowchart LR
     Content --> Pg
     Timeline --> Pg
     Manager --> Pg
+    Ops --> Pg
     Media --> S3
     Media --> Mongo
     Content --> Mongo
@@ -186,6 +189,32 @@ Manager/staff/admin web app нужен для операционной рабо�
 - admin settings.
 
 Авторизация идет через Keycloak/OAuth2/OIDC. Frontend передает JWT в backend через `Authorization: Bearer`.
+
+### Smart Solution Ops CRM
+
+Smart Solution Ops CRM - внутренний проектный контур для управления командой и запусками через Telegram, REST API и будущий manager dashboard.
+
+Первый backend slice:
+
+- `ops_projects` - карточка проекта или запуска: вертикаль, пайплайн, статус, ответственный, срок, следующий call, прогресс, launch status и definition of done;
+- `ops_tasks` - задачи проекта: ответственный, приоритет, статус, pipeline stage, срок и ссылка на deliverable;
+- `ops_calls` - расписание проектных созвонов с владельцем и временем;
+- `ops_artifacts` - ссылки на презентации, брифы, договоры, видео, дизайн, отчеты и другие deliverables;
+- `/api/ops/**` - REST boundary для Telegram-команд, dashboard/frontend и внешней автоматизации;
+- `/api/ops/projects/{id}/digest` - HTML/Telegram-ready статус проекта для командного чата.
+
+Целевые Telegram-сценарии:
+
+- показать активные проекты;
+- показать статус конкретного проекта;
+- собрать daily/weekly status digest;
+- добавить задачу с ответственным и сроком;
+- поставить или посмотреть ближайшие call'ы;
+- сохранить ссылку на презентацию, бриф, дизайн, видео или отчет;
+- обновить статус проекта или задачи;
+- найти горящие дедлайны и блокеры.
+
+AI в этом контуре помогает суммаризировать, искать и формулировать, но не является источником истины: финальные статусы, сроки, ответственные и переходы пайплайна меняются через доменный сервис/API.
 
 ### Promo / Lead-Gen Frontend
 

@@ -2,6 +2,75 @@
 
 Дата: 2026-06-04
 
+## Active Team Task 2026-07-23
+
+Фокус: Smart Solution Ops CRM как командный Telegram-штаб.
+
+Рабочая задача:
+
+- собрать в боте единый статус по проектам, задачам, коллам, презентациям, ответственным, срокам и пайплайну до готового результата;
+- вести вертикали `VIDEO`, `MED`, `IZI`, `RESTO`, `PRINT`, `SITE`, `ADS` структурно, а не только текстом в чате;
+- отвечать на вопросы участников группы сначала из Ops CRM + project memory;
+- если AI/RAG не знает ответ, бот тегает владельца; ответ владельца на исходный вопрос сохраняется в память проекта;
+- Smart Solution бот должен быть отдельным runtime от AERIS, с отдельным BotFather token, Redis prefix и портом.
+
+Стоп-лист на текущий срез:
+
+- не продолжать VM deploy без отдельной команды;
+- не коммитить и не синхронизировать `.env`, `.env.*`, `target/**`, `.codex*`;
+- не хранить BotFather token в git, docs или Obsidian;
+- не смешивать Smart Solution group flow с гостевым AERIS FSM.
+
+Первый командный статус:
+
+- `VIDEO`: видео-продакшен у `@egor`, нужен короткий статус по сценарию, дедлайнам и next deliverable;
+- `MED`: презентация по медицине у `@michael`, нужен текущий статус, ссылка/версия и срок готовности;
+- `IZI`: статус "ожидает оплату", нужен ответственный и дата следующего касания;
+- `RESTO`: запуски ресторанов, нужен список заведений/этапов;
+- `PRINT`: типография, нужен список макетов/тиражей/сроков;
+- `SITE`: Smart_Soultion.com + внутренняя CRM, нужен pipeline от логотипа/сайта до командного dashboard.
+- `ADS`: Яндекс Бизнес/Директ/Карты, нужен официальный внешний growth-контур: карточка, кампании, бюджеты, UTM, KPI и отчеты.
+
+Definition of Done для этого среза:
+
+- команда может написать `/projects`, `/summary CODE`, `/tasks CODE`, `/calls`, `/artifacts CODE` и получить актуальный digest;
+- обычный вопрос в группе получает ответ от бота, если ответ есть в CRM/RAG;
+- неизвестный вопрос эскалируется владельцу, а ответ владельца становится новой памятью проекта;
+- рекламные статусы и решения по Яндекс Бизнес/Директ живут в `ADS`, а не смешиваются с публичной выдачей Алисы/Карт;
+- AERIS и Smart Solution не конфликтуют по токенам, Redis state и портам;
+- после проверки локально можно отдельно включать VM/Yandex deploy.
+
+## Active Launch Status 2026-07-30
+
+Статус: backend AERIS на Yandex VM готов к демонстрационному REST/Swagger smoke, Telegram пока замокан.
+
+Сделано:
+
+- SSH-доступ к VM восстановлен через порт `2222`;
+- исходники синхронизированы в `/opt/astor-butler`;
+- `aeris_astor_butler_bot` пересобран через Docker Compose;
+- health/readiness/Swagger зелёные;
+- YandexGPT Lite runtime probe зелёный;
+- `/api/messages` contact + booking smoke создал реальную заявку в PostgreSQL;
+- Smart Solution Ops `RESTO` переведен в `READY_TO_LAUNCH`, `85%`.
+
+Следующие шаги:
+
+1. Получить от Егора Germany SOCKS5/HTTP CONNECT proxy, который открывает `https://api.telegram.org`.
+2. Подключить proxy env на VM и только после smoke включить `TELEGRAM_BOT_ENABLED=true`.
+3. Купить и настроить `c3ag.ru`: `A` record на `51.250.31.97`, затем nginx/Caddy TLS.
+4. Поднять C3 Agency frontend контейнер из main/front branch на этой VM.
+5. Спроектировать и подключить SABY/SBIS external reservation port для реального ресторана.
+
+Актуализация 2026-07-30:
+
+- proxy переносится на созвон с Егором;
+- `c3ag.ru` куплен/активируется, DNS настраиваем после активации домена;
+- C3 Agency frontend поднят на той же VM отдельным контейнером;
+- временный preview до домена: `http://51.250.31.97:3001`;
+- доменный runbook добавлен в `docs/operations/C3AG_DOMAIN_RUNBOOK.md`;
+- после DNS/TLS нужно закрыть прямой публичный `3001` и вести трафик через `80/443`.
+
 ## Цель ближайшего этапа
 
 Собрать Astor Butler MVP как управляемый Telegram/FSM backend для ресторана/event-площадки: первый контакт гостя, Consent Vault, сохранение профиля и сообщений, Kafka event trail, админ-уведомления, далее - сценарии бронирования и Slot Keeper.
@@ -212,3 +281,79 @@ Redis:
 1. Закончить cleanup: удалить sandbox/Codex-мусор, проверить git status, сборку и отсутствие `.env`/`target` в tracked files.
 2. Довести Table Booking слой: реализовать `TableBookingScenario` поверх описанной FSM-спеки, связать slot extraction с `TableReservationService`, отправлять AERIS plan и создавать hold только после сбора date/time/party/table.
 3. После стабилизации первого контакта и посадки перейти к `EVENT_BOOKING`/Slot Keeper и подготовить System Design ДЗ на базе реального API/FSM flow.
+
+## Дополнение 2026-07-23. Smart Solution Ops CRM через Telegram
+
+Продуктовый фокус расширяется: Telegram-бот становится внутренним операционным центром Smart Solution для управления проектами и командой.
+
+Цель: через бота выгружать команде статусы по проектам, расписание коллов, задачи, презентации, ответственных, сроки, этапы пайплайна и статусы запусков в разных вертикалях.
+
+Вертикали:
+
+- рестораны и HoReCa;
+- типографии;
+- video production;
+- медицина;
+- сайты и AI-проекты Smart Solution;
+- Яндекс Бизнес/Директ/Карты как внешний growth/adtech контур.
+
+Первый backend slice:
+
+- `ops_projects` - карточка проекта/запуска;
+- `ops_tasks` - задачи, ответственные, сроки, deliverables;
+- `ops_calls` - расписание проектных созвонов;
+- `ops_artifacts` - презентации, брифы, договоры, видео, дизайн и отчеты;
+- `/api/ops/**` - REST-контур для dashboard/Telegram-команд;
+- `/api/ops/projects/{id}/digest` - Telegram-ready статус проекта.
+- Telegram-команды для service chat: `/ops`, `/newproject`, `/projects`, `/project CODE`, `/tasks CODE`, `/summary CODE`, `/status CODE STATUS 90% text`, `/task CODE "title" @owner 25.07`, `/call CODE "title" 24.07 15:00 @owner`, `/calls CODE`, `/artifact CODE "title" https://... PRESENTATION @owner`, `/artifacts CODE`.
+- Seeded стартовые карточки для команды: `VIDEO` (видео-продакшен у `@egor`), `MED` (медицинская презентация у `@michael`), `IZI` (ожидает оплату), `RESTO` (запуски ресторанов), `PRINT` (типография), `SITE` (Smart_Soultion.com и внутренняя CRM), `ADS` (Яндекс Бизнес/Директ/Карты).
+- Separate `smart-solution-bot` runtime: отдельный Telegram token, compose profile `smart-solution`, port `8090`, Redis prefix `smart-solution`, group Q&A через Ops CRM + RAG memory; если бот не знает ответ, тегает owner, а reply owner сохраняется в `SMART_SOLUTION_GROUP_MEMORY`.
+- Reverse RAG/adtech boundary: внутренний AI может релевантно и прозрачно рекомендовать партнерский ресторан внутри наших каналов; публичная выдача Яндекса/Алисы/Карт продвигается через официальные продукты Яндекс Бизнес/Директ/Карты и ведется в проекте `ADS`.
+
+Ключевой принцип остается прежним:
+
+- Telegram - транспорт и быстрый UI;
+- FSM/status lifecycle - источник истины по процессам;
+- AI помогает с формулировками, суммаризацией, поиском и подготовкой материалов;
+- финальные бизнес-статусы, сроки, ответственные и переходы по пайплайну должны храниться структурно.
+
+## Дополнение 2026-07-23. Calliope -> AERIS Yandex AI rollout
+
+Цель: перевести реализацию Calliope в AERIS как основного ассистента для ресторанного production-smoke, не ломая FSM-архитектуру.
+
+Решение:
+
+- Yandex AI Studio Agent пока не создаем; используем прямые `gpt://...` model URI через существующий `YandexModelGateway`.
+- `yandexgpt-5-lite` работает как дешевый слой понимания intent/slots.
+- `yandexgpt-5.1` работает как quality слой для сложных non-FSM запросов, recovery и manager summaries.
+- Speech realtime выделен в отдельный adapter позже; текущий Java gateway покрывает text completion.
+- Telegram polling включаем только после German SOCKS5/HTTP proxy, потому что Yandex Cloud IP pool сейчас таймаутит `api.telegram.org`.
+- SABY/SBIS интеграция идет через отдельный external reservation port и не должна попадать в FSM как прямой API-вызов.
+
+Ближайшие шаги:
+
+1. Включить Yandex runtime env на VM без коммита секретов.
+2. Сделать completion probe и REST smoke через `/api/messages`.
+3. Получить German proxy от Егора и подключить Telegram Bot API.
+4. Прогнать реальную бронь стола: guest phrase -> FSM -> order/hold -> hostess confirmation -> guest final status.
+5. Спроектировать `SabyReservationProvider` после получения credentials/API contract.
+
+Runbook: `docs/operations/CALLIOPE_TO_AERIS_YANDEX_AI_ROLLOUT.md`.
+
+## Дополнение 2026-07-23. ООО «Счастье» / AERIS commercial production budget
+
+Для следующего оплачиваемого production-этапа зафиксирована рабочая смета:
+
+- запуск Astor Butler / AERIS: 60 000 рублей с учетом налогов;
+- сопровождение после тестового месяца: 20 000 рублей в месяц с учетом налогов;
+- первый тестовый месяц сопровождения показывается в договоре/счете как 20 000 рублей со скидкой 100%, то есть для Заказчика бесплатно;
+- текущая Yandex Cloud VM себестоимость: около 10 860 RUB/month без сверхлимитного трафика;
+- если инфраструктура перевыставляется клиенту с НДС 22%: около 13 249 RUB/month;
+- AI token reserve: 5 000 RUB/month, stress reserve: 15 000 RUB/month;
+- per guest AI economics: примерно 1.63 RUB в Lean и 3.68 RUB в Standard mode без клиентского НДС.
+
+Печатный пакет:
+
+- `docs/commercial/AERIS_SERVICE_AGREEMENT_DRAFT_RU.md`;
+- `docs/commercial/OOO_SCHASTYE_AERIS_PROD_BUDGET_RU.md`;
+- `docs/commercial/OOO_SCHASTYE_AERIS_PRINT_PACKAGE_RU.md`.

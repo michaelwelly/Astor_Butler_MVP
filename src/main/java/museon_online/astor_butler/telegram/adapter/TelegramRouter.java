@@ -215,6 +215,7 @@ public class TelegramRouter {
         User user = message.getFrom();
         Contact contact = message.getContact();
         Map<String, Object> payload = mediaPayload(message);
+        payload = replyPayload(message, payload);
 
         return IncomingMessage.telegram(
                 chatId,
@@ -242,11 +243,16 @@ public class TelegramRouter {
                 .chatId(outgoing.chatId().toString())
                 .text(outgoing.text());
 
+        Integer replyToMessageId = intMetadata(outgoing, "replyToMessageId");
+        if (replyToMessageId != null) {
+            builder.replyToMessageId(replyToMessageId).allowSendingWithoutReply(true);
+        }
+
         if (outgoing.html()) {
             builder.parseMode("HTML");
         }
         ReplyKeyboardMarkup customKeyboard = customReplyKeyboard(outgoing);
-        if (outgoing.requestContact()) {
+        if (outgoing.requestContact() && outgoing.chatId() != null && outgoing.chatId() > 0) {
             builder.replyMarkup(contactKeyboard());
         } else if (customKeyboard != null) {
             builder.replyMarkup(customKeyboard);
@@ -256,7 +262,15 @@ public class TelegramRouter {
             builder.replyMarkup(ReplyKeyboardRemove.builder().removeKeyboard(true).build());
         }
 
-        execute(sender, builder.build());
+        Message sent = execute(sender, builder.build());
+        if (sent != null) {
+            log.info(
+                    "📤 [TG] Outgoing message sent to {}: messageId={}, actions={}",
+                    outgoing.chatId(),
+                    sent.getMessageId(),
+                    outgoing.actions()
+            );
+        }
     }
 
     private void sendAdminAlert(OutgoingMessage outgoing, AbsSender sender) {
@@ -439,6 +453,45 @@ public class TelegramRouter {
             payload.put("fileName", audio.getFileName());
         }
         return payload;
+    }
+
+    private Map<String, Object> replyPayload(Message message, Map<String, Object> existingPayload) {
+        if (message == null || message.getReplyToMessage() == null) {
+            return existingPayload;
+        }
+        Map<String, Object> payload = new LinkedHashMap<>(existingPayload == null ? Map.of() : existingPayload);
+        Message reply = message.getReplyToMessage();
+        payload.put("replyToMessageId", reply.getMessageId());
+        if (reply.hasText()) {
+            payload.put("replyToText", reply.getText());
+        }
+        if (reply.getFrom() != null) {
+            payload.put("replyToUserId", reply.getFrom().getId());
+            payload.put("replyToUsername", reply.getFrom().getUserName());
+            payload.put("replyToBot", reply.getFrom().getIsBot());
+        }
+        return payload;
+    }
+
+    private Integer intMetadata(OutgoingMessage outgoing, String key) {
+        if (outgoing == null || outgoing.metadata() == null) {
+            return null;
+        }
+        Object value = outgoing.metadata().get(key);
+        if (value instanceof Integer integer) {
+            return integer;
+        }
+        if (value instanceof Number number) {
+            return number.intValue();
+        }
+        if (value instanceof String string && !string.isBlank()) {
+            try {
+                return Integer.parseInt(string.trim());
+            } catch (NumberFormatException ignored) {
+                return null;
+            }
+        }
+        return null;
     }
 
     private String previewText() {

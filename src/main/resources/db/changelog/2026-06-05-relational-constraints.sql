@@ -126,7 +126,7 @@ BEGIN
            FROM pg_constraint c
            JOIN pg_attribute a ON a.attrelid = c.conrelid AND a.attnum = ANY(c.conkey)
            WHERE c.contype = 'f'
-             AND c.conrelid = 'event_bookings'::regclass
+             AND c.conrelid = to_regclass('public.event_bookings')
              AND c.confrelid = 'users'::regclass
              AND a.attname = 'user_id'
        ) THEN
@@ -143,7 +143,7 @@ BEGIN
            FROM pg_constraint c
            JOIN pg_attribute a ON a.attrelid = c.conrelid AND a.attnum = ANY(c.conkey)
            WHERE c.contype = 'f'
-             AND c.conrelid = 'event_bookings'::regclass
+             AND c.conrelid = to_regclass('public.event_bookings')
              AND c.confrelid = 'users'::regclass
              AND a.attname = 'manager_user_id'
        ) THEN

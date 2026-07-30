@@ -44,6 +44,7 @@ import org.springframework.web.client.ResourceAccessException;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.lenient;
@@ -138,6 +139,15 @@ class MessageGatewayServiceTest {
     @Mock
     private ModelInteractionAuditRepository modelInteractionAuditRepository;
 
+    @Mock
+    private OpsTelegramCommandService opsTelegramCommandService;
+
+    @Mock
+    private OpsGroupQuestionAnswerService opsGroupQuestionAnswerService;
+
+    @Mock
+    private OpsGroupMessageIntakeService opsGroupMessageIntakeService;
+
     private MessageGatewayService service;
 
     @BeforeEach
@@ -194,12 +204,20 @@ class MessageGatewayServiceTest {
                 voiceTranscriptionRetryService,
                 fsmTimelineWriter,
                 telegramSystemNotifier,
-                modelInteractionAuditRepository
+                modelInteractionAuditRepository,
+                opsTelegramCommandService,
+                opsGroupQuestionAnswerService,
+                opsGroupMessageIntakeService
         );
         ReflectionTestUtils.setField(service, "adminChatId", "100500");
         ReflectionTestUtils.setField(service, "analyticsChatId", "100501");
         ReflectionTestUtils.setField(service, "systemChatId", "-5403153261");
+        ReflectionTestUtils.setField(service, "opsChatId", "-100900");
         ReflectionTestUtils.setField(service, "logConversationsEnabled", true);
+        lenient().when(opsGroupQuestionAnswerService.handle(any(), any(), any()))
+                .thenReturn(java.util.Optional.empty());
+        lenient().when(opsGroupMessageIntakeService.handle(any(), any(), any()))
+                .thenReturn(java.util.Optional.empty());
     }
 
     private void bridgeUnderstandingAwareCalls(FsmScenario... scenarios) {
@@ -249,6 +267,215 @@ class MessageGatewayServiceTest {
         verify(userEventProducer).publishIncomingMessage(incoming, BotState.READY_FOR_DIALOG, outgoing);
         verify(fsmTimelineWriter).append(any(FsmTimelineEvent.class));
         verify(modelInteractionAuditRepository).capture(any(ModelInteractionAuditRecord.class));
+    }
+
+    @Test
+    void handlesOpsCommandInsideOpsServiceChatBeforeGuestFsm() {
+        IncomingMessage incoming = IncomingMessage.telegram(
+                -100900L,
+                1773317437L,
+                1,
+                100,
+                "/projects",
+                null,
+                "Michael",
+                null,
+                "michaelwelly",
+                "ru",
+                false,
+                "100"
+        );
+        OutgoingMessage opsResponse = OutgoingMessage.of(
+                incoming,
+                "<b>Smart Solution Ops / active projects</b>",
+                BotState.READY_FOR_DIALOG.name(),
+                true,
+                false,
+                false,
+                false,
+                AdminAlert.none(),
+                java.util.List.of("OPS_TELEGRAM_COMMAND", "SKIP_GUEST_FSM")
+        );
+
+        when(fsmStorage.getState(incoming.chatId())).thenReturn(BotState.READY_FOR_DIALOG);
+        when(opsTelegramCommandService.supports("/projects")).thenReturn(true);
+        when(opsTelegramCommandService.handle(incoming, BotState.READY_FOR_DIALOG, "/projects"))
+                .thenReturn(java.util.Optional.of(opsResponse));
+
+        OutgoingMessage outgoing = service.handle(incoming);
+
+        assertThat(outgoing.text()).contains("Smart Solution Ops");
+        assertThat(outgoing.html()).isTrue();
+        verify(opsTelegramCommandService).handle(incoming, BotState.READY_FOR_DIALOG, "/projects");
+        verify(firstTouchScenario, never()).supports(any(), any(), any());
+        verify(modelGateway, never()).generateText(any());
+        verify(userEventProducer).publishIncomingMessage(incoming, BotState.READY_FOR_DIALOG, outgoing);
+    }
+
+    @Test
+    void handlesOpsCommandFromAnyTelegramGroupBeforeGuestConsent() {
+        IncomingMessage incoming = IncomingMessage.telegram(
+                -1003975140329L,
+                1773317437L,
+                1,
+                100,
+                "/ops@astor_butler_bot",
+                null,
+                "Michael",
+                null,
+                "michaelwelly",
+                "ru",
+                false,
+                "100"
+        );
+        OutgoingMessage opsResponse = OutgoingMessage.of(
+                incoming,
+                "<b>Smart Solution Ops</b>",
+                BotState.UNKNOWN.name(),
+                true,
+                false,
+                false,
+                false,
+                AdminAlert.none(),
+                java.util.List.of("OPS_TELEGRAM_COMMAND", "SKIP_GUEST_FSM")
+        );
+
+        when(fsmStorage.getState(incoming.chatId())).thenReturn(BotState.UNKNOWN);
+        when(opsTelegramCommandService.supports("/ops@astor_butler_bot")).thenReturn(true);
+        when(opsTelegramCommandService.handle(incoming, BotState.UNKNOWN, "/ops@astor_butler_bot"))
+                .thenReturn(java.util.Optional.of(opsResponse));
+
+        OutgoingMessage outgoing = service.handle(incoming);
+
+        assertThat(outgoing.text()).contains("Smart Solution Ops");
+        assertThat(outgoing.requestContact()).isFalse();
+        assertThat(outgoing.actions()).containsExactly("OPS_TELEGRAM_COMMAND", "SKIP_GUEST_FSM");
+        verify(opsTelegramCommandService).supports("/ops@astor_butler_bot");
+        verify(firstTouchScenario, never()).supports(any(), any(), any());
+        verify(fsmStorage, never()).setState(incoming.chatId(), BotState.CONSENT_REQUIRED);
+        verify(modelGateway, never()).generateText(any());
+    }
+
+    @Test
+    void silentlySkipsNonOpsTelegramGroupMessagesBeforeGuestConsent() {
+        IncomingMessage incoming = IncomingMessage.telegram(
+                -1003975140329L,
+                1773317437L,
+                1,
+                100,
+                "обычный текст в группе",
+                null,
+                "Michael",
+                null,
+                "michaelwelly",
+                "ru",
+                false,
+                "100"
+        );
+
+        when(fsmStorage.getState(incoming.chatId())).thenReturn(BotState.CONSENT_REQUIRED);
+        when(opsTelegramCommandService.supports("обычный текст в группе")).thenReturn(false);
+
+        OutgoingMessage outgoing = service.handle(incoming);
+
+        assertThat(outgoing.text()).isBlank();
+        assertThat(outgoing.requestContact()).isFalse();
+        assertThat(outgoing.nextState()).isEqualTo(BotState.CONSENT_REQUIRED.name());
+        assertThat(outgoing.actions()).containsExactly("GROUP_CHAT_CHECK", "SKIP_GUEST_FSM");
+        verify(firstTouchScenario, never()).supports(any(), any(), any());
+        verify(fsmStorage, never()).setState(incoming.chatId(), BotState.CONSENT_REQUIRED);
+        verify(modelGateway, never()).generateText(any());
+    }
+
+    @Test
+    void handlesGroupQuestionAnswerBeforeGuestFsm() {
+        IncomingMessage incoming = IncomingMessage.telegram(
+                -1003975140329L,
+                1773317437L,
+                1,
+                100,
+                "что по презентации MED?",
+                null,
+                "Michael",
+                null,
+                "michaelwelly",
+                "ru",
+                false,
+                "100"
+        );
+        OutgoingMessage qaResponse = OutgoingMessage.of(
+                incoming,
+                "<b>Smart Solution Ops</b>\nMED у Майкла.",
+                BotState.CONSENT_REQUIRED.name(),
+                true,
+                false,
+                false,
+                false,
+                AdminAlert.none(),
+                java.util.List.of("GROUP_QA_RAG_ANSWER", "SKIP_GUEST_FSM")
+        );
+
+        when(fsmStorage.getState(incoming.chatId())).thenReturn(BotState.CONSENT_REQUIRED);
+        when(opsTelegramCommandService.supports("что по презентации MED?")).thenReturn(false);
+        when(opsGroupQuestionAnswerService.handle(incoming, BotState.CONSENT_REQUIRED, "что по презентации MED?"))
+                .thenReturn(java.util.Optional.of(qaResponse));
+
+        OutgoingMessage outgoing = service.handle(incoming);
+
+        assertThat(outgoing.text()).contains("MED");
+        assertThat(outgoing.actions()).containsExactly("GROUP_QA_RAG_ANSWER", "SKIP_GUEST_FSM");
+        verify(firstTouchScenario, never()).supports(any(), any(), any());
+        verify(modelGateway, never()).generateText(any());
+        verify(userEventProducer).publishIncomingMessage(incoming, BotState.CONSENT_REQUIRED, outgoing);
+    }
+
+    @Test
+    void handlesOpsGroupIntakeBeforeGuestFsm() {
+        IncomingMessage incoming = IncomingMessage.telegram(
+                -1003975140329L,
+                1773317437L,
+                1,
+                100,
+                "MED статус 70% презентация у @michael на ревью",
+                null,
+                "Michael",
+                null,
+                "michaelwelly",
+                "ru",
+                false,
+                "100"
+        );
+        OutgoingMessage intakeResponse = OutgoingMessage.of(
+                incoming,
+                "<b>Smart Solution Ops / intake</b>",
+                BotState.CONSENT_REQUIRED.name(),
+                true,
+                false,
+                false,
+                false,
+                AdminAlert.none(),
+                java.util.List.of("OPS_GROUP_MESSAGE_INTAKE", "OPS_PROJECT_STATUS_UPDATED", "PROJECT_MEMORY_UPDATED", "SKIP_GUEST_FSM")
+        );
+
+        when(fsmStorage.getState(incoming.chatId())).thenReturn(BotState.CONSENT_REQUIRED);
+        when(opsTelegramCommandService.supports(incoming.text())).thenReturn(false);
+        when(opsGroupQuestionAnswerService.handle(incoming, BotState.CONSENT_REQUIRED, incoming.text()))
+                .thenReturn(java.util.Optional.empty());
+        when(opsGroupMessageIntakeService.handle(incoming, BotState.CONSENT_REQUIRED, incoming.text()))
+                .thenReturn(java.util.Optional.of(intakeResponse));
+
+        OutgoingMessage outgoing = service.handle(incoming);
+
+        assertThat(outgoing.text()).contains("Smart Solution Ops / intake");
+        assertThat(outgoing.actions()).containsExactly(
+                "OPS_GROUP_MESSAGE_INTAKE",
+                "OPS_PROJECT_STATUS_UPDATED",
+                "PROJECT_MEMORY_UPDATED",
+                "SKIP_GUEST_FSM"
+        );
+        verify(firstTouchScenario, never()).supports(any(), any(), any());
+        verify(modelGateway, never()).generateText(any());
+        verify(userEventProducer).publishIncomingMessage(incoming, BotState.CONSENT_REQUIRED, outgoing);
     }
 
     @Test
@@ -873,7 +1100,7 @@ class MessageGatewayServiceTest {
 
     @Test
     void defersSecondaryContentWhenCompositeIntentContainsTableBooking() {
-        IncomingMessage incoming = telegram("забронируй стол завтра на 20 и пришли винную карту");
+        IncomingMessage incoming = telegram("забронируй стол завтра в 20:00 на двоих и пришли винную карту");
         OutgoingMessage bookingResponse = OutgoingMessage.of(
                 incoming,
                 "Отправляю план зала AERIS.",
@@ -889,13 +1116,13 @@ class MessageGatewayServiceTest {
         when(fsmStorage.getState(incoming.chatId())).thenReturn(BotState.READY_FOR_DIALOG);
         when(firstTouchScenario.supports(eq(incoming), eq(BotState.READY_FOR_DIALOG), eq(incoming.text())))
                 .thenReturn(false);
-        when(tableBookingScenario.supports(eq(incoming), eq(BotState.READY_FOR_DIALOG), eq(incoming.text())))
+        when(tableBookingScenario.supports(eq(incoming), eq(BotState.READY_FOR_DIALOG), anyString()))
                 .thenReturn(true);
-        when(menuAssetsScenario.supports(eq(incoming), eq(BotState.READY_FOR_DIALOG), eq(incoming.text())))
+        when(menuAssetsScenario.supports(eq(incoming), eq(BotState.READY_FOR_DIALOG), anyString()))
                 .thenReturn(true);
-        when(quietGuideScenario.supports(eq(incoming), eq(BotState.READY_FOR_DIALOG), eq(incoming.text())))
+        when(quietGuideScenario.supports(eq(incoming), eq(BotState.READY_FOR_DIALOG), anyString()))
                 .thenReturn(false);
-        when(tableBookingScenario.handle(eq(incoming), eq(BotState.READY_FOR_DIALOG), eq(incoming.text())))
+        when(tableBookingScenario.handle(eq(incoming), eq(BotState.READY_FOR_DIALOG), anyString()))
                 .thenReturn(bookingResponse);
 
         OutgoingMessage outgoing = service.handle(incoming);

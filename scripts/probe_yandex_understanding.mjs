@@ -56,13 +56,14 @@ try {
   });
   const durationMs = Math.round(performance.now() - startedAt);
   const body = await response.json().catch(async () => ({ raw: await response.text() }));
-  const resultText = body?.alternatives?.[0]?.message?.text ?? "";
+  const result = body?.result ?? body;
+  const resultText = result?.alternatives?.[0]?.message?.text ?? "";
   console.log(JSON.stringify({
     ok: response.ok,
     status: response.status,
     durationMs,
     modelUri,
-    usage: body?.usage ?? null,
+    usage: result?.usage ?? null,
     text: resultText,
     error: response.ok ? null : body,
   }, null, 2));

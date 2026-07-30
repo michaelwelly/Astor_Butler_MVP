@@ -143,6 +143,48 @@ public class SemanticMemoryRepository {
         return jdbcTemplate.query(sql, resultMapper(), args.toArray());
     }
 
+    public List<SemanticSearchResult> searchText(String venueCode, List<String> sourceCodes, String query, int limit) {
+        List<String> tokens = tokens(query);
+        if (tokens.isEmpty()) {
+            return List.of();
+        }
+
+        String sourceFilter = "";
+        List<Object> args = new java.util.ArrayList<>();
+        args.add(normalizeVenue(venueCode));
+        if (sourceCodes != null && !sourceCodes.isEmpty()) {
+            sourceFilter = "AND ss.source_code IN (%s)".formatted(
+                    sourceCodes.stream().map(ignored -> "?").collect(Collectors.joining(", "))
+            );
+            args.addAll(sourceCodes);
+        }
+
+        String tokenFilter = tokens.stream()
+                .map(ignored -> "(LOWER(sc.content) LIKE ? OR LOWER(COALESCE(sc.title, ss.title)) LIKE ?)")
+                .collect(Collectors.joining(" OR "));
+        for (String token : tokens) {
+            String pattern = "%" + token + "%";
+            args.add(pattern);
+            args.add(pattern);
+        }
+        args.add(Math.max(1, limit));
+
+        String sql = """
+                SELECT sc.chunk_id, ss.source_code, ss.source_type, COALESCE(sc.title, ss.title) AS title,
+                       sc.content, 0.50::double precision AS score
+                FROM semantic_chunks sc
+                JOIN semantic_sources ss ON ss.source_id = sc.source_id
+                WHERE ss.venue_code = ?
+                  AND ss.active = TRUE
+                  %s
+                  AND (%s)
+                ORDER BY sc.updated_at DESC, sc.chunk_index ASC
+                LIMIT ?
+                """.formatted(sourceFilter, tokenFilter);
+
+        return jdbcTemplate.query(sql, resultMapper(), args.toArray());
+    }
+
     private RowMapper<SemanticSearchResult> resultMapper() {
         return (rs, rowNum) -> new SemanticSearchResult(
                 rs.getObject("chunk_id", UUID.class),
@@ -176,6 +218,18 @@ public class SemanticMemoryRepository {
             return 0;
         }
         return Math.max(1, text.trim().split("\\s+").length);
+    }
+
+    private List<String> tokens(String query) {
+        if (query == null || query.isBlank()) {
+            return List.of();
+        }
+        return java.util.Arrays.stream(query.toLowerCase().split("[^\\p{L}\\p{N}_]+"))
+                .map(String::trim)
+                .filter(token -> token.length() >= 3)
+                .distinct()
+                .limit(8)
+                .toList();
     }
 
     private String normalizeVenue(String venueCode) {

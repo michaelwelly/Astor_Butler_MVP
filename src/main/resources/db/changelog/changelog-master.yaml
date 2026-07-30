@@ -59,3 +59,9 @@ databaseChangeLog:
       file: db/changelog/2026-06-30-aeris-table-zones-rating.yaml
   - include:
       file: db/changelog/2026-06-30-aeris-table-display-names-ru.yaml
+  - include:
+      file: db/changelog/2026-07-23-smart-solution-ops-crm.yaml
+  - include:
+      file: db/changelog/2026-07-23-smart-solution-ops-seed.yaml
+  - include:
+      file: db/changelog/2026-07-23-smart-solution-group-qa.yaml

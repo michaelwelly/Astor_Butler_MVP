@@ -108,6 +108,37 @@ class TableBookingScenarioTest {
     }
 
     @Test
+    void keepsExplicitTimeSlotWhenInitialRequestAlsoLooksLikeTableSelection() {
+        IncomingMessage incoming = telegram("Хочу забронировать стол завтра в 20:00 на двоих, тихий стол в винной комнате");
+        UnderstoodInput understood = new UnderstoodInput(
+                incoming.text(),
+                "хочу забронировать стол завтра в 20:00 на 2 гостей, тихий стол в винной комнате",
+                InputIntent.TABLE_BOOKING,
+                0.92,
+                Map.of(
+                        "date", new SlotValue("date", "завтра", 0.95),
+                        "time", new SlotValue("time", "20:00", 0.98),
+                        "partySize", new SlotValue("partySize", "2", 0.95),
+                        "seatingPreference", new SlotValue("seatingPreference", "тихий стол в винной комнате", 0.9)
+                ),
+                List.of(InputIntent.TABLE_BOOKING),
+                false,
+                null
+        );
+
+        OutgoingMessage outgoing = scenario.handle(incoming, BotState.READY_FOR_DIALOG, understood.routeText(), understood);
+
+        assertThat(outgoing.nextState()).isEqualTo(BotState.READY_FOR_DIALOG.name());
+        assertThat(outgoing.actions()).contains("RESERVATION_CREATED", "WAIT_HOSTESS_CONFIRMATION");
+        assertThat(outgoing.actions()).doesNotContain("ASK_TIME", "ASK_PARTY_SIZE", "ASK_TABLE_SELECTION");
+        var commandCaptor = forClass(TableReservationCommand.class);
+        verify(tableReservationService).createReservation(commandCaptor.capture());
+        assertThat(commandCaptor.getValue().partySize()).isEqualTo(2);
+        assertThat(commandCaptor.getValue().requestedStartAt().atZone(BookingTimeProvider.VENUE_ZONE).toLocalTime())
+                .isEqualTo(LocalTime.of(20, 0));
+    }
+
+    @Test
     void asksPartySizeFirstForIncompleteInitialTableBookingRequest() {
         IncomingMessage incoming = telegram("Хочу забронировать столик");
 

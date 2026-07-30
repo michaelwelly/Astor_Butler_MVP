@@ -159,6 +159,10 @@ telegram:
     enabled: ${TELEGRAM_BOT_ENABLED:false}
     token: ${TELEGRAM_BOT_TOKEN:}
     username: ${TELEGRAM_BOT_USERNAME:astor_butler_bot}
+    proxy:
+      type: ${TELEGRAM_PROXY_TYPE:NO_PROXY}
+      host: ${TELEGRAM_PROXY_HOST:}
+      port: ${TELEGRAM_PROXY_PORT:0}
   ui:
     preview-enabled: ${TELEGRAM_UI_PREVIEW_ENABLED:true}
     cleanup-enabled: ${TELEGRAM_UI_CLEANUP_ENABLED:false}
@@ -176,6 +180,17 @@ telegram:
   system:
     chat-id: ${TELEGRAM_SYSTEM_CHAT_ID:}
     notifications-enabled: ${TELEGRAM_SYSTEM_NOTIFICATIONS_ENABLED:false}
+  ops:
+    chat-id: ${TELEGRAM_OPS_CHAT_ID:${TELEGRAM_HOSTESS_CHAT_ID:}}
+    group-qa:
+      enabled: ${TELEGRAM_OPS_GROUP_QA_ENABLED:false}
+      llm-enabled: ${TELEGRAM_OPS_GROUP_QA_LLM_ENABLED:true}
+    group-intake:
+      enabled: ${TELEGRAM_OPS_GROUP_INTAKE_ENABLED:false}
+      ack-enabled: ${TELEGRAM_OPS_GROUP_INTAKE_ACK_ENABLED:true}
+    owner-mention: ${TELEGRAM_OPS_OWNER_MENTION:@michaelwelly}
+    owner-username: ${TELEGRAM_OPS_OWNER_USERNAME:michaelwelly}
+    owner-user-id: ${TELEGRAM_OPS_OWNER_USER_ID:}
   booking:
     notifications-enabled: ${TELEGRAM_BOOKING_NOTIFICATIONS_ENABLED:true}
     manager-chat-id: ${TELEGRAM_BOOKING_MANAGER_CHAT_ID:876857557}

@@ -62,9 +62,12 @@ public class TableBookingDraftMerger {
         Optional<LocalDate> extractedDate = dateFromSlot(slots).or(() -> extractDate(normalized));
         LocalDate date = extractedDate.or(() -> storedDate(stored)).orElse(null);
 
-        Optional<LocalTime> extractedTime = shouldIgnoreTimeInCurrentStep(currentState, normalized, extractedDate)
+        Optional<LocalTime> slotTime = timeFromSlot(slots);
+        Optional<LocalTime> extractedTime = slotTime.isPresent()
+                ? slotTime
+                : shouldIgnoreTimeInCurrentStep(currentState, normalized, extractedDate)
                 ? Optional.empty()
-                : timeFromSlot(slots).or(() -> extractTime(normalized));
+                : extractTime(normalized);
         LocalTime time = extractedTime.or(() -> storedTime(stored)).orElse(null);
 
         Integer partySize = partySizeFromSlot(slots)

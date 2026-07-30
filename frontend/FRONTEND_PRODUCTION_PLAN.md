@@ -1,6 +1,6 @@
 # C3FLEX / Astor Butler — Frontend Production Plan
 
-Status: implemented (frontend-only). Aligns with `docs/contracts/FRONTEND_BACKEND_CONTRACTS.md` (`contract-first v0.1`).
+Status: implemented and containerized. Aligns with `docs/contracts/FRONTEND_BACKEND_CONTRACTS.md` (`contract-first v0.1`).
 
 Scope respected: only `frontend/**` and `design-system/**` were touched. No backend endpoints, no `src/main/**`, no `docker-compose.yml`, no `.env*`, no `docs/FSM_*`, no `docs/architecture/ARCHITECTURE.md`. No video binaries in git.
 
@@ -76,6 +76,28 @@ NEXT_PUBLIC_WEB_CHAT_ENDPOINT  # defaults to /api/chat (mock); set to gateway /a
 NEXT_PUBLIC_AUTH_LOGIN_ENDPOINT# optional; enables real OAuth start
 NEXT_PUBLIC_LEAD_ENDPOINT      # existing lead endpoint (unchanged)
 ```
+
+## Docker / VM Runtime
+
+The frontend has a production Docker path:
+
+- `frontend/Dockerfile` builds Next.js with `output: "standalone"`;
+- root `docker-compose.yml` defines `c3-agency-frontend` behind the `frontend` profile;
+- `docker-compose.prod.yml` exposes the temporary preview on port `3001`;
+- VM preview URL: `http://51.250.31.97:3001`.
+
+Validated on 2026-07-30:
+
+- `npm run build`: green;
+- `docker compose ... --profile frontend build c3-agency-frontend`: green;
+- local and VM containers: healthy;
+- external HTML and hero video: `200`.
+
+Known follow-ups:
+
+- replace mock `/api/chat` with real gateway path when web-chat persistence is accepted;
+- close public `3001` after `c3ag.ru` + TLS reverse proxy are live;
+- review `npm audit` high-severity dependency warnings before paid production traffic.
 
 ## Handoff to Codex (backend next targets, per contract §9)
 

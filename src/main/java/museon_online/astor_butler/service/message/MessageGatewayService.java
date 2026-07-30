@@ -35,6 +35,9 @@ public class MessageGatewayService {
     private final FsmTimelineWriter fsmTimelineWriter;
     private final TelegramSystemNotifier telegramSystemNotifier;
     private final ModelInteractionAuditRepository modelInteractionAuditRepository;
+    private final OpsTelegramCommandService opsTelegramCommandService;
+    private final OpsGroupQuestionAnswerService opsGroupQuestionAnswerService;
+    private final OpsGroupMessageIntakeService opsGroupMessageIntakeService;
 
     @Value("${telegram.admin.chat-id:}")
     private String adminChatId;
@@ -44,6 +47,9 @@ public class MessageGatewayService {
 
     @Value("${telegram.system.chat-id:}")
     private String systemChatId;
+
+    @Value("${telegram.ops.chat-id:}")
+    private String opsChatId;
 
     @Value("${astor.message.log-conversations-enabled:true}")
     private boolean logConversationsEnabled;
@@ -74,7 +80,45 @@ public class MessageGatewayService {
             );
         }
 
+        if (isOpsCommandFromGroup(incoming, text)) {
+            OutgoingMessage opsCommand = opsTelegramCommandService.handle(incoming, currentState, text)
+                    .orElse(null);
+            if (opsCommand != null) {
+                return finish(incoming, currentState, opsCommand);
+            }
+        }
+
+        if (isTelegramGroupChat(incoming.chatId())) {
+            java.util.Optional<OutgoingMessage> groupAnswer = opsGroupQuestionAnswerService.handle(incoming, currentState, text);
+            if (groupAnswer != null && groupAnswer.isPresent()) {
+                return finish(incoming, currentState, groupAnswer.get());
+            }
+            java.util.Optional<OutgoingMessage> groupIntake = opsGroupMessageIntakeService.handle(incoming, currentState, text);
+            if (groupIntake != null && groupIntake.isPresent()) {
+                return finish(incoming, currentState, groupIntake.get());
+            }
+        }
+
+        if (isTelegramGroupChat(incoming.chatId()) && isOpsServiceChat(incoming.chatId())) {
+            return finish(incoming, currentState, OutgoingMessage.of(
+                    incoming,
+                    "",
+                    currentState.name(),
+                    false,
+                    false,
+                    false,
+                    false,
+                    AdminAlert.none(),
+                    List.of("GROUP_CHAT_CHECK", "SKIP_GUEST_FSM")
+            ));
+        }
+
         if (isServiceChat(incoming.chatId())) {
+            OutgoingMessage opsCommand = opsTelegramCommandService.handle(incoming, currentState, text)
+                    .orElse(null);
+            if (opsCommand != null) {
+                return finish(incoming, currentState, opsCommand);
+            }
             return finish(incoming, currentState, OutgoingMessage.of(
                     incoming,
                     """
@@ -90,6 +134,20 @@ public class MessageGatewayService {
                     false,
                     AdminAlert.none(),
                     List.of("SERVICE_CHAT_CHECK", "SKIP_GUEST_FSM")
+            ));
+        }
+
+        if (isTelegramGroupChat(incoming.chatId())) {
+            return finish(incoming, currentState, OutgoingMessage.of(
+                    incoming,
+                    "",
+                    currentState.name(),
+                    false,
+                    false,
+                    false,
+                    false,
+                    AdminAlert.none(),
+                    List.of("GROUP_CHAT_CHECK", "SKIP_GUEST_FSM")
             ));
         }
 
@@ -356,7 +414,21 @@ public class MessageGatewayService {
             return false;
         }
         String value = chatId.toString();
-        return value.equals(adminChatId) || value.equals(analyticsChatId) || value.equals(systemChatId);
+        return value.equals(adminChatId) || value.equals(analyticsChatId) || value.equals(systemChatId) || value.equals(opsChatId);
+    }
+
+    private boolean isOpsServiceChat(Long chatId) {
+        return chatId != null && opsChatId != null && !opsChatId.isBlank() && chatId.toString().equals(opsChatId);
+    }
+
+    private boolean isOpsCommandFromGroup(IncomingMessage incoming, String text) {
+        return incoming != null
+                && isTelegramGroupChat(incoming.chatId())
+                && opsTelegramCommandService.supports(text);
+    }
+
+    private boolean isTelegramGroupChat(Long chatId) {
+        return chatId != null && chatId < 0;
     }
 
     private String normalize(String text) {
