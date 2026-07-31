@@ -21,6 +21,12 @@
 - The hero CTA is now `ФЛЕКСИТЬ`; the light/dark theme toggle lives beside it in the hero instead of the header.
 - The archive modal scroll is contained in `.archive-modal-body`, so the page background no longer scrolls while browsing the archive.
 - The Butler chat has premium AI assistant styling and uses the Astor Butler logo.
+- The lower Astor Butler block is now a sales assistant surface, not an implementation explainer:
+  - removed the Iris booking CTA from the C3AG site;
+  - removed visible `WEB -> Postgres -> RAG -> YandexGPT` copy from the UI;
+  - added Telegram-like quick buttons for C3 RИИLS, C3 REПОРТАЖ, C3 RECLAMA, C3 ФILM and C3 ЫI;
+  - product buttons call the floating Butler chat with sales/scenario prompts.
+- The generated preview background is now used as a persistent subtle site layer under lower sections.
 - Backend web fast reply now says `C3AG`, not `C3FLEX`.
 - LLM understanding calls now write `model_interaction_audit` rows with Yandex usage metadata.
 - `scripts/e2e_butler_yandex_smoke.mjs` covers Yandex probe, web message, Telegram contact bootstrap, Telegram message, optional DB assertions and token-cost estimate.
@@ -30,6 +36,7 @@
 - Local:
   - `npm run lint` passed with existing warnings only.
   - `npm run build` passed.
+  - `git diff --check` passed after Butler CTA/background changes.
   - targeted Maven tests passed: `MessageControllerTest`, `MessageGatewayServiceTest`, `GuestInputUnderstandingServiceTest`, `YandexModelGatewayTest`.
   - `git diff --check` passed.
 - VM:

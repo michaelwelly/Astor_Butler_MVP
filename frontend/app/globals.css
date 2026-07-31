@@ -147,18 +147,47 @@ h1, h2, h3 { font-family: var(--f-heading); font-weight: 300; margin: 0; letter-
 /* ── Hero Banner ───────────────────────────────────────────────────── */
 .netflix-main {
   background:
-    linear-gradient(180deg, rgba(0, 0, 0, .5) 0%, rgba(0, 0, 0, .9) 36vh, var(--ink) 78vh),
+    linear-gradient(180deg, rgba(0, 0, 0, .5) 0%, rgba(0, 0, 0, .9) 36vh, rgba(0, 0, 0, .96) 78vh),
     url("/hero-backgrounds/c3ag-ai-hero-v2-content-machine.png") top center / 100% auto no-repeat,
     var(--ink);
   min-height: 100vh;
+  isolation: isolate;
+  position: relative;
 }
 
 :root[data-theme="light"] .netflix-main {
   background:
     radial-gradient(circle at 50% 0%, rgba(255, 255, 255, .74) 0%, transparent 34vh),
-    linear-gradient(180deg, rgba(245, 245, 247, .78) 0%, rgba(245, 245, 247, .96) 34vh, var(--ink) 70vh),
+    linear-gradient(180deg, rgba(245, 245, 247, .72) 0%, rgba(245, 245, 247, .9) 34vh, rgba(245, 245, 247, .98) 70vh),
     url("/hero-backgrounds/c3ag-ai-hero-v3-sand-light-minimal.png") top center / 100% auto no-repeat,
     var(--ink);
+}
+
+.netflix-main::before {
+  background:
+    linear-gradient(180deg, rgba(0, 0, 0, .4), rgba(0, 0, 0, .78)),
+    url("/hero-backgrounds/c3ag-ai-hero-v2-content-machine.png") center / cover no-repeat;
+  content: "";
+  filter: saturate(.9) contrast(1.05);
+  inset: 0;
+  opacity: .16;
+  pointer-events: none;
+  position: fixed;
+  z-index: 0;
+}
+
+:root[data-theme="light"] .netflix-main::before {
+  background:
+    radial-gradient(circle at 70% 18%, rgba(255, 255, 255, .62), transparent 32vw),
+    linear-gradient(180deg, rgba(245, 245, 247, .72), rgba(245, 245, 247, .9)),
+    url("/hero-backgrounds/c3ag-ai-hero-v3-sand-light-minimal.png") center / cover no-repeat;
+  filter: saturate(.82) contrast(1.02);
+  opacity: .7;
+}
+
+.netflix-main > * {
+  position: relative;
+  z-index: 1;
 }
 
 .hero-banner {
@@ -1916,30 +1945,41 @@ footer a:hover { color: var(--paper); }
   background: rgba(245, 245, 247, .055);
   justify-self: start;
 }
-.butler-pipeline {
+.butler-quick-grid {
   border-top: 1px solid var(--line);
   display: grid;
   gap: 0;
   grid-template-columns: repeat(2, 1fr);
 }
-.butler-pipeline div {
+.butler-quick-grid button {
+  background: rgba(245, 245, 247, .035);
   border-bottom: 1px solid var(--line);
   border-right: 1px solid var(--line);
+  color: var(--paper);
+  cursor: pointer;
   display: grid;
   gap: 9px;
-  min-height: 132px;
+  min-height: 118px;
   padding: 18px;
+  text-align: left;
+  transition: background .2s ease, color .2s ease;
 }
-.butler-pipeline div:nth-child(2n) { border-right: 0; }
-.butler-pipeline div:nth-last-child(-n + 2) { border-bottom: 0; }
-.butler-pipeline svg { color: var(--accent); }
-.butler-pipeline strong {
+.butler-quick-grid button:nth-child(2n) { border-right: 0; }
+.butler-quick-grid button:nth-last-child(-n + 2) { border-bottom: 0; }
+.butler-quick-grid button:hover {
+  background: var(--paper);
+  color: var(--ink);
+}
+.butler-quick-grid svg { color: currentColor; opacity: .72; }
+.butler-quick-grid strong {
   color: var(--paper);
   font-size: 13px;
   letter-spacing: .06em;
   text-transform: uppercase;
 }
-.butler-pipeline span {
+.butler-quick-grid button:hover strong,
+.butler-quick-grid button:hover span { color: var(--ink); }
+.butler-quick-grid span {
   color: var(--muted);
   font-size: 12px;
   line-height: 1.55;
@@ -2000,14 +2040,14 @@ footer a:hover { color: var(--paper); }
   .butler-window-top { align-items: flex-start; flex-direction: column; gap: 6px; justify-content: center; padding: 14px 18px; }
   .butler-dialog { padding: 18px; }
   .butler-dialog p { max-width: 94%; }
-  .butler-pipeline { grid-template-columns: 1fr; }
-  .butler-pipeline div,
-  .butler-pipeline div:nth-child(2n),
-  .butler-pipeline div:nth-last-child(-n + 2) {
+  .butler-quick-grid { grid-template-columns: 1fr; }
+  .butler-quick-grid button,
+  .butler-quick-grid button:nth-child(2n),
+  .butler-quick-grid button:nth-last-child(-n + 2) {
     border-bottom: 1px solid var(--line);
     border-right: 0;
   }
-  .butler-pipeline div:last-child { border-bottom: 0; }
+  .butler-quick-grid button:last-child { border-bottom: 0; }
   .brief-form { grid-template-columns: 1fr; }
   .service-card { min-height: 0; }
 }
