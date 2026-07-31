@@ -163,7 +163,7 @@ public class MessageController {
 
     private OutgoingMessage webLeadReply(IncomingMessage incoming) {
         String text = """
-                Принял запрос. Я передам его команде C3FLEX: посмотрим задачу по продакшену, видео и сайту, а менеджер вернется с человеческим ответом.
+                Принял запрос. Я передам его команде C3AG: посмотрим задачу по продакшену, видео и сайту, а менеджер вернется с человеческим ответом.
 
                 Если удобно, следующим сообщением оставьте контакт, дедлайн и ссылку на текущие материалы.
                 """.strip();
@@ -178,7 +178,7 @@ public class MessageController {
                 null,
                 List.of("WEB_LEAD_CAPTURED", "WEB_FAST_REPLY", "ADMIN_ALERT")
         ).withMetadata(Map.of(
-                "site", incoming.payload() == null ? "c3flex" : incoming.payload().getOrDefault("site", "c3flex"),
+                "site", incoming.payload() == null ? "c3ag" : incoming.payload().getOrDefault("site", "c3ag"),
                 "webFastPath", true
         ));
     }

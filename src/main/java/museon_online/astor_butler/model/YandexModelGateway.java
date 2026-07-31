@@ -72,7 +72,8 @@ public class YandexModelGateway implements ModelGateway {
 
         Duration latency = Duration.ofNanos(System.nanoTime() - startedAt);
         Map<?, ?> body = response.getBody() == null ? Map.of() : response.getBody();
-        String text = readText(body);
+        Map<?, ?> result = resultBody(body);
+        String text = readText(result);
         log.debug(
                 "ModelGateway text generation provider=yandex-ai profile={} model={} scenario={} state={} purpose={} latencyMs={}",
                 request.profile(),
@@ -90,8 +91,8 @@ public class YandexModelGateway implements ModelGateway {
                 latency,
                 false,
                 Map.of(
-                        "usage", body.containsKey("usage") ? body.get("usage") : Map.of(),
-                        "modelVersion", String.valueOf(body.containsKey("modelVersion") ? body.get("modelVersion") : "")
+                        "usage", result.containsKey("usage") ? result.get("usage") : Map.of(),
+                        "modelVersion", String.valueOf(result.containsKey("modelVersion") ? result.get("modelVersion") : "")
                 )
         );
     }
@@ -189,6 +190,14 @@ public class YandexModelGateway implements ModelGateway {
         }
         Object text = messageMap.get("text");
         return text == null ? "" : text.toString();
+    }
+
+    private Map<?, ?> resultBody(Map<?, ?> body) {
+        Object result = body.get("result");
+        if (result instanceof Map<?, ?> resultMap) {
+            return resultMap;
+        }
+        return body;
     }
 
     private String trimTrailingSlash(String value) {

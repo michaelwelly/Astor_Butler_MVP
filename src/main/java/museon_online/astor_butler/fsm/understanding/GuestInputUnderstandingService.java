@@ -79,6 +79,10 @@ public class GuestInputUnderstandingService {
     }
 
     public UnderstoodInput understand(String rawText, BotState currentState) {
+        return understand(rawText, currentState, Map.of());
+    }
+
+    public UnderstoodInput understand(String rawText, BotState currentState, Map<String, Object> context) {
         String raw = rawText == null ? "" : rawText.trim();
         String normalized = normalize(raw);
         Map<String, SlotValue> slots = new LinkedHashMap<>();
@@ -90,7 +94,7 @@ public class GuestInputUnderstandingService {
         normalized = normalizePartySize(normalized, currentState, slots);
         captureTableSelection(normalized, slots);
 
-        LlmUnderstandingResult llmUnderstanding = understandWithLlm(raw, currentState, normalized, slots);
+        LlmUnderstandingResult llmUnderstanding = understandWithLlm(raw, currentState, normalized, slots, context);
         mergeLlmSlots(slots, llmUnderstanding);
 
         InputIntent primary = detectIntent(normalized, currentState, slots);
@@ -131,12 +135,13 @@ public class GuestInputUnderstandingService {
             String raw,
             BotState currentState,
             String normalized,
-            Map<String, SlotValue> slots
+            Map<String, SlotValue> slots,
+            Map<String, Object> context
     ) {
         if (llmUnderstandingService == null) {
             return LlmUnderstandingResult.empty();
         }
-        return llmUnderstandingService.understand(raw, currentState, normalized, Map.copyOf(slots));
+        return llmUnderstandingService.understand(raw, currentState, normalized, Map.copyOf(slots), context);
     }
 
     private void mergeLlmSlots(Map<String, SlotValue> slots, LlmUnderstandingResult llmUnderstanding) {

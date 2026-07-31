@@ -6,7 +6,7 @@
 - VM container: `c3_agency_frontend`.
 - Compose service: `c3-agency-frontend`.
 - Latest frontend image was rebuilt on the VM and the container is `healthy`.
-- Backend/Telegram services were not touched during the frontend deploy.
+- Backend AERIS was rebuilt after the frontend deploy to add YandexGPT understanding audit and the E2E smoke script.
 
 ## What Changed
 
@@ -18,21 +18,35 @@
 - Splash sound is a short four-hit handpan/hang motif.
 - New generated backgrounds live in `frontend/public/hero-backgrounds/`.
 - Production CSS references all four selected background files.
+- The hero CTA is now `ФЛЕКСИТЬ`; the light/dark theme toggle lives beside it in the hero instead of the header.
+- The archive modal scroll is contained in `.archive-modal-body`, so the page background no longer scrolls while browsing the archive.
+- The Butler chat has premium AI assistant styling and uses the Astor Butler logo.
+- Backend web fast reply now says `C3AG`, not `C3FLEX`.
+- LLM understanding calls now write `model_interaction_audit` rows with Yandex usage metadata.
+- `scripts/e2e_butler_yandex_smoke.mjs` covers Yandex probe, web message, Telegram contact bootstrap, Telegram message, optional DB assertions and token-cost estimate.
 
 ## Verification Already Done
 
 - Local:
   - `npm run lint` passed with existing warnings only.
   - `npm run build` passed.
+  - targeted Maven tests passed: `MessageControllerTest`, `MessageGatewayServiceTest`, `GuestInputUnderstandingServiceTest`, `YandexModelGatewayTest`.
   - `git diff --check` passed.
 - VM:
   - `docker compose --profile frontend up -d --build c3-agency-frontend` completed.
+  - `docker compose --profile app build/up aeris-astor-butler-bot` completed.
   - `c3_agency_frontend` reported `healthy`.
+  - `aeris_astor_butler_bot` reported `healthy`; `/actuator/health` returned `UP`.
   - `/`, `/reels`, `/events`, `/reclama`, `/studio` returned `200`.
+  - `/podcast`, `/wedding`, `/film`, `/ai`, `/sitemap.xml`, `/ab-logo.jpg` returned `200`.
   - hero background PNGs returned `200 image/png`.
   - `/portfolio/segreto_hero.mp4` returned `200 video/mp4`.
   - `/api/yadisk?resolve=1&path=/AI/Morgan Barbie.mp4` returned a signed Yandex Disk URL.
   - Signed Yandex Disk URL supports range playback: byte-range GET returned `206 Partial Content` with `Access-Control-Allow-Origin: *`.
+  - Butler E2E smoke saved messages and audit:
+    - direct YandexGPT Lite probe: 242 tokens, about `0.0484 RUB`;
+    - backend LLM audit rows: 841 total tokens, about `0.1682 RUB`;
+    - Postgres counts for run `butler-e2e-20260731122300`: `telegram_messages=3`, `web_messages=2`, `model_interaction_audit=2`.
 
 ## Content Display Notes
 
@@ -44,12 +58,10 @@
 
 ## Do Not Accidentally Commit
 
-- Backend files are currently dirty from a separate backend-agent flow. Keep them out of frontend commits unless that agent explicitly asks.
-- Also keep out of the frontend commit:
-  - `graphify-out/**`;
+- Keep local/runtime artifacts out of commits:
   - `output/**`;
-  - `scripts/e2e_butler_yandex_smoke.mjs` unless backend-agent owns it;
   - `.env`, `.env.*`, `target/**`, `.codex*`.
+- `graphify-out/**` may be committed when intentionally refreshed after code changes.
 
 ## Useful Commands
 

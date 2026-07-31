@@ -79,4 +79,65 @@ class YandexModelGatewayTest {
         assertThat(response.metadata()).containsKey("usage");
         server.verify();
     }
+
+    @Test
+    void generateTextParsesNestedResultResponse() {
+        AtomicReference<MockRestServiceServer> serverRef = new AtomicReference<>();
+        YandexModelGateway gateway = new YandexModelGateway(
+                new RestTemplateBuilder(restTemplate ->
+                        serverRef.set(MockRestServiceServer.bindTo(restTemplate).build())),
+                "https://llm.test",
+                "folder-123",
+                "api-key-123",
+                "",
+                "yandexgpt-5-lite",
+                "yandexgpt-5.1",
+                8000,
+                128,
+                0.0
+        );
+        MockRestServiceServer server = serverRef.get();
+
+        server.expect(once(), requestTo("https://llm.test/foundationModels/v1/completion"))
+                .andExpect(method(HttpMethod.POST))
+                .andRespond(withSuccess("""
+                        {
+                          "result": {
+                            "alternatives": [
+                              {
+                                "message": {
+                                  "role": "assistant",
+                                  "text": "{\\"intent\\":\\"PRODUCT_INTEREST\\"}"
+                                },
+                                "status": "ALTERNATIVE_STATUS_FINAL"
+                              }
+                            ],
+                            "usage": {
+                              "inputTextTokens": "90",
+                              "completionTokens": "12",
+                              "totalTokens": "102"
+                            },
+                            "modelVersion": "nested-version"
+                          }
+                        }
+                        """, MediaType.APPLICATION_JSON));
+
+        ModelTextResponse response = gateway.generateText(new ModelTextRequest(
+                "Верни JSON",
+                "LLM_UNDERSTANDING",
+                "READY_FOR_DIALOG",
+                "intent-slots-json",
+                ModelProfile.FRONTLINE,
+                Map.of()
+        ));
+
+        assertThat(response.text()).isEqualTo("{\"intent\":\"PRODUCT_INTEREST\"}");
+        assertThat(response.metadata().get("modelVersion")).isEqualTo("nested-version");
+        assertThat(response.metadata().get("usage")).isEqualTo(Map.of(
+                "inputTextTokens", "90",
+                "completionTokens", "12",
+                "totalTokens", "102"
+        ));
+        server.verify();
+    }
 }

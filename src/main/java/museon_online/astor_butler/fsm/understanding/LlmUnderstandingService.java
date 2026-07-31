@@ -5,12 +5,16 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import museon_online.astor_butler.fsm.core.BotState;
+import museon_online.astor_butler.model.ModelInteractionAuditRecord;
+import museon_online.astor_butler.model.ModelInteractionAuditRepository;
 import museon_online.astor_butler.model.ModelTextRequest;
 import museon_online.astor_butler.model.ModelTextResponse;
 import museon_online.astor_butler.model.ModelGateway;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -29,6 +33,9 @@ public class LlmUnderstandingService {
     private final ModelGateway modelGateway;
     private final ObjectMapper objectMapper;
 
+    @Autowired(required = false)
+    private ModelInteractionAuditRepository auditRepository;
+
     @Value("${astor.understanding.llm.enabled:false}")
     private boolean enabled;
 
@@ -44,22 +51,35 @@ public class LlmUnderstandingService {
             String normalizedText,
             Map<String, SlotValue> localSlots
     ) {
+        return understand(rawText, currentState, normalizedText, localSlots, Map.of());
+    }
+
+    public LlmUnderstandingResult understand(
+            String rawText,
+            BotState currentState,
+            String normalizedText,
+            Map<String, SlotValue> localSlots,
+            Map<String, Object> context
+    ) {
         if (!enabled || rawText == null || rawText.isBlank()) {
             return LlmUnderstandingResult.empty();
         }
 
         String state = currentState == null ? BotState.UNKNOWN.name() : currentState.canonical().name();
+        String prompt = prompt(rawText, state, normalizedText, localSlots);
         try {
             ModelTextResponse response = generateWithTimeout(new ModelTextRequest(
-                    prompt(rawText, state, normalizedText, localSlots),
+                    prompt,
                     "LLM_UNDERSTANDING",
                     state,
                     "intent-slots-json",
                     museon_online.astor_butler.model.ModelProfile.FRONTLINE,
                     Map.of("rawText", rawText)
             ));
+            audit(context, state, prompt, rawText, response, true, true, null);
             return parse(response);
         } catch (RuntimeException e) {
+            audit(context, state, prompt, rawText, null, false, false, e);
             log.warn("LLM understanding skipped: state={}, reason={}", state, e.toString());
             return LlmUnderstandingResult.empty();
         }
@@ -81,6 +101,65 @@ public class LlmUnderstandingService {
         } catch (CompletionException e) {
             Throwable cause = e.getCause() == null ? e : e.getCause();
             throw new RuntimeException("LLM understanding timed out or failed after " + timeoutMs + " ms", cause);
+        }
+    }
+
+    private void audit(
+            Map<String, Object> context,
+            String state,
+            String prompt,
+            String rawText,
+            ModelTextResponse response,
+            boolean generated,
+            boolean success,
+            RuntimeException error
+    ) {
+        if (auditRepository == null) {
+            return;
+        }
+        Map<String, Object> safeContext = context == null ? Map.of() : context;
+        auditRepository.capture(new ModelInteractionAuditRecord(
+                "AERIS",
+                string(safeContext, "channel"),
+                longValue(safeContext.get("chatId")),
+                longValue(safeContext.get("telegramUserId")),
+                string(safeContext, "correlationId"),
+                "LLM_UNDERSTANDING",
+                state,
+                "intent-slots-json",
+                response == null ? "" : response.provider(),
+                response == null ? "" : response.model(),
+                response == null || response.metadata() == null ? "" : String.valueOf(response.metadata().getOrDefault("profile", "")),
+                prompt,
+                rawText,
+                "",
+                response == null ? "" : response.text(),
+                generated,
+                response != null && response.fallback(),
+                success,
+                error == null ? "" : error.getClass().getSimpleName(),
+                error == null ? "" : error.getMessage(),
+                response == null ? Duration.ZERO : response.latency(),
+                response == null || response.metadata() == null ? Map.of() : response.metadata()
+        ));
+    }
+
+    private String string(Map<String, Object> context, String key) {
+        Object value = context.get(key);
+        return value == null ? "" : value.toString();
+    }
+
+    private Long longValue(Object value) {
+        if (value instanceof Number number) {
+            return number.longValue();
+        }
+        if (value == null || value.toString().isBlank()) {
+            return null;
+        }
+        try {
+            return Long.parseLong(value.toString());
+        } catch (NumberFormatException ignored) {
+            return null;
         }
     }
 

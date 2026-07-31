@@ -50,7 +50,7 @@ public class ScenarioRouter {
             return firstTouchScenario.handle(incoming, currentState, text);
         }
 
-        UnderstoodInput understood = inputUnderstandingService.understand(text, currentState);
+        UnderstoodInput understood = inputUnderstandingService.understand(text, currentState, understandingContext(incoming));
         captureUnderstandingMissIfNeeded(incoming, currentState, understood);
         String routeText = understood.routeText();
         OutgoingMessage composite = tryCompositeIntent(incoming, currentState, routeText, understood);
@@ -74,6 +74,18 @@ public class ScenarioRouter {
             }
         }
         return null;
+    }
+
+    private Map<String, Object> understandingContext(IncomingMessage incoming) {
+        if (incoming == null) {
+            return Map.of();
+        }
+        Map<String, Object> context = new LinkedHashMap<>();
+        context.put("channel", incoming.channel() == null ? "" : incoming.channel().name());
+        context.put("chatId", incoming.chatId());
+        context.put("telegramUserId", incoming.telegramUserId());
+        context.put("correlationId", incoming.correlationId());
+        return context;
     }
 
     private OutgoingMessage tryPrimaryIntentRoute(
