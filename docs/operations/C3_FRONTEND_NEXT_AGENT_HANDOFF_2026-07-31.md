@@ -27,6 +27,11 @@
   - added Telegram-like quick buttons for C3 RИИLS, C3 REПОРТАЖ, C3 RECLAMA, C3 ФILM and C3 ЫI;
   - product buttons call the floating Butler chat with sales/scenario prompts.
 - The generated preview background is now used as a persistent subtle site layer under lower sections.
+- Production video display now has a real Object Storage path:
+  - `frontend/scripts/object-storage-publish.mjs` downloads selected Yandex.Disk masters, renders web/preview/poster assets with ffmpeg and uploads them to `c3ag-media`;
+  - frontend supports explicit `s3:` media refs via `NEXT_PUBLIC_MEDIA_BASE_URL`;
+  - cards use `previewUrl` for autoplay-safe previews while the Reels player uses full `src`;
+  - object-ready records are prioritized while the archive migration is partial.
 - Backend web fast reply now says `C3AG`, not `C3FLEX`.
 - LLM understanding calls now write `model_interaction_audit` rows with Yandex usage metadata.
 - `scripts/e2e_butler_yandex_smoke.mjs` covers Yandex probe, web message, Telegram contact bootstrap, Telegram message, optional DB assertions and token-cost estimate.
@@ -54,12 +59,18 @@
     - direct YandexGPT Lite probe: 242 tokens, about `0.0484 RUB`;
     - backend LLM audit rows: 841 total tokens, about `0.1682 RUB`;
     - Postgres counts for run `butler-e2e-20260731122300`: `telegram_messages=3`, `web_messages=2`, `model_interaction_audit=2`.
+  - Object Storage media smoke:
+    - bucket `c3ag-media` accepts upload and public reads;
+    - `web.mp4`, `preview.mp4`, `poster.jpg` return `200`;
+    - `web.mp4` returns `206 Partial Content` for byte-range requests;
+    - first published set: `117-2`, `070-2-basta-aftermovie-part-2`, `063-zombolle-tor-s-tv-commercial`, `144`, `037-ess11-reel5`, `002-tangiers`;
+    - production DOM shows Object Storage poster/preview cards and full-player source from `storage.yandexcloud.net/c3ag-media`.
 
 ## Content Display Notes
 
-- `frontend/data/videos.json` currently has 197 live records using `yadisk:*` and `yadisk-poster:*`.
+- `frontend/data/videos.json` currently has 197 live records; 6 are Object Storage-ready, the rest still fall back to `yadisk:*` and `yadisk-poster:*`.
 - `featuredCount` is currently `0`; product rows still render, but there is no curated featured subset.
-- Cards intentionally do not autoplay Yandex Disk archive masters because they are heavy camera masters. They show poster stills; full video resolves and plays in `ReelsPlayer` after click.
+- Cards autoplay only Object Storage `previewUrl` assets. Yandex Disk archive masters are still poster-only because they are too heavy for scroll autoplay.
 - `DeviceHero` intentionally limits live screens to 3 and uses posters for the rest to keep memory/CPU under control.
 - If the desired behavior is "every card previews video like localhost", the right production step is to generate lightweight web renditions/previews and fill `previewUrl` or hosted `src` with Object Storage/CDN URLs.
 

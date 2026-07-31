@@ -1,5 +1,8 @@
 /** Anything served straight off the Yandex.Disk archive goes through here. */
 export const YADISK_ROUTE = "/api/yadisk";
+export const MEDIA_BASE_URL = (
+  process.env.NEXT_PUBLIC_MEDIA_BASE_URL ?? "https://media.placeholder.c3flex.local"
+).replace(/\/$/, "");
 
 /**
  * Resolve a video/poster reference used by the site's media manifests
@@ -7,6 +10,7 @@ export const YADISK_ROUTE = "/api/yadisk";
  *   "reel.mp4"              → /portfolio/reel.mp4  (drop the file in public/portfolio)
  *   "/anything/clip.mp4"    → used as-is (any local /public path)
  *   "https://…/clip.mp4"    → used as-is (absolute URL: CDN, object storage, …)
+ *   "s3:content/clip.mp4"   → NEXT_PUBLIC_MEDIA_BASE_URL/content/clip.mp4
  *   "yadisk:/VIDEO C3AG/…"  → /api/yadisk?path=… (streamed from the public archive)
  * Returns undefined for an empty ref so callers can apply their own fallback.
  *
@@ -16,11 +20,17 @@ export const YADISK_ROUTE = "/api/yadisk";
  */
 export function resolveMediaRef(ref?: string): string | undefined {
   if (!ref) return undefined;
+  if (ref.startsWith("s3:")) return objectStorageUrl(ref.slice("s3:".length));
+  if (ref.startsWith("object:")) return objectStorageUrl(ref.slice("object:".length));
   if (ref.startsWith("yadisk-poster:"))
     return yadiskUrl(ref.slice("yadisk-poster:".length), "poster");
   if (ref.startsWith("yadisk:")) return yadiskUrl(ref.slice("yadisk:".length));
   if (/^https?:\/\//i.test(ref) || ref.startsWith("/")) return ref;
   return `/portfolio/${ref}`;
+}
+
+export function objectStorageUrl(key: string): string {
+  return `${MEDIA_BASE_URL}/${key.replace(/^\/+/, "")}`;
 }
 
 export function yadiskUrl(path: string, kind: "video" | "poster" = "video"): string {

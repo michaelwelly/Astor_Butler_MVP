@@ -55,7 +55,20 @@ export function VideoCard({ item, onClick, quiet = false }: Props) {
     setAutoplay(!reduce && !conn?.saveData);
   }, []);
 
-  const previewSources = meta ? selectSources(meta, 640) : [];
+  const previewSources = meta?.assets.previewUrl
+    ? [
+        {
+          variant: "mobile" as const,
+          publicUrl: meta.assets.previewUrl,
+          contentType: "video/mp4",
+          width: 540,
+          height: 960,
+          bitrateKbps: 650,
+        },
+      ]
+    : meta
+      ? selectSources(meta, 640)
+      : [];
   const poster = meta?.poster.publicUrl ?? item.image;
 
   // Cards autoplay only what is actually light enough to autoplay. Clips served
