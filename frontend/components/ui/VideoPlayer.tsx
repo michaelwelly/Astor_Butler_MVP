@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Maximize, Minimize, X } from "lucide-react";
 import type { PortfolioCase } from "@/lib/portfolio";
-import { catalogVideos, selectSource } from "@/lib/video-catalog";
+import { catalogVideos, selectSources } from "@/lib/video-catalog";
 
 type Props = {
   item: PortfolioCase | null;
@@ -15,7 +15,9 @@ type Props = {
  * Adaptive, mobile-first player.
  *  - reserves aspect-ratio by orientation so the stage never jumps on load;
  *  - portrait media is letterboxed in a 9:16 stage, landscape in 16:9;
- *  - chooses the best source for the current viewport;
+ *  - emits a WebM→MP4 `<source>` list and picks resolution by viewport;
+ *  - autoplays muted (TZ: autoplay is always muted; the native controls are
+ *    the user action that turns sound on);
  *  - exposes a fullscreen toggle and uses playsInline for iOS.
  */
 export function VideoPlayer({ item, onClose }: Props) {
@@ -54,9 +56,10 @@ export function VideoPlayer({ item, onClose }: Props) {
   }, [item, onClose]);
 
   const orientation = catalog?.orientation ?? "landscape";
-  const source = catalog ? selectSource(catalog, viewportWidth) : null;
-  const videoSrc = source?.publicUrl ?? item?.video;
+  const sources = catalog ? selectSources(catalog, viewportWidth) : [];
+  const fallbackSrc = item?.video; // catalog entry missing → play the raw case file
   const poster = catalog?.poster.publicUrl ?? item?.image;
+  const hasMedia = sources.length > 0 || Boolean(fallbackSrc);
 
   const toggleFullscreen = async () => {
     const el = stageRef.current;
@@ -114,16 +117,26 @@ export function VideoPlayer({ item, onClose }: Props) {
               className={`video-stage video-stage--${orientation}`}
               data-orientation={orientation}
             >
-              {videoSrc ? (
+              {hasMedia ? (
                 <video
                   ref={videoRef}
                   className="video-stage-media"
-                  src={videoSrc}
                   poster={poster}
                   autoPlay
+                  muted
                   controls
                   playsInline
-                />
+                >
+                  {sources.length > 0
+                    ? sources.map((s) => (
+                        <source
+                          key={`${s.variant}-${s.contentType}`}
+                          src={s.publicUrl}
+                          type={s.contentType}
+                        />
+                      ))
+                    : fallbackSrc && <source src={fallbackSrc} type="video/mp4" />}
+                </video>
               ) : (
                 <div
                   className="video-stage-empty"

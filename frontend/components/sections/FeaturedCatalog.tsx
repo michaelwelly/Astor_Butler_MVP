@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { ChevronLeft, ChevronRight, X } from "lucide-react";
 import { directions, getByDirection, type PortfolioCase } from "@/lib/portfolio";
+import { DIRECTION_ORIENTATION, type VideoOrientation } from "@/lib/video-catalog";
 import { VideoCard } from "@/components/ui/VideoCard";
 
 type Props = {
@@ -16,12 +17,36 @@ const HOME_PREVIEW = PAGE_SIZE * 2;
 
 function CategoryCarousel({
   items,
+  orientation,
   onSelect,
 }: {
   items: PortfolioCase[];
+  orientation: VideoOrientation;
   onSelect: (item: PortfolioCase) => void;
 }) {
   const trackRef = useRef<HTMLDivElement>(null);
+  const [atStart, setAtStart] = useState(true);
+  const [atEnd, setAtEnd] = useState(false);
+
+  // An arrow that scrolls nothing is a dead control — grey them out at the
+  // ends instead of letting the user poke at them.
+  useEffect(() => {
+    const el = trackRef.current;
+    if (!el) return;
+    const sync = () => {
+      const max = el.scrollWidth - el.clientWidth;
+      setAtStart(el.scrollLeft <= 1);
+      setAtEnd(el.scrollLeft >= max - 1);
+    };
+    sync();
+    el.addEventListener("scroll", sync, { passive: true });
+    const ro = new ResizeObserver(sync);
+    ro.observe(el);
+    return () => {
+      el.removeEventListener("scroll", sync);
+      ro.disconnect();
+    };
+  }, [items.length]);
 
   const scrollByPage = (dir: 1 | -1) => {
     const el = trackRef.current;
@@ -30,11 +55,12 @@ function CategoryCarousel({
   };
 
   return (
-    <div className="cat-carousel">
+    <div className="cat-carousel" data-orientation={orientation}>
       <button
         type="button"
         className="cat-arrow cat-arrow--prev"
         onClick={() => scrollByPage(-1)}
+        disabled={atStart}
         aria-label="Предыдущие"
       >
         <ChevronLeft size={20} />
@@ -50,6 +76,7 @@ function CategoryCarousel({
         type="button"
         className="cat-arrow cat-arrow--next"
         onClick={() => scrollByPage(1)}
+        disabled={atEnd}
         aria-label="Следующие"
       >
         <ChevronRight size={20} />
@@ -97,7 +124,11 @@ export function FeaturedCatalog({ onSelect }: Props) {
                 <p className="category-desc">{dir.description}</p>
               </div>
             </div>
-            <CategoryCarousel items={preview} onSelect={onSelect} />
+            <CategoryCarousel
+              items={preview}
+              orientation={DIRECTION_ORIENTATION[dir.id]}
+              onSelect={onSelect}
+            />
           </motion.div>
         );
       })}

@@ -74,7 +74,7 @@ const MEDIA_BASE_URL = (
 export const POSTER_FALLBACK = "/portfolio/_poster-fallback.svg";
 
 // Per-direction defaults used when an item has no explicit override.
-const DIRECTION_ORIENTATION: Record<DirectionId, VideoOrientation> = {
+export const DIRECTION_ORIENTATION: Record<DirectionId, VideoOrientation> = {
   events: "landscape",
   reels: "portrait",
   commercials: "landscape",
@@ -201,16 +201,51 @@ export function getFeaturedCatalog(): CatalogVideo[] {
 }
 
 /**
- * Pick the best playable source for the current viewport.
- * UI must not break if only one source exists.
+ * The video-render TZ ships every rendition in two formats — WebM (VP9)
+ * and MP4 (H.264) — and the browser picks the first playable one, so WebM
+ * is always listed before MP4. Resolution is chosen by variant.
  */
-export function selectSource(
+const FORMAT_ORDER = ["video/webm", "video/mp4"];
+function byFormat(a: VideoSource, b: VideoSource): number {
+  const rank = (t: string) => {
+    const i = FORMAT_ORDER.indexOf(t);
+    return i === -1 ? FORMAT_ORDER.length : i;
+  };
+  return rank(a.contentType) - rank(b.contentType);
+}
+
+/**
+ * Ordered `<source>` list for the current viewport (mobile ≤768 else desktop),
+ * WebM before MP4. Falls back to the other variant, so the UI never breaks on a
+ * single-source item. Used by the modal player, which re-picks on resize.
+ */
+export function selectSources(
   video: Pick<CatalogVideo, "sources">,
   viewportWidth: number,
-): VideoSource | null {
-  if (!video.sources.length) return null;
+): VideoSource[] {
+  if (!video.sources.length) return [];
   const preferred = viewportWidth <= 768 ? "mobile" : "desktop";
-  return video.sources.find((s) => s.variant === preferred) ?? video.sources[0];
+  const chosen = video.sources.filter((s) => s.variant === preferred);
+  return (chosen.length ? chosen : video.sources).slice().sort(byFormat);
+}
+
+export type HeroSource = { src: string; type: string; media?: string };
+
+/**
+ * Declarative `<source>` list for the always-on hero background. Native `media`
+ * lets the browser pick resolution once at load — no JS, no reload churn on
+ * resize — and `type` prefers WebM. Mobile renditions are media-gated so
+ * desktop clients take the heavier 1080p file; WebM before MP4 within each.
+ * ponytail: assumes the hero ships both mobile+desktop renditions (the render TZ
+ * guarantees it); a single-variant hero would need the media gate dropped.
+ */
+export function heroSources(video: Pick<CatalogVideo, "sources">): HeroSource[] {
+  const forVariant = (variant: VideoSource["variant"], media?: string) =>
+    video.sources
+      .filter((s) => s.variant === variant)
+      .sort(byFormat)
+      .map((s) => ({ src: s.publicUrl, type: s.contentType, media }));
+  return [...forVariant("mobile", "(max-width: 768px)"), ...forVariant("desktop")];
 }
 
 /** Minimal reference passed into the Web Chat payload (selectedVideo). */
