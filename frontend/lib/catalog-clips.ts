@@ -20,6 +20,9 @@ export type CatalogClip = {
   direction: DirectionId; // "events" | "reels" | "commercials"
   src: string; // video
   poster?: string; // card image / player still
+  originalUrl?: string; // master/source file, usually Yandex.Disk or cold storage
+  adaptedUrl?: string; // site-ready edited rendition when it differs from src
+  previewUrl?: string; // lightweight teaser or autoplay-safe rendition
   duration?: string; // "01:40" — shown on the card
   kicker?: string; // short line under the title
   statement?: string; // longer line in the player overlay

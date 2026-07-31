@@ -3,7 +3,15 @@
 // Editorial ticker. Words alternate solid / outline serif; the track is
 // duplicated once so the -50% keyframe loops seamlessly. Pauses on hover and
 // for reduced-motion (CSS).
-const WORDS = ["Ивенты", "Рилсы", "Реклама", "Подкасты", "Кинематограф", "Продакшн"];
+const WORDS = [
+  "C3 RИИLS",
+  "C3 REПОРТАЖ",
+  "C3 RECLAMA",
+  "C3 PODКАСТ",
+  "C3 ВЭDDING",
+  "C3 ФILM",
+  "C3 ЫI",
+];
 
 export function Marquee() {
   const items = [...WORDS, ...WORDS];

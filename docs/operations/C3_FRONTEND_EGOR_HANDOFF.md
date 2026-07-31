@@ -17,6 +17,7 @@ Current state:
 - frontend is running on the Yandex VM as Docker container `c3_agency_frontend`;
 - container healthcheck is green;
 - desktop and mobile open after click/tap on the intro splash;
+- intro click sound is now a short four-hit handpan/hang motif, not the old low "ta-dum" swell;
 - domain `c3ag.ru` is bought/activating, DNS/TLS will be attached later;
 - Telegram and proxy work are postponed until the separate call.
 
@@ -129,6 +130,14 @@ Chat is intentionally mocked through `/api/chat` for now. Later it should move t
 - Product order on the homepage is fixed as Reels, Events/reportage, Advertising, then the rest.
 - Public logo is already smoke-tested in Yandex Object Storage; use the same bucket for future media.
 - The header now has a light/dark theme toggle; it persists in browser local storage.
+- Three generated hero background candidates are stored in `frontend/public/hero-backgrounds/`:
+  - `c3ag-ai-hero-v1.png` - vivid generative AI spectacle;
+  - `c3ag-ai-hero-v2-content-machine.png` - films, ads, social clips and festival reportage controlled by AI;
+  - `c3ag-ai-hero-v3-sand-light.png` - cursor-driven sand/light interaction concept.
+- The active splash direction uses the light sequence:
+  - `c3ag-ai-hero-v2-content-machine-light.png` before click;
+  - `c3ag-ai-hero-v3-sand-light-minimal.png` during the click transition and as a subtle light-theme site texture.
+- Keep the center overlay readable and keep hover/cursor movement as code-driven light/sand behavior, not baked UI labels inside the image.
 - Public domain/TLS will replace the temporary `51.250.31.97:3001` URL.
 - Direct public port `3001` should be closed after reverse proxy on `80/443` is ready.
 - `npm ci` currently reports high-severity dependency audit warnings; review before paid production traffic.

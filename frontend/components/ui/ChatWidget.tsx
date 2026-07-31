@@ -16,7 +16,7 @@ type Message = { from: "bot" | "user"; text: string };
 const INITIAL_MESSAGES: Message[] = [
   {
     from: "bot",
-    text: "Здравствуйте! Я Astor Butler — персональный менеджер C3AG.ru. Расскажите о задаче, подберём формат и команду.",
+    text: "Здравствуйте. Я Astor Butler — AI-менеджер C3AG.ru. Помогаю подобрать продукт, собрать контекст и передать команде точную задачу.",
   },
 ];
 
@@ -224,7 +224,7 @@ export function ChatWidget({ inline, selectedVideo = null, quickAsks = QUICK_ASK
           </span>
           <div className="chat-header-text">
             <strong>Astor Butler</strong>
-            <span>Персональный менеджер · {REPLY_TIME}</span>
+            <span>AI assistant · C3AG / Iris · {REPLY_TIME}</span>
           </div>
           {!inline && (
             <button type="button" onClick={() => setMode("spotlight")} aria-label="Свернуть чат">
@@ -240,6 +240,17 @@ export function ChatWidget({ inline, selectedVideo = null, quickAsks = QUICK_ASK
               <span>{msg.text}</span>
             </div>
           ))}
+          {sending && (
+            <div className="chat-msg chat-msg-bot chat-msg-thinking" aria-live="polite">
+              <img src="/ab-logo.jpg" alt="" className="chat-msg-avatar" />
+              <span>
+                <em>думаю</em>
+                <i />
+                <i />
+                <i />
+              </span>
+            </div>
+          )}
           <div ref={bottomRef} />
         </div>
 

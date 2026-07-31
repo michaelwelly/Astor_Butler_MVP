@@ -20,6 +20,9 @@ export type PortfolioCase = {
   accent: string;
   image: string;
   video?: string;
+  originalUrl?: string;
+  adaptedUrl?: string;
+  previewUrl?: string;
   statement: string;
   featured?: boolean;
   // ── Contract overrides (optional) ──────────────────────────────────────
@@ -43,24 +46,24 @@ export type Direction = {
 
 export const directions: Direction[] = [
   {
-    id: "events",
+    id: "reels",
     index: "01",
-    title: "Ивенты",
-    shortTitle: "Ивенты",
-    description: "Атмосфера с пульсом. Живые моменты, превращённые в истории, которые переживают ночь.",
+    title: "C3 RИИLS",
+    shortTitle: "RИИLS",
+    description: "Быстро, тактильно, точно. Визуальный язык для продуктов, которые хочется потрогать.",
   },
   {
-    id: "reels",
+    id: "events",
     index: "02",
-    title: "Рилсы и продукт",
-    shortTitle: "Рилсы",
-    description: "Быстро, тактильно, точно. Визуальный язык для продуктов, которые хочется потрогать.",
+    title: "C3 REПОРТАЖ",
+    shortTitle: "REПОРТАЖ",
+    description: "Атмосфера с пульсом. Живые моменты, превращённые в истории, которые переживают ночь.",
   },
   {
     id: "commercials",
     index: "03",
-    title: "Реклама",
-    shortTitle: "Реклама",
+    title: "C3 RECLAMA",
+    shortTitle: "RECLAMA",
     description: "Кинематографичные кампании с редакционной точкой зрения и чёткой бизнес-задачей.",
   },
 ];
@@ -495,6 +498,9 @@ function buildCases(clips: CatalogClip[]): PortfolioCase[] {
       accent: c.accent ?? "#d76f49",
       image: resolveMediaRef(c.poster) ?? "/portfolio/_poster-fallback.svg",
       video: resolveMediaRef(c.src),
+      originalUrl: resolveMediaRef(c.originalUrl) ?? c.originalUrl,
+      adaptedUrl: resolveMediaRef(c.adaptedUrl) ?? c.adaptedUrl,
+      previewUrl: resolveMediaRef(c.previewUrl) ?? c.previewUrl,
       statement: c.statement ?? c.kicker ?? "",
       featured: c.featured,
       tags: c.tags,

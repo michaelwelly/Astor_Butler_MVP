@@ -10,27 +10,14 @@ import {
   useReducedMotion,
   type Variants,
 } from "framer-motion";
-import { ArrowDown, ArrowUpRight } from "lucide-react";
+import { ArrowDown } from "lucide-react";
 import { catalogVideos, POSTER_FALLBACK, type CatalogVideo } from "@/lib/video-catalog";
 import { HERO_CLIPS, type HeroClip } from "@/lib/hero-clips";
 import { resolveMediaRef } from "@/lib/media-ref";
 import { Magnetic } from "@/components/ui/Magnetic";
-import { CyclingLine } from "@/components/ui/CyclingLine";
+import { ThemeToggle } from "@/components/ui/ThemeToggle";
 
 const EASE: [number, number, number, number] = [0.4, 0, 0.2, 1];
-
-/**
- * The endings the headline cycles through. All four finish the same opening
- * ("Ваша история —") and name a different part of the studio's actual range,
- * which is also what the gadget field behind them is showing. Kept to a
- * similar length so the reserved width stays tight.
- */
-const HEADLINE_ENDINGS = [
-  "на каждом экране.",
-  "в каждом формате.",
-  "в любом масштабе.",
-  "от рилса до зала.",
-];
 
 /** What the gadgets actually play — the manifest and the catalog both map to this. */
 type Clip = { src: string; poster: string };
@@ -336,31 +323,13 @@ export function DeviceHero() {
         initial="hidden"
         animate="show"
       >
-        <motion.p className="hero-eyebrow" variants={rise}>
-          <span className="hero-eyebrow-dot" /> Независимая продакшн-студия
-        </motion.p>
-        {/* The opening steps back so the eye lands on the line that moves. */}
-        <h1 className="hero-title">
-          <span className="hero-title-line hero-title-line--lead">Ваша история —</span>
-          <span className="hero-title-line hero-title-line--cycle">
-            <CyclingLine items={HEADLINE_ENDINGS} />
-          </span>
-        </h1>
-        <motion.p className="hero-lede" variants={rise}>
-          C3AG.ru превращает моменты, продукты и кампании в фильмы с характером.
-          Съёмка, монтаж и звук — одной командой.
-        </motion.p>
-        <motion.div className="hero-cta" variants={rise}>
+        <motion.div className="hero-cta hero-cta--solo" variants={rise}>
           <Magnetic>
             <a className="hero-cta-primary" href="#catalog" data-cursor="play">
-              Смотреть работы <ArrowDown size={16} />
+              ФЛЕКСИТЬ <ArrowDown size={16} />
             </a>
           </Magnetic>
-          <Magnetic>
-            <a className="hero-cta-ghost" href="#contact">
-              Начать проект <ArrowUpRight size={15} />
-            </a>
-          </Magnetic>
+          <ThemeToggle />
         </motion.div>
       </motion.div>
     </section>

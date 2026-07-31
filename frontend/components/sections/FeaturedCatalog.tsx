@@ -3,8 +3,9 @@
 import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { ChevronLeft, ChevronRight, X } from "lucide-react";
-import { directions, getByDirection, type PortfolioCase } from "@/lib/portfolio";
-import { DIRECTION_ORIENTATION, type VideoOrientation } from "@/lib/video-catalog";
+import { getByDirection, getForFolders, type DirectionId, type PortfolioCase } from "@/lib/portfolio";
+import { products, type Product } from "@/lib/products";
+import { type VideoOrientation } from "@/lib/video-catalog";
 import { VideoCard } from "@/components/ui/VideoCard";
 
 type Props = {
@@ -19,10 +20,12 @@ function CategoryCarousel({
   items,
   orientation,
   onSelect,
+  quiet = false,
 }: {
   items: PortfolioCase[];
   orientation: VideoOrientation;
   onSelect: (item: PortfolioCase) => void;
+  quiet?: boolean;
 }) {
   const trackRef = useRef<HTMLDivElement>(null);
   const [atStart, setAtStart] = useState(true);
@@ -68,7 +71,7 @@ function CategoryCarousel({
       <div className="cat-track" ref={trackRef}>
         {items.map((item) => (
           <div className="cat-track-item" key={item.id}>
-            <VideoCard item={item} onClick={onSelect} />
+            <VideoCard item={item} onClick={onSelect} quiet={quiet} />
           </div>
         ))}
       </div>
@@ -85,32 +88,59 @@ function CategoryCarousel({
   );
 }
 
+function productFallbackDirection(product: Product): DirectionId {
+  if (product.slug === "reels") return "reels";
+  if (product.slug === "reclama" || product.slug === "ai") return "commercials";
+  return "events";
+}
+
+function productOrientation(product: Product): VideoOrientation {
+  if (product.slug === "reels" || product.slug === "podcast") return "portrait";
+  return "landscape";
+}
+
+function getProductFeed(product: Product, offset = 0, limit = HOME_PREVIEW): PortfolioCase[] {
+  const byFolders = getForFolders(product.clipFolders);
+  const source = byFolders.length ? byFolders : getByDirection(productFallbackDirection(product));
+  return source.slice(offset, offset + limit);
+}
+
 export function FeaturedCatalog({ onSelect }: Props) {
   const [archiveOpen, setArchiveOpen] = useState(false);
 
   useEffect(() => {
     if (!archiveOpen) return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") setArchiveOpen(false);
     };
     window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener("keydown", onKey);
+    };
   }, [archiveOpen]);
 
-  const archiveByDirection = directions
-    .map((dir) => ({ dir, items: getByDirection(dir.id).slice(HOME_PREVIEW) }))
+  const archiveByProduct = products
+    .map((product) => ({ product, items: getProductFeed(product, HOME_PREVIEW) }))
     .filter((g) => g.items.length > 0);
 
-  const archiveCount = archiveByDirection.reduce((acc, g) => acc + g.items.length, 0);
+  const archiveCount = archiveByProduct.reduce((acc, g) => acc + g.items.length, 0);
 
   return (
     <section className="featured-catalog" id="catalog">
-      {directions.map((dir, i) => {
-        const preview = getByDirection(dir.id, HOME_PREVIEW);
+      <div className="featured-catalog-intro">
+        <p className="section-label">Новостная лента</p>
+        <h2>Семь продуктовых линеек</h2>
+      </div>
+
+      {products.map((product, i) => {
+        const preview = getProductFeed(product);
         return (
           <motion.div
-            key={dir.id}
-            id={`row-${dir.id}`}
+            key={product.slug}
+            id={`row-${product.slug}`}
             className="featured-category"
             initial={{ opacity: 0, y: 40 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -118,16 +148,17 @@ export function FeaturedCatalog({ onSelect }: Props) {
             transition={{ duration: 0.6, delay: i * 0.08 }}
           >
             <div className="category-header">
-              <span className="category-num">{dir.index}</span>
+              <span className="category-num">{product.num}</span>
               <div>
-                <h2 className="category-title">{dir.title}</h2>
-                <p className="category-desc">{dir.description}</p>
+                <h2 className="category-title">{product.name}</h2>
+                <p className="category-desc">{product.tagline}</p>
               </div>
             </div>
             <CategoryCarousel
               items={preview}
-              orientation={DIRECTION_ORIENTATION[dir.id]}
+              orientation={productOrientation(product)}
               onSelect={onSelect}
+              quiet
             />
           </motion.div>
         );
@@ -158,6 +189,7 @@ export function FeaturedCatalog({ onSelect }: Props) {
               exit={{ opacity: 0, y: 40 }}
               transition={{ duration: 0.3, ease: "easeOut" }}
               onClick={(e) => e.stopPropagation()}
+              data-lenis-prevent
               role="dialog"
               aria-modal="true"
               aria-label="Архив работ"
@@ -169,9 +201,9 @@ export function FeaturedCatalog({ onSelect }: Props) {
                 </button>
               </div>
               <div className="archive-modal-body">
-                {archiveByDirection.map((g) => (
-                  <div key={g.dir.id} className="archive-group">
-                    <p className="archive-group-title">{g.dir.title}</p>
+                {archiveByProduct.map((g) => (
+                  <div key={g.product.slug} className="archive-group">
+                    <p className="archive-group-title">{g.product.name}</p>
                     <div className="archive-grid">
                       {g.items.map((item) => (
                         <VideoCard

@@ -8,6 +8,7 @@ import { isArchiveMaster } from "@/lib/media-ref";
 type Props = {
   item: PortfolioCase;
   onClick: (item: PortfolioCase) => void;
+  quiet?: boolean;
 };
 
 const STATUS_LABEL: Record<string, string> = {
@@ -35,7 +36,7 @@ const STATUS_LABEL: Record<string, string> = {
 // Peak concurrency is set by how many cards fit on screen, not by this number.
 const IN_VIEW = 0.25;
 
-export function VideoCard({ item, onClick }: Props) {
+export function VideoCard({ item, onClick, quiet = false }: Props) {
   const meta = useMemo(
     () => catalogVideos.find((v) => v.slug === (item.slug ?? item.id)),
     [item],
@@ -105,6 +106,7 @@ export function VideoCard({ item, onClick }: Props) {
       data-cursor="play"
       data-orientation={orientation}
       data-playing={playing ? "" : undefined}
+      data-quiet={quiet ? "" : undefined}
       aria-label={`${item.category}: ${item.title}`}
     >
       {/* Decorative: the button's aria-label already names the work. */}
@@ -137,20 +139,22 @@ export function VideoCard({ item, onClick }: Props) {
         </video>
       )}
 
-      {statusLabel && (
+      {!quiet && statusLabel && (
         <span className="video-card-badges">
           <span className="video-badge video-badge--status">{statusLabel}</span>
         </span>
       )}
 
-      {item.duration && <span className="video-card-duration">{item.duration}</span>}
+      {!quiet && item.duration && <span className="video-card-duration">{item.duration}</span>}
 
       {/* Over a moving picture, permanent text is noise. The title stays
           because it identifies the work; the rest waits for intent. */}
-      <div className="video-card-overlay">
-        <strong className="video-card-title">{item.title}</strong>
-        <span className="video-card-kicker">{shortDescription}</span>
-      </div>
+      {!quiet && (
+        <div className="video-card-overlay">
+          <strong className="video-card-title">{item.title}</strong>
+          <span className="video-card-kicker">{shortDescription}</span>
+        </div>
+      )}
     </button>
   );
 }

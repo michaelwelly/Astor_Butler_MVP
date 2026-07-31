@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Menu } from "lucide-react";
 import { Wordmark } from "@/components/ui/Wordmark";
-import { ThemeToggle } from "@/components/ui/ThemeToggle";
 
 type Props = {
   onMenuOpen: () => void;
@@ -66,7 +65,6 @@ export function Navigation({ onMenuOpen }: Props) {
         ))}
       </nav>
       <div className="header-actions">
-        <ThemeToggle />
         <button className="menu-button" type="button" onClick={onMenuOpen} aria-label="Открыть меню">
           <Menu size={20} />
         </button>

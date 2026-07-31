@@ -55,6 +55,11 @@ export type CatalogVideo = {
   status: VideoStatus;
   poster: PosterAsset;
   sources: VideoSource[];
+  assets: {
+    originalUrl?: string;
+    adaptedUrl?: string;
+    previewUrl?: string;
+  };
   cta: VideoCta;
   // UI convenience mirrors (not part of the wire contract):
   accent: string;
@@ -178,6 +183,11 @@ function toCatalogVideo(item: PortfolioCase): CatalogVideo {
       height: dims.h,
     },
     sources: buildSources(item, orientation),
+    assets: {
+      originalUrl: item.originalUrl,
+      adaptedUrl: item.adaptedUrl,
+      previewUrl: item.previewUrl,
+    },
     cta: { label: "Обсудить похожий проект", intent: "PROJECT_REQUEST" },
     accent: item.accent,
     year: item.year,

@@ -1,120 +1,81 @@
 "use client";
 
-import { useState } from "react";
-import { ArrowUpRight, Check, Send } from "lucide-react";
-import { submitLead, type LeadRequest } from "@/lib/lead-api";
+import { ArrowUpRight, Bot, Database, MessagesSquare, Sparkles } from "lucide-react";
 import { RevealLines } from "@/components/ui/RevealLines";
+import { askButler } from "@/lib/chat-bus";
 
-const EMPTY_LEAD: LeadRequest = {
-  projectType: "",
-  description: "",
-  services: "",
-  format: "",
-  deadline: "",
-  budget: "",
-  contact: "",
-};
+const PREVIEW_MESSAGES = [
+  {
+    from: "guest",
+    text: "Хочу 10 рилсов для ресторана и понять, можно ли снять перед ивентом.",
+  },
+  {
+    from: "butler",
+    text: "Я Astor Butler. Зафиксировал запрос, вижу C3 RИИLS и сценарий ресторана. Уточню дату, задачу и бюджет.",
+  },
+  {
+    from: "butler",
+    text: "Сообщение сохраняется в Postgres, интент уходит в understanding, а контекст продуктов C3AG добавляется через RAG перед ответом YandexGPT.",
+  },
+];
 
-type LeadStatus = "idle" | "sending" | "sent" | "error";
+const PIPELINE = [
+  { icon: MessagesSquare, title: "Диалог", text: "Человек пишет в окно сайта или Telegram." },
+  { icon: Database, title: "Память", text: "Сообщение, сессия и профиль сохраняются в Postgres." },
+  { icon: Sparkles, title: "Понимание", text: "Интент и факты попадают в векторную базу и RAG." },
+  { icon: Bot, title: "Личность", text: "YandexGPT отвечает как Astor Butler: ресторан Iris, брони и продукты C3AG." },
+];
 
 export function Contact() {
-  const [lead, setLead] = useState<LeadRequest>(EMPTY_LEAD);
-  const [status, setStatus] = useState<LeadStatus>("idle");
-
-  const handleChange = (field: keyof LeadRequest, value: string) => {
-    setLead((prev) => ({ ...prev, [field]: value }));
-  };
-
-  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    setStatus("sending");
-    try {
-      await submitLead(lead);
-      setStatus("sent");
-      setLead(EMPTY_LEAD);
-    } catch {
-      setStatus("error");
-    }
-  };
+  const openProjectDialog = () => askButler("Хочу обсудить продукт C3AG и подобрать формат");
+  const openBookingDialog = () => askButler("Хочу забронировать стол на ивент в Iris");
 
   return (
     <section className="contact" id="contact">
       <div className="contact-copy">
-        <p className="section-label">Начать проект</p>
+        <p className="section-label">Astor Butler</p>
         <RevealLines
-          lines={["Расскажите, что вы хотите,", "чтобы люди", <><i>почувствовали.</i></>]}
+          lines={["Не форма.", "Живой диалог", <>с <i>памятью.</i></>]}
         />
-        <p>Поделитесь главным. Мы вернёмся с правильной производственной формой.</p>
-        <a href="https://t.me/" target="_blank" rel="noreferrer">
-          Предпочитаете Telegram? Напишите напрямую <ArrowUpRight size={15} />
-        </a>
+        <p>
+          Под блоком о студии человек попадает не в пустую заявку, а в диалог:
+          продажа продукта C3AG, бронь стола на ивент или полезная информация
+          проходят через один backend-контур.
+        </p>
+        <div className="contact-actions">
+          <button type="button" onClick={openProjectDialog}>
+            Подобрать продукт <ArrowUpRight size={15} />
+          </button>
+          <button type="button" onClick={openBookingDialog}>
+            Бронь в Iris <ArrowUpRight size={15} />
+          </button>
+        </div>
       </div>
-      <form className="brief-form" onSubmit={handleSubmit}>
-        <label>
-          <span>Тип проекта</span>
-          <input
-            required
-            value={lead.projectType}
-            onChange={(e) => handleChange("projectType", e.target.value)}
-            placeholder="Кампания, мероприятие, рилсы..."
-          />
-        </label>
-        <label className="wide">
-          <span>Что снимаем?</span>
-          <textarea
-            required
-            value={lead.description}
-            onChange={(e) => handleChange("description", e.target.value)}
-            placeholder="Несколько строк о задаче, настроении и аудитории."
-          />
-        </label>
-        <label>
-          <span>Нужные услуги</span>
-          <input
-            value={lead.services}
-            onChange={(e) => handleChange("services", e.target.value)}
-            placeholder="Концепция, съёмка, монтаж..."
-          />
-        </label>
-        <label>
-          <span>Формат</span>
-          <input
-            value={lead.format}
-            onChange={(e) => handleChange("format", e.target.value)}
-            placeholder="Рилсы, фильм, подкаст..."
-          />
-        </label>
-        <label>
-          <span>Дедлайн</span>
-          <input
-            value={lead.deadline}
-            onChange={(e) => handleChange("deadline", e.target.value)}
-            placeholder="Когда нужно выйти в эфир?"
-          />
-        </label>
-        <label>
-          <span>Бюджет</span>
-          <input
-            value={lead.budget}
-            onChange={(e) => handleChange("budget", e.target.value)}
-            placeholder="Комфортный диапазон"
-          />
-        </label>
-        <label className="wide">
-          <span>Имя и контакт</span>
-          <input
-            required
-            value={lead.contact}
-            onChange={(e) => handleChange("contact", e.target.value)}
-            placeholder="Telegram, email или телефон"
-          />
-        </label>
-        <button className="submit-button" disabled={status === "sending"} type="submit">
-          {status === "sending" ? "Отправляем..." : status === "sent" ? "Заявка получена" : "Отправить заявку"}
-          {status === "sent" ? <Check size={17} /> : <Send size={16} />}
-        </button>
-        {status === "error" && <p className="form-error">Что-то пошло не так. Попробуйте ещё раз.</p>}
-      </form>
+      <div className="butler-window" aria-label="Пример диалога с Astor Butler">
+        <div className="butler-window-top">
+          <span>Astor Butler</span>
+          <small>WEB → Postgres → RAG → YandexGPT</small>
+        </div>
+        <div className="butler-dialog">
+          {PREVIEW_MESSAGES.map((message, index) => (
+            <p key={index} data-from={message.from}>
+              {message.text}
+            </p>
+          ))}
+        </div>
+        <div className="butler-pipeline">
+          {PIPELINE.map((step) => {
+            const Icon = step.icon;
+            return (
+              <div key={step.title}>
+                <Icon size={16} />
+                <strong>{step.title}</strong>
+                <span>{step.text}</span>
+              </div>
+            );
+          })}
+        </div>
+      </div>
     </section>
   );
 }
