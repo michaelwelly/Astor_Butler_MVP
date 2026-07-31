@@ -34,7 +34,7 @@ export function MobileMenu({ open, onClose }: Props) {
             <X size={22} />
           </button>
           <nav className="menu-scroll" aria-label="Направления">
-            <p className="menu-kicker">C3 Agency / Направления</p>
+            <p className="menu-kicker">C3AG.ru / Направления</p>
             <ul className="menu-products">
               {products.map((product) => (
                 <li key={product.slug}>

@@ -1,6 +1,6 @@
-# C3FLEX.com Frontend
+# C3AG.ru Frontend
 
-Public video-first portfolio and lead-generation frontend for the C3FLEX.com product contour.
+Public video-first portfolio and lead-generation frontend for the C3AG.ru product contour.
 
 ## Local Run
 
@@ -29,7 +29,7 @@ Port `3000` is reserved for local Grafana in the backend Docker Compose stack.
 
 Use `.env.local` only when custom frontend values are needed.
 
-The current lead form works in demo mode until `NEXT_PUBLIC_LEAD_ENDPOINT` is defined. The portfolio dataset lives in `lib/portfolio.ts`; replace its three sample video URLs with public MinIO URLs from `astor-media/raw/` after local curation.
+The current lead form works in demo mode until `NEXT_PUBLIC_LEAD_ENDPOINT` is defined. The portfolio dataset lives in `lib/portfolio.ts`; replace temporary media with public Yandex Object Storage URLs from `c3ag-media` after curation.
 
 ## Lightweight Preview
 

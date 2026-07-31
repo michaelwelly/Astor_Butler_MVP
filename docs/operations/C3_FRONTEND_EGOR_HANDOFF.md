@@ -24,7 +24,7 @@ Current state:
 
 This handoff is for frontend work only:
 
-- C3 Agency / C3FLEX public preview;
+- C3 Agency / C3AG.ru public preview;
 - responsive UI/UX review;
 - Dockerized Next.js production path;
 - future design iteration readiness.
@@ -90,7 +90,8 @@ Default runtime values:
 NEXT_PUBLIC_SITE_URL=http://localhost:3001
 NEXT_PUBLIC_API_BASE_URL=http://localhost:8089
 NEXT_PUBLIC_WEB_CHAT_ENDPOINT=/api/chat
-NEXT_PUBLIC_MEDIA_BASE_URL=
+NEXT_PUBLIC_MEDIA_BASE_URL=https://storage.yandexcloud.net/c3ag-media
+NEXT_PUBLIC_BRAND_LOGO_URL=https://storage.yandexcloud.net/c3ag-media/brand/c3ag-logo.svg
 ```
 
 Chat is intentionally mocked through `/api/chat` for now. Later it should move to backend `/api/messages` after the web-chat persistence contract is confirmed.
@@ -125,6 +126,9 @@ Chat is intentionally mocked through `/api/chat` for now. Later it should move t
 
 - Design revisions will arrive later; keep current changes easy to iterate.
 - Real video/poster assets should replace temporary and mixed sample media.
+- Product order on the homepage is fixed as Reels, Events/reportage, Advertising, then the rest.
+- Public logo is already smoke-tested in Yandex Object Storage; use the same bucket for future media.
+- The header now has a light/dark theme toggle; it persists in browser local storage.
 - Public domain/TLS will replace the temporary `51.250.31.97:3001` URL.
 - Direct public port `3001` should be closed after reverse proxy on `80/443` is ready.
 - `npm ci` currently reports high-severity dependency audit warnings; review before paid production traffic.

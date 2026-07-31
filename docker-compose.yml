@@ -33,6 +33,7 @@ services:
         NEXT_PUBLIC_API_BASE_URL: ${C3_FRONTEND_API_BASE_URL:-http://localhost:8089}
         NEXT_PUBLIC_WEB_CHAT_ENDPOINT: ${C3_FRONTEND_WEB_CHAT_ENDPOINT:-/api/chat}
         NEXT_PUBLIC_MEDIA_BASE_URL: ${C3_FRONTEND_MEDIA_BASE_URL:-}
+        NEXT_PUBLIC_BRAND_LOGO_URL: ${C3_FRONTEND_BRAND_LOGO_URL:-/c3ag-logo.svg}
     image: c3-agency-frontend:local
     container_name: c3_agency_frontend
     environment:

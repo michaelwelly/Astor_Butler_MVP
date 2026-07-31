@@ -66,7 +66,7 @@ export function ParallaxSection() {
       </div>
 
       <div ref={labelRef} className="parallax-label">
-        <span>C3FLEX</span>
+        <span>C3AG.ru</span>
         <p>Кинематографическая площадка</p>
       </div>
     </section>

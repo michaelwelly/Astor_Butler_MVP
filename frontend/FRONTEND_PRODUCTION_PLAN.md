@@ -1,4 +1,4 @@
-# C3FLEX / Astor Butler — Frontend Production Plan
+# C3AG.ru / Astor Butler — Frontend Production Plan
 
 Status: implemented and containerized. Aligns with `docs/contracts/FRONTEND_BACKEND_CONTRACTS.md` (`contract-first v0.1`).
 
@@ -12,7 +12,7 @@ description, shortDescription, tags, category, featured, durationSeconds, orient
 status, poster, sources[], cta`. `status` uses backend-compatible values `READY / DRAFT /
 ARCHIVED`. The 30 existing cases in `lib/portfolio.ts` are mapped to this shape by a
 deterministic adapter; any case can override fields via the optional fields added to
-`PortfolioCase`. When the backend ships `GET /api/content/c3flex/videos`, its `items[]`
+`PortfolioCase`. When the backend ships `GET /api/content/c3ag/videos`, its `items[]`
 replaces `catalogVideos` 1:1.
 
 ### 2. Preview cards
@@ -46,8 +46,14 @@ payload until the backend persists anonymous consent.
 ## Video assets — object storage mapping (metadata only)
 
 Binaries are NOT in git. Source files currently live on Yandex.Disk
-(`https://disk.yandex.ru/d/oopTdDN0CTuIig`). Target object storage: bucket `astor-media`
-(per README), exposed to the frontend only as `publicUrl` / `signedUrl` (§2).
+(`https://disk.yandex.ru/d/oopTdDN0CTuIig`). Production object storage is Yandex Object
+Storage bucket `c3ag-media`, exposed to the frontend only as public CDN-like URLs.
+
+Validated public logo smoke:
+
+```text
+https://storage.yandexcloud.net/c3ag-media/brand/c3ag-logo.svg
+```
 
 Frontend resolution order (`lib/video-catalog.ts → resolveMediaUrl`):
 
@@ -58,10 +64,10 @@ Frontend resolution order (`lib/video-catalog.ts → resolveMediaUrl`):
 Suggested object-key convention for the 30 items:
 
 ```
-content/c3flex/videos/<slug>/source.mp4      # original
-content/c3flex/videos/<slug>/mobile.mp4      # 720p portrait/landscape rendition
-content/c3flex/videos/<slug>/desktop.mp4     # 1080p rendition
-content/c3flex/posters/<slug>.jpg            # poster
+content/c3ag/videos/<slug>/source.mp4      # original
+content/c3ag/videos/<slug>/mobile.mp4      # 720p portrait/landscape rendition
+content/c3ag/videos/<slug>/desktop.mp4     # 1080p rendition
+content/c3ag/posters/<slug>.jpg            # poster
 ```
 
 `<slug>` equals the catalog `slug` (currently the case `id`). To go live with real media:
@@ -72,6 +78,7 @@ case's `video`/`image` to the object key or replace `catalogVideos` with the bac
 
 ```
 NEXT_PUBLIC_MEDIA_BASE_URL     # object storage / CDN base for bare object keys
+NEXT_PUBLIC_BRAND_LOGO_URL     # defaults to /c3ag-logo.svg locally, object storage in prod
 NEXT_PUBLIC_WEB_CHAT_ENDPOINT  # defaults to /api/chat (mock); set to gateway /api/messages
 NEXT_PUBLIC_AUTH_LOGIN_ENDPOINT# optional; enables real OAuth start
 NEXT_PUBLIC_LEAD_ENDPOINT      # existing lead endpoint (unchanged)
@@ -92,6 +99,15 @@ Validated on 2026-07-30:
 - `docker compose ... --profile frontend build c3-agency-frontend`: green;
 - local and VM containers: healthy;
 - external HTML and hero video: `200`.
+
+Updated on 2026-07-31:
+
+- final visible brand changed to `C3AG.ru`;
+- product preview order is Reels, event reportage, advertising, then the remaining products;
+- Yandex Object Storage bucket `c3ag-media` is public-read for frontend media;
+- production Docker build receives `NEXT_PUBLIC_MEDIA_BASE_URL` and
+  `NEXT_PUBLIC_BRAND_LOGO_URL` for object-storage-backed media;
+- header includes a persisted light/dark theme toggle.
 
 Known follow-ups:
 

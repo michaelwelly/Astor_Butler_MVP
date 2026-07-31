@@ -11,7 +11,8 @@ services:
         NEXT_PUBLIC_SITE_URL: ${C3_FRONTEND_PUBLIC_URL:-http://51.250.31.97:3001}
         NEXT_PUBLIC_API_BASE_URL: ${C3_FRONTEND_API_BASE_URL:-http://51.250.31.97:8089}
         NEXT_PUBLIC_WEB_CHAT_ENDPOINT: ${C3_FRONTEND_WEB_CHAT_ENDPOINT:-/api/chat}
-        NEXT_PUBLIC_MEDIA_BASE_URL: ${C3_FRONTEND_MEDIA_BASE_URL:-}
+        NEXT_PUBLIC_MEDIA_BASE_URL: ${C3_FRONTEND_MEDIA_BASE_URL:-https://storage.yandexcloud.net/c3ag-media}
+        NEXT_PUBLIC_BRAND_LOGO_URL: ${C3_FRONTEND_BRAND_LOGO_URL:-https://storage.yandexcloud.net/c3ag-media/brand/c3ag-logo.svg}
     ports:
       - "${C3_FRONTEND_PUBLIC_PORT:-3001}:3001"
 

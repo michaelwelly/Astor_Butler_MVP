@@ -27,7 +27,7 @@ export function Hero() {
         <p className="eyebrow"><span /> Независимая продакшн-студия</p>
         <h1>Истории, которые<br /><i>остаются.</i></h1>
         <p className="hero-description">
-          C3FLEX превращает мимолётные моменты, осязаемые продукты и амбициозные кампании в фильмы с характером.
+          C3AG.ru превращает мимолётные моменты, осязаемые продукты и амбициозные кампании в фильмы с характером.
         </p>
         <div className="hero-links">
           <a className="primary-link" href="#work">Смотреть работы <ArrowDown size={16} /></a>

@@ -102,7 +102,7 @@ export function HeroBanner() {
           </span>
         </h1>
         <motion.p className="hero-lede" variants={rise}>
-          C3FLEX превращает мимолётные моменты, осязаемые продукты и амбициозные
+          C3AG.ru превращает мимолётные моменты, осязаемые продукты и амбициозные
           кампании в фильмы с характером.
         </motion.p>
         <motion.div className="hero-cta" variants={rise}>

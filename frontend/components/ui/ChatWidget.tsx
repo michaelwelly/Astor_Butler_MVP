@@ -16,7 +16,7 @@ type Message = { from: "bot" | "user"; text: string };
 const INITIAL_MESSAGES: Message[] = [
   {
     from: "bot",
-    text: "Здравствуйте! Я Astor Butler — персональный менеджер C3FLEX. Расскажите о задаче, подберём формат и команду.",
+    text: "Здравствуйте! Я Astor Butler — персональный менеджер C3AG.ru. Расскажите о задаче, подберём формат и команду.",
   },
 ];
 

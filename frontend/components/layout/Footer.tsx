@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { products } from "@/lib/products";
+import { Wordmark } from "@/components/ui/Wordmark";
 
 export function Footer() {
   const year = new Date().getFullYear();
@@ -8,7 +9,7 @@ export function Footer() {
       <div className="footer-top">
         <div className="footer-brand">
           <Link className="brand" href="/">
-            C3<span>FLEX</span><sup>.com</sup>
+            <Wordmark />
           </Link>
           <p>Независимая продакшн-студия / {year}</p>
         </div>

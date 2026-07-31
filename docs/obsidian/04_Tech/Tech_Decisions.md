@@ -22,6 +22,15 @@
 - Regression decision: explicit `time` slots from understanding have priority over the guard that prevents table numbers from being parsed as times.
 - Smart Solution Ops `RESTO` is now `READY_TO_LAUNCH` at `85%`; remaining launch blockers are external Telegram proxy, C3 frontend/domain rollout, and SABY/SBIS integration.
 
+## C3AG.ru Frontend Media Boundary 2026-07-31
+
+- Final public brand for the frontend is `C3AG.ru`; legacy `C3FLEX` naming may remain only in backward-compatible env names or historical documentation.
+- Yandex Object Storage bucket `c3ag-media` is the production media origin for C3 Agency assets.
+- First verified public object: `https://storage.yandexcloud.net/c3ag-media/brand/c3ag-logo.svg`.
+- Production frontend receives media settings through `C3_FRONTEND_MEDIA_BASE_URL` and `C3_FRONTEND_BRAND_LOGO_URL`, mapped to Next build args `NEXT_PUBLIC_MEDIA_BASE_URL` and `NEXT_PUBLIC_BRAND_LOGO_URL`.
+- Homepage product order is business-defined: Reels first, event reportage second, advertising third, then the remaining product pages.
+- Frontend header includes a persisted light/dark theme toggle for this release.
+
 ## Smart Solution Ops CRM Boundary 2026-07-23
 
 - Astor Butler backend expands into an internal Smart Solution project CRM while keeping Telegram as transport/UI.

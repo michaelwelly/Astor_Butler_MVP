@@ -122,8 +122,17 @@ Validated on 2026-07-30:
 - Docker image build: green;
 - local container health: green;
 - VM container health: green;
-- external `GET /`: `200`, title `C3FLEX.com — видео-продакшн с характером`;
+- external `GET /`: `200`, title was the pre-rename `C3FLEX.com — видео-продакшн с характером`;
 - external hero video `/portfolio/segreto_hero.mp4`: `200`.
+
+Updated on 2026-07-31:
+
+- domains `c3ag.ru` and `c3ag.online` are bought and are waiting for REG.RU administrator identification;
+- final frontend brand is `C3AG.ru`;
+- production media bucket is `c3ag-media`;
+- logo smoke URL: `https://storage.yandexcloud.net/c3ag-media/brand/c3ag-logo.svg`;
+- Docker production default media base: `https://storage.yandexcloud.net/c3ag-media`;
+- the frontend release includes a persisted light/dark theme toggle.
 
 Temporary security-group rule:
 
@@ -134,7 +143,7 @@ After domain/TLS is ready, close direct `3001` and route public traffic through 
 ## Status
 
 - Domain purchase: activation in progress at REG.RU.
-- DNS records: pending registrar panel.
+- DNS records: pending registrar identification / DNS panel.
 - Server TLS/routing: pending DNS propagation.
 - VM frontend preview: running on `http://51.250.31.97:3001`.
 - Telegram proxy: intentionally postponed until call with Egor.

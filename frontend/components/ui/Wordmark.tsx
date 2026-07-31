@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * C3FLEX.com set as live type rather than an image, so the site's signature
+ * C3AG.ru set as live type rather than an image, so the site's signature
  * motion — a slow luminance wave travelling left to right through the letters
  * — can run through it. The wave is pure opacity: it inherits whatever colour
  * the context sets, which is why the same component works on the dark header
@@ -15,8 +15,8 @@ type Segment = { text: string; wrap?: "span" | "sup" };
 
 const SEGMENTS: Segment[] = [
   { text: "C3" },
-  { text: "FLEX", wrap: "span" },
-  { text: ".com", wrap: "sup" },
+  { text: "AG", wrap: "span" },
+  { text: ".ru", wrap: "sup" },
 ];
 
 export function Wordmark({ className = "" }: { className?: string }) {
@@ -37,7 +37,7 @@ export function Wordmark({ className = "" }: { className?: string }) {
   return (
     // The mark reads as one word to assistive tech; the per-letter spans are
     // presentational only.
-    <span className={`wordmark ${className}`.trim()} role="img" aria-label="C3FLEX.com">
+    <span className={`wordmark ${className}`.trim()} role="img" aria-label="C3AG.ru">
       <span aria-hidden="true">
         {SEGMENTS.map(({ text, wrap }) => {
           const kids = letters(text);

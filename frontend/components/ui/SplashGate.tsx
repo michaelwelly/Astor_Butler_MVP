@@ -3,6 +3,7 @@
 import { useState, useCallback, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Wordmark } from "@/components/ui/Wordmark";
+import { BRAND_LOGO_URL, BRAND_NAME } from "@/lib/brand";
 
 type Props = { onComplete: () => void };
 type Phase = "idle" | "animating";
@@ -92,7 +93,7 @@ export function SplashGate({ onComplete }: Props) {
             transition={{ duration: 0.45, ease: EASE }}
           >
             {/* The mark breathes on luminance only — see .splash-logo-still. */}
-            <img src="/c3flex-logo.png" className="splash-logo-still" alt="" />
+            <img src={BRAND_LOGO_URL} className="splash-logo-still" alt="" />
             <Wordmark className="splash-wordmark" />
             <motion.p
               className="splash-hint"
@@ -108,8 +109,8 @@ export function SplashGate({ onComplete }: Props) {
           <motion.div key="anim" className="splash-anim">
             <div className="intro-logo-wrap">
               <motion.img
-                src="/c3flex-logo.png"
-                alt="C3FLEX"
+                src={BRAND_LOGO_URL}
+                alt={BRAND_NAME}
                 className="intro-logo"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}

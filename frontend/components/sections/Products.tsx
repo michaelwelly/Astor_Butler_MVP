@@ -1,18 +1,13 @@
 import Link from "next/link";
 import { ArrowUpRight } from "lucide-react";
-import { fixedProducts, quoteProducts, products, type Product } from "@/lib/products";
+import { products, type Product } from "@/lib/products";
 import { getForFolders } from "@/lib/portfolio";
 import { RevealLines } from "@/components/ui/RevealLines";
 import { ProductSlides, SLIDES_PER_CARD } from "@/components/sections/ProductSlides";
 
 /**
- * Seven products, split by the only question a visitor actually arrives with:
- * "сколько это стоит?". Four have an answer on the page; three cannot have one
- * until a brief happens, and pretending otherwise wastes everybody's time.
- *
- * The audience label on each card does the second job — a couple looking for a
- * wedding film and a brand manager buying a TV spot skip past each other
- * without a landing-page fork in the way.
+ * Seven products in the commercial order. The first three are the money pages:
+ * Reels, event reportage and advertising.
  */
 
 /** Every card starts its slideshow at a different moment. */
@@ -53,18 +48,9 @@ export function Products() {
       </div>
 
       <div className="product-group">
-        <p className="product-group-label">Фиксированная цена</p>
-        <div className="product-grid">
-          {fixedProducts.map((p) => (
-            <ProductCard key={p.slug} product={p} offset={offsetOf(p)} />
-          ))}
-        </div>
-      </div>
-
-      <div className="product-group">
-        <p className="product-group-label">Смета под проект</p>
-        <div className="product-grid product-grid--three">
-          {quoteProducts.map((p) => (
+        <p className="product-group-label">Продукты</p>
+        <div className="product-grid product-grid--ordered">
+          {products.map((p) => (
             <ProductCard key={p.slug} product={p} offset={offsetOf(p)} />
           ))}
         </div>

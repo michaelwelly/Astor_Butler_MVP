@@ -347,7 +347,7 @@ export function DeviceHero() {
           </span>
         </h1>
         <motion.p className="hero-lede" variants={rise}>
-          C3FLEX превращает моменты, продукты и кампании в фильмы с характером.
+          C3AG.ru превращает моменты, продукты и кампании в фильмы с характером.
           Съёмка, монтаж и звук — одной командой.
         </motion.p>
         <motion.div className="hero-cta" variants={rise}>

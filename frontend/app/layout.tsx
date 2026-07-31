@@ -14,10 +14,10 @@ const inter = Inter({
   display: "swap",
 });
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://frontend-eight-tau-82.vercel.app";
-const SITE_TITLE = "C3 Agency — видеопродакшн полного цикла";
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://c3ag.ru";
+const SITE_TITLE = "C3AG.ru — видеопродакшн полного цикла";
 const SITE_DESCRIPTION =
-  "Семь направлений видеопродакшена C3 Agency: пакетная съёмка Reels, репортаж с мероприятий, видеоподкасты, свадебные и документальные фильмы, реклама полного цикла и AI-производство. Фиксированные цены и сметы под проект.";
+  "Семь направлений видеопродакшена C3AG.ru: пакетная съёмка Reels, репортаж с мероприятий, реклама полного цикла, видеоподкасты, свадебные и документальные фильмы, AI-производство. Фиксированные цены и сметы под проект.";
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
@@ -32,14 +32,14 @@ export const metadata: Metadata = {
     "свадебный фильм",
     "рекламный ролик",
     "AI видео",
+    "C3AG.ru",
     "C3 Agency",
-    "C3FLEX",
   ],
   openGraph: {
     type: "website",
     locale: "ru_RU",
     url: SITE_URL,
-    siteName: "C3FLEX",
+    siteName: "C3AG.ru",
     title: SITE_TITLE,
     description: SITE_DESCRIPTION,
     images: [
@@ -47,7 +47,7 @@ export const metadata: Metadata = {
         url: "/og-image.png",
         width: 1200,
         height: 630,
-        alt: "C3FLEX — видео-продакшн с характером",
+        alt: "C3AG.ru — видео-продакшн с характером",
       },
     ],
   },
@@ -63,7 +63,14 @@ export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="ru" className={inter.variable}>
+    <html lang="ru" className={inter.variable} suppressHydrationWarning>
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `try{var t=localStorage.getItem('c3ag-theme');if(t!=='light'&&t!=='dark')t=matchMedia('(prefers-color-scheme: light)').matches?'light':'dark';document.documentElement.dataset.theme=t;}catch(e){document.documentElement.dataset.theme='dark';}`,
+          }}
+        />
+      </head>
       <body>{children}</body>
     </html>
   );

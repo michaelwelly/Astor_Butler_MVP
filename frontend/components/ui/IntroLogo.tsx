@@ -1,6 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
+import { BRAND_LOGO_URL, BRAND_NAME } from "@/lib/brand";
 
 type Props = {
   onComplete: () => void;
@@ -32,8 +33,8 @@ export function IntroLogo({ onComplete }: Props) {
           transition={{ duration: 1.4, times: [0, 0.3, 1], ease: [0.16, 1, 0.3, 1] }}
         />
         <motion.img
-          src="/c3flex-logo.png"
-          alt="C3FLEX"
+          src={BRAND_LOGO_URL}
+          alt={BRAND_NAME}
           className="intro-logo"
           initial={{ opacity: 0, scale: 0.55 }}
           animate={{ opacity: 1, scale: 1 }}

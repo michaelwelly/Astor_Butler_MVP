@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
 /**
- * Local mock for the C3FLEX web chat.
+ * Local mock for the C3AG.ru web chat.
  *
  * It accepts the production-shaped Web Chat body (FRONTEND_BACKEND_CONTRACTS.md
  * §4, `POST /api/messages`) and returns a contract-shaped response. It also
@@ -38,7 +38,7 @@ function scriptedReply(step: number): string {
   if (step <= 0) return QUESTIONS[0];
   if (step <= QUESTIONS.length) return QUESTIONS[step - 1];
   return (
-    "✅ Запрос принят! Я передам детали команде C3FLEX, мы свяжемся в течение 2–3 часов. " +
+    "✅ Запрос принят! Я передам детали команде C3AG.ru, мы свяжемся в течение 2–3 часов. " +
     "Пока посмотрите похожие работы в каталоге выше ↑"
   );
 }

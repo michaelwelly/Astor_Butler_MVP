@@ -37,6 +37,18 @@
   --f-heading: var(--f-body);
 }
 
+:root[data-theme="light"] {
+  --ink: #f5f5f7;
+  --ink-2: #ffffff;
+  --ink-3: #ececf0;
+  --paper: #101014;
+  --muted: #666a70;
+  --line: rgba(16, 16, 20, .14);
+  --accent: #101014;
+  --warm: var(--accent);
+  --gold: var(--accent);
+}
+
 /* ── Reset ─────────────────────────────────────────────────────────── */
 *, *::before, *::after { box-sizing: border-box; }
 html { scroll-behavior: smooth; background: var(--ink); }
@@ -104,7 +116,7 @@ h1, h2, h3 { font-family: var(--f-heading); font-weight: 300; margin: 0; letter-
 }
 
 .header-actions { display: flex; gap: 8px; margin-left: 16px; }
-.circle-link, .menu-button {
+.circle-link, .menu-button, .theme-toggle {
   align-items: center;
   background: rgba(245, 245, 247, .08);
   border: 1px solid var(--line);
@@ -116,8 +128,21 @@ h1, h2, h3 { font-family: var(--f-heading); font-weight: 300; margin: 0; letter-
   width: 40px;
   transition: background .2s;
 }
-.circle-link:hover, .menu-button:hover { background: rgba(245, 245, 247, .18); }
+.circle-link:hover, .menu-button:hover, .theme-toggle:hover { background: rgba(245, 245, 247, .18); }
 .menu-button { display: none; }
+
+:root[data-theme="light"] .nav-pill,
+:root[data-theme="light"] .circle-link,
+:root[data-theme="light"] .menu-button,
+:root[data-theme="light"] .theme-toggle {
+  background: rgba(16, 16, 20, .05);
+}
+:root[data-theme="light"] .nav-pill:hover,
+:root[data-theme="light"] .circle-link:hover,
+:root[data-theme="light"] .menu-button:hover,
+:root[data-theme="light"] .theme-toggle:hover {
+  background: rgba(16, 16, 20, .1);
+}
 
 /* ── Hero Banner ───────────────────────────────────────────────────── */
 .netflix-main { min-height: 100vh; }
@@ -2619,7 +2644,7 @@ body { -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; 
    half of the cycling headline, so the site reads as one hand.
    ════════════════════════════════════════════════════════════════════════ */
 
-/* ── Wordmark: C3FLEX.com as live type ────────────────────────────────── */
+/* ── Wordmark: C3AG.ru as live type ───────────────────────────────────── */
 .wordmark { display: inline-block; white-space: nowrap; }
 .wordmark > span { display: inline-flex; align-items: baseline; }
 .wm-flex { display: inline-flex; font-weight: 400; }
@@ -3086,6 +3111,26 @@ body { -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; 
   backdrop-filter: blur(20px) saturate(1.1);
 }
 
+:root[data-theme="light"] .site-header--scrolled {
+  background: rgba(245, 245, 247, .78);
+}
+
+:root[data-theme="light"] .hero-banner,
+:root[data-theme="light"] .device-hero,
+:root[data-theme="light"] .splash-gate,
+:root[data-theme="light"] .intro-screen,
+:root[data-theme="light"] .product-card[data-slides],
+:root[data-theme="light"] .video-card,
+:root[data-theme="light"] .reels-feed {
+  --ink: #000000;
+  --ink-2: #141416;
+  --ink-3: #1c1c1e;
+  --paper: #f5f5f7;
+  --muted: #a7a7a9;
+  --line: rgba(245, 245, 247, .16);
+  --accent: #f5f5f7;
+}
+
 /* Same 44px floor as the burger that opens this. */
 .menu-overlay > button {
   align-items: center;
@@ -3095,13 +3140,6 @@ body { -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; 
   right: calc(5vw - 10px);
   top: max(14px, env(safe-area-inset-top));
   width: 44px;
-}
-
-/* Above the breakpoint the actions container holds only the burger, which is
-   hidden there — an empty box still spending its gap and margin, which left
-   the nav floating 78px off the edge against the wordmark's 38px. */
-@media (min-width: 861px) {
-  .header-actions { display: none; }
 }
 
 /* ── Reels: gesture hints ─────────────────────────────────────────────── */
@@ -3245,3 +3283,26 @@ body { -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; 
 }
 @keyframes reels-spin { to { transform: rotate(360deg); } }
 @media (prefers-reduced-motion: reduce) { .reels-spinner { animation-duration: 2.4s; } }
+
+/* ── Light theme polish ──────────────────────────────────────────────── */
+:root[data-theme="light"] .product-card:hover,
+:root[data-theme="light"] .service-card:hover,
+:root[data-theme="light"] .chat-ask:hover:not(:disabled) {
+  background: rgba(16, 16, 20, .04);
+  border-color: rgba(16, 16, 20, .26);
+}
+
+:root[data-theme="light"] .chat-spotlight {
+  background: rgba(255, 255, 255, .86);
+  box-shadow: 0 14px 40px rgba(16, 16, 20, .14);
+}
+
+:root[data-theme="light"] .chat-spotlight:hover {
+  background: rgba(255, 255, 255, .96);
+  border-color: rgba(16, 16, 20, .22);
+}
+
+:root[data-theme="light"] .video-overlay-backdrop,
+:root[data-theme="light"] .archive-modal-backdrop {
+  background: rgba(245, 245, 247, .72);
+}
