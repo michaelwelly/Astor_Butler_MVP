@@ -37,6 +37,9 @@ export function publishedClips(): CatalogClip[] {
     .filter((r) => r.src.trim())
     .map((r) => {
       const c: CatalogClip = { title: r.title, direction: r.direction, src: r.src.trim() };
+      // The archive folder is the only thing that tells podcasts apart from
+      // documentaries — both land in the same site direction.
+      if (r.sourcePath) c.folder = r.sourcePath;
       if (r.poster.trim()) c.poster = r.poster.trim();
       if (r.duration.trim()) c.duration = r.duration.trim();
       if (r.featured) c.featured = true;

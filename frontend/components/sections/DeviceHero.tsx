@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   motion,
   useMotionValue,
@@ -117,9 +117,37 @@ const DEVICES: Device[] = [
 ];
 
 /**
- * Screen contents. `still` swaps the <video> for a poster background — used on the
- * blurred, dimmed back tier where a frozen frame is indistinguishable from video,
- * so gadget count can grow without the concurrent-decode cost scaling with it.
+ * How many gadget screens actually play video at once.
+ *
+ * Every clip in the pool is a camera master off the archive — 2160×3840 and
+ * 4096×2160 are the common shapes — and one decoded 4K frame is ~33 MB before
+ * the decode pipeline and compositor textures are counted. Twelve of those ran
+ * over a gigabyte of RAM to animate screens a few hundred pixels wide.
+ *
+ * The field reads as alive because every gadget drifts, tilts and parallaxes in
+ * CSS, not because every screen is playing — so the rest fall back to the poster
+ * still the back tier already used. Raise this the day real 720p renditions land
+ * and `isArchiveMaster` stops being true for the pool.
+ */
+const LIVE_SCREENS = 3;
+
+/**
+ * The first few front-tier gadgets, in layout order: laptop, phone, monitor.
+ * Deterministic, so SSR and client agree, and it keeps one phone live — the
+ * narrow layout hides laptops and monitors, and a hero that is completely
+ * frozen on mobile reads as broken rather than restrained.
+ */
+const LIVE_INDEXES = new Set(
+  DEVICES.reduce<number[]>((acc, d, i) => {
+    if (d.depth === "front" && acc.length < LIVE_SCREENS) acc.push(i);
+    return acc;
+  }, []),
+);
+
+/**
+ * Screen contents. `still` swaps the <video> for a poster background — a frozen
+ * frame on a small, drifting, often blurred gadget is hard to tell from video,
+ * so gadget count grows without the concurrent-decode cost scaling with it.
  */
 function Screen({ clip, still }: { clip: Clip; still: boolean }) {
   if (still) {
@@ -175,9 +203,19 @@ export function DeviceHero() {
   const reduce = useReducedMotion();
   const sectionRef = useRef<HTMLElement>(null);
 
-  // The field is ~11 concurrent decodes. Once the hero has scrolled away they
-  // are invisible but still burning CPU, and the catalog below now autoplays
-  // its own cards — so hand the budget over instead of stacking the two.
+  // Same opt-out the cards use: a visitor who asked for less motion, or for less
+  // data, gets the poster field and no decodes at all. Resolved after mount so
+  // the server and the first client render agree.
+  const [live, setLive] = useState(false);
+  useEffect(() => {
+    const lessMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const conn = (navigator as Navigator & { connection?: { saveData?: boolean } }).connection;
+    setLive(!lessMotion && !conn?.saveData);
+  }, []);
+
+  // Even at LIVE_SCREENS decodes, once the hero has scrolled away they are
+  // invisible but still burning CPU and holding decoder memory — so release the
+  // budget instead of keeping it for a section nobody is looking at.
   useEffect(() => {
     const section = sectionRef.current;
     if (!section) return;
@@ -281,7 +319,7 @@ export function DeviceHero() {
               style={{ "--x": `${d.x}%`, "--y": `${d.y}%`, "--s": d.scale } as React.CSSProperties}
             >
               <div className="dv-drift" style={style}>
-                <Frame type={d.type} clip={clip} still={d.depth === "back"} />
+                <Frame type={d.type} clip={clip} still={!live || !LIVE_INDEXES.has(i)} />
               </div>
             </div>
           );

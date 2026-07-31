@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { Menu } from "lucide-react";
 import { Wordmark } from "@/components/ui/Wordmark";
 
@@ -8,11 +9,14 @@ type Props = {
   onMenuOpen: () => void;
 };
 
+// Root-relative hashes so the same header works on product pages. On the home
+// page the path already matches, so the browser treats these as same-document
+// fragment jumps — no reload.
 const PILLS = [
-  { label: "Работы", href: "#catalog" },
-  { label: "Услуги", href: "#services" },
-  { label: "О студии", href: "#about" },
-  { label: "Контакт", href: "#contact" },
+  { label: "Направления", id: "products" },
+  { label: "Работы", id: "catalog" },
+  { label: "О студии", id: "about" },
+  { label: "Контакт", id: "contact" },
 ];
 
 export function Navigation({ onMenuOpen }: Props) {
@@ -27,7 +31,7 @@ export function Navigation({ onMenuOpen }: Props) {
 
   // Highlight the pill whose section is crossing the viewport middle.
   useEffect(() => {
-    const sections = PILLS.map((p) => document.getElementById(p.href.slice(1))).filter(
+    const sections = PILLS.map((p) => document.getElementById(p.id)).filter(
       (el): el is HTMLElement => Boolean(el),
     );
     if (!sections.length) return;
@@ -45,19 +49,19 @@ export function Navigation({ onMenuOpen }: Props) {
 
   return (
     <header className={`site-header${scrolled ? " site-header--scrolled" : ""}`}>
-      <a className="brand" href="#top">
+      <Link className="brand" href="/">
         <Wordmark />
-      </a>
+      </Link>
       <nav className="desktop-nav" aria-label="Main navigation">
         {PILLS.map((p) => (
-          <a
-            key={p.href}
-            href={p.href}
-            className={`nav-pill${active === p.href.slice(1) ? " nav-pill--active" : ""}`}
-            aria-current={active === p.href.slice(1) ? "true" : undefined}
+          <Link
+            key={p.id}
+            href={`/#${p.id}`}
+            className={`nav-pill${active === p.id ? " nav-pill--active" : ""}`}
+            aria-current={active === p.id ? "true" : undefined}
           >
             {p.label}
-          </a>
+          </Link>
         ))}
       </nav>
       <div className="header-actions">

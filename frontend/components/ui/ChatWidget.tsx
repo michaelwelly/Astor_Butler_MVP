@@ -6,6 +6,7 @@ import { ChevronDown, Send } from "lucide-react";
 import { acceptConsent, hasConsent } from "@/lib/consent";
 import { persistChatId, persistSessionId, getSessionId, getTempChatId } from "@/lib/session";
 import { sendWebChatMessage, type SelectedVideoRef } from "@/lib/web-chat";
+import { onButlerAsk } from "@/lib/chat-bus";
 import { ConsentNotice } from "@/components/ui/ConsentNotice";
 import { CyclingLine } from "@/components/ui/CyclingLine";
 import { HINT_CHAT_SEEN, learned, markLearned } from "@/lib/session-hint";
@@ -42,6 +43,9 @@ const QUICK_ASKS = [
   "Хочу рекламный ролик",
 ];
 
+/** Product pages narrow these to their own product — see ProductPage. */
+
+
 const REPLY_TIME = "обычно отвечаем за 15 минут";
 
 /**
@@ -60,9 +64,11 @@ type Props = {
   inline?: boolean;
   /** Current page/video context for the Web Chat payload. */
   selectedVideo?: SelectedVideoRef;
+  /** Override the one-tap openers (product pages ask about their product). */
+  quickAsks?: string[];
 };
 
-export function ChatWidget({ inline, selectedVideo = null }: Props) {
+export function ChatWidget({ inline, selectedVideo = null, quickAsks = QUICK_ASKS }: Props) {
   // Floating widget collapses to a compact Spotlight-style input.
   const [mode, setMode] = useState<"spotlight" | "full">(inline ? "full" : "spotlight");
   const [messages, setMessages] = useState<Message[]>(INITIAL_MESSAGES);
@@ -166,6 +172,12 @@ export function ChatWidget({ inline, selectedVideo = null }: Props) {
     if (e.key === "Enter") submit(input);
   };
 
+  // A CTA button anywhere on the page hands us the КП keyword to send. The ref
+  // keeps the listener on the current `submit` without re-binding every render.
+  const submitRef = useRef(submit);
+  submitRef.current = submit;
+  useEffect(() => onButlerAsk((text) => submitRef.current(text)), []);
+
   // ── Compact Spotlight launcher (floating, collapsed) ───────────────────
   // Reads as a text field you can type into, not a button that might do
   // anything: the manager's face, a live question, and a caret.
@@ -235,7 +247,7 @@ export function ChatWidget({ inline, selectedVideo = null }: Props) {
             so they never sit under an ongoing exchange. */}
         {!messages.some((m) => m.from === "user") && !pendingText && (
           <div className="chat-asks">
-            {QUICK_ASKS.map((ask) => (
+            {quickAsks.map((ask) => (
               <button
                 key={ask}
                 type="button"

@@ -28,6 +28,13 @@ export type CatalogClip = {
   featured?: boolean;
   orientation?: "portrait" | "landscape"; // else derived from direction
   accent?: string; // card accent hex
+  /**
+   * Archive folder the clip came from ("/VIDEO C3AG/7. Подкасты/…"). Set
+   * automatically for records out of the video DB; it is how a product page
+   * finds its own work, since the three site directions are far coarser than
+   * the seven products. Hand-written entries can leave it out.
+   */
+  folder?: string;
 };
 
 export const CATALOG_CLIPS: CatalogClip[] = [

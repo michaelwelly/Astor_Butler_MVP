@@ -29,6 +29,8 @@ export type PortfolioCase = {
   tags?: string[];
   orientation?: "portrait" | "landscape";
   status?: "READY" | "DRAFT" | "ARCHIVED";
+  /** Archive folder the clip came from — see getForFolders. */
+  folder?: string;
 };
 
 export type Direction = {
@@ -497,6 +499,7 @@ function buildCases(clips: CatalogClip[]): PortfolioCase[] {
       featured: c.featured,
       tags: c.tags,
       orientation: c.orientation,
+      folder: c.folder,
     };
   });
 }
@@ -524,29 +527,23 @@ export function getFeatured(): PortfolioCase[] {
   return portfolioCases.filter((c) => c.featured === true);
 }
 
-export const servicePackages = [
-  {
-    number: "01",
-    title: "Рилсы / Продукт A",
-    price: "85 000 ₽",
-    description: "10 рилсов: идея и структура, съёмка, монтаж, одна правка.",
-  },
-  {
-    number: "02",
-    title: "Рилсы / Продукт B",
-    price: "65 000 ₽",
-    description: "Сфокусированный съёмочный день: съёмка, монтаж, одна правка.",
-  },
-  {
-    number: "03",
-    title: "Event Stories",
-    price: "от 22 000 ₽",
-    description: "Съёмка атмосферы мероприятия от двух часов. Каждый следующий час — 11 000 ₽.",
-  },
-  {
-    number: "04",
-    title: "Подкаст",
-    price: "68 000 ₽",
-    description: "Полноценный выпуск подкаста до одного часа, готовый к релизу.",
-  },
-];
+/**
+ * Cases whose archive folder starts with any of the given prefixes.
+ *
+ * The three site directions (events / reels / commercials) are far coarser than
+ * the seven products — podcasts, documentaries and interviews all collapse into
+ * one of them — but the Yandex archive is already sorted into folders that map
+ * onto the products almost one to one. So a product asks for its folders, not
+ * for a direction. See `clipFolders` in lib/products.ts.
+ */
+export function getForFolders(prefixes: string[] | undefined, limit?: number): PortfolioCase[] {
+  if (!prefixes?.length) return [];
+  const matched = portfolioCases.filter((c) =>
+    c.folder ? prefixes.some((p) => c.folder!.startsWith(p)) : false,
+  );
+  return limit ? matched.slice(0, limit) : matched;
+}
+
+// Prices now live in lib/products.ts, transcribed from the КП. The old
+// servicePackages list here had drifted from the proposals (подкаст 68 000 ₽ vs
+// 45 000 ₽ in the PDF) — one source only, so that cannot happen again.

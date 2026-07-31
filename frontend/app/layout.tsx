@@ -1,6 +1,9 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
+// Loaded second on purpose: the product sheet overrides a handful of globals
+// (mobile menu layout, footer) and relies on source order to win.
+import "./products.css";
 
 // One family for the whole site — headings differ by weight and tracking,
 // not by typeface. See the "Minimal skin" block in globals.css.
@@ -12,9 +15,9 @@ const inter = Inter({
 });
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://frontend-eight-tau-82.vercel.app";
-const SITE_TITLE = "C3FLEX.com — видео-продакшн с характером";
+const SITE_TITLE = "C3 Agency — видеопродакшн полного цикла";
 const SITE_DESCRIPTION =
-  "Видео-портфолио независимой продакшн-студии C3FLEX: ивенты, рилсы и коммерческая реклама. Кинематографичная съёмка и монтаж под ключ. Astor Butler подберёт формат и команду под вашу задачу.";
+  "Семь направлений видеопродакшена C3 Agency: пакетная съёмка Reels, репортаж с мероприятий, видеоподкасты, свадебные и документальные фильмы, реклама полного цикла и AI-производство. Фиксированные цены и сметы под проект.";
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
@@ -23,11 +26,14 @@ export const metadata: Metadata = {
   keywords: [
     "видеопродакшн",
     "видеосъёмка",
-    "ивенты",
-    "рилсы",
-    "реклама",
+    "съёмка reels",
+    "репортаж с мероприятия",
+    "видеоподкаст",
+    "свадебный фильм",
+    "рекламный ролик",
+    "AI видео",
+    "C3 Agency",
     "C3FLEX",
-    "монтаж",
   ],
   openGraph: {
     type: "website",

@@ -8,7 +8,7 @@ import { Footer } from "@/components/layout/Footer";
 import { DeviceHero } from "@/components/sections/DeviceHero";
 import { Marquee } from "@/components/sections/Marquee";
 import { FeaturedCatalog } from "@/components/sections/FeaturedCatalog";
-import { Services } from "@/components/sections/Services";
+import { Products } from "@/components/sections/Products";
 import { Manifesto } from "@/components/sections/Manifesto";
 import { Contact } from "@/components/sections/Contact";
 import { CinemaCursor } from "@/components/ui/CinemaCursor";
@@ -71,10 +71,12 @@ export function HomePage() {
         <Navigation onMenuOpen={() => setMenuOpen(true)} />
         <DeviceHero />
         <Marquee />
-        <FeaturedCatalog onSelect={openReels} />
+        {/* Products before works: the site's job is routing to seven offers,
+            and the reel now also lives on each product page. */}
         <Reveal>
-          <Services />
+          <Products />
         </Reveal>
+        <FeaturedCatalog onSelect={openReels} />
         <Reveal>
           <Manifesto />
         </Reveal>
