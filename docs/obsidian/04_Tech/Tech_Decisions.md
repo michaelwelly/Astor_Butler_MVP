@@ -574,6 +574,9 @@ FSM управляет состоянием диалога, разрешенны
 - Smart Solutions has no confirmed media archive yet: no `clipFolders`, no rolling lower video/news feed, only a generated premium cover at `frontend/public/product-covers/smart-solutions.jpg` and a CTA to Clio.
 - Wedding remains a visible `#3` product card/tile even without confirmed video assets; the portfolio row must keep the honest CTA instead of generic fallback cards.
 - Team/about adds `Сергей Зюров` with a neutral public label because no exact role was found in repo/project memory.
+- Domain/HTTPS inspection 2026-08-01: `c3ag.online` resolves to the production VM `51.250.31.97` through REG.RU DNS (`ns1.reg.ru` / `ns2.reg.ru`), not through a Yandex Cloud public DNS zone. Current Yandex Cloud folder has no public DNS zone, ALB, backend group/router or Certificate Manager certificate for C3AG. ALB + Certificate Manager rollout is blocked until DNS control/delegation or exact REG.RU validation/routing records are available. Voice/OAuth flags stay off until HTTPS and server-side credentials are verified.
+- C3 Studio naming 2026-08-01: `/studio` is the demo production cabinet for video catalog management, render upload checks, acceptance checklist and client-chat preview. User-facing legacy `C3FLEX · Кабинет`/`Кабинет монтажёра` naming is replaced with `C3 Studio`; backend/service identifiers may retain historical names only where compatibility requires it.
+- C3AG web source batch 2026-08-01: price labels use dedicated high-contrast theme tokens, Clio's first chat message points to the C3AG personal-data policy, the standalone Yandex ID mock panel is removed from the contact section, and the frontend now serves `/docs/policy.html`. Production deployment is pending VM SSH access.
 
 ## Связанные продуктовые заметки
 

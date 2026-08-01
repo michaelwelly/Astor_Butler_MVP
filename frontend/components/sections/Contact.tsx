@@ -4,7 +4,6 @@ import { ArrowUpRight, Bot, BriefcaseBusiness, Clapperboard, Film, Sparkles } fr
 import { RevealLines } from "@/components/ui/RevealLines";
 import { askButler } from "@/lib/chat-bus";
 import { CLIO_AVATAR, CLIO_NAME } from "@/lib/clio-persona";
-import { YandexIdConsentPanel } from "@/components/sections/YandexIdConsentPanel";
 
 const PREVIEW_MESSAGES = [
   {
@@ -111,7 +110,6 @@ export function Contact() {
           })}
         </div>
       </div>
-      <YandexIdConsentPanel />
     </section>
   );
 }

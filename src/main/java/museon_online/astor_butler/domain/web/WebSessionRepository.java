@@ -110,7 +110,7 @@ public class WebSessionRepository {
 
         String policyVersion = string(consent, "policyVersion");
         if (policyVersion == null || policyVersion.isBlank()) {
-            policyVersion = "2026-06-02-local";
+            policyVersion = "2026-08-01-c3ag-web";
         }
 
         Map<String, Object> evidence = new LinkedHashMap<>();

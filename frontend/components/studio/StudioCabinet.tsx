@@ -46,7 +46,7 @@ export function StudioCabinet() {
     <div className="cab">
       <header className="cab-top">
         <span className="cab-top-brand">
-          C3<b>FLEX</b> · Кабинет
+          C3 <b>Studio</b>
         </span>
         <nav className="cab-top-nav">
           {TABS.map((t) => {
@@ -92,14 +92,14 @@ function StudioGate({ onDemo }: { onDemo: () => void }) {
         <ArrowLeft size={16} /> На сайт
       </Link>
       <div className="cab-gate-card">
-        <p className="section-label">Кабинет монтажёра</p>
+        <p className="section-label">C3 Studio</p>
         <h1 className="cab-gate-title">
           Вход для
           <br />
           <i>команды.</i>
         </h1>
         <p className="cab-gate-lede">
-          Доступ к кабинету выдаётся по роли монтажёра. Пока бэкенд авторизации
+          Доступ к C3 Studio выдаётся по роли монтажёра. Пока бэкенд авторизации
           поднимается, кабинет открыт в demo-режиме.
         </p>
         <div className="cab-gate-demo">
@@ -124,13 +124,13 @@ function Overview({ user, onUpload }: { user: StudioUser; onUpload: () => void }
     <div className="cab-panel">
       <section className="cab-splash">
         <div className="cab-splash-copy">
-          <p className="section-label">Кабинет монтажёра</p>
+          <p className="section-label">C3 Studio</p>
           <h1 className="cab-splash-title">
             Здравствуйте,
             <br />
             {firstName}.
           </h1>
-          <p className="cab-splash-sub">Ваши ролики, приёмка и чаты клиентов — в одном месте.</p>
+          <p className="cab-splash-sub">Ваши ролики, приёмка, загрузки и чаты клиентов — в одном месте.</p>
           <button type="button" className="cab-primary-btn cab-primary-btn--lg" onClick={onUpload}>
             <UploadCloud size={18} /> Загрузить рендеры
           </button>

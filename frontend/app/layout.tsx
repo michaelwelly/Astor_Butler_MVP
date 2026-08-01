@@ -17,7 +17,7 @@ const inter = Inter({
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://c3ag.ru";
 const SITE_TITLE = "C3AG.ru — видеопродакшн полного цикла";
 const SITE_DESCRIPTION =
-  "Семь направлений видеопродакшена C3AG.ru: пакетная съёмка Reels, репортаж с мероприятий, реклама полного цикла, видеоподкасты, свадебные и документальные фильмы, AI-производство. Фиксированные цены и сметы под проект.";
+  "Восемь направлений C3AG.ru: Reels, репортаж, Wedding, Podcast, реклама, Film, AI и Smart Solutions. Фиксированные продукты и сметы под проект.";
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),

@@ -23,7 +23,7 @@ export function useStudioSession() {
         demo: isLocal,
       }
     : null;
-  const enterDemo = () => writeLocalSession("editor@c3flex.local");
+  const enterDemo = () => writeLocalSession("editor@c3studio.local");
   const signOut = async () => {
     await logout();
   };

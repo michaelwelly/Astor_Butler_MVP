@@ -56,7 +56,7 @@ public class WebSessionMessageService {
         Map<String, Object> safeEvidence = evidence == null ? Map.of() : evidence;
         Map<String, Object> consent = new LinkedHashMap<>();
         consent.put("privacyAccepted", true);
-        consent.put("policyVersion", firstNonBlank(policyVersion, string(safeEvidence, "policyVersion"), "2026-06-02-local"));
+        consent.put("policyVersion", firstNonBlank(policyVersion, string(safeEvidence, "policyVersion"), "2026-08-01-c3ag-web"));
         consent.put("acceptedAt", string(safeEvidence, "acceptedAt"));
         consent.put("source", source == null || source.isBlank() ? "WEB" : source);
 

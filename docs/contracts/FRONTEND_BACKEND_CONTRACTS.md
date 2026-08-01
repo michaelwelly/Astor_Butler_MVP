@@ -245,7 +245,7 @@ Rules:
     },
     "consent": {
       "privacyAccepted": true,
-      "policyVersion": "2026-06-02-local",
+      "policyVersion": "2026-08-01-c3ag-web",
       "acceptedAt": "2026-06-23T12:00:00Z"
     }
   }
@@ -377,10 +377,10 @@ Frontend must show privacy notice before sending web chat/contact data.
 
 ```json
 {
-  "version": "2026-06-02-local",
-  "title": "Astor Butler local MVP privacy policy placeholder",
+  "version": "2026-08-01-c3ag-web",
+  "title": "Политика обработки персональных данных C3AG",
   "url": "/docs/policy.html",
-  "effectiveFrom": "2026-06-02T00:00:00Z"
+  "effectiveFrom": "2026-08-01T00:00:00Z"
 }
 ```
 
@@ -390,7 +390,7 @@ Frontend must show privacy notice before sending web chat/contact data.
 {
   "userId": null,
   "consentType": "PRIVACY_POLICY",
-  "policyVersion": "2026-06-02-local",
+  "policyVersion": "2026-08-01-c3ag-web",
   "source": "WEB",
   "evidence": {
     "sessionId": "7c3417e0-3af4-4e7a-b5be-88759a7e9781",

@@ -53,7 +53,7 @@
   justify-content: space-between;
   padding-top: 14px;
 }
-.product-foot strong { font-size: 18px; font-weight: 500; }
+.product-foot strong { color: var(--price-color); font-size: 18px; font-weight: 500; }
 .product-foot svg { color: var(--accent); }
 
 /* ── Card slideshow ───────────────────────────────────────────────────── */
@@ -89,6 +89,7 @@
 .product-card[data-slides] .product-audience,
 .product-card[data-slides] .product-tagline { color: rgba(245, 245, 247, .86); }
 .product-card[data-slides] .product-foot { border-top-color: rgba(245, 245, 247, .22); }
+.product-card[data-slides] .product-foot strong { color: #fffaf0; text-shadow: 0 1px 14px rgba(0, 0, 0, .68); }
 @media (prefers-reduced-motion: reduce) {
   .product-slides img { transition: none; }
 }
@@ -172,8 +173,8 @@
   margin-top: 40px;
 }
 .pr-price { display: flex; flex-direction: column; gap: 4px; }
-.pr-price strong { font-size: clamp(26px, 3.4vw, 40px); font-weight: 400; letter-spacing: -.02em; }
-.pr-price small { color: var(--muted); font-size: 12px; letter-spacing: .06em; }
+.pr-price strong { color: var(--price-color); font-size: clamp(26px, 3.4vw, 40px); font-weight: 400; letter-spacing: -.02em; }
+.pr-price small { color: var(--price-note-color); font-size: 12px; letter-spacing: .06em; }
 
 /* ── Product page: CTA ────────────────────────────────────────────────── */
 .pr-cta {
@@ -283,8 +284,8 @@
 }
 .pr-package h3 { font-size: 20px; font-weight: 400; line-height: 1.15; margin: 0; }
 .pr-package-price { display: flex; flex-direction: column; gap: 4px; margin: 0; }
-.pr-package-price strong { font-size: 28px; font-weight: 400; letter-spacing: -.02em; }
-.pr-package-price small { color: var(--muted); font-size: 11px; letter-spacing: .04em; }
+.pr-package-price strong { color: var(--price-color); font-size: 28px; font-weight: 400; letter-spacing: -.02em; }
+.pr-package-price small { color: var(--price-note-color); font-size: 11px; letter-spacing: .04em; }
 .pr-package ul {
   border-top: 1px solid var(--line);
   display: grid;
@@ -469,7 +470,7 @@
 .menu-products a:hover { opacity: .7; }
 .menu-num { color: var(--muted); font-size: 11px; letter-spacing: .1em; }
 .menu-name { font-size: clamp(20px, 5.2vw, 30px); font-weight: 300; letter-spacing: -.01em; line-height: 1.1; }
-.menu-price { color: var(--muted); font-size: 12px; letter-spacing: .04em; white-space: nowrap; }
+.menu-price { color: var(--price-note-color); font-size: 12px; letter-spacing: .04em; white-space: nowrap; }
 .menu-sections { display: flex; flex-wrap: wrap; gap: 10px; }
 .menu-sections a {
   border: 1px solid var(--line);

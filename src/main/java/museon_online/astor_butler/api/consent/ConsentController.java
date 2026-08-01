@@ -92,10 +92,10 @@ public class ConsentController {
     @Operation(summary = "Get current privacy policy version")
     public ResponseEntity<PolicyResponse> currentPolicy() {
         return ResponseEntity.ok(new PolicyResponse(
-                "2026-06-02-local",
-                "Astor Butler local MVP privacy policy placeholder",
+                "2026-08-01-c3ag-web",
+                "Политика обработки персональных данных C3AG",
                 "/docs/policy.html",
-                Instant.parse("2026-06-02T00:00:00Z")
+                Instant.parse("2026-08-01T00:00:00Z")
         ));
     }
 

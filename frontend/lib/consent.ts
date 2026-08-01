@@ -1,17 +1,16 @@
 /**
  * Site privacy consent (FRONTEND_BACKEND_CONTRACTS.md §6).
  *
- * Consent must be accepted before sending chat/contact data. Until the backend
- * supports anonymous consent persistence, evidence travels inside the Web Chat
- * payload. This module is frontend-only state; the backend Consent Vault stays
- * the source of truth.
+ * Consent must be accepted before sending chat/contact data. Evidence travels
+ * inside the Web Chat payload and is persisted by the backend Consent Vault.
+ * This module only keeps the browser-side acknowledgement for repeat visits.
  */
 
 export const CURRENT_POLICY = {
-  version: "2026-06-02-local",
-  title: "Astor Butler local MVP privacy policy placeholder",
+  version: "2026-08-01-c3ag-web",
+  title: "Политика обработки персональных данных C3AG",
   url: "/docs/policy.html",
-  effectiveFrom: "2026-06-02T00:00:00Z",
+  effectiveFrom: "2026-08-01T00:00:00Z",
 } as const;
 
 export type ConsentEvidence = {

@@ -69,7 +69,7 @@ export function AuthMenu() {
           <div className="auth-dropdown" role="menu">
             <p className="auth-dropdown-name">{displayName}</p>
             <Link href="/studio" className="auth-logout" onClick={() => setOpen(false)}>
-              <Clapperboard size={15} /> Кабинет монтажёра
+              <Clapperboard size={15} /> C3 Studio
             </Link>
             <button
               type="button"

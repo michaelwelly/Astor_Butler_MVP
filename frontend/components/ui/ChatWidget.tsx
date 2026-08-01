@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { ChevronDown, Mic, Send, Square, Volume2, X } from "lucide-react";
-import { acceptConsent, hasConsent } from "@/lib/consent";
+import { acceptConsent, CURRENT_POLICY, hasConsent } from "@/lib/consent";
 import { persistChatId, persistSessionId, getSessionId, getTempChatId } from "@/lib/session";
 import { sendWebChatMessage, type SelectedVideoRef } from "@/lib/web-chat";
 import { onButlerAsk } from "@/lib/chat-bus";
@@ -20,12 +20,13 @@ import {
   type ClioVoiceStatus,
 } from "@/lib/clio-voice";
 
-type Message = { from: "bot" | "user"; text: string };
+type Message = { from: "bot" | "user"; text: string; kind?: "privacy_intro" };
 
 const INITIAL_MESSAGES: Message[] = [
   {
     from: "bot",
     text: CLIO_GREETING,
+    kind: "privacy_intro",
   },
 ];
 
@@ -402,7 +403,17 @@ export function ChatWidget({ inline, selectedVideo = null, quickAsks = QUICK_ASK
           {messages.map((msg, i) => (
             <div key={i} className={`chat-msg chat-msg-${msg.from}`}>
               {msg.from === "bot" && <img src={CLIO_AVATAR} alt="" className="chat-msg-avatar" />}
-              <span>{msg.text}</span>
+              <span>
+                {msg.text}
+                {msg.kind === "privacy_intro" && (
+                  <>
+                    <br />
+                    <a className="chat-policy-link" href={CURRENT_POLICY.url} target="_blank" rel="noopener noreferrer">
+                      Политика обработки данных
+                    </a>
+                  </>
+                )}
+              </span>
             </div>
           ))}
           {sending && (

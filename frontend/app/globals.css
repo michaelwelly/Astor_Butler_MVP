@@ -8,6 +8,8 @@
   --paper: #f7f1e4;      /* primary text */
   --muted: #a99d87;      /* secondary text */
   --line: rgba(247, 241, 228, .14);
+  --price-color: #fffaf0;
+  --price-note-color: #d8ccb4;
 
   /* Gold stays quiet: it marks navigation, labels, focus and primary surfaces
      without turning the site into a one-note colour treatment. */
@@ -50,6 +52,8 @@
   --paper: #17150e;
   --muted: #665f52;
   --line: rgba(116, 82, 15, .18);
+  --price-color: #17150e;
+  --price-note-color: #4b4439;
   --accent: #74520f;
   --warm: var(--accent);
   --gold: var(--accent);
@@ -1059,6 +1063,14 @@ h1, h2, h3 { font-family: var(--f-heading); font-weight: 300; margin: 0; letter-
   font-size: 13px;
   line-height: 1.65;
   padding: 10px 14px;
+}
+.chat-policy-link {
+  color: var(--gold);
+  display: inline-block;
+  font-weight: 600;
+  margin-top: 7px;
+  text-decoration: underline;
+  text-underline-offset: 3px;
 }
 .chat-msg-thinking span {
   align-items: center;

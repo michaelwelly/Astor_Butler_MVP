@@ -236,8 +236,16 @@ Result:
 
 ## Status
 
-- Domain purchase: activation in progress at REG.RU.
-- DNS records: pending registrar identification / DNS panel.
-- Server TLS/routing: pending DNS propagation.
+- Domain purchase: `c3ag.online` is publicly resolving through REG.RU DNS; `c3ag.ru` still points elsewhere and is not the current C3AG VM target.
+- DNS records observed on 2026-08-01:
+  - `c3ag.online A` -> `51.250.31.97`;
+  - `www.c3ag.online A` -> `51.250.31.97`;
+  - `api.c3ag.online` has no A/CNAME record;
+  - authoritative nameservers are `ns1.reg.ru` / `ns2.reg.ru`, not Yandex Cloud DNS.
+- Yandex Cloud state on 2026-08-01: no public DNS zone, no ALB, no Certificate Manager certificate and no existing ALB backend/router were found in the current authenticated cloud/folder.
+- Desired ALB + Certificate Manager path is blocked until DNS control is available in Yandex Cloud or the required validation/routing records can be added at REG.RU. Do not create ALB/certificate resources that cannot be validated.
+- Smallest DNS action for VM-level HTTPS: keep `A @ -> 51.250.31.97`, keep `A www -> 51.250.31.97`, add `A api -> 51.250.31.97`, then configure HTTPS reverse proxy on the VM.
+- Smallest DNS action for Yandex ALB architecture: delegate `c3ag.online` to a Yandex Cloud public DNS zone, or keep REG.RU DNS and add the exact Certificate Manager DNS validation records plus an ALB routing record once the ALB public address exists.
+- Server TLS/routing: pending DNS control / confirmed architecture choice.
 - VM frontend preview: running on `http://51.250.31.97:3001`.
 - Telegram API egress: DNS works, direct HTTPS to `api.telegram.org:443` currently times out from the VM; keep investigating outbound firewall/routing/Telegram reachability before relying on Telegram operator notifications.
