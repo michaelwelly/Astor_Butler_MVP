@@ -1,16 +1,16 @@
 # Graph Report - Astor_Butler_MVP  (2026-08-01)
 
 ## Corpus Check
-- 674 files · ~988,964 words
+- 674 files · ~989,013 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 6354 nodes · 14236 edges · 526 communities (481 shown, 45 thin omitted)
+- 6354 nodes · 14236 edges · 528 communities (483 shown, 45 thin omitted)
 - Extraction: 87% EXTRACTED · 13% INFERRED · 0% AMBIGUOUS · INFERRED: 1917 edges (avg confidence: 0.8)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `ab5c6ccd`
+- Built from commit: `22ef10ec`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -388,7 +388,9 @@
 - [[_COMMUNITY_Community 521|Community 521]]
 - [[_COMMUNITY_Community 522|Community 522]]
 - [[_COMMUNITY_Community 523|Community 523]]
+- [[_COMMUNITY_Community 524|Community 524]]
 - [[_COMMUNITY_Community 525|Community 525]]
+- [[_COMMUNITY_Community 526|Community 526]]
 - [[_COMMUNITY_Community 531|Community 531]]
 
 ## God Nodes (most connected - your core abstractions)
@@ -418,7 +420,7 @@
 ## Import Cycles
 - 3-file cycle: `frontend/lib/catalog-clips.ts -> frontend/lib/portfolio.ts -> frontend/lib/video-db.ts -> frontend/lib/catalog-clips.ts`
 
-## Communities (526 total, 45 thin omitted)
+## Communities (528 total, 45 thin omitted)
 
 ### Community 0 - "Community 0"
 Cohesion: 0.12
@@ -514,7 +516,7 @@ Nodes (24): dependencies, framer-motion, gsap, lenis, lucide-react, next, react,
 
 ### Community 23 - "Community 23"
 Cohesion: 0.07
-Nodes (27): getByDirection(), getForFolders(), BuyingModel, fixedProducts, Product, productBySlug, ProductCase, ProductEmbed (+19 more)
+Nodes (28): useLenis(), getForFolders(), BuyingModel, fixedProducts, Product, productBySlug, ProductCase, ProductEmbed (+20 more)
 
 ### Community 24 - "Community 24"
 Cohesion: 0.16
@@ -561,8 +563,8 @@ Cohesion: 0.20
 Nodes (12): ArtAuctionRepository, ArtAuctionBid, ArtAuctionBidCommand, ArtAuctionBidStatus, ArtAuctionLot, Instant, List, Long (+4 more)
 
 ### Community 35 - "Community 35"
-Cohesion: 0.15
-Nodes (12): askButler(), onButlerAsk(), LeadRequest, submitLead(), Contact(), PREVIEW_MESSAGES, QUICK_ACTIONS, Manifesto() (+4 more)
+Cohesion: 0.11
+Nodes (18): HomePage(), toRef(), LeadRequest, submitLead(), toSelectedVideoRef(), Contact(), PREVIEW_MESSAGES, QUICK_ACTIONS (+10 more)
 
 ### Community 36 - "Community 36"
 Cohesion: 0.16
@@ -594,7 +596,7 @@ Nodes (12): chunk_texts(), extract_docx(), extract_pdf(), extract_text(), main()
 
 ### Community 43 - "Community 43"
 Cohesion: 0.07
-Nodes (49): browserVoiceAvailability, browserVoiceErrorMessage(), BrowserVoiceProbe, BrowserVoiceUnavailableCode, CLIO_VOICE_STARTERS, CLIO_VOICE_STATUS_COPY, clioSttUnavailableResult(), ClioTranscribeMockResult (+41 more)
+Nodes (50): browserVoiceAvailability, browserVoiceErrorMessage(), BrowserVoiceProbe, BrowserVoiceUnavailableCode, CLIO_VOICE_STARTERS, CLIO_VOICE_STATUS_COPY, clioSttUnavailableResult(), ClioTranscribeMockResult (+42 more)
 
 ### Community 44 - "Community 44"
 Cohesion: 0.32
@@ -605,8 +607,8 @@ Cohesion: 0.15
 Nodes (14): FsmControllerTest, empty(), FsmRuntimeStateService, MessageFacts, ProfileFacts, BotState, Instant, Long (+6 more)
 
 ### Community 46 - "Community 46"
-Cohesion: 0.11
-Nodes (11): InboundEvent, DomainEventPublisher, LoggingEventPublisher, IdempotencyGuard, Long, String, Update, DomainEvent (+3 more)
+Cohesion: 0.13
+Nodes (10): InboundEvent, IdempotencyGuard, InboundEvent, Update, Long, String, Update, DomainEvent (+2 more)
 
 ### Community 47 - "Community 47"
 Cohesion: 0.20
@@ -701,8 +703,8 @@ Cohesion: 0.39
 Nodes (4): CharityButton, InlineKeyboardMarkup, Override, String
 
 ### Community 70 - "Community 70"
-Cohesion: 0.39
-Nodes (4): ContactButton, InlineKeyboardMarkup, Override, String
+Cohesion: 0.33
+Nodes (5): ContactButton, InlineKeyboardButton, InlineKeyboardMarkup, Override, String
 
 ### Community 71 - "Community 71"
 Cohesion: 0.39
@@ -713,8 +715,8 @@ Cohesion: 0.39
 Nodes (4): MenuButton, InlineKeyboardMarkup, Override, String
 
 ### Community 73 - "Community 73"
-Cohesion: 0.33
-Nodes (5): MerchButton, InlineKeyboardButton, InlineKeyboardMarkup, Override, String
+Cohesion: 0.39
+Nodes (4): MerchButton, InlineKeyboardMarkup, Override, String
 
 ### Community 74 - "Community 74"
 Cohesion: 0.39
@@ -829,8 +831,8 @@ Cohesion: 0.47
 Nodes (3): FSMHandler, BotState, CommandContext
 
 ### Community 102 - "Community 102"
-Cohesion: 0.08
-Nodes (21): Contact, CommandContext, ContactHandler, Mapping, User, Long, User, Long (+13 more)
+Cohesion: 0.09
+Nodes (19): Contact, CommandContext, ContactHandler, Mapping, User, Long, User, Long (+11 more)
 
 ### Community 104 - "Community 104"
 Cohesion: 0.18
@@ -1217,8 +1219,8 @@ Cohesion: 0.36
 Nodes (4): VenueContentIngestService, Scheduled, String, VenueContentIngestSummary
 
 ### Community 341 - "Community 341"
-Cohesion: 0.15
-Nodes (9): FSMStorage, ImpactMeterScenarioTest, List, MediaAsset, BeforeEach, IncomingMessage, String, Test (+1 more)
+Cohesion: 0.11
+Nodes (15): FSMStorage, ImpactMeterScenarioTest, ScenarioRouterTest, List, MediaAsset, String, BeforeEach, IncomingMessage (+7 more)
 
 ### Community 342 - "Community 342"
 Cohesion: 0.70
@@ -1353,8 +1355,8 @@ Cohesion: 0.38
 Nodes (4): VenueContentAssetStorageServiceTest, NormalizedVenueContentPost, Test, VenueContentAsset
 
 ### Community 383 - "Community 383"
-Cohesion: 0.16
-Nodes (12): SwaggerConfig, C3flexContentController, Boolean, GetMapping, Integer, Operation, String, VideoCatalogView (+4 more)
+Cohesion: 0.28
+Nodes (7): C3flexContentController, Boolean, GetMapping, Integer, Operation, String, VideoCatalogView
 
 ### Community 384 - "Community 384"
 Cohesion: 0.32
@@ -1369,8 +1371,8 @@ Cohesion: 0.26
 Nodes (7): IdentityService, Long, IncomingMessage, Long, String, FsmTimelineEvent, Override
 
 ### Community 387 - "Community 387"
-Cohesion: 0.06
-Nodes (32): HomePage(), toRef(), useLenis(), Footer(), Navigation(), PILLS, Props, toSelectedVideoRef() (+24 more)
+Cohesion: 0.09
+Nodes (16): Footer(), Navigation(), PILLS, Props, Props, EASE, Phase, Props (+8 more)
 
 ### Community 388 - "Community 388"
 Cohesion: 0.21
@@ -1405,8 +1407,8 @@ Cohesion: 0.25
 Nodes (9): blankToDefault(), String, Long, Map, Object, OutgoingMessage, String, WebSessionResolution (+1 more)
 
 ### Community 400 - "Community 400"
-Cohesion: 0.38
-Nodes (7): GetMapping, Map, Object, Operation, ResponseEntity, String, SystemController
+Cohesion: 0.19
+Nodes (12): SwaggerConfig, GetMapping, Map, Object, Operation, ResponseEntity, String, Bean (+4 more)
 
 ### Community 401 - "Community 401"
 Cohesion: 0.33
@@ -1657,8 +1659,8 @@ Cohesion: 0.26
 Nodes (8): TelegramStarPaymentService, ApiException, List, Long, String, TelegramStarPayment, TelegramStarPaymentCommand, Transactional
 
 ### Community 499 - "Community 499"
-Cohesion: 0.14
-Nodes (15): Any, BaseModel, analyze(), AnalyzeRequest, AnalyzeResponse, party_size_from_text(), _pipeline(), rule_slots() (+7 more)
+Cohesion: 0.22
+Nodes (9): Any, BaseModel, analyze(), AnalyzeRequest, AnalyzeResponse, party_size_from_text(), _pipeline(), rule_slots() (+1 more)
 
 ### Community 502 - "Community 502"
 Cohesion: 0.18
@@ -1732,9 +1734,17 @@ Nodes (3): AlisaClientException, RuntimeException, String
 Cohesion: 0.38
 Nodes (4): IntentExampleBootstrapTest, IntentExampleSeed, String, Test
 
+### Community 524 - "Community 524"
+Cohesion: 0.20
+Nodes (8): askButler(), onButlerAsk(), getByDirection(), DIRECTION_ORIENTATION, VideoOrientation, FeaturedCatalog(), getProductFeed(), Props
+
 ### Community 525 - "Community 525"
 Cohesion: 0.24
 Nodes (10): Draft(), TableBookingDraftStorage, Draft, Instant, Integer, LocalDate, LocalTime, Long (+2 more)
+
+### Community 526 - "Community 526"
+Cohesion: 0.33
+Nodes (3): DomainEventPublisher, LoggingEventPublisher, DomainEvent
 
 ### Community 531 - "Community 531"
 Cohesion: 0.25
@@ -1752,7 +1762,7 @@ _Questions this graph is uniquely positioned to answer:_
   _High betweenness centrality (0.159) - this node is a cross-community bridge._
 - **Why does `HttpStatus` connect `Community 217` to `Community 388`, `Community 6`, `Community 15`, `Community 20`, `Community 25`, `Community 283`, `Community 30`, `Community 31`, `Community 287`, `Community 36`, `Community 296`, `Community 424`, `Community 45`, `Community 49`, `Community 50`, `Community 53`, `Community 314`, `Community 444`, `Community 450`, `Community 196`, `Community 200`, `Community 201`, `Community 333`, `Community 462`, `Community 220`, `Community 223`, `Community 226`, `Community 355`, `Community 229`, `Community 233`, `Community 498`, `Community 245`, `Community 506`?**
   _High betweenness centrality (0.022) - this node is a cross-community bridge._
-- **Why does `none()` connect `Community 29` to `Community 3`, `Community 4`, `Community 5`, `Community 7`, `Community 11`, `Community 14`, `Community 18`, `Community 21`, `Community 406`, `Community 297`, `Community 41`, `Community 47`, `Community 51`, `Community 63`, `Community 453`, `Community 197`, `Community 205`, `Community 80`, `Community 474`, `Community 221`, `Community 93`, `Community 225`, `Community 98`, `Community 226`, `Community 499`?**
+- **Why does `none()` connect `Community 29` to `Community 3`, `Community 4`, `Community 5`, `Community 7`, `Community 11`, `Community 14`, `Community 18`, `Community 21`, `Community 406`, `Community 297`, `Community 41`, `Community 47`, `Community 51`, `Community 63`, `Community 453`, `Community 197`, `Community 205`, `Community 80`, `Community 341`, `Community 474`, `Community 221`, `Community 93`, `Community 225`, `Community 98`, `Community 226`?**
   _High betweenness centrality (0.013) - this node is a cross-community bridge._
 - **Are the 281 inferred relationships involving `of()` (e.g. with `.documentMetadata()` and `.sendDocumentIfPresent()`) actually correct?**
   _`of()` has 281 INFERRED edges - model-reasoned connections that need verification._
