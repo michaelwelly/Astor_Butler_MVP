@@ -13,10 +13,10 @@ type Props = {
 // page the path already matches, so the browser treats these as same-document
 // fragment jumps — no reload.
 const PILLS = [
-  { label: "Направления", id: "products" },
-  { label: "Работы", id: "catalog" },
+  { label: "Услуги", id: "products" },
+  { label: "Портфолио", id: "catalog" },
   { label: "О студии", id: "about" },
-  { label: "Контакт", id: "contact" },
+  { label: "Обсудить проект", id: "contact" },
 ];
 
 export function Navigation({ onMenuOpen }: Props) {

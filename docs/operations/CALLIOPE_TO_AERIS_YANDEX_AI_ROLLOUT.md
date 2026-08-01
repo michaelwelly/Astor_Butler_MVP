@@ -161,6 +161,33 @@ AI stress reserve: 15 000 RUB/month
 
 Цель: AERIS создает локальную бронь через FSM, а интеграция с SABY/SBIS становится external reservation port.
 
+Repository discovery on 2026-08-01:
+
+- spelling in project memory/docs is `SABY/SBIS`, not confirmed `Sabby`;
+- current backend already has the local booking stack:
+  - `TableBookingScenario`;
+  - `TableReservationService`;
+  - `TableReservationRepository`;
+  - `table_reservation_orders`;
+  - `table_reservation_holds`;
+  - REST endpoints under `/api/bookings/**`;
+  - hostess Telegram confirmation via `TableReservationNotificationService`;
+  - `sbis_external_id` column for future external sync;
+- no implemented `SabyReservationProvider`, `SbisTableAvailabilityAdapter`, HTTP client or runtime env binding was found in `src/main/java`;
+- do not design from scratch before reading the actual SABY/SBIS API contract and representative guidance from the user's correspondence.
+
+Grounded capability map for the future adapter:
+
+| Voice / Telegram use case | Existing local capability | External SABY/SBIS gap | Guardrail |
+| --- | --- | --- | --- |
+| Availability query: "есть стол завтра в 20:00 на двоих?" | `GET /api/bookings/tables/availability`, local holds/orders | map venue/zone/table/time to provider availability API | read-only, no booking side effects |
+| Find table: "тихий стол у окна" | `TableBookingDraftMerger`, seating model, local table zones | provider table/area vocabulary and availability status | show candidate, ask guest to confirm |
+| Reserve | `TableReservationService.createReservation` creates local order + hold and asks hostess | create external reservation and store `sbis_external_id`/sync status | confirmation-gated, idempotency key from local order id |
+| Modify | `TableReservationService.changeByGuest` and `ChangeCancelScenario` | external update endpoint and conflict policy | explicit guest confirmation and hostess/operator confirmation where needed |
+| Cancel | `TableReservationService.cancelByGuest` | external cancel endpoint | explicit confirmation, idempotent cancel by external id |
+| Confirmation | hostess buttons and local status lifecycle | provider confirmation/status reconciliation | local FSM remains source of truth; external status is synchronized, not allowed to bypass FSM |
+| Handoff / limitations | admin/hostess cards | provider errors/rate limits/outages | graceful fallback to local hold + human operator |
+
 Implementation path:
 
 1. Создать порт `ExternalReservationProvider`:
@@ -179,6 +206,83 @@ Implementation path:
    - `SABY_RESTAURANT_ID`.
 4. Авторизацию делать в adapter layer, не в FSM.
 5. Локальный `table_reservation_orders` остается source of truth для MVP; external id и sync status сохранять рядом с order.
+
+Open inputs before implementation:
+
+- exact API vendor spelling and product name;
+- official base URL and API version;
+- authentication flow;
+- required organization/restaurant identifiers;
+- availability, create, update/cancel, status and webhook/polling endpoints;
+- idempotency support;
+- rate limits and retry guidance;
+- representative instructions from Yandex Mail correspondence.
+
+Do not send external messages or create/cancel real bookings without explicit final user approval.
+
+## Yandex SpeechKit STT/TTS Integration Roadmap
+
+Goal: Telegram/site voice -> STT transcript -> safe text normalization/entity extraction -> existing `GuestInputUnderstandingService`/FSM/AI pipelines -> confirmation-gated booking through local/SABY provider. For the C3AG website, the final textual Clio reply may optionally be converted to speech by TTS after the text response exists.
+
+Current code boundary:
+
+- `TelegramRouter` captures VOICE/AUDIO metadata and calls `TelegramVoiceTranscriptionService.enrich(...)`;
+- `TelegramVoiceTranscriptionService` downloads Telegram audio, uploads a short-lived object via `ObjectStorageService.uploadTelegramVoice(...)`, calls `SpeechToTextService`, then forwards canonical text into the normal `MessageGatewayService` path;
+- current `SpeechToTextService` implementation is `ExternalCommandSpeechToTextService` with env:
+  - `ASTOR_STT_ENABLED`;
+  - `ASTOR_STT_COMMAND`;
+  - `ASTOR_STT_TIMEOUT_SECONDS`;
+  - `ASTOR_STT_RETRY_TTL_SECONDS`;
+  - `ASTOR_STT_KEEP_LOCAL_FILES`;
+  - `S3_VOICE_TTL_DAYS`;
+- `ModelGateway` handles text/embedding/vision, but SpeechKit STT should remain a separate STT adapter, not an LLM intent/router.
+- Clio website voice UI is feature-gated. Its local test-double endpoints are `/api/chat/transcribe` and `/api/chat/speak`; both are mocks until server-side SpeechKit credentials and HTTPS are configured.
+
+Official Yandex SpeechKit facts checked on 2026-08-01:
+
+- service URL for STT API v3 is `stt.api.cloud.yandex.net`;
+- v3 has streaming `Recognizer` and asynchronous `AsyncRecognizer`;
+- supported recognition formats include LPCM, OggOpus and MP3;
+- synchronous recognition is limited to 1 MB, 30 seconds, one channel;
+- streaming recognition is limited to 5 minutes, 10 MB, one channel;
+- asynchronous recognition supports up to 60 MB request body or 1 GB via Object Storage, up to 4 hours, with results retained by Yandex for 3 days;
+- authentication uses an IAM token or API key for a service account with SpeechKit permissions.
+- Yandex ID/OAuth docs checked on 2026-08-01: Yandex ID authorization is OAuth-based; app registration is required before tokens; user permissions are scoped and revocable; Yandex recommends requesting only permissions the app cannot function without.
+
+Implementation plan:
+
+1. Add `YandexSpeechKitSpeechToTextService` behind existing `SpeechToTextService`.
+2. Add env-only config:
+   - `ASTOR_STT_PROVIDER=external-command|yandex-speechkit`;
+   - `YANDEX_SPEECHKIT_API_KEY` or IAM-token based service account flow;
+   - `YANDEX_FOLDER_ID`;
+   - `YANDEX_SPEECHKIT_STT_ENDPOINT=stt.api.cloud.yandex.net`;
+   - `YANDEX_SPEECHKIT_TTS_ENDPOINT`;
+   - `YANDEX_SPEECHKIT_TTS_VOICE`, selected from supported built-in/authorized Yandex voices as a feminine voice for Clio;
+   - `YANDEX_SPEECHKIT_MODE=streaming|async`;
+   - conservative connect/read deadlines and max audio duration/size.
+3. Prefer streaming for short Telegram/site voice notes and async/Object Storage for longer uploads.
+4. Keep local raw audio retention short (`S3_VOICE_TTL_DAYS`, default 3) and delete temp files unless diagnostics explicitly require retention.
+5. Add retry with bounded backoff, circuit breaker and bulkhead around SpeechKit STT/TTS calls.
+6. On STT failure, keep FSM state unchanged and ask the guest to repeat or type the message; do not infer booking actions from failed/low-confidence transcripts.
+7. On TTS failure, keep the text reply as source of truth and show a non-blocking voice fallback.
+8. Add metrics: request count, latency, success/failure reason, transcript length, provider mode, timeout/circuit state; never log secrets or full private audio.
+9. Tests:
+   - adapter unit tests with mocked SpeechKit responses;
+   - timeout/error fallback tests;
+   - Telegram voice normalization test proving transcript enters the same `MessageGatewayService` path as text;
+   - website voice tests for permission denied, STT unavailable, recognized text, TTS unavailable;
+   - booking safety tests proving reserve/modify/cancel remain confirmation-gated and idempotent.
+
+No real SpeechKit keys or paid external calls should be used without explicit approval.
+
+Production enablement blockers for website voice:
+
+- public HTTPS for the C3AG site, because browser microphone capture is not available on plain HTTP except localhost;
+- server-side SpeechKit STT/TTS credentials and billing approval;
+- verified Yandex/Telegram networking from the VM;
+- privacy/legal copy for audio handling and retention;
+- load/smoke test with test flags before any paid external calls.
 
 ## Real Booking Smoke Test
 

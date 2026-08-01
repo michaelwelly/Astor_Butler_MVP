@@ -6,17 +6,17 @@ import { RevealLines } from "@/components/ui/RevealLines";
 import { ProductSlides, SLIDES_PER_CARD } from "@/components/sections/ProductSlides";
 
 /**
- * Seven products in the commercial order. The first three are the money pages:
- * Reels, event reportage and advertising.
+ * Product directions in commercial order.
  */
 
 /** Every card starts its slideshow at a different moment. */
 const STAGGER_MS = 260;
 
 function postersFor(product: Product): string[] {
-  return getForFolders(product.clipFolders, SLIDES_PER_CARD)
+  const works = getForFolders(product.clipFolders, SLIDES_PER_CARD - 1)
     .map((c) => c.image)
     .filter(Boolean);
+  return [product.coverImage, ...works];
 }
 
 function ProductCard({ product, offset }: { product: Product; offset: number }) {
@@ -43,7 +43,7 @@ export function Products() {
   return (
     <section className="products section-pad" id="products">
       <div className="section-heading compact">
-        <p className="section-label">Семь направлений</p>
+        <p className="section-label">Продуктовые направления</p>
         <RevealLines lines={["Производство", <>без <i>лишних слов.</i></>]} />
       </div>
 

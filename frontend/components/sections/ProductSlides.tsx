@@ -18,6 +18,8 @@ import { useEffect, useState } from "react";
 
 /** Time each still holds before the crossfade to the next one. */
 const SLIDE_MS = 2200;
+/** Product cards stay visually stable unless a future rollout explicitly enables ambient rotation. */
+const AUTO_ROTATE = process.env.NEXT_PUBLIC_PRODUCT_CARD_SLIDES_AUTOPLAY === "true";
 /** Stills kept per card. Enough to feel like a reel, few enough to stay light. */
 export const SLIDES_PER_CARD = 4;
 
@@ -41,7 +43,7 @@ export function ProductSlides({ posters, offset }: Props) {
   }, []);
 
   useEffect(() => {
-    if (!live || posters.length < 2) return;
+    if (!AUTO_ROTATE || !live || posters.length < 2) return;
     let timer: ReturnType<typeof setInterval>;
     const start = setTimeout(() => {
       timer = setInterval(() => setIndex((i) => (i + 1) % posters.length), SLIDE_MS);

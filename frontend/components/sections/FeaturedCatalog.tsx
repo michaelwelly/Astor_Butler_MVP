@@ -1,12 +1,14 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import type { CSSProperties } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { ChevronLeft, ChevronRight, X } from "lucide-react";
-import { getByDirection, getForFolders, type DirectionId, type PortfolioCase } from "@/lib/portfolio";
+import { getForFolders, type PortfolioCase } from "@/lib/portfolio";
 import { products, type Product } from "@/lib/products";
 import { type VideoOrientation } from "@/lib/video-catalog";
 import { VideoCard } from "@/components/ui/VideoCard";
+import { askButler } from "@/lib/chat-bus";
 
 type Props = {
   onSelect: (item: PortfolioCase) => void;
@@ -88,21 +90,13 @@ function CategoryCarousel({
   );
 }
 
-function productFallbackDirection(product: Product): DirectionId {
-  if (product.slug === "reels") return "reels";
-  if (product.slug === "reclama" || product.slug === "ai") return "commercials";
-  return "events";
-}
-
 function productOrientation(product: Product): VideoOrientation {
-  if (product.slug === "reels" || product.slug === "podcast") return "portrait";
+  if (product.slug === "reels") return "portrait";
   return "landscape";
 }
 
 function getProductFeed(product: Product, offset = 0, limit = HOME_PREVIEW): PortfolioCase[] {
-  const byFolders = getForFolders(product.clipFolders);
-  const source = byFolders.length ? byFolders : getByDirection(productFallbackDirection(product));
-  return source.slice(offset, offset + limit);
+  return getForFolders(product.clipFolders).slice(offset, offset + limit);
 }
 
 export function FeaturedCatalog({ onSelect }: Props) {
@@ -131,8 +125,8 @@ export function FeaturedCatalog({ onSelect }: Props) {
   return (
     <section className="featured-catalog" id="catalog">
       <div className="featured-catalog-intro">
-        <p className="section-label">Новостная лента</p>
-        <h2>Семь продуктовых линеек</h2>
+        <p className="section-label">Портфолио по направлениям</p>
+        <h2>Продуктовые направления</h2>
       </div>
 
       {products.map((product, i) => {
@@ -154,12 +148,27 @@ export function FeaturedCatalog({ onSelect }: Props) {
                 <p className="category-desc">{product.tagline}</p>
               </div>
             </div>
-            <CategoryCarousel
-              items={preview}
-              orientation={productOrientation(product)}
-              onSelect={onSelect}
-              quiet
-            />
+            {preview.length > 0 ? (
+              <CategoryCarousel
+                items={preview}
+                orientation={productOrientation(product)}
+                onSelect={onSelect}
+                quiet
+              />
+            ) : (
+              <div
+                className="category-empty"
+                style={{ "--category-cover": `url(${product.coverImage})` } as CSSProperties}
+              >
+                <div>
+                  <span>{product.audience}</span>
+                  <p>Подборку по этому направлению отправим в чат после короткого брифа.</p>
+                </div>
+                <button type="button" onClick={() => askButler(product.ctaWord)}>
+                  {product.ctaLabel}
+                </button>
+              </div>
+            )}
           </motion.div>
         );
       })}

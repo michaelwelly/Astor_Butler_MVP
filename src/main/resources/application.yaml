@@ -117,6 +117,11 @@ astor:
   web:
     notifications:
       admin-chat-enabled: ${ASTOR_WEB_ADMIN_CHAT_NOTIFICATIONS_ENABLED:true}
+    rate-limit:
+      enabled: ${ASTOR_WEB_RATE_LIMIT_ENABLED:true}
+      max-per-minute: ${ASTOR_WEB_RATE_LIMIT_MAX_PER_MINUTE:12}
+      burst-window-seconds: ${ASTOR_WEB_RATE_LIMIT_BURST_WINDOW_SECONDS:10}
+      max-burst: ${ASTOR_WEB_RATE_LIMIT_MAX_BURST:4}
 
 spring:
   application:

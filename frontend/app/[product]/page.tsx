@@ -7,7 +7,7 @@ import { products, productBySlug } from "@/lib/products";
  * A root-level dynamic segment so a proposal can link c3ag.ru/wedding rather
  * than c3ag.ru/#wedding — КП go out as links, and a fragment is not a page.
  * `dynamicParams = false` keeps it from swallowing every other single-segment
- * URL: only the seven slugs resolve, everything else is a real 404.
+ * URL: only known product slugs resolve, everything else is a real 404.
  */
 export const dynamicParams = false;
 

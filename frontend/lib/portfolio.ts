@@ -490,7 +490,7 @@ function buildCases(clips: CatalogClip[]): PortfolioCase[] {
       id: slug,
       slug,
       direction: c.direction,
-      category: meta?.shortTitle ?? c.direction,
+      category: c.category ?? meta?.shortTitle ?? c.direction,
       title: c.title,
       kicker: c.kicker ?? "",
       year: c.year ?? "2025",
@@ -537,16 +537,22 @@ export function getFeatured(): PortfolioCase[] {
  * Cases whose archive folder starts with any of the given prefixes.
  *
  * The three site directions (events / reels / commercials) are far coarser than
- * the seven products — podcasts, documentaries and interviews all collapse into
+ * the product directions — podcasts, documentaries and interviews all collapse into
  * one of them — but the Yandex archive is already sorted into folders that map
  * onto the products almost one to one. So a product asks for its folders, not
  * for a direction. See `clipFolders` in lib/products.ts.
  */
 export function getForFolders(prefixes: string[] | undefined, limit?: number): PortfolioCase[] {
   if (!prefixes?.length) return [];
-  const matched = portfolioCases.filter((c) =>
-    c.folder ? prefixes.some((p) => c.folder!.startsWith(p)) : false,
-  );
+  const matched = portfolioCases
+    .map((c, index) => ({
+      c,
+      index,
+      group: c.folder ? prefixes.findIndex((p) => c.folder!.startsWith(p)) : -1,
+    }))
+    .filter((item) => item.group >= 0)
+    .sort((a, b) => a.group - b.group || a.index - b.index)
+    .map((item) => item.c);
   return limit ? matched.slice(0, limit) : matched;
 }
 

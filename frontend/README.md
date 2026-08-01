@@ -29,7 +29,26 @@ Port `3000` is reserved for local Grafana in the backend Docker Compose stack.
 
 Use `.env.local` only when custom frontend values are needed.
 
-The current lead form works in demo mode until `NEXT_PUBLIC_LEAD_ENDPOINT` is defined. The portfolio dataset lives in `lib/portfolio.ts`; replace temporary media with public Yandex Object Storage URLs from `c3ag-media` after curation.
+The chat widget works in demo mode while `NEXT_PUBLIC_WEB_CHAT_ENDPOINT=/api/chat`.
+For production Telegram operator notifications, build with:
+
+```text
+NEXT_PUBLIC_WEB_CHAT_ENDPOINT=http://51.250.31.97:8089/api/messages
+```
+
+The backend must allow the frontend origin through `ASTOR_WEB_ALLOWED_ORIGINS`
+and must have Telegram analytics/operator delivery configured through
+`TELEGRAM_BOT_ENABLED`, `TELEGRAM_BOT_TOKEN`, and `TELEGRAM_ANALYTICS_CHAT_ID`
+or `TELEGRAM_ADMIN_CHAT_ID`.
+
+The portfolio dataset lives in `lib/portfolio.ts`; replace temporary media with
+public Yandex Object Storage URLs from `c3ag-media` after curation.
+
+## Clio Chat Persona
+
+The frontend display assistant is `Clio`. User-facing copy and deterministic
+demo replies live in `lib/clio-persona.ts`; backend/FSM identities are not
+renamed by this frontend layer.
 
 ## Lightweight Preview
 

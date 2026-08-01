@@ -36,6 +36,11 @@ public class WebLeadNotificationService {
                 <b>Astor Butler / website lead</b>
                 Новое сообщение с сайта
 
+                <b>Dialog</b>
+                lead %s
+                message %s
+                time %s
+
                 <b>Visitor</b>
                 session %s
                 chat %s / user %s
@@ -55,9 +60,10 @@ public class WebLeadNotificationService {
                 Fallback: %s
                 Actions: %s
 
-                <b>Correlation</b>
-                %s
                 """.formatted(
+                html(text(session.id())),
+                html(blank(incoming.correlationId())),
+                html(text(incoming.receivedAt())),
                 html(session.sessionId()),
                 html(text(session.chatId())),
                 html(blank(session.externalUserId())),
@@ -69,8 +75,7 @@ public class WebLeadNotificationService {
                 html(blank(consent(payload))),
                 html(outgoing == null ? "" : outgoing.nextState()),
                 html(outgoing == null ? "" : text(outgoing.fallback())),
-                html(outgoing == null || outgoing.actions() == null ? "" : String.join(", ", outgoing.actions())),
-                html(blank(incoming.correlationId()))
+                html(outgoing == null || outgoing.actions() == null ? "" : String.join(", ", outgoing.actions()))
         );
     }
 

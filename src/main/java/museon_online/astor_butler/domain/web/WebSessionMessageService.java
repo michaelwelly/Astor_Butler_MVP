@@ -25,7 +25,7 @@ public class WebSessionMessageService {
         );
         Long compatibilityChatId = hasStableSession(payloadSessionId, externalSessionId) ? null : requestedChatId;
         WebSessionResolution session = repository.upsert(
-                stringOrDefault(safePayload, "site", "c3flex"),
+                stringOrDefault(safePayload, "site", "c3ag"),
                 sessionId,
                 externalUserId,
                 compatibilityChatId,
@@ -61,7 +61,7 @@ public class WebSessionMessageService {
         consent.put("source", source == null || source.isBlank() ? "WEB" : source);
 
         Map<String, Object> payload = new LinkedHashMap<>(safeEvidence);
-        payload.put("site", stringOrDefault(payload, "site", "c3flex"));
+        payload.put("site", stringOrDefault(payload, "site", "c3ag"));
         payload.put("consent", consent);
         return resolve(null, null, payload);
     }

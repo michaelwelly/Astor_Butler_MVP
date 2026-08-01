@@ -18,6 +18,8 @@ import type { DirectionId } from "./portfolio";
 export type CatalogClip = {
   title: string;
   direction: DirectionId; // "events" | "reels" | "commercials"
+  /** Product-level label shown on cards, e.g. "PODКАСТ" or "ФILM". */
+  category?: string;
   src: string; // video
   poster?: string; // card image / player still
   originalUrl?: string; // master/source file, usually Yandex.Disk or cold storage
@@ -35,7 +37,7 @@ export type CatalogClip = {
    * Archive folder the clip came from ("/VIDEO C3AG/7. Подкасты/…"). Set
    * automatically for records out of the video DB; it is how a product page
    * finds its own work, since the three site directions are far coarser than
-   * the seven products. Hand-written entries can leave it out.
+   * the product directions. Hand-written entries can leave it out.
    */
   folder?: string;
 };

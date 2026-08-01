@@ -31,6 +31,24 @@
 - Homepage product order is business-defined: Reels first, event reportage second, advertising third, then the remaining product pages.
 - Frontend header includes a persisted light/dark theme toggle for this release.
 
+## C3AG Hybrid Product Design And Clio 2026-08-01
+
+- Approved visual direction is a hybrid: commercial structure/cards/CTA/navigation from the light editorial product reference, plus dark cinematic editorial atmosphere, thin lines, ghost controls and large atmospheric imagery from the fashion/editorial reference.
+- Theme tokens own the look: light is white/gold, dark is black/sand-gold. Product atmosphere is implemented as global site texture, not per-page hardcoding.
+- Seven generated product covers live under `frontend/public/product-covers/` and are functional category entries for Reels, Reportage, Advertising, Podcasts, Wedding, Films and AI.
+- Wedding has no confirmed local video assets yet, so the UI must show an honest CTA/brief path instead of falling back to unrelated event/reportage footage.
+- Films includes the owner-approved UMECON factory series through official YouTube privacy-enhanced embed only; the source video is not downloaded or republished.
+- The frontend display assistant is `Clio`: an original generated avatar and user-facing copy/persona for product briefing. Backend/FSM identities remain unchanged unless a later integration decision says otherwise.
+- Website chat production path is `frontend ChatWidget -> POST /api/messages -> web_sessions/web_messages -> WebLeadNotificationService -> TelegramAdminNotifier`. FSM/backend remain the source of truth for persisted dialogue and notifications.
+- Before production k6 verification, WEB `/api/messages` is protected by Redis-backed per-session/user/chat/IP rate limits with 429 fallback, `Retry-After`, and Micrometer outcome metrics. Web fast-path does not call LLM; Telegram notifications remain serialized/throttled through `TelegramAdminNotifier`.
+- Production rollout on 2026-08-01 deployed C3AG frontend + Aeris backend to VM `51.250.31.97`. Public smoke confirmed `GET /`, `/film`, `/wedding`, `/podcast`, product cover images, Clio avatar, backend health and one marked WEB chat E2E. PostgreSQL stored the test message as `IN=1` and `OUT=1`; Telegram operator projection was formed, but actual Telegram API delivery remains blocked/unverified because VM DNS works while direct HTTPS to `api.telegram.org:443` times out. Yandex support confirmed NAT Gateway is not required while the VM has public IPv4; remaining checks are outbound `443`, DNS `53`, local firewall/routing and Telegram reachability.
+- Telegram egress diagnostic 2026-08-01: exact VM/VPC inspection found one-to-one NAT public IPv4 `51.250.31.97`, SG egress TCP/UDP `0.0.0.0/0`, no custom route table, host default route via `10.129.0.1`, DNS `10.129.0.2`, `ufw inactive`, `OUTPUT ACCEPT`. Host/container outbound HTTPS to Yandex endpoints works, while `api.telegram.org:443` times out. No network policy change was applied; next step is provider-side support evidence review, not blind route/DNS changes.
+- Controlled production k6 smoke on 2026-08-01 ran for 5 minutes with 2 VUs against read-only C3AG routes and backend health only. Result: 623 HTTP requests, 0% failures, 1246/1246 checks passed, p95 536.5 ms, post-load frontend/backend remained healthy. The script does not POST chat messages, so it avoids mass Telegram/LLM side effects.
+- SABY/SBIS discovery 2026-08-01: current backend already has local table booking domain, holds/orders, hostess confirmation, REST endpoints and `sbis_external_id`, but no implemented `SabyReservationProvider` or real external HTTP client. Next step is to read the actual API contract/correspondence before implementation; adapter must sit behind an external reservation port and booking actions stay confirmation-gated/idempotent.
+- Yandex SpeechKit roadmap 2026-08-01: STT remains separate from LLM intent/routing. Existing `SpeechToTextService`/`TelegramVoiceTranscriptionService` boundary can host a future `YandexSpeechKitSpeechToTextService`; transcripts then enter the same `MessageGatewayService -> GuestInputUnderstandingService -> FSM` path as typed text. No keys or paid calls without approval.
+- C3AG Clio voice UI 2026-08-01: website microphone and optional spoken replies are feature-gated. Browser recording starts only after explicit click and consent, uses secure context only, sends audio to a server-side STT endpoint, then routes recognized text through the existing Web Chat/FSM path. TTS is optional and must use supported built-in/authorized Yandex SpeechKit feminine voice options; no cloned real-person voice and no frontend cloud credentials.
+- C3AG Yandex ID consent UX 2026-08-01: Yandex ID is optional and cannot be treated as blanket personal-data transfer. UI must first show privacy-policy link and explicit contact-processing consent, then request only approved OAuth scopes/fields, keep phone/Telegram as manual optional fields, split commercial proposal email consent where required, preview data before submit, and persist consent version/time/source with the lead audit.
+
 ## Smart Solution Ops CRM Boundary 2026-07-23
 
 - Astor Butler backend expands into an internal Smart Solution project CRM while keeping Telegram as transport/UI.
@@ -547,6 +565,15 @@ FSM управляет состоянием диалога, разрешенны
 - Полный rollout/runbook: `docs/operations/CALLIOPE_TO_AERIS_YANDEX_AI_ROLLOUT.md`.
 - Коммерческая смета: `docs/commercial/OOO_SCHASTYE_AERIS_PROD_BUDGET_RU.md`.
 - Пакет к печати: `docs/commercial/OOO_SCHASTYE_AERIS_PRINT_PACKAGE_RU.md`.
+
+## C3AG Eight-Product Catalog 2026-08-01
+
+- C3AG public catalog now has eight product directions in `frontend/lib/products.ts`.
+- Confirmed ordering: `01` Reels, `02` Reportage, `03` Wedding, `04` Podcasts, `05` Advertising/Reclama, `06` Films, `07` AI, `08` Smart Solutions.
+- Smart Solutions is a quote-model product for website creation, AI/business integrations, CRM/Telegram/backend handoff and repeatable client solutions. It uses existing Smart Solution Ops material as source context and stays on `Смета под проект`.
+- Smart Solutions has no confirmed media archive yet: no `clipFolders`, no rolling lower video/news feed, only a generated premium cover at `frontend/public/product-covers/smart-solutions.jpg` and a CTA to Clio.
+- Wedding remains a visible `#3` product card/tile even without confirmed video assets; the portfolio row must keep the honest CTA instead of generic fallback cards.
+- Team/about adds `Сергей Зюров` with a neutral public label because no exact role was found in repo/project memory.
 
 ## Связанные продуктовые заметки
 

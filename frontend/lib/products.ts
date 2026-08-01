@@ -1,8 +1,8 @@
 /**
- * The seven C3 Agency products, transcribed from the commercial proposals
- * (КП, декабрь 2025 — январь 2026). This file is the single source of truth for
- * prices, packages and CTA wording: the site must never contradict a PDF that
- * is already in a client's inbox.
+ * C3 Agency products, transcribed from the commercial proposals and project
+ * memory. This file is the single source of truth for prices, packages and CTA
+ * wording: the site must never contradict a PDF that is already in a client's
+ * inbox.
  *
  * Two buying modes, one page template:
  *   - "fixed" — price is on the page, the visitor decides alone and sends a
@@ -30,6 +30,13 @@ export type ProductStep = { title: string; text: string };
 export type ProductCase = { title: string; task: string; did: string; result: string };
 export type ProductPoint = { title: string; text: string };
 export type ProductIncludes = { group: string; items: string[] };
+export type ProductEmbed = {
+  provider: "youtube";
+  title: string;
+  href: string;
+  embedUrl: string;
+  caption: string;
+};
 
 export type Product = {
   slug: string;
@@ -38,6 +45,8 @@ export type Product = {
   name: string;
   /** One line under the name on the card and in the hero. */
   tagline: string;
+  /** Generated 16:9 category cover used as the first visual entry. */
+  coverImage: string;
   /** Who this is for, in two words, printed on the card. */
   audience: string;
   model: BuyingModel;
@@ -80,17 +89,20 @@ export type Product = {
    * one-line "examples on request" instead of a grid of placeholders.
    */
   clipFolders?: string[];
+  /** External project player. Official embeds only; never copied media files. */
+  featuredEmbed?: ProductEmbed;
   seoTitle: string;
   seoDescription: string;
 };
 
-export const products: Product[] = [
+const productRecords: Product[] = [
   // ─────────────────────────────────────────────────────────────────────────
   {
     slug: "reels",
     num: "01",
     name: "C3 RИИLS",
     tagline: "Контент на 2–4 недели за одну съёмочную смену",
+    coverImage: "/product-covers/reels.jpg",
     audience: "Ресторанам и барам",
     model: "fixed",
     priceFrom: "85 000 ₽",
@@ -212,6 +224,7 @@ export const products: Product[] = [
     num: "02",
     name: "C3 REПОРТАЖ",
     tagline: "Атмосфера, масштаб и эмоции — в ролике, который работает на следующее событие",
+    coverImage: "/product-covers/events.jpg",
     audience: "Клубам, площадкам, event-агентствам",
     model: "fixed",
     priceFrom: "от 22 000 ₽",
@@ -304,9 +317,10 @@ export const products: Product[] = [
   // ─────────────────────────────────────────────────────────────────────────
   {
     slug: "reclama",
-    num: "03",
+    num: "05",
     name: "C3 RECLAMA",
     tagline: "Производство рекламных роликов полного цикла",
+    coverImage: "/product-covers/reclama.jpg",
     audience: "Брендам и агентствам",
     model: "quote",
     ctaWord: "Хочу рекламу",
@@ -403,6 +417,7 @@ export const products: Product[] = [
     num: "04",
     name: "C3 PODКАСТ",
     tagline: "Запись видеоподкаста под ключ",
+    coverImage: "/product-covers/podcast.jpg",
     audience: "Экспертам и медиа",
     model: "fixed",
     priceFrom: "45 000 ₽",
@@ -495,9 +510,10 @@ export const products: Product[] = [
   // ─────────────────────────────────────────────────────────────────────────
   {
     slug: "wedding",
-    num: "05",
+    num: "03",
     name: "C3 ВЭDDING",
     tagline: "Кинематографичные свадебные фильмы, которые становятся семейной историей",
+    coverImage: "/product-covers/wedding.jpg",
     audience: "Молодожёнам и парам",
     model: "fixed",
     priceFrom: "от 60 000 ₽",
@@ -617,6 +633,7 @@ export const products: Product[] = [
     num: "06",
     name: "C3 ФILM",
     tagline: "Документальные и корпоративные фильмы",
+    coverImage: "/product-covers/film.jpg",
     audience: "Компаниям и основателям",
     model: "quote",
     ctaWord: "Хочу кино",
@@ -687,6 +704,15 @@ export const products: Product[] = [
       { title: "Масштаб под задачу", text: "Результат соответствует масштабу задачи и ожиданиям заказчика." },
     ],
     clipFolders: ["/VIDEO C3AG/1.Докментально кино"],
+    featuredEmbed: {
+      provider: "youtube",
+      title: "Сериал ЗАВОД «Последствия пандемии - 1 серия» с Андреем Рожковым",
+      href: "https://www.youtube.com/watch?v=QrHQ0MULGfs&list=PLyo4caXR0hzZ_zUtjnAWg7MgsLAeutVLd",
+      embedUrl:
+        "https://www.youtube-nocookie.com/embed/QrHQ0MULGfs?list=PLyo4caXR0hzZ_zUtjnAWg7MgsLAeutVLd&rel=0&modestbranding=1",
+      caption:
+        "Проектовая серия UMECON о заводе: документальный формат, производственная среда, герой и контекст компании.",
+    },
     seoTitle: "C3 ФILM — документальные и корпоративные фильмы",
     seoDescription:
       "Полный цикл производства документальных, корпоративных и имиджевых фильмов: концепция, съёмка, постпродакшн. Индивидуальная смета.",
@@ -697,6 +723,7 @@ export const products: Product[] = [
     num: "07",
     name: "C3 ЫI",
     tagline: "Рекламный контент без съёмочной площадки",
+    coverImage: "/product-covers/ai.jpg",
     audience: "Брендам, агентствам, продакшенам",
     model: "quote",
     ctaWord: "Хочу AI",
@@ -744,7 +771,64 @@ export const products: Product[] = [
     seoDescription:
       "Рекламные ролики на генеративных моделях: концепция, раскадровка, превиз, генерация, монтаж и саунд-дизайн. Без съёмочной площадки.",
   },
+  {
+    slug: "smart-solutions",
+    num: "08",
+    name: "Smart Solutions",
+    tagline: "Сайты, AI-интеграции и повторяемые бизнес-решения",
+    coverImage: "/product-covers/smart-solutions.jpg",
+    audience: "Бизнесу и командам",
+    model: "quote",
+    ctaWord: "Хочу Smart Solutions",
+    ctaLabel: "Обсудить Smart Solutions",
+    lead:
+      "Собираем прикладные цифровые решения вокруг реальной операционной задачи: сайт, CRM-контур, AI-ассистент, " +
+      "интеграции и понятный pipeline для команды. Основа — уже проверенная проектная логика Astor Butler и Smart Solution Ops.",
+    fitFor: [
+      "Компаниям, которым нужен сайт не как витрина, а как рабочий вход в продажи или сервис",
+      "Командам, где заявки, задачи и контекст теряются между чатами, таблицами и ручными созвонами",
+      "Проектам, которым нужен AI-ассистент, CRM или интеграция без отдельного внутреннего отдела разработки",
+      "Бизнесам, которые хотят повторяемое решение вместо разовой презентации или лендинга",
+    ],
+    deliverables: [
+      "Сайт или продуктовая страница с понятным маршрутом заявки",
+      "AI-ассистент для квалификации, брифа, справки или внутреннего Q&A",
+      "Интеграции с backend, Telegram, CRM, аналитикой и рабочими чатами",
+      "Операционный dashboard или API-контур для статусов, задач и материалов",
+      "Документация, env-boundary и runbook для безопасного запуска",
+    ],
+    includes: [
+      {
+        group: "Продуктовый контур",
+        items: ["структура сайта или сервиса", "маршрут заявки", "сценарии Clio/ассистента", "границы данных и согласий"],
+      },
+      {
+        group: "Интеграции",
+        items: ["backend endpoint", "Telegram/CRM handoff", "AI/RAG-контур при наличии данных", "observability и fallback"],
+      },
+      {
+        group: "Запуск",
+        items: ["production checklist", "документация", "тестовый сценарий", "план расширения после первого релиза"],
+      },
+    ],
+    steps: [
+      { title: "Задача", text: "Фиксируем, что должно заработать: сайт, заявки, AI, CRM, интеграция или повторяемый продукт." },
+      { title: "Карта решения", text: "Описываем flow пользователя, команды, данных, согласий и внешних сервисов." },
+      { title: "Смета", text: "Считаем этапы, риски, зависимости и объём интеграций под конкретный проект." },
+      { title: "MVP", text: "Собираем первый рабочий контур с тестами, документацией и безопасным rollout-путём." },
+    ],
+    why: [
+      { title: "Не только сайт", text: "Входная страница сразу связывается с заявкой, командой, backend и дальнейшим процессом." },
+      { title: "AI без магии", text: "Отделяем persona, FSM, интеграции, права и внешние вызовы, чтобы решение можно было сопровождать." },
+      { title: "Повторяемость", text: "Используем уже описанные контуры Smart Solution Ops, CRM, Telegram и production runbooks как основу." },
+    ],
+    seoTitle: "Smart Solutions — сайты, AI-интеграции и бизнес-решения",
+    seoDescription:
+      "Проектирование и запуск сайтов, AI-ассистентов, CRM-контуров и бизнес-интеграций под задачу компании. Индивидуальная смета.",
+  },
 ];
+
+export const products = [...productRecords].sort((a, b) => Number(a.num) - Number(b.num));
 
 export const productBySlug = new Map(products.map((p) => [p.slug, p]));
 

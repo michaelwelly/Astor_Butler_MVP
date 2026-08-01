@@ -26,6 +26,8 @@ export type VideoRecord = {
   title: string;
   category: string; // original Yandex folder (e.g. "5. Reels Контент")
   direction: DirectionId; // mapped site row — override per record if wrong
+  productCategory?: string; // product-level label, e.g. "PODКАСТ" or "ФILM"
+  tags?: string[];
   sourcePath: string; // path inside the Yandex.Disk archive (reference only)
   sizeBytes: number; // master size (reference only)
   src: string; // hosted URL — YOU fill this
@@ -43,6 +45,88 @@ export type VideoRecord = {
 
 export const videoDb = videos as unknown as VideoRecord[];
 
+type VideoClassification = {
+  direction: DirectionId;
+  category: string;
+  tags: string[];
+  orientation?: "portrait" | "landscape";
+};
+
+function hasPrefix(path: string, prefixes: string[]): boolean {
+  return prefixes.some((prefix) => path.startsWith(prefix));
+}
+
+function classifyRecord(record: VideoRecord): VideoClassification {
+  const path = record.sourcePath;
+
+  if (hasPrefix(path, ["/VIDEO C3AG/5. Reels Контент", "/VIDEO C3AG/10. Рестораны и еда", "/VIDEO C3AG/11.Спорт и танцы", "/FOOD SHOWREEL"])) {
+    return {
+      direction: "reels",
+      category: "RИИLS",
+      tags: ["reels", "social", "short-form"],
+      orientation: "portrait",
+    };
+  }
+
+  if (hasPrefix(path, ["/VIDEO C3AG/4. Эвент и репортажи", "/VIDEO C3AG/8. Трансляции и сеты"])) {
+    return {
+      direction: "events",
+      category: "REПОРТАЖ",
+      tags: ["reportage", "events", "aftermovie"],
+      orientation: "landscape",
+    };
+  }
+
+  if (hasPrefix(path, ["/VIDEO C3AG/7. Подкасты", "/VIDEO C3AG/6. Интервью"])) {
+    return {
+      direction: "events",
+      category: "PODКАСТ",
+      tags: ["podcasts", "interview", "multicamera"],
+      orientation: "landscape",
+    };
+  }
+
+  if (hasPrefix(path, ["/VIDEO C3AG/1.Докментально кино"])) {
+    return {
+      direction: "events",
+      category: "ФILM",
+      tags: ["films", "documentary", "corporate-film"],
+      orientation: "landscape",
+    };
+  }
+
+  if (hasPrefix(path, ["/AI/"])) {
+    return {
+      direction: "commercials",
+      category: "ЫI",
+      tags: ["ai", "advertising", "generative-video"],
+      orientation: "landscape",
+    };
+  }
+
+  if (hasPrefix(path, [
+    "/VIDEO C3AG/2. Клипы",
+    "/VIDEO C3AG/3. Реклама",
+    "/VIDEO C3AG/9. Автомобили и техника",
+    "/VIDEO C3AG/Коммерческие ролики",
+    "/VIDEO C3AG/Моушен графика",
+  ])) {
+    return {
+      direction: "commercials",
+      category: "RECLAMA",
+      tags: ["advertising", "commercial", "brand-film"],
+      orientation: "landscape",
+    };
+  }
+
+  return {
+    direction: record.direction,
+    category: record.productCategory?.trim() || record.category || record.direction,
+    tags: record.tags ?? [],
+    orientation: record.orientation || undefined,
+  };
+}
+
 /** Records you've hosted (src filled), mapped to the catalog's clip shape. */
 export function publishedClips(): CatalogClip[] {
   return videoDb
@@ -56,9 +140,15 @@ export function publishedClips(): CatalogClip[] {
       return a.index - b.index;
     })
     .map(({ r }) => {
+      const classification = classifyRecord(r);
       const objectRef = (key?: string) => (key?.trim() ? `s3:${key.trim()}` : undefined);
       const src = objectRef(r.objectKey) ?? r.src.trim();
-      const c: CatalogClip = { title: r.title, direction: r.direction, src };
+      const c: CatalogClip = {
+        title: r.title,
+        direction: classification.direction,
+        category: classification.category,
+        src,
+      };
       // The archive folder is the only thing that tells podcasts apart from
       // documentaries — both land in the same site direction.
       if (r.sourcePath) c.folder = r.sourcePath;
@@ -67,8 +157,9 @@ export function publishedClips(): CatalogClip[] {
       if (r.adaptedUrl?.trim()) c.adaptedUrl = r.adaptedUrl.trim();
       c.previewUrl = objectRef(r.previewObjectKey) ?? r.previewUrl?.trim();
       if (r.duration.trim()) c.duration = r.duration.trim();
+      c.tags = Array.from(new Set([...(r.tags ?? []), ...classification.tags]));
       if (r.featured) c.featured = true;
-      if (r.orientation) c.orientation = r.orientation;
+      c.orientation = r.orientation || classification.orientation;
       return c;
     });
 }

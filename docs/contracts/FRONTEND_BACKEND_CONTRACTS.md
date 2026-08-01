@@ -159,6 +159,55 @@ Frontend must use this endpoint for C3FLEX/site bot messages until a dedicated `
 Backend now stores WEB sessions/messages in `web_sessions` and `web_messages`.
 For `channel=WEB`, `chatId` is optional and not authoritative: backend resolves a stable synthetic FSM `chatId` from `payload.sessionId` and returns it in the response.
 If frontend sends both `payload.sessionId` and a temporary `chatId`, backend prefers `payload.sessionId`.
+Production C3AG chat should use `NEXT_PUBLIC_WEB_CHAT_ENDPOINT=http://51.250.31.97:8089/api/messages` until a same-origin API gateway route is attached.
+Backend CORS must include the frontend origin through `ASTOR_WEB_ALLOWED_ORIGINS`.
+Operator notifications use `WebLeadNotificationService -> TelegramAdminNotifier`; configure `TELEGRAM_BOT_ENABLED=true`, `TELEGRAM_BOT_TOKEN` and `TELEGRAM_ANALYTICS_CHAT_ID` or `TELEGRAM_ADMIN_CHAT_ID` in runtime secrets.
+
+Production smoke on 2026-08-01 confirmed that a C3AG WEB message is accepted by `http://51.250.31.97:8089/api/messages`, returns `WEB_LEAD_RECEIVED`, and persists exactly one `IN` plus one `OUT` row in `web_messages` for the test correlation id. The response included `ADMIN_ALERT`, so the operator notification projection was formed. Actual Telegram delivery was not fully verified because the VM currently resolves `api.telegram.org` but direct HTTPS to `api.telegram.org:443` times out; see `docs/operations/C3AG_DOMAIN_RUNBOOK.md`.
+
+Controlled production k6 on 2026-08-01 used the read-only `scripts/k6_c3ag_prod_smoke.js` path for 5 minutes with `2` VUs. It produced 623 HTTP requests, `0.00%` failures, `100%` checks and `p95=536.5ms`. The script intentionally does not POST chat messages, so it does not generate mass Telegram or LLM side effects.
+
+### Chat Chain Protection
+
+- Ingress `/api/messages` WEB traffic is rate-limited per `payload.sessionId`, then `externalUserId`, then `chatId`, then client IP.
+- Defaults are conservative and env-driven:
+  - `ASTOR_WEB_RATE_LIMIT_ENABLED=true`;
+  - `ASTOR_WEB_RATE_LIMIT_MAX_PER_MINUTE=12`;
+  - `ASTOR_WEB_RATE_LIMIT_BURST_WINDOW_SECONDS=10`;
+  - `ASTOR_WEB_RATE_LIMIT_MAX_BURST=4`.
+- Redis is the limiter backend. If Redis is unavailable, limiter fails open and emits `astor.web_chat.rate_limit{outcome="error_open"}` so the site does not fail closed because of infrastructure.
+- Denied requests return HTTP `429` with `Retry-After` and a user-safe `WEB_RATE_LIMITED` response body; frontend displays the returned text.
+- Web fast-path lead capture does not invoke LLM. LLM-enabled FSM routes keep their own timeout settings; Telegram operator notifications are serialized and throttled in `TelegramAdminNotifier`.
+
+### Clio Web Voice Contract
+
+Status: source/mock only. Do not deploy as enabled until production HTTPS, SpeechKit credentials/billing and VM network reachability are verified.
+
+Frontend feature flags:
+
+```text
+NEXT_PUBLIC_CLIO_VOICE_ENABLED=false
+NEXT_PUBLIC_CLIO_TTS_ENABLED=false
+NEXT_PUBLIC_CLIO_VOICE_TRANSCRIBE_ENDPOINT=/api/chat/transcribe
+NEXT_PUBLIC_CLIO_TTS_ENDPOINT=/api/chat/speak
+```
+
+Server-side test-double flags for local QA only:
+
+```text
+CLIO_VOICE_TEST_DOUBLE_ENABLED=true
+CLIO_TTS_TEST_DOUBLE_ENABLED=true
+```
+
+Rules:
+
+- Browser microphone permission is requested only after an explicit click on the gold circular Clio voice control.
+- Voice control states are explicit: `idle`, `listening`, `processing`, `speaking`, `error`, `permission_denied`, `unavailable`.
+- No audio is silently recorded, transmitted or retained. Cancel stops tracks and clears chunks.
+- Microphone API requires a secure context: HTTPS in production or localhost for local QA.
+- Transcribed text enters the existing Web Chat path (`submit -> POST /api/messages`), so backend/FSM remains the source of truth for dialog state, lead persistence and notifications.
+- SpeechKit STT/TTS credentials stay server-side. Frontend never receives API keys, IAM tokens or service account secrets.
+- TTS is optional and uses a supported built-in/authorized Yandex SpeechKit feminine voice selected for Clio; it must not be presented as a cloned real person.
 
 ### Request
 
@@ -357,6 +406,25 @@ Rules:
 - If `userId` is unknown, backend persists anonymous consent in `web_consents` through either `POST /api/consents` or Web Chat payload consent evidence.
 - After OAuth login, frontend/backend links session consent to internal `users.id`.
 - Consent is required before sending phone/email/message to staff/admin chats.
+
+### Optional Yandex ID Consent Flow
+
+Status: UI/mock only. OAuth app registration, scopes, real client IDs and token exchange are not implemented until legal copy and OAuth configuration are approved.
+
+Consent UX requirements:
+
+- First show the privacy-policy link and an explicit checkbox for contact processing/lead follow-up.
+- User may continue without Yandex ID.
+- Only after consent may the UI offer Yandex ID authorization.
+- Requested Yandex fields must be listed before authorization. Initial minimum target: stable Yandex user id plus granted profile name/email if scopes permit.
+- Do not assert phone can be retrieved automatically. Phone and Telegram are explicit optional user-entered fields:
+  - phone: call/clarification;
+  - Telegram: messaging/follow-up.
+- Email may be used for a commercial proposal only if a separate proposal/marketing consent is checked where required by policy.
+- Before submit, show a preview of exactly what will be sent.
+- Persist consent version, time, source, selected scopes and confirmation action with the lead audit.
+- Telegram/admin notification receives only minimum lead data and a consent/audit reference, not raw OAuth tokens.
+- Do not share Yandex ID profile data silently with Telegram, LLM, booking/SABY or advertising systems.
 
 ## 7. Staff/Admin/System Notifications For Site
 

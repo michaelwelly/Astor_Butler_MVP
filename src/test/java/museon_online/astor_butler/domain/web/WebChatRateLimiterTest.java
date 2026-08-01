@@ -1,0 +1,53 @@
+package museon_online.astor_butler.domain.web;
+
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
+import org.junit.jupiter.api.Test;
+import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.data.redis.core.ValueOperations;
+import org.springframework.test.util.ReflectionTestUtils;
+
+import java.util.Map;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.startsWith;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
+class WebChatRateLimiterTest {
+
+    private final StringRedisTemplate redisTemplate = mock(StringRedisTemplate.class);
+    private final ValueOperations<String, String> valueOperations = mock(ValueOperations.class);
+    private final WebChatRateLimiter limiter = new WebChatRateLimiter(redisTemplate, new SimpleMeterRegistry());
+
+    @Test
+    void deniesWhenBurstWindowIsExceededForSession() {
+        ReflectionTestUtils.setField(limiter, "enabled", true);
+        ReflectionTestUtils.setField(limiter, "maxBurst", 1L);
+        ReflectionTestUtils.setField(limiter, "maxPerMinute", 10L);
+        ReflectionTestUtils.setField(limiter, "burstWindowSeconds", 10L);
+        when(redisTemplate.opsForValue()).thenReturn(valueOperations);
+        when(valueOperations.increment(startsWith("web-chat:rate:burst:session:session-1"))).thenReturn(2L);
+
+        WebChatRateLimiter.Decision decision = limiter.check(
+                "203.0.113.10",
+                "web:anon:session-1",
+                null,
+                Map.of("sessionId", "session-1")
+        );
+
+        assertThat(decision.allowed()).isFalse();
+        assertThat(decision.reason()).isEqualTo("burst");
+        assertThat(decision.retryAfterSeconds()).isEqualTo(10);
+    }
+
+    @Test
+    void failsOpenWhenRedisIsUnavailable() {
+        ReflectionTestUtils.setField(limiter, "enabled", true);
+        when(redisTemplate.opsForValue()).thenThrow(new IllegalStateException("redis down"));
+
+        WebChatRateLimiter.Decision decision = limiter.check("203.0.113.10", null, null, Map.of());
+
+        assertThat(decision.allowed()).isTrue();
+    }
+}

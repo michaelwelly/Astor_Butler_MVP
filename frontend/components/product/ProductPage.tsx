@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import type { CSSProperties } from "react";
 import Link from "next/link";
 import { ArrowLeft, ArrowUpRight, Check } from "lucide-react";
 import { MotionConfig } from "framer-motion";
@@ -67,12 +68,13 @@ export function ProductPage({ product }: { product: Product }) {
   useLenis();
   const [menuOpen, setMenuOpen] = useState(false);
   const [reelsStart, setReelsStart] = useState<number | null>(null);
+  const heroStyle = { "--product-cover": `url(${product.coverImage})` } as CSSProperties;
 
   const works: PortfolioCase[] = getForFolders(product.clipFolders);
   const hasWorks = works.length >= MIN_WORKS;
   const shown = works.slice(0, WORKS_SHOWN);
 
-  const priceLine = product.priceFrom ?? "Индивидуальная смета";
+  const priceLine = product.priceFrom ?? "Смета под проект";
   const priceNote =
     product.priceNote ?? (product.model === "quote" ? "после встречи и брифа" : undefined);
 
@@ -85,7 +87,7 @@ export function ProductPage({ product }: { product: Product }) {
         <Navigation onMenuOpen={() => setMenuOpen(true)} />
 
         {/* ── Hero ───────────────────────────────────────────────────────── */}
-        <header className="pr-hero">
+        <header className="pr-hero" style={heroStyle}>
           <Link className="pr-back" href="/#products">
             <ArrowLeft size={15} /> Все направления
           </Link>
@@ -104,6 +106,30 @@ export function ProductPage({ product }: { product: Product }) {
             <AskButton product={product} />
           </div>
         </header>
+
+        {product.featuredEmbed && (
+          <Block label="Проектовая серия" title={product.featuredEmbed.title} id="series">
+            <div className="pr-embed">
+              <div className="pr-embed-frame">
+                <iframe
+                  src={product.featuredEmbed.embedUrl}
+                  title={product.featuredEmbed.title}
+                  loading="lazy"
+                  referrerPolicy="strict-origin-when-cross-origin"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                  allowFullScreen
+                />
+              </div>
+              <div className="pr-embed-copy">
+                <p>{product.featuredEmbed.caption}</p>
+                <a href={product.featuredEmbed.href} target="_blank" rel="noreferrer">
+                  Открыть серию на YouTube
+                  <ArrowUpRight size={16} />
+                </a>
+              </div>
+            </div>
+          </Block>
+        )}
 
         {/* ── Проблема и решение ─────────────────────────────────────────── */}
         {product.pains && (

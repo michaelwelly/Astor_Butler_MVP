@@ -153,7 +153,7 @@ class ScenarioRouterTest {
 
         when(firstTouchScenario.supports(incoming, BotState.READY_FOR_DIALOG, incoming.text()))
                 .thenReturn(false);
-        when(inputUnderstandingService.understand(incoming.text(), BotState.READY_FOR_DIALOG))
+        when(inputUnderstandingService.understand(eq(incoming.text()), eq(BotState.READY_FOR_DIALOG), any()))
                 .thenReturn(understood);
         when(tableBookingScenario.supports(incoming, BotState.READY_FOR_DIALOG, understood.routeText(), understood))
                 .thenReturn(true);

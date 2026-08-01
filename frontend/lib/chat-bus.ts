@@ -1,6 +1,6 @@
 /**
  * Every КП ends with a keyword — «ПАКЕТ», «РЕПОРТАЖ», «Хочу кино». A CTA button
- * anywhere on the site sends that word straight into the Butler chat instead of
+ * anywhere on the site sends that word straight into the Clio chat instead of
  * opening an empty input and making the visitor retype it.
  *
  * A window event rather than a context: the chat widget is mounted once per

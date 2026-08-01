@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { clioDemoReply } from "@/lib/clio-persona";
 
 /**
  * Local mock for the C3AG.ru web chat.
@@ -25,45 +26,28 @@ type WebChatBody = {
   messages?: LegacyMessage[]; // legacy shape
 };
 
-const QUESTIONS = [
-  "Понял! Какая главная цель этого материала — что должен почувствовать или сделать зритель после просмотра?",
-  "Какие услуги нужны: только съёмка, съёмка + монтаж, или полный продакшн под ключ?",
-  "Формат: вертикальный рилс или горизонтальное видео? Примерный хронометраж готового материала?",
-  "Когда нужен готовый материал? Укажите дедлайн.",
-  "Есть ориентир по бюджету? Любая вилка поможет подобрать правильный состав команды.",
-  "Отлично! Как с вами связаться? Укажите имя и телеграм или телефон.",
-];
-
-function scriptedReply(step: number): string {
-  if (step <= 0) return QUESTIONS[0];
-  if (step <= QUESTIONS.length) return QUESTIONS[step - 1];
-  return (
-    "✅ Запрос принят! Я передам детали команде C3AG.ru, мы свяжемся в течение 2–3 часов. " +
-    "Пока посмотрите похожие работы в каталоге выше ↑"
-  );
-}
-
 export async function POST(req: NextRequest) {
   const body = (await req.json()) as WebChatBody;
 
   // Legacy shape: derive step from user message count.
   if (Array.isArray(body.messages)) {
     const step = body.messages.filter((m) => m.from === "user").length;
-    return NextResponse.json({ reply: scriptedReply(step) });
+    const last = [...body.messages].reverse().find((m) => m.from === "user")?.text ?? "";
+    return NextResponse.json({ reply: clioDemoReply(last, step) });
   }
 
   // Contract shape: use the dev-only `turn` hint for the guided script.
   const step = typeof body.turn === "number" ? body.turn : 1;
-  const reply = scriptedReply(step);
+  const reply = clioDemoReply(body.text ?? "", step);
 
   // Mirror the production response contract (subset) alongside `reply`.
   return NextResponse.json({
     channel: "WEB",
     text: reply,
     reply, // convenience for the current widget
-    nextState: step > QUESTIONS.length ? "READY_FOR_DIALOG" : "COLLECTING",
+    nextState: step > 6 ? "READY_FOR_DIALOG" : "COLLECTING",
     fallback: false,
-    actions: step > QUESTIONS.length ? ["WEB_LEAD_CAPTURED"] : [],
+    actions: step > 6 ? ["WEB_LEAD_CAPTURED"] : [],
     createdAt: new Date().toISOString(),
   });
 }

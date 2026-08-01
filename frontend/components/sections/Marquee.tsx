@@ -6,11 +6,12 @@
 const WORDS = [
   "C3 RИИLS",
   "C3 REПОРТАЖ",
-  "C3 RECLAMA",
-  "C3 PODКАСТ",
   "C3 ВЭDDING",
+  "C3 PODКАСТ",
+  "C3 RECLAMA",
   "C3 ФILM",
   "C3 ЫI",
+  "Smart Solutions",
 ];
 
 export function Marquee() {

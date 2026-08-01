@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { ChevronDown, Send } from "lucide-react";
+import { ChevronDown, Mic, Send, Square, Volume2, X } from "lucide-react";
 import { acceptConsent, hasConsent } from "@/lib/consent";
 import { persistChatId, persistSessionId, getSessionId, getTempChatId } from "@/lib/session";
 import { sendWebChatMessage, type SelectedVideoRef } from "@/lib/web-chat";
@@ -10,13 +10,22 @@ import { onButlerAsk } from "@/lib/chat-bus";
 import { ConsentNotice } from "@/components/ui/ConsentNotice";
 import { CyclingLine } from "@/components/ui/CyclingLine";
 import { HINT_CHAT_SEEN, learned, markLearned } from "@/lib/session-hint";
+import { CLIO_AVATAR, CLIO_GREETING, CLIO_NAME, CLIO_REPLY_TIME } from "@/lib/clio-persona";
+import {
+  browserVoiceAvailability,
+  browserVoiceErrorMessage,
+  CLIO_VOICE_STARTERS,
+  CLIO_VOICE_STATUS_COPY,
+  readClioVoiceClientConfig,
+  type ClioVoiceStatus,
+} from "@/lib/clio-voice";
 
 type Message = { from: "bot" | "user"; text: string };
 
 const INITIAL_MESSAGES: Message[] = [
   {
     from: "bot",
-    text: "Здравствуйте. Я Astor Butler — AI-менеджер C3AG.ru. Помогаю подобрать продукт, собрать контекст и передать команде точную задачу.",
+    text: CLIO_GREETING,
   },
 ];
 
@@ -27,10 +36,10 @@ const INITIAL_MESSAGES: Message[] = [
  * corner of the eye.
  */
 const LAUNCHER_PROMPTS = [
-  "Сколько стоит ролик?",
-  "Нужен ивент на 200 человек",
-  "Хочу 10 рилсов для бренда",
-  "Когда сможете снять?",
+  "Помоги оценить стоимость",
+  "Подскажи сроки проекта",
+  "Какой формат выбрать?",
+  "Хочу отправить бриф",
 ];
 
 /**
@@ -38,15 +47,15 @@ const LAUNCHER_PROMPTS = [
  * one tap — the chip text is sent as-is.
  */
 const QUICK_ASKS = [
-  "Сколько стоит съёмка ивента?",
-  "Нужны рилсы для бренда",
-  "Хочу рекламный ролик",
+  "Помоги оценить стоимость съёмки",
+  "Подскажи возможные сроки",
+  "Помоги выбрать формат",
+  "Хочу отправить бриф",
+  "Хочу поговорить с продюсером",
 ];
 
 /** Product pages narrow these to their own product — see ProductPage. */
 
-
-const REPLY_TIME = "обычно отвечаем за 15 минут";
 
 /**
  * How long the launcher waits before it starts asking for attention. Late
@@ -75,8 +84,15 @@ export function ChatWidget({ inline, selectedVideo = null, quickAsks = QUICK_ASK
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
   const [pendingText, setPendingText] = useState<string | null>(null);
+  const [pendingVoiceConsent, setPendingVoiceConsent] = useState(false);
+  const [voiceStatus, setVoiceStatus] = useState<ClioVoiceStatus>("idle");
+  const [voiceError, setVoiceError] = useState<string | null>(null);
+  const voiceConfig = readClioVoiceClientConfig();
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const recorderRef = useRef<MediaRecorder | null>(null);
+  const streamRef = useRef<MediaStream | null>(null);
+  const chunksRef = useRef<Blob[]>([]);
 
   const open = inline || mode === "full";
 
@@ -100,7 +116,11 @@ export function ChatWidget({ inline, selectedVideo = null, quickAsks = QUICK_ASK
   // never takes no for an answer is just harassment.
   const [attract, setAttract] = useState(false);
   const attractRuns = useRef(0);
-  const engaged = messages.some((m) => m.from === "user") || pendingText !== null;
+  const engaged =
+    messages.some((m) => m.from === "user") ||
+    pendingText !== null ||
+    pendingVoiceConsent ||
+    voiceStatus !== "idle";
 
   useEffect(() => {
     if (inline || engaged || learned(HINT_CHAT_SEEN)) return;
@@ -138,6 +158,7 @@ export function ChatWidget({ inline, selectedVideo = null, quickAsks = QUICK_ASK
     try {
       const { reply } = await sendWebChatMessage(text, selectedVideo, { turn });
       setMessages((prev) => [...prev, { from: "bot", text: reply }]);
+      if (voiceConfig.ttsEnabled) void requestSpokenReply(reply);
     } catch {
       setMessages((prev) => [
         ...prev,
@@ -147,6 +168,15 @@ export function ChatWidget({ inline, selectedVideo = null, quickAsks = QUICK_ASK
       setSending(false);
     }
   };
+
+  const cleanupVoiceCapture = () => {
+    recorderRef.current = null;
+    chunksRef.current = [];
+    streamRef.current?.getTracks().forEach((track) => track.stop());
+    streamRef.current = null;
+  };
+
+  useEffect(() => cleanupVoiceCapture, []);
 
   const submit = (raw: string) => {
     const text = raw.trim();
@@ -163,9 +193,144 @@ export function ChatWidget({ inline, selectedVideo = null, quickAsks = QUICK_ASK
 
   const onConsentAccept = () => {
     acceptConsent();
+    if (pendingVoiceConsent) {
+      setPendingVoiceConsent(false);
+      void startVoiceCapture();
+      return;
+    }
     const text = pendingText;
     setPendingText(null);
     if (text) void deliver(text);
+  };
+
+  const transcribeVoice = async (audio: Blob) => {
+    setVoiceStatus("processing");
+    setVoiceError(null);
+    try {
+      const form = new FormData();
+      form.append("audio", audio, "clio-voice.webm");
+      form.append("source", "c3ag-web-chat");
+      const res = await fetch(voiceConfig.transcribeEndpoint, {
+        method: "POST",
+        headers: {
+          "X-Request-Id": `clio-voice-${Date.now()}`,
+        },
+        body: form,
+      });
+      const data = (await res.json()) as { text?: string; message?: string; code?: string };
+      if (!res.ok || !data.text?.trim()) {
+        throw new Error(data.message || data.code || "STT unavailable");
+      }
+      setVoiceStatus("idle");
+      submit(data.text);
+    } catch (e) {
+      setVoiceStatus("error");
+      setVoiceError(
+        e instanceof Error
+          ? e.message
+          : "Голос сейчас не удалось распознать. Напишите сообщение текстом.",
+      );
+    } finally {
+      cleanupVoiceCapture();
+    }
+  };
+
+  const requestSpokenReply = async (reply: string) => {
+    setVoiceStatus("speaking");
+    try {
+      const res = await fetch(voiceConfig.speakEndpoint, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text: reply, voice: "clio-feminine-built-in" }),
+      });
+      const data = (await res.json()) as { audioUrl?: string | null };
+      if (res.ok && data.audioUrl) {
+        const audio = new Audio(data.audioUrl);
+        await audio.play();
+      }
+    } catch {
+      /* Voice reply is optional; keep the text reply as source of truth. */
+    } finally {
+      setVoiceStatus("idle");
+    }
+  };
+
+  const startVoiceCapture = async () => {
+    if (!voiceConfig.voiceEnabled) {
+      setVoiceStatus("unavailable");
+      setVoiceError(CLIO_VOICE_STATUS_COPY.unavailable);
+      return;
+    }
+    const availability = browserVoiceAvailability({
+      secureContext: window.isSecureContext,
+      hasMediaDevices: Boolean(navigator.mediaDevices?.getUserMedia),
+      hasMediaRecorder: typeof MediaRecorder !== "undefined",
+    });
+    if (!availability.ok) {
+      setVoiceStatus("unavailable");
+      setVoiceError(browserVoiceErrorMessage(availability.code));
+      return;
+    }
+    setVoiceError(null);
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      streamRef.current = stream;
+      chunksRef.current = [];
+      const recorder = new MediaRecorder(stream);
+      recorderRef.current = recorder;
+      recorder.ondataavailable = (event) => {
+        if (event.data.size > 0) chunksRef.current.push(event.data);
+      };
+      recorder.onstop = () => {
+        const audio = new Blob(chunksRef.current, { type: recorder.mimeType || "audio/webm" });
+        if (!audio.size) {
+          setVoiceStatus("error");
+          setVoiceError("Запись получилась пустой. Попробуйте ещё раз или напишите текстом.");
+          cleanupVoiceCapture();
+          return;
+        }
+        void transcribeVoice(audio);
+      };
+      recorder.start();
+      setVoiceStatus("listening");
+    } catch (e) {
+      cleanupVoiceCapture();
+      const denied = e instanceof DOMException && (e.name === "NotAllowedError" || e.name === "SecurityError");
+      setVoiceStatus(denied ? "permission_denied" : "error");
+      setVoiceError(
+        denied
+          ? CLIO_VOICE_STATUS_COPY.permission_denied
+          : "Не удалось включить микрофон. Проверьте устройство или напишите текстом.",
+      );
+    }
+  };
+
+  const toggleVoice = () => {
+    if (voiceStatus === "listening") {
+      recorderRef.current?.stop();
+      return;
+    }
+    if (!hasConsent()) {
+      if (mode === "spotlight") setMode("full");
+      setPendingVoiceConsent(true);
+      return;
+    }
+    void startVoiceCapture();
+  };
+
+  const cancelVoice = () => {
+    const recorder = recorderRef.current;
+    if (!recorder) {
+      cleanupVoiceCapture();
+      setVoiceStatus("idle");
+      setVoiceError(null);
+      return;
+    }
+    recorder.onstop = null;
+    if (recorder.state !== "inactive") recorder.stop();
+    cleanupVoiceCapture();
+    setVoiceStatus("idle");
+    setVoiceError(null);
   };
 
   const handleKey = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -192,17 +357,17 @@ export function ChatWidget({ inline, selectedVideo = null, quickAsks = QUICK_ASK
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4, ease: [0.4, 0, 0.2, 1] }}
-          aria-label="Открыть чат с менеджером"
+          aria-label={`Открыть чат с ${CLIO_NAME}`}
         >
           <span className="chat-spotlight-avatar">
-            <img src="/ab-logo.jpg" alt="" />
+            <img src={CLIO_AVATAR} alt="" />
             <span className="chat-presence" />
           </span>
           <span className="chat-spotlight-body">
             <span className="chat-spotlight-placeholder">
               <CyclingLine items={LAUNCHER_PROMPTS} interval={3800} />
             </span>
-            <span className="chat-spotlight-meta">Astor Butler · {REPLY_TIME}</span>
+            <span className="chat-spotlight-meta">{CLIO_NAME} · {CLIO_REPLY_TIME}</span>
           </span>
         </motion.button>
       </div>
@@ -219,12 +384,12 @@ export function ChatWidget({ inline, selectedVideo = null, quickAsks = QUICK_ASK
       >
         <div className="chat-panel-header">
           <span className="chat-spotlight-avatar chat-logo-wrap">
-            <img src="/ab-logo.jpg" alt="Astor Butler" className="chat-logo" />
+            <img src={CLIO_AVATAR} alt={CLIO_NAME} className="chat-logo" />
             <span className="chat-presence" />
           </span>
           <div className="chat-header-text">
-            <strong>Astor Butler</strong>
-            <span>AI assistant · C3AG / Iris · {REPLY_TIME}</span>
+            <strong>{CLIO_NAME}</strong>
+            <span>ассистентка по брифу · {CLIO_REPLY_TIME}</span>
           </div>
           {!inline && (
             <button type="button" onClick={() => setMode("spotlight")} aria-label="Свернуть чат">
@@ -236,13 +401,13 @@ export function ChatWidget({ inline, selectedVideo = null, quickAsks = QUICK_ASK
         <div className="chat-messages">
           {messages.map((msg, i) => (
             <div key={i} className={`chat-msg chat-msg-${msg.from}`}>
-              {msg.from === "bot" && <img src="/ab-logo.jpg" alt="" className="chat-msg-avatar" />}
+              {msg.from === "bot" && <img src={CLIO_AVATAR} alt="" className="chat-msg-avatar" />}
               <span>{msg.text}</span>
             </div>
           ))}
           {sending && (
             <div className="chat-msg chat-msg-bot chat-msg-thinking" aria-live="polite">
-              <img src="/ab-logo.jpg" alt="" className="chat-msg-avatar" />
+              <img src={CLIO_AVATAR} alt="" className="chat-msg-avatar" />
               <span>
                 <em>думаю</em>
                 <i />
@@ -256,9 +421,12 @@ export function ChatWidget({ inline, selectedVideo = null, quickAsks = QUICK_ASK
 
         {/* One tap = a sent message. Gone as soon as the conversation is real,
             so they never sit under an ongoing exchange. */}
-        {!messages.some((m) => m.from === "user") && !pendingText && (
+        {!messages.some((m) => m.from === "user") && !pendingText && !pendingVoiceConsent && (
           <div className="chat-asks">
-            {quickAsks.map((ask) => (
+            {[...quickAsks, ...CLIO_VOICE_STARTERS]
+              .filter((ask, index, arr) => arr.indexOf(ask) === index)
+              .slice(0, 5)
+              .map((ask) => (
               <button
                 key={ask}
                 type="button"
@@ -273,16 +441,34 @@ export function ChatWidget({ inline, selectedVideo = null, quickAsks = QUICK_ASK
         )}
 
         <AnimatePresence>
-          {pendingText && (
+          {(pendingText || pendingVoiceConsent) && (
             <motion.div
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: "auto" }}
               exit={{ opacity: 0, height: 0 }}
             >
-              <ConsentNotice onAccept={onConsentAccept} onDecline={() => setPendingText(null)} />
+              <ConsentNotice
+                onAccept={onConsentAccept}
+                onDecline={() => {
+                  setPendingText(null);
+                  setPendingVoiceConsent(false);
+                }}
+              />
             </motion.div>
           )}
         </AnimatePresence>
+
+        {voiceConfig.voiceEnabled && (
+          <div className="chat-voice-state" data-state={voiceStatus} role="status" aria-live="polite">
+            <span>{voiceError || CLIO_VOICE_STATUS_COPY[voiceStatus]}</span>
+            {voiceStatus === "listening" && (
+              <button type="button" onClick={cancelVoice} aria-label="Отменить голосовую запись">
+                <X size={13} />
+                Отменить
+              </button>
+            )}
+          </div>
+        )}
 
         <div className="chat-input-row">
           <input
@@ -295,6 +481,25 @@ export function ChatWidget({ inline, selectedVideo = null, quickAsks = QUICK_ASK
             onKeyDown={handleKey}
             aria-label="Сообщение"
           />
+          {voiceConfig.voiceEnabled && (
+            <button
+              type="button"
+              className="chat-voice"
+              data-state={voiceStatus}
+              onClick={toggleVoice}
+              aria-label={voiceStatus === "listening" ? "Остановить запись" : "Записать голосовое сообщение"}
+              aria-pressed={voiceStatus === "listening"}
+              disabled={sending || voiceStatus === "processing" || voiceStatus === "speaking"}
+            >
+              {voiceStatus === "listening" ? (
+                <Square size={15} />
+              ) : voiceStatus === "speaking" ? (
+                <Volume2 size={15} />
+              ) : (
+                <Mic size={15} />
+              )}
+            </button>
+          )}
           <button
             type="button"
             className="chat-send"

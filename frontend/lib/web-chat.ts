@@ -31,7 +31,7 @@ export type ViewportInfo = {
 };
 
 export type WebChatPayload = {
-  site: "c3flex";
+  site: "c3ag";
   sessionId: string;
   page: string;
   referrer: string | null;
@@ -99,7 +99,7 @@ export function buildWebChatRequest(
     username: null,
     correlationId: buildCorrelationId(sessionId),
     payload: {
-      site: "c3flex",
+      site: "c3ag",
       sessionId,
       page: currentPage(),
       referrer: getReferrer(),
@@ -113,7 +113,7 @@ export function buildWebChatRequest(
 
 /**
  * Send a message. Posts the contract body to the local mock endpoint today;
- * swap NEXT_PUBLIC_WEB_CHAT_ENDPOINT to the real gateway path when ready.
+ * set NEXT_PUBLIC_WEB_CHAT_ENDPOINT to the real gateway path when ready.
  *
  * `devHint.turn` is a dev-only sibling field used solely by the local mock to
  * advance its guided KP script. It sits OUTSIDE `payload`, so the contract
@@ -136,8 +136,8 @@ export async function sendWebChatMessage(
     body: JSON.stringify(devHint ? { ...body, turn: devHint.turn } : body),
   });
 
-  if (!res.ok) throw new Error("web-chat request failed");
   const data = await res.json();
+  if (!res.ok && !data.reply && !data.text) throw new Error("web-chat request failed");
   // Mock returns { reply }; real contract returns { text, ... }.
   return { reply: data.reply ?? data.text ?? "" };
 }

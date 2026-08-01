@@ -52,7 +52,7 @@ until you start hosting real clips.
 
 ## Product feed mapping
 
-The homepage work feed is product-led now: seven rows follow `lib/products.ts`
+The homepage work feed is product-led now: rows follow `lib/products.ts`
 order and use `clipFolders` to pick records from this database. Keep product
 names, prices and terms in `lib/products.ts`; keep media metadata here. When
 Mongo/Object Storage replaces this local JSON, preserve the same fields so the

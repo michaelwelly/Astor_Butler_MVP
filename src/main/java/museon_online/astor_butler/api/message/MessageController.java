@@ -6,6 +6,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import museon_online.astor_butler.api.common.ApiException;
 import museon_online.astor_butler.api.common.ErrorCode;
 import museon_online.astor_butler.domain.web.WebLeadNotificationService;
+import museon_online.astor_butler.domain.web.WebChatRateLimiter;
 import museon_online.astor_butler.domain.web.WebSessionMessageService;
 import museon_online.astor_butler.domain.web.WebSessionResolution;
 import museon_online.astor_butler.service.message.IncomingMessage;
@@ -19,6 +20,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import jakarta.servlet.http.HttpServletRequest;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
@@ -32,15 +34,18 @@ public class MessageController {
     private final MessageGatewayService messageGatewayService;
     private final WebSessionMessageService webSessionMessageService;
     private final WebLeadNotificationService webLeadNotificationService;
+    private final WebChatRateLimiter webChatRateLimiter;
 
     public MessageController(
             MessageGatewayService messageGatewayService,
             WebSessionMessageService webSessionMessageService,
-            WebLeadNotificationService webLeadNotificationService
+            WebLeadNotificationService webLeadNotificationService,
+            WebChatRateLimiter webChatRateLimiter
     ) {
         this.messageGatewayService = messageGatewayService;
         this.webSessionMessageService = webSessionMessageService;
         this.webLeadNotificationService = webLeadNotificationService;
+        this.webChatRateLimiter = webChatRateLimiter;
     }
 
     @PostMapping
@@ -48,7 +53,15 @@ public class MessageController {
             summary = "Process normalized UI message through FSM gateway",
             description = "Common entry point for future web chat, Telegram-like adapters and smoke checks. Telegram stays a UI transport; FSM remains the source of truth."
     )
-    public ResponseEntity<MessageResponse> process(@RequestBody MessageRequest request) {
+    public ResponseEntity<MessageResponse> process(@RequestBody MessageRequest request, HttpServletRequest httpRequest) {
+        return processInternal(request, httpRequest);
+    }
+
+    ResponseEntity<MessageResponse> process(MessageRequest request) {
+        return processInternal(request, null);
+    }
+
+    private ResponseEntity<MessageResponse> processInternal(MessageRequest request, HttpServletRequest httpRequest) {
         MessageChannel messageChannel = channel(request.channel());
         String correlationId = request.correlationId() == null ? UUID.randomUUID().toString() : request.correlationId();
         Map<String, Object> payload = request.payload() == null ? Map.of() : request.payload();
@@ -57,6 +70,17 @@ public class MessageController {
         String externalUserId = request.externalUserId();
 
         if (messageChannel == MessageChannel.WEB) {
+            WebChatRateLimiter.Decision decision = webChatRateLimiter.check(
+                    clientIp(httpRequest),
+                    externalUserId,
+                    chatId,
+                    payload
+            );
+            if (!decision.allowed()) {
+                return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS)
+                        .header("Retry-After", String.valueOf(decision.retryAfterSeconds()))
+                        .body(rateLimitedResponse(request, correlationId, decision));
+            }
             try {
                 webSession = webSessionMessageService.resolve(externalUserId, chatId, payload);
                 chatId = webSession.chatId();
@@ -127,6 +151,40 @@ public class MessageController {
             webLeadNotificationService.project(webSession, incoming, outgoing);
         }
         return ResponseEntity.ok(MessageResponse.from(outgoing));
+    }
+
+    private String clientIp(HttpServletRequest request) {
+        if (request == null) {
+            return "";
+        }
+        String forwarded = request.getHeader("X-Forwarded-For");
+        if (forwarded != null && !forwarded.isBlank()) {
+            return forwarded.split(",")[0].trim();
+        }
+        return request.getRemoteAddr();
+    }
+
+    private MessageResponse rateLimitedResponse(MessageRequest request, String correlationId, WebChatRateLimiter.Decision decision) {
+        String text = "Сейчас слишком много сообщений. Пожалуйста, попробуйте ещё раз через минуту — так я смогу не потерять ваш запрос.";
+        return new MessageResponse(
+                "WEB",
+                request.externalUserId(),
+                request.chatId(),
+                text,
+                "WEB_RATE_LIMITED",
+                false,
+                false,
+                false,
+                true,
+                false,
+                List.of("WEB_RATE_LIMITED"),
+                Map.of(
+                        "correlationId", correlationId,
+                        "rateLimitReason", decision.reason(),
+                        "retryAfterSeconds", decision.retryAfterSeconds()
+                ),
+                Instant.now()
+        );
     }
 
     private MessageChannel channel(String channel) {

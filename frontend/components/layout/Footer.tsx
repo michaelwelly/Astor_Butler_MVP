@@ -13,7 +13,7 @@ export function Footer() {
           </Link>
           <p>Независимая продакшн-студия / {year}</p>
         </div>
-        {/* The seven products in the footer is the crawlable sitemap — every
+        {/* Product links in the footer are the crawlable sitemap — every
             page links to every other one, which is what a КП sent as a link
             needs. */}
         <nav className="footer-products" aria-label="Направления">

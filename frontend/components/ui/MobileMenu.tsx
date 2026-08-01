@@ -4,14 +4,15 @@ import { X } from "lucide-react";
 import { products } from "@/lib/products";
 
 /**
- * On mobile this is the sitemap, not a decoration: seven products with their
+ * On mobile this is the sitemap, not a decoration: products with their
  * price is the fastest route to the page someone actually wants. The section
  * anchors sit underneath, small, because they are the secondary need.
  */
 const SECTIONS = [
-  { label: "Работы", href: "/#catalog" },
+  { label: "Услуги", href: "/#products" },
+  { label: "Портфолио", href: "/#catalog" },
   { label: "О студии", href: "/#about" },
-  { label: "Контакт", href: "/#contact" },
+  { label: "Обсудить проект", href: "/#contact" },
   { label: "Приёмка", href: "/studio" },
 ];
 
