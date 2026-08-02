@@ -292,4 +292,3 @@ Then get explicit approval for the infrastructure step:
    - only then set webhook after Telegram egress is resolved.
 
 For the current state, DNS alone is not enough. It only proves the domain can point at an ingress target.
-

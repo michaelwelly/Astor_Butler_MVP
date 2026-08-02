@@ -12,19 +12,19 @@
 
 ## Состав
 
-1. `ASTOR_BUTLER_SABY_SERVICE_AGREEMENT_DRAFT_RU.md`  
+1. `ASTOR_BUTLER_SABY_SERVICE_AGREEMENT_DRAFT_RU.md`
    Основной договор оказания услуг: предмет, состав услуг, приемка, поддержка, данные, конфиденциальность, IP, ответственность и ограничения.
 
-2. `ASTOR_BUTLER_SABY_ANNEX_1_TZ_RU.md`  
+2. `ASTOR_BUTLER_SABY_ANNEX_1_TZ_RU.md`
    Приложение N 1: техническое задание на Astor Butler для ресторана/площадки.
 
-3. `ASTOR_BUTLER_SABY_ANNEX_2_API_WORKFLOW_RU.md`  
+3. `ASTOR_BUTLER_SABY_ANNEX_2_API_WORKFLOW_RU.md`
    Приложение N 2: API-интеграция Saby и workflow подтверждения бронирований.
 
-4. `ASTOR_BUTLER_SABY_ANNEX_3_DATA_CONSENT_RU.md`  
+4. `ASTOR_BUTLER_SABY_ANNEX_3_DATA_CONSENT_RU.md`
    Приложение N 3: данные, согласия, обработка персональных данных и границы передачи в Telegram/AI/Saby.
 
-5. `ASTOR_BUTLER_SABY_ANNEX_4_MILESTONES_ACCEPTANCE_RU.md`  
+5. `ASTOR_BUTLER_SABY_ANNEX_4_MILESTONES_ACCEPTANCE_RU.md`
    Приложение N 4: этапы проекта, результаты, критерии приемки и открытые вопросы.
 
 ## Проверенные источники по Saby
@@ -51,4 +51,3 @@
 ## Send-ready summary
 
 Astor Butler предлагается как управляемый Telegram/AI/FSM-ассистент для ресторана: он собирает запрос гостя, сохраняет историю и согласия, помогает подобрать сценарий бронирования, передает заявку сотруднику и, после подтвержденной интеграции, синхронизирует статус с Saby. Окончательные бронирования, переносы, отмены и спорные действия остаются confirmation-gated и требуют подтверждения уполномоченного сотрудника или явно согласованного внешнего workflow.
-

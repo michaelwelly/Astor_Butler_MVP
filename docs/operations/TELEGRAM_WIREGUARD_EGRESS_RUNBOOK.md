@@ -173,4 +173,3 @@ sudo systemctl daemon-reload
 ```
 
 Do not commit the WireGuard config, private key, `.env.production`, backups or VM temporary files.
-

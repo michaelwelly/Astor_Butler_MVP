@@ -163,4 +163,3 @@ ExternalReservationProvider
 - контакты ответственного представителя Saby/Заказчика;
 - limits/tariffs;
 - список полей, разрешенных к передаче.
-

@@ -158,4 +158,3 @@ SpeechKit STT/TTS подключается только после наличи�
 - idempotency policy;
 - acceptance tests;
 - письменного согласования Заказчика.
-
