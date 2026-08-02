@@ -1,16 +1,16 @@
 # Graph Report - Astor_Butler_MVP  (2026-08-02)
 
 ## Corpus Check
-- 675 files · ~993,247 words
+- 675 files · ~993,371 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 6359 nodes · 14252 edges · 526 communities (480 shown, 46 thin omitted)
+- 6359 nodes · 14252 edges · 526 communities (479 shown, 47 thin omitted)
 - Extraction: 87% EXTRACTED · 13% INFERRED · 0% AMBIGUOUS · INFERRED: 1917 edges (avg confidence: 0.8)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `952227f5`
+- Built from commit: `2607b73f`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -418,7 +418,7 @@
 ## Import Cycles
 - 3-file cycle: `frontend/lib/catalog-clips.ts -> frontend/lib/portfolio.ts -> frontend/lib/video-db.ts -> frontend/lib/catalog-clips.ts`
 
-## Communities (526 total, 46 thin omitted)
+## Communities (526 total, 47 thin omitted)
 
 ### Community 0 - "Community 0"
 Cohesion: 0.14
@@ -693,8 +693,8 @@ Cohesion: 0.39
 Nodes (4): BalanceButton, InlineKeyboardMarkup, Override, String
 
 ### Community 68 - "Community 68"
-Cohesion: 0.20
-Nodes (7): CancelButton, InlineKeyboardMarkup, Override, String, InlineKeyboardMarkup, String, BotButton
+Cohesion: 0.39
+Nodes (4): CancelButton, InlineKeyboardMarkup, Override, String
 
 ### Community 69 - "Community 69"
 Cohesion: 0.39
@@ -729,8 +729,8 @@ Cohesion: 0.39
 Nodes (4): SlotButton, InlineKeyboardMarkup, Override, String
 
 ### Community 77 - "Community 77"
-Cohesion: 0.39
-Nodes (4): TableReservationButton, InlineKeyboardMarkup, Override, String
+Cohesion: 0.20
+Nodes (7): TableReservationButton, InlineKeyboardMarkup, Override, String, InlineKeyboardMarkup, String, BotButton
 
 ### Community 78 - "Community 78"
 Cohesion: 0.39
@@ -801,8 +801,8 @@ Cohesion: 0.29
 Nodes (4): chatIdBase, options, scenarios, stepSleep
 
 ### Community 95 - "Community 95"
-Cohesion: 0.27
-Nodes (9): TelegramVoiceTranscriptionService, ObjectStorageResult, AbsSender, IncomingMessage, Map, Object, Path, SpeechToTextResult (+1 more)
+Cohesion: 0.30
+Nodes (8): TelegramVoiceTranscriptionService, AbsSender, IncomingMessage, Map, Object, Path, SpeechToTextResult, String
 
 ### Community 96 - "Community 96"
 Cohesion: 0.57
@@ -861,8 +861,8 @@ Cohesion: 0.20
 Nodes (9): ManagerHelpScenario, AdminAlert, BotState, IncomingMessage, Long, Object, OutgoingMessage, Override (+1 more)
 
 ### Community 198 - "Community 198"
-Cohesion: 0.16
-Nodes (9): FSMHandler, MenuHandler, BotState, CommandContext, Override, InlineKeyboardMarkup, ReplyKeyboardMarkup, String (+1 more)
+Cohesion: 0.29
+Nodes (4): InlineKeyboardMarkup, ReplyKeyboardMarkup, String, BotResponse
 
 ### Community 199 - "Community 199"
 Cohesion: 0.38
@@ -957,8 +957,8 @@ Cohesion: 0.22
 Nodes (8): ArtAuctionScenario, ArtAuctionBidCommand, BotState, IncomingMessage, Long, OutgoingMessage, Override, String
 
 ### Community 222 - "Community 222"
-Cohesion: 0.22
-Nodes (9): GreetingHandler, BotState, CommandContext, Override, BotApiMethod, Long, ReplyKeyboard, String (+1 more)
+Cohesion: 0.14
+Nodes (14): FSMHandler, FallbackHandler, GreetingHandler, BotState, CommandContext, Override, BotState, CommandContext (+6 more)
 
 ### Community 223 - "Community 223"
 Cohesion: 0.14
@@ -1009,8 +1009,8 @@ Cohesion: 0.11
 Nodes (19): useAuth(), EditorTask, editorTasks(), MOCK_CHATS, MockChat, MockMessage, STATUS_CYCLE, STATUS_LABEL (+11 more)
 
 ### Community 245 - "Community 245"
-Cohesion: 0.30
-Nodes (6): ScenarioReplyComposer, shortContent(), String, ScenarioReply, ScenarioReplyDraft, String
+Cohesion: 0.21
+Nodes (8): ScenarioReplyComposer, ScenarioReplyComposerTest, ScenarioReply, ScenarioReplyDraft, String, ScenarioReplyDraft, String, Test
 
 ### Community 250 - "Community 250"
 Cohesion: 0.20
@@ -1398,7 +1398,7 @@ Nodes (5): FSM Index, Specs, Нужно прописать, Первый кру�
 
 ### Community 397 - "Community 397"
 Cohesion: 0.43
-Nodes (4): FallbackHandler, BotState, CommandContext, Override
+Nodes (4): MenuHandler, BotState, CommandContext, Override
 
 ### Community 399 - "Community 399"
 Cohesion: 0.25
@@ -1441,8 +1441,8 @@ Cohesion: 0.50
 Nodes (3): of(), ModelVisionRequest, String
 
 ### Community 412 - "Community 412"
-Cohesion: 0.26
-Nodes (7): InputStream, Integer, Long, Object, Path, String, ObjectStorageService
+Cohesion: 0.24
+Nodes (8): InputStream, ObjectStorageResult, Integer, Long, Object, Path, String, ObjectStorageService
 
 ### Community 419 - "Community 419"
 Cohesion: 0.20
@@ -1543,10 +1543,6 @@ Nodes (8): RussianNluAdapter, BotState, ObjectMapper, Override, RestTemplateBuil
 ### Community 445 - "Community 445"
 Cohesion: 0.50
 Nodes (3): Astor AI Commercial Pack, Documents, Status
-
-### Community 447 - "Community 447"
-Cohesion: 0.38
-Nodes (4): ScenarioReplyComposerTest, ScenarioReplyDraft, String, Test
 
 ### Community 450 - "Community 450"
 Cohesion: 0.24
@@ -1739,7 +1735,7 @@ Nodes (7): C3AG Frontend Next Agent Handoff 2026-07-31, Content Display Notes, D
 ## Knowledge Gaps
 - **1546 isolated node(s):** `Params`, `LegacyMessage`, `WebChatBody`, `SpeakResponse`, `TranscribeResponse` (+1541 more)
   These have ≤1 connection - possible missing edges or undocumented components.
-- **46 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **47 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_

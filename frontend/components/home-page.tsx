@@ -6,7 +6,6 @@ import { useLenis } from "@/hooks/useLenis";
 import { Navigation } from "@/components/layout/Navigation";
 import { Footer } from "@/components/layout/Footer";
 import { DeviceHero } from "@/components/sections/DeviceHero";
-import { Marquee } from "@/components/sections/Marquee";
 import { FeaturedCatalog } from "@/components/sections/FeaturedCatalog";
 import { Products } from "@/components/sections/Products";
 import { Manifesto } from "@/components/sections/Manifesto";
@@ -88,13 +87,10 @@ export function HomePage() {
       <main className="netflix-main" id="top">
         <Navigation onMenuOpen={() => setMenuOpen(true)} />
         <DeviceHero />
-        <Marquee />
-        {/* Products before works: the site's job is routing to seven offers,
-            and the reel now also lives on each product page. */}
+        <FeaturedCatalog onSelect={openReels} />
         <Reveal>
           <Products />
         </Reveal>
-        <FeaturedCatalog onSelect={openReels} />
         <Reveal>
           <Contact />
         </Reveal>

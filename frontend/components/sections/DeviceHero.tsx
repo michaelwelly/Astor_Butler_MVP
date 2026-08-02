@@ -11,12 +11,9 @@ import {
   useReducedMotion,
   type Variants,
 } from "framer-motion";
-import { ArrowDown } from "lucide-react";
 import { catalogVideos, POSTER_FALLBACK, type CatalogVideo } from "@/lib/video-catalog";
 import { HERO_CLIPS, type HeroClip } from "@/lib/hero-clips";
 import { resolveMediaRef } from "@/lib/media-ref";
-import { Magnetic } from "@/components/ui/Magnetic";
-import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import { products } from "@/lib/products";
 
 const EASE: [number, number, number, number] = [0.4, 0, 0.2, 1];
@@ -225,10 +222,12 @@ export function DeviceHero() {
     target: sectionRef,
     offset: ["start start", "end start"],
   });
-  const fieldY = useTransform(scrollYProgress, [0, 1], [0, -70]);
-  const fieldScale = useTransform(scrollYProgress, [0, 1], [1, 1.08]);
-  const copyY = useTransform(scrollYProgress, [0, 1], [0, -40]);
-  const copyOpacity = useTransform(scrollYProgress, [0, 0.85], [1, 0]);
+  const fieldY = useTransform(scrollYProgress, [0, 1], [0, -90]);
+  const fieldScale = useTransform(scrollYProgress, [0, 1], [1, 1.1]);
+  const copyY = useTransform(scrollYProgress, [0, 0.85], [0, -26]);
+  const proseOpacity = useTransform(scrollYProgress, [0.18, 0.58], [1, 0]);
+  const listTension = useTransform(scrollYProgress, [0.28, 0.72], [0, 1]);
+  const linkGap = useTransform(listTension, [0, 1], [10, 18]);
 
   // Mouse parallax — spring-smoothed tilt of the whole field.
   const mx = useMotionValue(0);
@@ -271,88 +270,94 @@ export function DeviceHero() {
   };
 
   return (
-    <section
-      className="device-hero"
-      ref={sectionRef}
-      onMouseMove={onMove}
-      onMouseLeave={onLeave}
-    >
-      <div className="device-hero-glow" />
-
-      <motion.div
-        className="device-field"
-        style={{ y: fieldY, scale: fieldScale, rotateX: tiltX, rotateY: tiltY }}
-        aria-hidden="true"
+    <section className="device-hero narrative-hero" ref={sectionRef}>
+      <div
+        className="device-hero-stage"
+        onMouseMove={onMove}
+        onMouseLeave={onLeave}
       >
-        {DEVICES.map((d, i) => {
-          const clip = pick(d.type);
-          if (!clip) return null;
-          const style = {
-            "--x": `${d.x}%`,
-            "--y": `${d.y}%`,
-            "--s": d.scale,
-            "--dx": `${d.dx}cqw`,
-            "--dy": `${d.dy}cqh`,
-            "--dz": `${d.dz}cqw`,
-            "--dr": `${d.dr}deg`,
-            animationDuration: `${d.dur}s`,
-            animationDelay: `${d.delay}s`,
-            animationDirection: d.reverse ? "reverse" : "normal",
-          } as React.CSSProperties;
-          return (
-            <div
-              key={i}
-              className="dv-anchor"
-              data-depth={d.depth}
-              data-mobile={d.mobile ? undefined : "hide"}
-              style={{ "--x": `${d.x}%`, "--y": `${d.y}%`, "--s": d.scale } as React.CSSProperties}
-            >
-              <div className="dv-drift" style={style}>
-                <Frame type={d.type} clip={clip} still={!live || !LIVE_INDEXES.has(i)} />
-              </div>
-            </div>
-          );
-        })}
-      </motion.div>
+        <div className="device-hero-glow" />
 
-      <div className="device-hero-scrim" />
-      <div className="grain" />
-
-      <motion.div
-        className="hero-copy device-hero-copy"
-        style={{ y: copyY, opacity: copyOpacity }}
-        variants={stage}
-        initial="hidden"
-        animate="show"
-      >
-        <motion.p className="device-kicker" variants={rise}>
-          C3 Studio / production catalogue
-        </motion.p>
-        <motion.h1 className="device-title" variants={rise}>
-          C3 Studio
-          <span>Каталог продакшна <i>и живое портфолио</i></span>
-        </motion.h1>
-        <motion.nav
-          className="device-product-rail"
-          variants={rise}
-          aria-label="Продуктовые направления C3 Studio"
+        <motion.div
+          className="device-field"
+          style={{ y: fieldY, scale: fieldScale, rotateX: tiltX, rotateY: tiltY }}
+          aria-hidden="true"
         >
-          {products.map((product) => (
-            <Link key={product.slug} href={`/${product.slug}`}>
-              <span>{product.num}</span>
-              {product.name}
-            </Link>
-          ))}
-        </motion.nav>
-        <motion.div className="hero-cta hero-cta--solo" variants={rise}>
-          <Magnetic>
-            <a className="hero-cta-primary" href="#catalog" data-cursor="play">
-              Смотреть портфолио <ArrowDown size={16} />
-            </a>
-          </Magnetic>
-          <ThemeToggle />
+          {DEVICES.map((d, i) => {
+            const clip = pick(d.type);
+            if (!clip) return null;
+            const style = {
+              "--x": `${d.x}%`,
+              "--y": `${d.y}%`,
+              "--s": d.scale,
+              "--dx": `${d.dx}cqw`,
+              "--dy": `${d.dy}cqh`,
+              "--dz": `${d.dz}cqw`,
+              "--dr": `${d.dr}deg`,
+              animationDuration: `${d.dur}s`,
+              animationDelay: `${d.delay}s`,
+              animationDirection: d.reverse ? "reverse" : "normal",
+            } as React.CSSProperties;
+            return (
+              <div
+                key={i}
+                className="dv-anchor"
+                data-depth={d.depth}
+                data-mobile={d.mobile ? undefined : "hide"}
+                style={{ "--x": `${d.x}%`, "--y": `${d.y}%`, "--s": d.scale } as React.CSSProperties}
+              >
+                <div className="dv-drift" style={style}>
+                  <Frame type={d.type} clip={clip} still={!live || !LIVE_INDEXES.has(i)} />
+                </div>
+              </div>
+            );
+          })}
         </motion.div>
-      </motion.div>
+
+        <div className="device-hero-scrim" />
+        <div className="grain" />
+
+        <motion.div
+          className="hero-copy device-hero-copy narrative-copy"
+          style={{ y: copyY }}
+          variants={stage}
+          initial="hidden"
+          animate="show"
+        >
+          <motion.p className="device-kicker" variants={rise}>
+            C3 Studio / editorial production
+          </motion.p>
+          <motion.h1 className="narrative-title" variants={rise}>
+            <span>C3 собирает</span>
+            <i>живую форму проекта</i>
+          </motion.h1>
+          <motion.p className="narrative-text" variants={rise}>
+            <motion.span style={{ opacity: reduce ? 1 : proseOpacity }}>Мы команда C3: превращаем ритм места, людей и бренда в </motion.span>
+            <motion.span
+              className="narrative-products"
+              style={{ gap: reduce ? 10 : linkGap }}
+            >
+              {products.map((product) => (
+                <Link
+                  key={product.slug}
+                  href={`/${product.slug}`}
+                  aria-label={`${product.num}. ${product.name}`}
+                >
+                  {product.name}
+                </Link>
+              ))}
+            </motion.span>
+            <motion.span style={{ opacity: reduce ? 1 : proseOpacity }}> — от короткой вертикальной искры до фильма, подкаста, рекламы и умной digital-системы.</motion.span>
+          </motion.p>
+          <motion.p
+            className="narrative-scroll-note"
+            style={{ opacity: reduce ? 1 : proseOpacity }}
+            variants={rise}
+          >
+            Прокрутите ниже: слова останутся направлениями, а дальше откроется портфолио по продуктам.
+          </motion.p>
+        </motion.div>
+      </div>
     </section>
   );
 }

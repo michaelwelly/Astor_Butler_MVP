@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
-import { AnimatePresence, motion } from "framer-motion";
+import { useState, useRef, useEffect, useCallback } from "react";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { ChevronDown, Mic, Send, Square, Volume2, X } from "lucide-react";
 import { acceptConsent, CURRENT_POLICY, hasConsent } from "@/lib/consent";
 import { persistChatId, persistSessionId, getSessionId, getTempChatId } from "@/lib/session";
@@ -69,9 +69,15 @@ export function ChatWidget({ inline, selectedVideo = null, quickAsks = QUICK_ASK
   const telegramConfig = readTelegramHandoffConfig();
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const launcherRef = useRef<HTMLButtonElement>(null);
+  const restoreFocusOnCloseRef = useRef(false);
   const recorderRef = useRef<MediaRecorder | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const chunksRef = useRef<Blob[]>([]);
+  const reduceMotion = useReducedMotion();
+  const shellTransition = reduceMotion
+    ? { duration: 0 }
+    : { type: "spring" as const, stiffness: 440, damping: 38, mass: 0.85 };
 
   const open = inline || mode === "full";
 
@@ -89,6 +95,27 @@ export function ChatWidget({ inline, selectedVideo = null, quickAsks = QUICK_ASK
   const openFromLauncher = () => {
     setMode("full");
   };
+
+  const closeToLauncher = useCallback(() => {
+    restoreFocusOnCloseRef.current = true;
+    setMode("spotlight");
+  }, []);
+
+  useEffect(() => {
+    if (inline || mode !== "spotlight" || !restoreFocusOnCloseRef.current) return;
+    restoreFocusOnCloseRef.current = false;
+    const id = window.requestAnimationFrame(() => launcherRef.current?.focus());
+    return () => window.cancelAnimationFrame(id);
+  }, [closeToLauncher, inline, mode]);
+
+  useEffect(() => {
+    if (inline || mode !== "full") return;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") closeToLauncher();
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [closeToLauncher, inline, mode]);
 
   const deliver = async (text: string) => {
     const next: Message[] = [...messages, { from: "user", text }];
@@ -326,16 +353,22 @@ export function ChatWidget({ inline, selectedVideo = null, quickAsks = QUICK_ASK
   // ── Compact orb launcher (floating, collapsed) ─────────────────────────
   if (!inline && mode === "spotlight") {
     return (
-      <div className="chat-widget chat-widget--floating chat-widget--collapsed">
+      <motion.div
+        className="chat-widget chat-widget--floating chat-widget--collapsed"
+        layout
+        transition={shellTransition}
+      >
         <motion.button
+          ref={launcherRef}
           layoutId="clio-widget-shell"
           type="button"
           className="chat-orb"
           onClick={openFromLauncher}
-          initial={{ opacity: 0, scale: 0.92 }}
+          initial={false}
           animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.4, ease: [0.4, 0, 0.2, 1] }}
+          transition={shellTransition}
           aria-label={`Открыть чат с ${CLIO_NAME}`}
+          aria-expanded="false"
         >
           <span className="chat-orb-halo" aria-hidden="true" />
           <span className="chat-spotlight-avatar">
@@ -343,18 +376,22 @@ export function ChatWidget({ inline, selectedVideo = null, quickAsks = QUICK_ASK
             <span className="chat-presence" />
           </span>
         </motion.button>
-      </div>
+      </motion.div>
     );
   }
 
   return (
-    <div className={`chat-widget${inline ? " chat-widget--inline" : " chat-widget--floating"}`}>
+    <motion.div
+      className={`chat-widget${inline ? " chat-widget--inline" : " chat-widget--floating chat-widget--expanded"}`}
+      layout={!inline}
+      transition={shellTransition}
+    >
       <motion.div
         layoutId={!inline ? "clio-widget-shell" : undefined}
         className="chat-panel"
         initial={false}
         animate={{ opacity: 1, y: 0, scale: 1 }}
-        transition={{ duration: 0.25, ease: "easeOut" }}
+        transition={shellTransition}
       >
         <div className="chat-panel-header">
           <span className="chat-spotlight-avatar chat-logo-wrap">
@@ -366,7 +403,12 @@ export function ChatWidget({ inline, selectedVideo = null, quickAsks = QUICK_ASK
             <span>{CLIO_SUBTITLE} · {CLIO_REPLY_TIME}</span>
           </div>
           {!inline && (
-            <button type="button" onClick={() => setMode("spotlight")} aria-label="Свернуть чат">
+            <button
+              type="button"
+              onClick={closeToLauncher}
+              aria-label="Свернуть чат"
+              aria-expanded="true"
+            >
               <ChevronDown size={18} />
             </button>
           )}
@@ -532,6 +574,6 @@ export function ChatWidget({ inline, selectedVideo = null, quickAsks = QUICK_ASK
         </div>
 
       </motion.div>
-    </div>
+    </motion.div>
   );
 }
