@@ -1,16 +1,16 @@
-# Graph Report - Astor_Butler_MVP  (2026-08-01)
+# Graph Report - Astor_Butler_MVP  (2026-08-02)
 
 ## Corpus Check
-- 674 files · ~989,013 words
+- 674 files · ~993,032 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 6354 nodes · 14236 edges · 528 communities (483 shown, 45 thin omitted)
+- 6354 nodes · 14236 edges · 526 communities (481 shown, 45 thin omitted)
 - Extraction: 87% EXTRACTED · 13% INFERRED · 0% AMBIGUOUS · INFERRED: 1917 edges (avg confidence: 0.8)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `22ef10ec`
+- Built from commit: `817155ff`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -385,10 +385,8 @@
 - [[_COMMUNITY_Community 518|Community 518]]
 - [[_COMMUNITY_Community 519|Community 519]]
 - [[_COMMUNITY_Community 520|Community 520]]
-- [[_COMMUNITY_Community 521|Community 521]]
 - [[_COMMUNITY_Community 522|Community 522]]
 - [[_COMMUNITY_Community 523|Community 523]]
-- [[_COMMUNITY_Community 524|Community 524]]
 - [[_COMMUNITY_Community 525|Community 525]]
 - [[_COMMUNITY_Community 526|Community 526]]
 - [[_COMMUNITY_Community 531|Community 531]]
@@ -420,7 +418,7 @@
 ## Import Cycles
 - 3-file cycle: `frontend/lib/catalog-clips.ts -> frontend/lib/portfolio.ts -> frontend/lib/video-db.ts -> frontend/lib/catalog-clips.ts`
 
-## Communities (528 total, 45 thin omitted)
+## Communities (526 total, 45 thin omitted)
 
 ### Community 0 - "Community 0"
 Cohesion: 0.12
@@ -463,8 +461,8 @@ Cohesion: 0.19
 Nodes (9): ChangeCancelScenarioTest, BeforeEach, EventBookingOrder, IncomingMessage, Instant, Integer, String, TableReservationOrder (+1 more)
 
 ### Community 10 - "Community 10"
-Cohesion: 0.21
-Nodes (9): BotState, InputIntent, Integer, LlmUnderstandingResult, Map, RussianNluSlot, SlotValue, String (+1 more)
+Cohesion: 0.19
+Nodes (12): BotState, InputIntent, Integer, LlmUnderstandingResult, Map, Object, Optional, RussianNluSlot (+4 more)
 
 ### Community 11 - "Community 11"
 Cohesion: 0.20
@@ -516,7 +514,7 @@ Nodes (24): dependencies, framer-motion, gsap, lenis, lucide-react, next, react,
 
 ### Community 23 - "Community 23"
 Cohesion: 0.07
-Nodes (28): useLenis(), getForFolders(), BuyingModel, fixedProducts, Product, productBySlug, ProductCase, ProductEmbed (+20 more)
+Nodes (27): getByDirection(), getForFolders(), BuyingModel, fixedProducts, Product, productBySlug, ProductCase, ProductEmbed (+19 more)
 
 ### Community 24 - "Community 24"
 Cohesion: 0.16
@@ -563,8 +561,8 @@ Cohesion: 0.20
 Nodes (12): ArtAuctionRepository, ArtAuctionBid, ArtAuctionBidCommand, ArtAuctionBidStatus, ArtAuctionLot, Instant, List, Long (+4 more)
 
 ### Community 35 - "Community 35"
-Cohesion: 0.11
-Nodes (18): HomePage(), toRef(), LeadRequest, submitLead(), toSelectedVideoRef(), Contact(), PREVIEW_MESSAGES, QUICK_ACTIONS (+10 more)
+Cohesion: 0.15
+Nodes (12): askButler(), onButlerAsk(), LeadRequest, submitLead(), Contact(), PREVIEW_MESSAGES, QUICK_ACTIONS, Manifesto() (+4 more)
 
 ### Community 36 - "Community 36"
 Cohesion: 0.16
@@ -596,7 +594,7 @@ Nodes (12): chunk_texts(), extract_docx(), extract_pdf(), extract_text(), main()
 
 ### Community 43 - "Community 43"
 Cohesion: 0.07
-Nodes (50): browserVoiceAvailability, browserVoiceErrorMessage(), BrowserVoiceProbe, BrowserVoiceUnavailableCode, CLIO_VOICE_STARTERS, CLIO_VOICE_STATUS_COPY, clioSttUnavailableResult(), ClioTranscribeMockResult (+42 more)
+Nodes (49): browserVoiceAvailability, browserVoiceErrorMessage(), BrowserVoiceProbe, BrowserVoiceUnavailableCode, CLIO_VOICE_STARTERS, CLIO_VOICE_STATUS_COPY, clioSttUnavailableResult(), ClioTranscribeMockResult (+41 more)
 
 ### Community 44 - "Community 44"
 Cohesion: 0.32
@@ -1355,8 +1353,8 @@ Cohesion: 0.38
 Nodes (4): VenueContentAssetStorageServiceTest, NormalizedVenueContentPost, Test, VenueContentAsset
 
 ### Community 383 - "Community 383"
-Cohesion: 0.28
-Nodes (7): C3flexContentController, Boolean, GetMapping, Integer, Operation, String, VideoCatalogView
+Cohesion: 0.16
+Nodes (12): SwaggerConfig, C3flexContentController, Boolean, GetMapping, Integer, Operation, String, VideoCatalogView (+4 more)
 
 ### Community 384 - "Community 384"
 Cohesion: 0.32
@@ -1371,8 +1369,8 @@ Cohesion: 0.26
 Nodes (7): IdentityService, Long, IncomingMessage, Long, String, FsmTimelineEvent, Override
 
 ### Community 387 - "Community 387"
-Cohesion: 0.09
-Nodes (16): Footer(), Navigation(), PILLS, Props, Props, EASE, Phase, Props (+8 more)
+Cohesion: 0.06
+Nodes (32): HomePage(), toRef(), useLenis(), Footer(), Navigation(), PILLS, Props, toSelectedVideoRef() (+24 more)
 
 ### Community 388 - "Community 388"
 Cohesion: 0.21
@@ -1387,8 +1385,8 @@ Cohesion: 0.48
 Nodes (3): LlmScenarioPromptCatalog, Resource, String
 
 ### Community 394 - "Community 394"
-Cohesion: 0.22
-Nodes (8): AstorButlerApplication, IntentExampleCorpusLoader, String, IntentExampleSeed, JsonNode, List, Resource, String
+Cohesion: 0.16
+Nodes (10): AstorButlerApplication, IntentExampleCorpusLoader, IntentExampleCorpusLoaderTest, String, IntentExampleSeed, JsonNode, List, Resource (+2 more)
 
 ### Community 395 - "Community 395"
 Cohesion: 0.48
@@ -1407,8 +1405,8 @@ Cohesion: 0.25
 Nodes (9): blankToDefault(), String, Long, Map, Object, OutgoingMessage, String, WebSessionResolution (+1 more)
 
 ### Community 400 - "Community 400"
-Cohesion: 0.19
-Nodes (12): SwaggerConfig, GetMapping, Map, Object, Operation, ResponseEntity, String, Bean (+4 more)
+Cohesion: 0.38
+Nodes (7): GetMapping, Map, Object, Operation, ResponseEntity, String, SystemController
 
 ### Community 401 - "Community 401"
 Cohesion: 0.33
@@ -1491,8 +1489,8 @@ Cohesion: 0.14
 Nodes (15): autoChecklist(), completeness(), FileKind, isKind(), ParsedFile, parseFilename(), POSTER_EXT, REQUIRED_RES (+7 more)
 
 ### Community 430 - "Community 430"
-Cohesion: 0.20
-Nodes (10): IntentExampleRepository, LlmUnderstandingService, Autowired, EmbeddingProvider, IntentExampleMatch, List, Matcher, ObjectProvider (+2 more)
+Cohesion: 0.25
+Nodes (9): IntentExampleRepository, LlmUnderstandingService, Autowired, EmbeddingProvider, IntentExampleMatch, List, Matcher, ObjectProvider (+1 more)
 
 ### Community 431 - "Community 431"
 Cohesion: 0.50
@@ -1561,10 +1559,6 @@ Nodes (3): AgentRequest, fromUserText(), String
 ### Community 453 - "Community 453"
 Cohesion: 0.26
 Nodes (7): canonical(), waitsForConsentAndContact(), MainMenuScenario, BotState, IncomingMessage, OutgoingMessage, String
-
-### Community 454 - "Community 454"
-Cohesion: 0.25
-Nodes (4): Object, UnderstoodInput, Test, GuestInputUnderstandingServiceTest
 
 ### Community 455 - "Community 455"
 Cohesion: 0.17
@@ -1733,10 +1727,6 @@ Nodes (3): AlisaClientException, RuntimeException, String
 ### Community 519 - "Community 519"
 Cohesion: 0.38
 Nodes (4): IntentExampleBootstrapTest, IntentExampleSeed, String, Test
-
-### Community 524 - "Community 524"
-Cohesion: 0.20
-Nodes (8): askButler(), onButlerAsk(), getByDirection(), DIRECTION_ORIENTATION, VideoOrientation, FeaturedCatalog(), getProductFeed(), Props
 
 ### Community 525 - "Community 525"
 Cohesion: 0.24

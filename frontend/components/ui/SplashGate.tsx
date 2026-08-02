@@ -2,7 +2,6 @@
 
 import { useState, useCallback, useEffect, type PointerEvent } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Wordmark } from "@/components/ui/Wordmark";
 import { BRAND_LOGO_URL, BRAND_NAME } from "@/lib/brand";
 
 type Props = { onComplete: () => void };
@@ -141,7 +140,10 @@ export function SplashGate({ onComplete }: Props) {
           >
             {/* The mark breathes on luminance only — see .splash-logo-still. */}
             <img src={BRAND_LOGO_URL} className="splash-logo-still" alt="" />
-            <Wordmark className="splash-wordmark" />
+            <div className="splash-lockup" aria-label="C3 STUDIO — Визуальные истории для брендов">
+              <span className="splash-wordmark">C3 STUDIO</span>
+              <span className="splash-strapline">Визуальные истории для брендов</span>
+            </div>
             <motion.p
               className="splash-hint"
               animate={{ opacity: [0.35, 0.85, 0.35] }}

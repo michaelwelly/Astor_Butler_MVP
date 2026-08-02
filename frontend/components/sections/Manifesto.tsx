@@ -1,15 +1,20 @@
+import Image from "next/image";
 import { RevealLines } from "@/components/ui/RevealLines";
 
 const TEAM = [
   {
     role: "CEO",
-    name: "C3 Agency",
+    name: "Sergey Izyrow",
     text: "Стратегия продукта, продажи, переговоры и финальная ответственность за результат клиента.",
+    portrait: "/team/sergey-izyrow-portrait.jpeg",
+    portraitAlt: "Sergey Izyrow",
   },
   {
     role: "CTO",
     name: "Michael Welly",
     text: "Архитектура backend, AI-контура, интеграций, данных и production-инфраструктуры.",
+    portrait: "/team/michael-welly-portrait.jpeg",
+    portraitAlt: "Michael Welly",
   },
   {
     role: "CFO",
@@ -20,11 +25,6 @@ const TEAM = [
     role: "COO",
     name: "C3 Operations",
     text: "Производственный тайминг, команда на площадке, контроль выдачи и операционный порядок.",
-  },
-  {
-    role: "Команда",
-    name: "Сергей Зюров",
-    text: "Участник команды C3AG. Точная роль будет раскрыта после подтверждения публичной формулировки.",
   },
 ];
 
@@ -38,7 +38,21 @@ export function Manifesto() {
       </div>
       <div className="team-lane" aria-label="Команда C3 Agency">
         {TEAM.map((member, index) => (
-          <article className="team-card" key={member.role}>
+          <article
+            className={member.portrait ? "team-card team-card--portrait" : "team-card"}
+            key={member.role}
+          >
+            {member.portrait && (
+              <div className="team-card-photo">
+                <Image
+                  src={member.portrait}
+                  alt={member.portraitAlt}
+                  fill
+                  sizes="(max-width: 720px) 78vw, 306px"
+                  priority={false}
+                />
+              </div>
+            )}
             <span>{String(index + 1).padStart(2, "0")}</span>
             <strong>{member.role}</strong>
             <h3>{member.name}</h3>

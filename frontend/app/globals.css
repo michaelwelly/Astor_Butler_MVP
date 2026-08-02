@@ -1976,6 +1976,38 @@ footer a:hover { color: var(--paper); }
   padding: 22px;
   scroll-snap-align: start;
 }
+.team-card--portrait {
+  grid-template-rows: auto auto auto 1fr;
+  overflow: hidden;
+  padding-top: 14px;
+}
+.team-card-photo {
+  aspect-ratio: 16 / 11;
+  border: 1px solid var(--line);
+  border-radius: calc(var(--r-md) - 2px);
+  isolation: isolate;
+  margin: 0 0 2px;
+  overflow: hidden;
+  position: relative;
+}
+.team-card-photo::after {
+  background:
+    linear-gradient(180deg, rgba(8, 7, 5, 0) 48%, rgba(8, 7, 5, .42) 100%),
+    radial-gradient(circle at 20% 0%, rgba(227, 189, 119, .24), transparent 42%);
+  content: "";
+  inset: 0;
+  mix-blend-mode: soft-light;
+  pointer-events: none;
+  position: absolute;
+  z-index: 1;
+}
+.team-card-photo img {
+  filter: contrast(1.06) saturate(.9);
+  height: 100%;
+  object-fit: cover;
+  object-position: 50% 34%;
+  width: 100%;
+}
 .team-card span {
   color: var(--muted);
   font-size: 11px;
@@ -3533,12 +3565,36 @@ body { -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; 
   0%, 100% { opacity: .78; }
   50%      { opacity: 1; }
 }
+.splash-lockup {
+  align-items: center;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-width: min(520px, 86vw);
+  text-align: center;
+}
 .splash-wordmark {
-  font-size: clamp(22px, 4.4vw, 34px);
-  font-weight: 700;
-  letter-spacing: -.06em;
+  color: var(--paper);
+  font-family: var(--f-heading);
+  font-size: clamp(34px, 8vw, 78px);
+  font-weight: 400;
+  letter-spacing: .08em;
+  line-height: .9;
+  text-transform: uppercase;
+}
+.splash-strapline {
+  color: var(--muted);
+  font-size: clamp(13px, 2.8vw, 17px);
+  letter-spacing: .08em;
+  line-height: 1.35;
 }
 .splash-hint { letter-spacing: .26em; }
+
+@media (max-width: 520px) {
+  .splash-lockup { gap: 8px; }
+  .splash-wordmark { font-size: clamp(32px, 13vw, 56px); letter-spacing: .055em; }
+  .splash-strapline { max-width: 24ch; }
+}
 
 /* Entry: the wordmark's underline wipes open from centre. */
 .intro-wipe {
