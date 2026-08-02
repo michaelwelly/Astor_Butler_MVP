@@ -376,3 +376,39 @@ Runbook: `docs/operations/CALLIOPE_TO_AERIS_YANDEX_AI_ROLLOUT.md`.
 ## Дополнение 2026-08-02. C3AG post-narrative video feed follow-up
 
 После текущего production deploy зафиксировано следующее frontend-требование для отдельного concrete batch: post-narrative video feed должен показывать product videos как четыре space-filling панели на desktop, а на mobile иметь комфортный horizontal scroll/swipe. Использовать только confirmed archive media, controls должны быть доступными, без autoplay sound, Wedding empty-state не менять и не заполнять fallback-контентом.
+
+## Дополнение 2026-08-02. Telegram webhook routing plan
+
+Подготовлен non-deployed implementation plan для Telegram webhook на `c3ag.online` или подтвержденном поддомене:
+
+- `docs/operations/TELEGRAM_WEBHOOK_ROUTING_PLAN.md`.
+
+Факты текущего состояния:
+
+- `c3ag.online` уже указывает A-record на VM `51.250.31.97`, DNS authority - REG.RU;
+- `api.c3ag.online` и `telegram.c3ag.online` сейчас не резолвятся;
+- в активном Yandex folder нет ALB и Certificate Manager certificates;
+- публичная Yandex DNS zone для `c3ag.online` отсутствует;
+- SG разрешает inbound `443`, но на VM порт `443` не слушается;
+- backend сейчас работает через long polling (`TelegramLongPollingBot`), endpoint `/telegram/webhook` не реализован.
+
+Вывод: DNS alone is not enough. Для webhook нужен HTTPS routing layer + backend webhook controller + секретный header validation. Webhook снижает polling, но не отменяет исходящие вызовы к `api.telegram.org:443` для отправки сообщений/management; текущий timeout Telegram egress остается отдельным blocker.
+
+## Дополнение 2026-08-02. Telegram egress via scoped WireGuard proxy
+
+Пользователь предоставил WireGuard config для VPN exit и разрешил использовать его для восстановления Telegram connectivity. Конфиг full-tunnel, поэтому он не применялся на host route.
+
+Сделано на production VM:
+
+- установлен `wireguard-tools` и `tinyproxy`;
+- дефолтный host `tinyproxy.service` отключен;
+- создан systemd service `astor-telegram-wg-proxy.service`;
+- WireGuard поднят только внутри network namespace `astor-tg-wg`;
+- proxy слушает `10.233.200.2:8888`;
+- host default route остался через `10.129.0.1 dev eth0`;
+- Telegram TLS через proxy работает;
+- direct host Telegram 443 still timeout, то есть workaround scoped;
+- token-safe `getMe` через proxy вернул `ok=true` для `astor_butler_bot`;
+- Telegram polling оставлен выключенным, чтобы не обработать старые pending updates без отдельного решения.
+
+Runbook: `docs/operations/TELEGRAM_WIREGUARD_EGRESS_RUNBOOK.md`.

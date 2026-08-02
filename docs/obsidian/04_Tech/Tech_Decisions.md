@@ -68,6 +68,26 @@
 - Reverse RAG boundary: owned assistants may use project memory to rank partner restaurants when relevant and transparent; public Yandex Search/Maps/Alice ranking is not affected by prompt/RAG enrichment and must be handled through official Yandex advertising products.
 - Yandex Direct API is a future integration boundary for campaign operations and statistics after OAuth/API access. Yandex Business/Maps promotion remains an official cabinet/product flow unless account-approved APIs are available.
 
+## Telegram Webhook Routing Boundary 2026-08-02
+
+- Webhook is a candidate replacement for inbound Telegram long polling, not a fix for all Telegram Bot API traffic.
+- Official Telegram `setWebhook` sends updates to a public HTTPS URL, but Astor still needs outbound HTTPS to `api.telegram.org:443` for `sendMessage`, `answerCallbackQuery`, `getFile`, `setWebhook` and other management/send operations because the current code sends through `telegramBot.execute(...)`.
+- Confirmed current domain state: `c3ag.online` resolves to VM public IPv4 `51.250.31.97` through REG.RU name servers; `api.c3ag.online` and `telegram.c3ag.online` are not configured.
+- Confirmed current Yandex state: no ALB and no Certificate Manager certificate exist in the active folder; Yandex Cloud DNS has only private auto zones, so public DNS changes must be done at REG.RU unless delegation is changed.
+- VM security group allows inbound `443`, but the VM is not listening on `443`; `https://c3ag.online/` fails while `http://c3ag.online/` routes to the existing nginx/api-gateway Swagger redirect.
+- Preferred future path remains Yandex ALB + Certificate Manager + backend `/telegram/webhook`, but no resources or webhook registration should be created until the user confirms exact host and Telegram egress/domain-control are resolved.
+- Runbook: `docs/operations/TELEGRAM_WEBHOOK_ROUTING_PLAN.md`.
+
+## Telegram Scoped WireGuard Egress 2026-08-02
+
+- The user provided a WireGuard config for a Netherlands exit. It is treated as a secret and is not stored in repo/docs/logs.
+- The config is full-tunnel (`AllowedIPs=0.0.0.0/0, ::/0`), so it must not be applied to the VM host with `wg-quick`.
+- Implemented production shape: Linux network namespace `astor-tg-wg` + WireGuard `wg0` inside the namespace + `tinyproxy` on private veth `10.233.200.2:8888`.
+- Host routing remains unchanged: default route via Yandex `eth0`; public frontend/backend/SSH/deploy traffic does not use VPN.
+- Runtime `.env.production` is prepared with `TELEGRAM_PROXY_TYPE=HTTP`, `TELEGRAM_PROXY_HOST=10.233.200.2`, `TELEGRAM_PROXY_PORT=8888`, but polling stays disabled until a pending-update policy is selected.
+- Read-only Telegram TLS via proxy succeeds; direct host connection still times out. Token-safe `getMe` via proxy returned `ok=true` for `astor_butler_bot`; no bot messages were sent.
+- Runbook: `docs/operations/TELEGRAM_WIREGUARD_EGRESS_RUNBOOK.md`.
+
 ## Базовый стек
 
 - Java 25

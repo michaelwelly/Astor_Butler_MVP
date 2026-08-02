@@ -166,6 +166,39 @@ Observed on 2026-08-01 from VM `51.250.31.97`:
 - IPv6 connection fails immediately because Yandex Cloud security groups are IPv4-only and this VM path is not a working IPv6 egress path;
 - no network rules were changed during the production C3AG rollout.
 
+Update on 2026-08-02:
+
+- a user-provided full-tunnel WireGuard config was installed only on the VM in root-only runtime storage, not in git;
+- it is isolated in Linux network namespace `astor-tg-wg`;
+- `tinyproxy` listens only on private veth `10.233.200.2:8888`;
+- host default route remains via Yandex `eth0`;
+- `curl --proxy http://10.233.200.2:8888 https://api.telegram.org/` succeeds with TLS verification;
+- direct host HTTPS to `api.telegram.org:443` still times out, proving the workaround is scoped to proxy users;
+- `.env.production` contains proxy env but keeps Telegram polling disabled until pending-update policy is approved.
+
+Detailed runbook:
+
+```text
+docs/operations/TELEGRAM_WIREGUARD_EGRESS_RUNBOOK.md
+```
+
+## Telegram Webhook Routing Note
+
+Detailed non-deployed plan:
+
+```text
+docs/operations/TELEGRAM_WEBHOOK_ROUTING_PLAN.md
+```
+
+Short decision:
+
+- target can be `https://c3ag.online/telegram/webhook` or a cleaner `https://api.c3ag.online/telegram/webhook`;
+- current DNS `c3ag.online A -> 51.250.31.97` is not enough by itself because HTTPS on `443` is not live;
+- Yandex ALB and Certificate Manager are currently absent in the active folder;
+- REG.RU is the current public DNS authority for `c3ag.online`, not Yandex Cloud DNS;
+- inbound webhook reduces Telegram long polling, but does not eliminate outbound HTTPS calls to Telegram Bot API for `sendMessage`, `answerCallbackQuery`, `getFile`, `setWebhook` and similar operations;
+- do not create DNS records/certificates or call `setWebhook` until domain-control, TLS routing and Telegram outbound egress are confirmed.
+
 Additional VPC evidence on 2026-08-01:
 
 - VM: `astor-butler-aeris-mvp` / `epdjiqbfc08tufap5v8p`;
