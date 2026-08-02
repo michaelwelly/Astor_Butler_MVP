@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import {
   motion,
@@ -16,6 +17,7 @@ import { HERO_CLIPS, type HeroClip } from "@/lib/hero-clips";
 import { resolveMediaRef } from "@/lib/media-ref";
 import { Magnetic } from "@/components/ui/Magnetic";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
+import { products } from "@/lib/products";
 
 const EASE: [number, number, number, number] = [0.4, 0, 0.2, 1];
 
@@ -323,10 +325,29 @@ export function DeviceHero() {
         initial="hidden"
         animate="show"
       >
+        <motion.p className="device-kicker" variants={rise}>
+          C3 Studio / production catalogue
+        </motion.p>
+        <motion.h1 className="device-title" variants={rise}>
+          C3 Studio
+          <span>Каталог продакшна <i>и живое портфолио</i></span>
+        </motion.h1>
+        <motion.nav
+          className="device-product-rail"
+          variants={rise}
+          aria-label="Продуктовые направления C3 Studio"
+        >
+          {products.map((product) => (
+            <Link key={product.slug} href={`/${product.slug}`}>
+              <span>{product.num}</span>
+              {product.name}
+            </Link>
+          ))}
+        </motion.nav>
         <motion.div className="hero-cta hero-cta--solo" variants={rise}>
           <Magnetic>
             <a className="hero-cta-primary" href="#catalog" data-cursor="play">
-              ФЛЕКСИТЬ <ArrowDown size={16} />
+              Смотреть портфолио <ArrowDown size={16} />
             </a>
           </Magnetic>
           <ThemeToggle />

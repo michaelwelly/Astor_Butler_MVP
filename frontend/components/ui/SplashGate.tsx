@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useCallback, useEffect, type PointerEvent } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import { BRAND_LOGO_URL, BRAND_NAME } from "@/lib/brand";
 
 type Props = { onComplete: () => void };
@@ -89,12 +89,13 @@ function synthesizeHandpanEntry() {
 
 export function SplashGate({ onComplete }: Props) {
   const [phase, setPhase] = useState<Phase>("idle");
+  const reduceMotion = useReducedMotion();
 
   const handleEnter = useCallback(() => {
     if (phase !== "idle") return;
-    synthesizeHandpanEntry();
+    if (!reduceMotion) synthesizeHandpanEntry();
     setPhase("animating");
-  }, [phase]);
+  }, [phase, reduceMotion]);
 
   const handlePointerMove = useCallback((event: PointerEvent<HTMLDivElement>) => {
     const bounds = event.currentTarget.getBoundingClientRect();
@@ -110,9 +111,9 @@ export function SplashGate({ onComplete }: Props) {
   // in. This is the floor: once the click happened, the site opens.
   useEffect(() => {
     if (phase !== "animating") return;
-    const id = setTimeout(onComplete, 2200);
+    const id = setTimeout(onComplete, reduceMotion ? 480 : 1500);
     return () => clearTimeout(id);
-  }, [phase, onComplete]);
+  }, [phase, reduceMotion, onComplete]);
 
   return (
     <motion.div
@@ -123,6 +124,9 @@ export function SplashGate({ onComplete }: Props) {
       transition={{ duration: 0.65, ease: "easeInOut" }}
       onClick={handleEnter}
       onPointerMove={handlePointerMove}
+      role="dialog"
+      aria-modal="true"
+      aria-label="Приветствие C3 AG"
     >
       <div className="splash-bg splash-bg--content" aria-hidden="true" />
       <div className="splash-bg splash-bg--sand" aria-hidden="true" />
@@ -138,23 +142,23 @@ export function SplashGate({ onComplete }: Props) {
             exit={{ opacity: 0 }}
             transition={{ duration: 0.45, ease: EASE }}
           >
-            {/* The mark breathes on luminance only — see .splash-logo-still. */}
-            <img src={BRAND_LOGO_URL} className="splash-logo-still" alt="" />
-            <div className="splash-lockup" aria-label="C3 STUDIO — Визуальные истории для брендов">
-              <span className="splash-wordmark">C3 STUDIO</span>
-              <span className="splash-strapline">Визуальные истории для брендов</span>
-            </div>
-            <motion.p
-              className="splash-hint"
-              animate={{ opacity: [0.35, 0.85, 0.35] }}
-              transition={{ repeat: Infinity, duration: 3.2, ease: EASE }}
+            <motion.button
+              type="button"
+              className="splash-mark-button"
+              aria-label="Войти на сайт C3 AG"
+              onClick={(event) => {
+                event.stopPropagation();
+                handleEnter();
+              }}
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: reduceMotion ? 0.01 : 0.45, delay: reduceMotion ? 0 : 0.25, ease: EASE }}
             >
-              нажмите, чтобы войти
-            </motion.p>
+              <img src={BRAND_LOGO_URL} className="splash-logo-still" alt="" />
+            </motion.button>
           </motion.div>
         ) : (
-          // Entry punch, restyled: no white flash, no radial glow. The mark
-          // fades up and the wordmark wipes open from its own centre.
+          // Entry punch, restyled: no white flash, no radial glow.
           <motion.div key="anim" className="splash-anim">
             <div className="intro-logo-wrap">
               <motion.img
@@ -164,7 +168,7 @@ export function SplashGate({ onComplete }: Props) {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ duration: 0.5, ease: EASE }}
-                onAnimationComplete={() => setTimeout(onComplete, 900)}
+                onAnimationComplete={() => setTimeout(onComplete, reduceMotion ? 0 : 520)}
               />
               <motion.span
                 className="intro-wipe"

@@ -30,10 +30,28 @@ function toRef(item: PortfolioCase | null): SelectedVideoRef {
 
 export function HomePage() {
   useLenis();
-  const [introComplete, setIntroComplete] = useState(false);
+  const [introComplete, setIntroComplete] = useState<boolean | null>(null);
 
   useEffect(() => {
-    if (!introComplete) {
+    try {
+      setIntroComplete(window.sessionStorage.getItem("c3ag.welcomeSeen") === "true");
+    } catch {
+      setIntroComplete(true);
+    }
+  }, []);
+
+  const completeIntro = () => {
+    try {
+      window.sessionStorage.setItem("c3ag.welcomeSeen", "true");
+    } catch {
+      /* Session storage is an enhancement; do not trap the visitor. */
+    }
+    window.scrollTo({ top: 0, behavior: "instant" });
+    setIntroComplete(true);
+  };
+
+  useEffect(() => {
+    if (introComplete === false) {
       document.body.style.overflow = "hidden";
     } else {
       document.body.style.overflow = "";
@@ -62,8 +80,8 @@ export function HomePage() {
       <ScrollProgress />
       <div className="film-overlay" aria-hidden="true" />
       <AnimatePresence>
-        {!introComplete && (
-          <SplashGate key="splash" onComplete={() => { window.scrollTo({ top: 0, behavior: "instant" }); setIntroComplete(true); }} />
+        {introComplete === false && (
+          <SplashGate key="splash" onComplete={completeIntro} />
         )}
       </AnimatePresence>
 
@@ -78,10 +96,10 @@ export function HomePage() {
         </Reveal>
         <FeaturedCatalog onSelect={openReels} />
         <Reveal>
-          <Manifesto />
+          <Contact />
         </Reveal>
         <Reveal>
-          <Contact />
+          <Manifesto />
         </Reveal>
         <Footer />
 
@@ -97,7 +115,7 @@ export function HomePage() {
         />
       )}
 
-      {introComplete && (
+      {introComplete === true && (
         <ChatWidget
           selectedVideo={toRef(reelsStart !== null ? portfolioCases[reelsAt] : null)}
         />

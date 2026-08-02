@@ -8,8 +8,6 @@ import { persistChatId, persistSessionId, getSessionId, getTempChatId } from "@/
 import { sendWebChatMessage, type SelectedVideoRef } from "@/lib/web-chat";
 import { onButlerAsk } from "@/lib/chat-bus";
 import { ConsentNotice } from "@/components/ui/ConsentNotice";
-import { CyclingLine } from "@/components/ui/CyclingLine";
-import { HINT_CHAT_SEEN, learned, markLearned } from "@/lib/session-hint";
 import { CLIO_AVATAR, CLIO_GREETING, CLIO_NAME, CLIO_REPLY_TIME } from "@/lib/clio-persona";
 import { CLIO_SUBTITLE } from "@/lib/clio-persona";
 import {
@@ -33,19 +31,6 @@ const INITIAL_MESSAGES: Message[] = [
 ];
 
 /**
- * What the collapsed launcher shows instead of a placeholder. A generic
- * "напишите сообщение" tells nobody what this box is for; a real question
- * rotating through it does, and it doubles as the one moving thing in the
- * corner of the eye.
- */
-const LAUNCHER_PROMPTS = [
-  "Помоги оценить стоимость",
-  "Подскажи сроки проекта",
-  "Какой формат выбрать?",
-  "Хочу отправить бриф",
-];
-
-/**
  * Tappable openers. The cost of a first message is the whole barrier, so it is
  * one tap — the chip text is sent as-is.
  */
@@ -59,17 +44,6 @@ const QUICK_ASKS = [
 
 /** Product pages narrow these to their own product — see ProductPage. */
 
-
-/**
- * How long the launcher waits before it starts asking for attention. Late
- * enough that it doesn't compete with the hero on arrival, early enough to
- * catch someone who has started reading and stalled.
- */
-const ATTRACT_AFTER = 6000;
-/** Longer pause before asking again after a look-but-don't-write. */
-const ATTRACT_AGAIN = 25000;
-/** Total invitations before we accept the answer is no. */
-const ATTRACT_MAX_RUNS = 3;
 
 type Props = {
   /** Embedded full-chat variant (used inside a page section). */
@@ -112,45 +86,8 @@ export function ChatWidget({ inline, selectedVideo = null, quickAsks = QUICK_ASK
     if (!inline && mode === "full") inputRef.current?.focus();
   }, [inline, mode]);
 
-  // The launcher pings for attention until the visitor actually writes.
-  //
-  // Opening it is NOT the finish line: someone who looked, read the greeting
-  // and collapsed it again without typing is exactly the person worth asking
-  // a second time. So the ping goes quiet while the panel is open, then
-  // resumes on a longer delay — up to a limit, because an invitation that
-  // never takes no for an answer is just harassment.
-  const [attract, setAttract] = useState(false);
-  const attractRuns = useRef(0);
-  const engaged =
-    messages.some((m) => m.from === "user") ||
-    pendingText !== null ||
-    pendingVoiceConsent ||
-    pendingTelegramConsent ||
-    voiceStatus !== "idle";
-
-  useEffect(() => {
-    if (inline || engaged || learned(HINT_CHAT_SEEN)) return;
-    if (mode === "full") {
-      setAttract(false);
-      return;
-    }
-    if (attractRuns.current >= ATTRACT_MAX_RUNS) return;
-    const delay = attractRuns.current === 0 ? ATTRACT_AFTER : ATTRACT_AGAIN;
-    const id = setTimeout(() => {
-      attractRuns.current += 1;
-      setAttract(true);
-    }, delay);
-    return () => clearTimeout(id);
-  }, [inline, engaged, mode]);
-
-  // Writing is the thing we were asking for — stop asking, for good.
-  useEffect(() => {
-    if (engaged) markLearned(HINT_CHAT_SEEN);
-  }, [engaged]);
-
   const openFromLauncher = () => {
     setMode("full");
-    setAttract(false);
   };
 
   const deliver = async (text: string) => {
@@ -386,31 +323,24 @@ export function ChatWidget({ inline, selectedVideo = null, quickAsks = QUICK_ASK
   submitRef.current = submit;
   useEffect(() => onButlerAsk((text) => submitRef.current(text)), []);
 
-  // ── Compact Spotlight launcher (floating, collapsed) ───────────────────
-  // Reads as a text field you can type into, not a button that might do
-  // anything: the manager's face, a live question, and a caret.
+  // ── Compact orb launcher (floating, collapsed) ─────────────────────────
   if (!inline && mode === "spotlight") {
     return (
-      <div className="chat-widget chat-widget--floating">
+      <div className="chat-widget chat-widget--floating chat-widget--collapsed">
         <motion.button
+          layoutId="clio-widget-shell"
           type="button"
-          className="chat-spotlight"
-          data-attract={attract ? "" : undefined}
+          className="chat-orb"
           onClick={openFromLauncher}
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
+          initial={{ opacity: 0, scale: 0.92 }}
+          animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.4, ease: [0.4, 0, 0.2, 1] }}
           aria-label={`Открыть чат с ${CLIO_NAME}`}
         >
+          <span className="chat-orb-halo" aria-hidden="true" />
           <span className="chat-spotlight-avatar">
             <img src={CLIO_AVATAR} alt="" />
             <span className="chat-presence" />
-          </span>
-          <span className="chat-spotlight-body">
-            <span className="chat-spotlight-placeholder">
-              <CyclingLine items={LAUNCHER_PROMPTS} interval={3800} />
-            </span>
-        <span className="chat-spotlight-meta">{CLIO_NAME} · {CLIO_REPLY_TIME}</span>
           </span>
         </motion.button>
       </div>
@@ -420,6 +350,7 @@ export function ChatWidget({ inline, selectedVideo = null, quickAsks = QUICK_ASK
   return (
     <div className={`chat-widget${inline ? " chat-widget--inline" : " chat-widget--floating"}`}>
       <motion.div
+        layoutId={!inline ? "clio-widget-shell" : undefined}
         className="chat-panel"
         initial={false}
         animate={{ opacity: 1, y: 0, scale: 1 }}
