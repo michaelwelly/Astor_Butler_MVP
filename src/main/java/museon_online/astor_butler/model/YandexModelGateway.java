@@ -14,6 +14,11 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
+import java.io.IOException;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.ArrayList;
@@ -27,6 +32,8 @@ public class YandexModelGateway implements ModelGateway {
 
     private final ObjectMapper objectMapper = new ObjectMapper();
     private final RestTemplate restTemplate;
+    private final HttpClient httpClient;
+    private final Duration requestTimeout;
     private final String baseUrl;
     private final String folderId;
     private final String apiKey;
@@ -48,9 +55,13 @@ public class YandexModelGateway implements ModelGateway {
             @Value("${yandex.ai.max-tokens:256}") int maxTokens,
             @Value("${yandex.ai.temperature:0.1}") double temperature
     ) {
+        this.requestTimeout = Duration.ofMillis(Math.max(1, timeoutMs));
         this.restTemplate = restTemplateBuilder
-                .connectTimeout(Duration.ofMillis(Math.max(1, timeoutMs)))
-                .readTimeout(Duration.ofMillis(Math.max(1, timeoutMs)))
+                .connectTimeout(requestTimeout)
+                .readTimeout(requestTimeout)
+                .build();
+        this.httpClient = HttpClient.newBuilder()
+                .connectTimeout(requestTimeout)
                 .build();
         this.baseUrl = trimTrailingSlash(baseUrl);
         this.folderId = blankToNull(folderId);
@@ -111,15 +122,7 @@ public class YandexModelGateway implements ModelGateway {
                 "text", request.text() == null ? "" : request.text()
         );
 
-        String responseBody = restTemplate.execute(
-                baseUrl + "/foundationModels/v1/textEmbedding",
-                HttpMethod.POST,
-                requestEntity -> {
-                    requestEntity.getHeaders().putAll(headers());
-                    objectMapper.writeValue(requestEntity.getBody(), body);
-                },
-                response -> new String(response.getBody().readAllBytes(), StandardCharsets.UTF_8)
-        );
+        String responseBody = executeEmbeddingRequest(body);
 
         Duration latency = Duration.ofNanos(System.nanoTime() - startedAt);
         Map<?, ?> responseJson = parseJsonObject(responseBody);
@@ -179,13 +182,16 @@ public class YandexModelGateway implements ModelGateway {
     private HttpHeaders headers() {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.set(HttpHeaders.AUTHORIZATION, authorizationHeaderValue());
+        return headers;
+    }
+
+    private String authorizationHeaderValue() {
         if (apiKey != null) {
-            headers.set(HttpHeaders.AUTHORIZATION, "Api-Key " + apiKey);
-            return headers;
+            return "Api-Key " + apiKey;
         }
         if (iamToken != null) {
-            headers.setBearerAuth(iamToken);
-            return headers;
+            return "Bearer " + iamToken;
         }
         throw new IllegalStateException("Yandex AI credentials are not configured: set YANDEX_API_KEY or YANDEX_IAM_TOKEN");
     }
@@ -256,6 +262,30 @@ public class YandexModelGateway implements ModelGateway {
             }
         }
         return embedding;
+    }
+
+    private String executeEmbeddingRequest(Map<String, String> body) {
+        try {
+            HttpRequest request = HttpRequest.newBuilder(URI.create(baseUrl + "/foundationModels/v1/textEmbedding"))
+                    .timeout(requestTimeout)
+                    .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+                    .header(HttpHeaders.AUTHORIZATION, authorizationHeaderValue())
+                    .POST(HttpRequest.BodyPublishers.ofString(objectMapper.writeValueAsString(body), StandardCharsets.UTF_8))
+                    .build();
+            HttpResponse<String> response = httpClient.send(
+                    request,
+                    HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8)
+            );
+            if (response.statusCode() >= 400) {
+                throw new IllegalStateException("Yandex AI embedding request failed with status=" + response.statusCode());
+            }
+            return response.body();
+        } catch (IOException e) {
+            throw new IllegalStateException("Yandex AI embedding request failed", e);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new IllegalStateException("Yandex AI embedding request was interrupted", e);
+        }
     }
 
     private Map<?, ?> parseJsonObject(String rawBody) {
