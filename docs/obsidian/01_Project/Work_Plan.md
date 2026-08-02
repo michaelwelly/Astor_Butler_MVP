@@ -357,3 +357,22 @@ Runbook: `docs/operations/CALLIOPE_TO_AERIS_YANDEX_AI_ROLLOUT.md`.
 - `docs/commercial/AERIS_SERVICE_AGREEMENT_DRAFT_RU.md`;
 - `docs/commercial/OOO_SCHASTYE_AERIS_PROD_BUDGET_RU.md`;
 - `docs/commercial/OOO_SCHASTYE_AERIS_PRINT_PACKAGE_RU.md`.
+
+## Дополнение 2026-08-02. Astor Butler / Saby contract package
+
+Пользователь подтвердил vendor spelling: `Saby` (`https://saby.ru/`), исторически `СБИС/sbis` только как прежнее название. Для ресторанной интеграции используем официальный reference `Saby Presto`; публичные страницы подтверждают продукт для общепита и общий API-подход Saby, но не дают конкретный API method для бронирования столов. Поэтому в договорном пакете capabilities разделены на verified facts и requested integration capabilities.
+
+Подготовлен reviewable Markdown-пакет по модели договор + приложения:
+
+- `docs/commercial/ASTOR_BUTLER_SABY_AGREEMENT_PACKAGE_RU.md`;
+- `docs/commercial/ASTOR_BUTLER_SABY_SERVICE_AGREEMENT_DRAFT_RU.md`;
+- `docs/commercial/ASTOR_BUTLER_SABY_ANNEX_1_TZ_RU.md`;
+- `docs/commercial/ASTOR_BUTLER_SABY_ANNEX_2_API_WORKFLOW_RU.md`;
+- `docs/commercial/ASTOR_BUTLER_SABY_ANNEX_3_DATA_CONSENT_RU.md`;
+- `docs/commercial/ASTOR_BUTLER_SABY_ANNEX_4_MILESTONES_ACCEPTANCE_RU.md`.
+
+Не отправлять внешним получателям без явного адресата и финального approval. Перед implementation нужны Saby API contract, auth model, sandbox/prod credentials, organization/restaurant ids, limits/tariffs and representative guidance.
+
+## Дополнение 2026-08-02. C3AG post-narrative video feed follow-up
+
+После текущего production deploy зафиксировано следующее frontend-требование для отдельного concrete batch: post-narrative video feed должен показывать product videos как четыре space-filling панели на desktop, а на mobile иметь комфортный horizontal scroll/swipe. Использовать только confirmed archive media, controls должны быть доступными, без autoplay sound, Wedding empty-state не менять и не заполнять fallback-контентом.
