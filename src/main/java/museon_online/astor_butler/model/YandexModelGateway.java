@@ -1,5 +1,7 @@
 package museon_online.astor_butler.model;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -22,6 +24,7 @@ import java.util.Map;
 @ConditionalOnProperty(prefix = "astor.model", name = "provider", havingValue = "yandex", matchIfMissing = false)
 public class YandexModelGateway implements ModelGateway {
 
+    private final ObjectMapper objectMapper = new ObjectMapper();
     private final RestTemplate restTemplate;
     private final String baseUrl;
     private final String folderId;
@@ -103,18 +106,18 @@ public class YandexModelGateway implements ModelGateway {
         String modelUri = embeddingModelUri(request.model(), request.purpose());
         long startedAt = System.nanoTime();
 
-        ResponseEntity<Map> response = restTemplate.exchange(
+        ResponseEntity<String> response = restTemplate.exchange(
                 baseUrl + "/foundationModels/v1/textEmbedding",
                 HttpMethod.POST,
                 new HttpEntity<>(Map.of(
                         "modelUri", modelUri,
                         "text", request.text() == null ? "" : request.text()
                 ), headers()),
-                Map.class
+                String.class
         );
 
         Duration latency = Duration.ofNanos(System.nanoTime() - startedAt);
-        Map<?, ?> body = response.getBody() == null ? Map.of() : response.getBody();
+        Map<?, ?> body = parseJsonObject(response.getBody());
         List<Double> embedding = readEmbedding(resultBody(body));
         log.debug(
                 "ModelGateway embedding provider=yandex-ai model={} scenario={} state={} purpose={} dimension={} latencyMs={}",
@@ -248,6 +251,17 @@ public class YandexModelGateway implements ModelGateway {
             }
         }
         return embedding;
+    }
+
+    private Map<?, ?> parseJsonObject(String rawBody) {
+        if (rawBody == null || rawBody.isBlank()) {
+            return Map.of();
+        }
+        try {
+            return objectMapper.readValue(rawBody, Map.class);
+        } catch (JsonProcessingException e) {
+            throw new IllegalStateException("Cannot parse Yandex AI JSON response", e);
+        }
     }
 
     private Map<?, ?> resultBody(Map<?, ?> body) {
