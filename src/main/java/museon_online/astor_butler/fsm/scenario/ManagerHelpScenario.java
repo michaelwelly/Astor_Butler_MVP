@@ -152,12 +152,14 @@ public class ManagerHelpScenario implements FsmScenario {
     }
 
     private boolean isManagerHelpIntent(String text) {
-        return containsAny(text, "менеджер", "администратор", "человек", "оператор", "сотрудник", "позови", "позвать", "ручная помощь", "жалоба");
+        return containsAny(text, "менеджер", "администратор", "человек", "оператор", "сотрудник", "команд", "связаться", "связь", "позови", "позвать", "ручная помощь", "жалоба");
     }
 
     private boolean isShortManagerCall(String text) {
         return text.equals("менеджер")
                 || text.equals("администратор")
+                || text.equals("связаться с командой")
+                || text.equals("помощь команды")
                 || text.equals("позови менеджера")
                 || text.equals("позвать менеджера")
                 || text.equals("оператор")

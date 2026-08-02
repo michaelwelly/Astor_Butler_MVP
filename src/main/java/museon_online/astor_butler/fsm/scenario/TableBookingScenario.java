@@ -308,7 +308,9 @@ public class TableBookingScenario implements FsmScenario {
             return true;
         }
         String value = normalize(text);
-        return value.contains("забронировать стол")
+        return value.equals("бронь")
+                || value.equals("бронь стола")
+                || value.contains("забронировать стол")
                 || value.contains("забронировать столик")
                 || value.contains("бронь стол")
                 || value.contains("бронь столик")

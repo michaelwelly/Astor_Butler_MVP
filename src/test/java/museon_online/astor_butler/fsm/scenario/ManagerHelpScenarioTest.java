@@ -89,6 +89,19 @@ class ManagerHelpScenarioTest {
         verify(fsmStorage).setState(incoming.chatId(), BotState.READY_FOR_DIALOG);
     }
 
+    @Test
+    void supportsTeamContactButtonFromMainMenu() {
+        IncomingMessage incoming = telegram("Связаться с командой");
+
+        assertThat(scenario.supports(incoming, BotState.READY_FOR_DIALOG, incoming.text())).isTrue();
+
+        OutgoingMessage outgoing = scenario.handle(incoming, BotState.READY_FOR_DIALOG, incoming.text());
+
+        assertThat(outgoing.nextState()).isEqualTo(BotState.MANAGER_HELP_COLLECT_REASON.name());
+        assertThat(outgoing.text()).contains("Напишите", "что именно передать команде");
+        assertThat(outgoing.adminAlert().required()).isFalse();
+    }
+
     private IncomingMessage telegram(String text) {
         return IncomingMessage.telegram(
                 1773317437L,

@@ -414,6 +414,16 @@ Runbook: `docs/operations/CALLIOPE_TO_AERIS_YANDEX_AI_ROLLOUT.md`.
 - `TELEGRAM_GET_UPDATES_TIMEOUT_SECONDS=20`, чтобы long polling не конфликтовал с proxy idle behavior;
 - runtime audit 2026-08-02: Yandex text understanding включен, scenario reply LLM выключен, STT/voice выключен, Saby runtime credentials/env не настроены.
 
+## Дополнение 2026-08-02. AERIS Telegram buttons / Voice / Saby boundary
+
+Подтверждено production smoke: Yandex provider отвечает на контролируемый read-only prompt, но генерация сценарных ответов остается выключенной (`ASTOR_SCENARIO_REPLY_LLM_ENABLED=false`), чтобы меню, бронь и manager handoff оставались структурными FSM-сценариями, а не LLM actions.
+
+В Telegram guest keyboard добавлены понятные кнопки: `Меню кухни`, `Бар`, `Коктейли`, `Винная карта`, `Видео-тур`, `Бронь стола`, `Связаться с командой`, `Главное меню`. Тексты маршрутизируются через существующие FSM scenarios.
+
+Voice pipeline: Telegram voice media boundary есть, STT выключен. Добавлены pre-STT лимиты по длительности/размеру и честный текстовый fallback. Реальный SpeechKit можно включать только через server-side credentials/secret storage и отдельный smoke.
+
+Saby: локальный repo/docs/Obsidian и non-secret runtime config не содержат реальный API contract/base URL/auth/credentials/org id/restaurant id. Добавлена compile-ready Saby provider boundary, disabled by default, fail-closed without network calls. Не создавать реальные брони Saby до получения официального API-контракта и sandbox/prod credentials.
+
 Дополнительный production media smoke 2026-08-02:
 
 - найден подтвержденный локальный архив `/Users/michaelwelly/Desktop/AERIS FILES`;

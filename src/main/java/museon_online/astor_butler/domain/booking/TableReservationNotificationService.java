@@ -319,14 +319,15 @@ public class TableReservationNotificationService {
     private ReplyKeyboardMarkup guestMainMenuKeyboard() {
         return ReplyKeyboardMarkup.builder()
                 .keyboard(List.of(
-                        keyboardRow("📅 Забронировать стол", "📖 Меню и карты"),
-                        keyboardRow("🥂 Сабраж", "🏛 Видео-тур"),
-                        keyboardRow("🎟 Афиша", "✨ Концепция"),
-                        keyboardRow("🎉 Мероприятие", "🛎 Помощь команды"),
-                        keyboardRow("✏️ Изменить / отменить", "💬 Оставить отзыв"),
-                        keyboardRow("💚 Чаевые", "🤍 Донат"),
-                        keyboardRow("🎨 Аукцион", "🎁 Мерч"),
-                        keyboardRow("🏠 Главное меню")
+                        keyboardRow("Меню кухни", "Бар"),
+                        keyboardRow("Коктейли", "Винная карта"),
+                        keyboardRow("Видео-тур", "Бронь стола"),
+                        keyboardRow("Связаться с командой", "Главное меню"),
+                        keyboardRow("Сабраж", "Афиша"),
+                        keyboardRow("Концепция AERIS"),
+                        keyboardRow("Изменить / отменить", "Оставить отзыв"),
+                        keyboardRow("Чаевые", "Донат"),
+                        keyboardRow("Аукцион", "Мерч")
                 ))
                 .resizeKeyboard(true)
                 .oneTimeKeyboard(false)

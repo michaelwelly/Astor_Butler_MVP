@@ -400,7 +400,13 @@ public class MessageGatewayService {
     private String voiceRetryText(IncomingMessage incoming) {
         Object reason = incoming.payload() == null ? null : incoming.payload().get("transcriptionReason");
         if (reason == null || reason.toString().isBlank() || "STT disabled".equals(reason)) {
-            return "Голосовое принял, но сейчас не смог уверенно его разобрать. Запишите, пожалуйста, еще раз чуть ближе к микрофону и одной короткой фразой.";
+            return "Голосовое получил. Сейчас расшифровка голоса выключена, поэтому напишите запрос текстом — я сразу продолжу тот же сценарий.";
+        }
+        if ("VOICE_DURATION_LIMIT_EXCEEDED".equals(reason.toString())) {
+            return "Голосовое получилось слишком длинным для безопасной расшифровки. Напишите, пожалуйста, коротко текстом: меню, бронь, видео-тур или помощь команды.";
+        }
+        if ("VOICE_FILE_SIZE_LIMIT_EXCEEDED".equals(reason.toString())) {
+            return "Файл голосового слишком большой для текущего лимита. Напишите запрос текстом или отправьте короткое голосовое.";
         }
         return "Голосовое получил, но расшифровка не сложилась. Попробуйте, пожалуйста, еще раз: чуть медленнее и без фонового шума.";
     }

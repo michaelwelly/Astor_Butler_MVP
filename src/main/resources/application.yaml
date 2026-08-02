@@ -40,6 +40,21 @@ astor:
       voice-ttl-days: ${S3_VOICE_TTL_DAYS:3}
   message:
     log-conversations-enabled: ${ASTOR_LOG_CONVERSATIONS_ENABLED:true}
+  integrations:
+    saby:
+      enabled: ${ASTOR_SABY_ENABLED:false}
+      base-url: ${SABY_API_BASE_URL:}
+      auth-method: ${SABY_AUTH_METHOD:}
+      api-token: ${SABY_API_TOKEN:}
+      client-id: ${SABY_CLIENT_ID:}
+      client-secret: ${SABY_CLIENT_SECRET:}
+      refresh-token: ${SABY_REFRESH_TOKEN:}
+      organization-id: ${SABY_ORGANIZATION_ID:}
+      restaurant-id: ${SABY_RESTAURANT_ID:}
+      availability-path: ${SABY_AVAILABILITY_PATH:}
+      reservation-path: ${SABY_RESERVATION_PATH:}
+      timeout-ms: ${SABY_TIMEOUT_MS:3000}
+      max-retries: ${SABY_MAX_RETRIES:1}
   startup:
     admin-notification-enabled: ${ASTOR_STARTUP_ADMIN_NOTIFICATION_ENABLED:true}
     operational-preview-enabled: ${ASTOR_OPERATIONAL_PREVIEW_ENABLED:true}
@@ -177,6 +192,8 @@ telegram:
     preview-avatar-path: ${TELEGRAM_UI_PREVIEW_AVATAR_PATH:classpath:telegram/aeris-butler-preview.png}
   voice:
     download-enabled: ${TELEGRAM_VOICE_DOWNLOAD_ENABLED:true}
+    max-duration-seconds: ${TELEGRAM_VOICE_MAX_DURATION_SECONDS:60}
+    max-file-size-bytes: ${TELEGRAM_VOICE_MAX_FILE_SIZE_BYTES:10485760}
   admin:
     chat-id: ${TELEGRAM_ADMIN_CHAT_ID:}
   analytics:

@@ -152,6 +152,18 @@ class TableBookingScenarioTest {
     }
 
     @Test
+    void supportsBookingButtonLabelFromMainMenu() {
+        IncomingMessage incoming = telegram("Бронь стола");
+
+        assertThat(scenario.supports(incoming, BotState.READY_FOR_DIALOG, incoming.text())).isTrue();
+
+        OutgoingMessage outgoing = scenario.handle(incoming, BotState.READY_FOR_DIALOG, incoming.text());
+
+        assertThat(outgoing.nextState()).isEqualTo(BotState.TABLE_BOOKING_COLLECT_PARTY_SIZE.name());
+        assertThat(outgoing.actions()).containsExactly("ASK_PARTY_SIZE");
+    }
+
+    @Test
     void doesNotResendHallPlanDuringActiveSlotCollection() {
         IncomingMessage incoming = telegram("завтра");
         when(draftStorage.find(incoming.chatId())).thenReturn(Optional.of(new TableBookingDraftStorage.Draft(

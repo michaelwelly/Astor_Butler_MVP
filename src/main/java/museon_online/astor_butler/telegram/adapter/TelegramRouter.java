@@ -322,14 +322,15 @@ public class TelegramRouter {
     private ReplyKeyboardMarkup guestMainMenuKeyboard() {
         return ReplyKeyboardMarkup.builder()
                 .keyboard(List.of(
-                        keyboardRow("📅 Забронировать стол", "📖 Меню и карты"),
-                        keyboardRow("🥂 Сабраж", "🏛 Видео-тур"),
-                        keyboardRow("🎟 Афиша", "✨ Концепция"),
-                        keyboardRow("🎉 Мероприятие", "🛎 Помощь команды"),
-                        keyboardRow("✏️ Изменить / отменить", "💬 Оставить отзыв"),
-                        keyboardRow("💚 Чаевые", "🤍 Донат"),
-                        keyboardRow("🎨 Аукцион", "🎁 Мерч"),
-                        keyboardRow("🏠 Главное меню")
+                        keyboardRow("Меню кухни", "Бар"),
+                        keyboardRow("Коктейли", "Винная карта"),
+                        keyboardRow("Видео-тур", "Бронь стола"),
+                        keyboardRow("Связаться с командой", "Главное меню"),
+                        keyboardRow("Сабраж", "Афиша"),
+                        keyboardRow("Концепция AERIS"),
+                        keyboardRow("Изменить / отменить", "Оставить отзыв"),
+                        keyboardRow("Чаевые", "Донат"),
+                        keyboardRow("Аукцион", "Мерч")
                 ))
                 .resizeKeyboard(true)
                 .oneTimeKeyboard(false)
@@ -443,12 +444,14 @@ public class TelegramRouter {
             payload.put("mediaKind", "VOICE");
             payload.put("telegramFileId", voice.getFileId());
             payload.put("durationSeconds", voice.getDuration());
+            payload.put("fileSizeBytes", voice.getFileSize());
             payload.put("mimeType", voice.getMimeType());
         } else if (message.hasAudio()) {
             Audio audio = message.getAudio();
             payload.put("mediaKind", "AUDIO");
             payload.put("telegramFileId", audio.getFileId());
             payload.put("durationSeconds", audio.getDuration());
+            payload.put("fileSizeBytes", audio.getFileSize());
             payload.put("mimeType", audio.getMimeType());
             payload.put("fileName", audio.getFileName());
         }

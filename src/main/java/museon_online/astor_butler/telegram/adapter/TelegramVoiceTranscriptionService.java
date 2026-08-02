@@ -30,6 +30,12 @@ public class TelegramVoiceTranscriptionService {
     @Value("${telegram.voice.download-enabled:true}")
     private boolean downloadEnabled;
 
+    @Value("${telegram.voice.max-duration-seconds:60}")
+    private long maxDurationSeconds;
+
+    @Value("${telegram.voice.max-file-size-bytes:10485760}")
+    private long maxFileSizeBytes;
+
     @Value("${astor.speech-to-text.work-dir:/private/tmp/astor-butler-stt}")
     private String workDir;
 
@@ -54,6 +60,10 @@ public class TelegramVoiceTranscriptionService {
         }
 
         Map<String, Object> payload = new LinkedHashMap<>(incoming.payload());
+        SpeechToTextResult limitResult = guardVoiceLimits(payload);
+        if (limitResult != null) {
+            return withTranscriptionStatus(incoming, limitResult);
+        }
         try {
             Path audioFile = download(sender, fileId.toString(), incoming);
             payload.put("localAudioPath", audioFile.toString());
@@ -87,6 +97,24 @@ public class TelegramVoiceTranscriptionService {
             payload.put("transcriptionReason", e.getClass().getSimpleName() + ": " + e.getMessage());
             return incoming.withTextAndPayload(incoming.text(), payload);
         }
+    }
+
+    private SpeechToTextResult guardVoiceLimits(Map<String, Object> payload) {
+        long durationSeconds = longValue(payload.get("durationSeconds"));
+        if (maxDurationSeconds > 0 && durationSeconds > maxDurationSeconds) {
+            return SpeechToTextResult.failed(
+                    "VOICE_DURATION_LIMIT_EXCEEDED",
+                    Map.of("durationSeconds", durationSeconds, "maxDurationSeconds", maxDurationSeconds)
+            );
+        }
+        long fileSizeBytes = longValue(payload.get("fileSizeBytes"));
+        if (maxFileSizeBytes > 0 && fileSizeBytes > maxFileSizeBytes) {
+            return SpeechToTextResult.failed(
+                    "VOICE_FILE_SIZE_LIMIT_EXCEEDED",
+                    Map.of("fileSizeBytes", fileSizeBytes, "maxFileSizeBytes", maxFileSizeBytes)
+            );
+        }
+        return null;
     }
 
     private IncomingMessage withTranscriptionStatus(IncomingMessage incoming, SpeechToTextResult result) {
@@ -160,5 +188,19 @@ public class TelegramVoiceTranscriptionService {
 
     private String string(Object value) {
         return value == null ? "" : value.toString();
+    }
+
+    private long longValue(Object value) {
+        if (value instanceof Number number) {
+            return number.longValue();
+        }
+        if (value == null) {
+            return 0;
+        }
+        try {
+            return Long.parseLong(value.toString());
+        } catch (NumberFormatException ignored) {
+            return 0;
+        }
     }
 }

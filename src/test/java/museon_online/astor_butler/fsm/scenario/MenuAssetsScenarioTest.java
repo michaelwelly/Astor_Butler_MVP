@@ -134,6 +134,14 @@ class MenuAssetsScenarioTest {
     }
 
     @Test
+    void routesPrimaryKeyboardMenuLabels() {
+        assertThat(scenario.supports(telegram("Меню кухни"), BotState.READY_FOR_DIALOG, "Меню кухни")).isTrue();
+        assertThat(scenario.supports(telegram("Бар"), BotState.READY_FOR_DIALOG, "Бар")).isTrue();
+        assertThat(scenario.supports(telegram("Коктейли"), BotState.READY_FOR_DIALOG, "Коктейли")).isTrue();
+        assertThat(scenario.supports(telegram("Винная карта"), BotState.READY_FOR_DIALOG, "Винная карта")).isTrue();
+    }
+
+    @Test
     void sendsKitchenAndWineForMenuAndWineRequest() {
         IncomingMessage incoming = telegram("покажи меню и винную карту");
 
