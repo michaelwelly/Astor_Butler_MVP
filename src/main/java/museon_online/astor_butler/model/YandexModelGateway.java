@@ -14,6 +14,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
@@ -105,20 +106,24 @@ public class YandexModelGateway implements ModelGateway {
     public ModelEmbeddingResponse generateEmbedding(ModelEmbeddingRequest request) {
         String modelUri = embeddingModelUri(request.model(), request.purpose());
         long startedAt = System.nanoTime();
+        Map<String, String> body = Map.of(
+                "modelUri", modelUri,
+                "text", request.text() == null ? "" : request.text()
+        );
 
-        ResponseEntity<String> response = restTemplate.exchange(
+        String responseBody = restTemplate.execute(
                 baseUrl + "/foundationModels/v1/textEmbedding",
                 HttpMethod.POST,
-                new HttpEntity<>(Map.of(
-                        "modelUri", modelUri,
-                        "text", request.text() == null ? "" : request.text()
-                ), headers()),
-                String.class
+                requestEntity -> {
+                    requestEntity.getHeaders().putAll(headers());
+                    objectMapper.writeValue(requestEntity.getBody(), body);
+                },
+                response -> new String(response.getBody().readAllBytes(), StandardCharsets.UTF_8)
         );
 
         Duration latency = Duration.ofNanos(System.nanoTime() - startedAt);
-        Map<?, ?> body = parseJsonObject(response.getBody());
-        List<Double> embedding = readEmbedding(resultBody(body));
+        Map<?, ?> responseJson = parseJsonObject(responseBody);
+        List<Double> embedding = readEmbedding(resultBody(responseJson));
         log.debug(
                 "ModelGateway embedding provider=yandex-ai model={} scenario={} state={} purpose={} dimension={} latencyMs={}",
                 modelUri,
