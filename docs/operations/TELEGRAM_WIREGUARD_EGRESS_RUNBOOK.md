@@ -50,6 +50,7 @@ Production `.env.production` on the VM was configured with:
 TELEGRAM_PROXY_TYPE=HTTP
 TELEGRAM_PROXY_HOST=10.233.200.2
 TELEGRAM_PROXY_PORT=8888
+TELEGRAM_GET_UPDATES_TIMEOUT_SECONDS=20
 TELEGRAM_BOT_ENABLED=false
 AERIS_ASTOR_BUTLER_BOT_ENABLED=false
 ```
@@ -88,7 +89,9 @@ getMe_ok=true
 bot_username=astor_butler_bot
 ```
 
-No `sendMessage`, webhook registration or bot messages were sent.
+During the initial VPN smoke, no `sendMessage`, webhook registration or bot messages were sent.
+
+Production polling was then activated for `aeris-astor-butler-bot` on 2026-08-02 after `getWebhookInfo` reported no configured webhook and no pending updates. Telegram long-polling uses `TELEGRAM_GET_UPDATES_TIMEOUT_SECONDS=20` so the Bot API returns before the HTTP proxy/client idle timeout.
 
 Public regression checks after the VPN proxy:
 
@@ -129,6 +132,7 @@ AERIS_ASTOR_BUTLER_BOT_ENABLED=true
 TELEGRAM_PROXY_TYPE=HTTP
 TELEGRAM_PROXY_HOST=10.233.200.2
 TELEGRAM_PROXY_PORT=8888
+TELEGRAM_GET_UPDATES_TIMEOUT_SECONDS=20
 ```
 
 5. Restart only:

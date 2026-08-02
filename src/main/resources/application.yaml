@@ -164,6 +164,7 @@ telegram:
     enabled: ${TELEGRAM_BOT_ENABLED:false}
     token: ${TELEGRAM_BOT_TOKEN:}
     username: ${TELEGRAM_BOT_USERNAME:astor_butler_bot}
+    get-updates-timeout-seconds: ${TELEGRAM_GET_UPDATES_TIMEOUT_SECONDS:20}
     proxy:
       type: ${TELEGRAM_PROXY_TYPE:NO_PROXY}
       host: ${TELEGRAM_PROXY_HOST:}

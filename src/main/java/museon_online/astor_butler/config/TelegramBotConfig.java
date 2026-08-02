@@ -35,6 +35,9 @@ public class TelegramBotConfig {
     @Value("${telegram.bot.proxy.port:0}")
     private int proxyPort;
 
+    @Value("${telegram.bot.get-updates-timeout-seconds:20}")
+    private int getUpdatesTimeoutSeconds;
+
     @Bean
     @ConditionalOnProperty(prefix = "telegram.bot", name = "enabled", havingValue = "true", matchIfMissing = true)
     public TelegramBotsApi telegramBotsApi() throws TelegramApiException {
@@ -79,6 +82,7 @@ public class TelegramBotConfig {
 
     public DefaultBotOptions botOptions() {
         DefaultBotOptions options = new DefaultBotOptions();
+        options.setGetUpdatesTimeout(Math.max(1, getUpdatesTimeoutSeconds));
         DefaultBotOptions.ProxyType type = proxyType();
         options.setProxyType(type);
         if (type != DefaultBotOptions.ProxyType.NO_PROXY) {
