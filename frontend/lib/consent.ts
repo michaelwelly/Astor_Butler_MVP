@@ -17,6 +17,7 @@ export type ConsentEvidence = {
   privacyAccepted: boolean;
   policyVersion: string;
   acceptedAt: string; // ISO
+  source?: "web-chat-message" | "web-chat-voice" | "web-chat-telegram-handoff";
 };
 
 const CONSENT_KEY = "c3flex.consent";
@@ -39,11 +40,12 @@ export function hasConsent(): boolean {
   return getConsent()?.privacyAccepted === true;
 }
 
-export function acceptConsent(): ConsentEvidence {
+export function acceptConsent(source: ConsentEvidence["source"] = "web-chat-message"): ConsentEvidence {
   const evidence: ConsentEvidence = {
     privacyAccepted: true,
     policyVersion: CURRENT_POLICY.version,
     acceptedAt: new Date().toISOString(),
+    source,
   };
   try {
     if (typeof window !== "undefined") {

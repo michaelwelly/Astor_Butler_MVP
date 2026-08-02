@@ -3,7 +3,7 @@
 import { ArrowUpRight, Bot, BriefcaseBusiness, Clapperboard, Film, Sparkles } from "lucide-react";
 import { RevealLines } from "@/components/ui/RevealLines";
 import { askButler } from "@/lib/chat-bus";
-import { CLIO_AVATAR, CLIO_NAME } from "@/lib/clio-persona";
+import { CLIO_AVATAR, CLIO_NAME, CLIO_SUBTITLE } from "@/lib/clio-persona";
 
 const PREVIEW_MESSAGES = [
   {
@@ -12,7 +12,7 @@ const PREVIEW_MESSAGES = [
   },
   {
     from: "butler",
-    text: "Я Clio, ассистентка по брифу. Вижу ресторанный сценарий и помогу собрать задачу, дату, бюджет и контекст для команды.",
+    text: "Я Clio, AI-ассистентка C3 Studio. Вижу ресторанный сценарий и помогу собрать задачу, дату, бюджет и контекст для команды.",
   },
   {
     from: "butler",
@@ -87,7 +87,7 @@ export function Contact() {
       <div className="butler-window" aria-label="Пример диалога с Clio">
         <div className="butler-window-top">
           <span>{CLIO_NAME}</span>
-          <small>ассистентка по брифу</small>
+          <small>{CLIO_SUBTITLE}</small>
         </div>
         <div className="butler-dialog">
           {PREVIEW_MESSAGES.map((message, index) => (

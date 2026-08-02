@@ -11,6 +11,7 @@ import { ConsentNotice } from "@/components/ui/ConsentNotice";
 import { CyclingLine } from "@/components/ui/CyclingLine";
 import { HINT_CHAT_SEEN, learned, markLearned } from "@/lib/session-hint";
 import { CLIO_AVATAR, CLIO_GREETING, CLIO_NAME, CLIO_REPLY_TIME } from "@/lib/clio-persona";
+import { CLIO_SUBTITLE } from "@/lib/clio-persona";
 import {
   browserVoiceAvailability,
   browserVoiceErrorMessage,
@@ -19,8 +20,9 @@ import {
   readClioVoiceClientConfig,
   type ClioVoiceStatus,
 } from "@/lib/clio-voice";
+import { readTelegramHandoffConfig, telegramHandoffDisabledCopy } from "@/lib/telegram-handoff";
 
-type Message = { from: "bot" | "user"; text: string; kind?: "privacy_intro" };
+type Message = { from: "bot" | "user"; text: string; kind?: "privacy_intro" | "telegram_handoff" };
 
 const INITIAL_MESSAGES: Message[] = [
   {
@@ -86,9 +88,11 @@ export function ChatWidget({ inline, selectedVideo = null, quickAsks = QUICK_ASK
   const [sending, setSending] = useState(false);
   const [pendingText, setPendingText] = useState<string | null>(null);
   const [pendingVoiceConsent, setPendingVoiceConsent] = useState(false);
+  const [pendingTelegramConsent, setPendingTelegramConsent] = useState(false);
   const [voiceStatus, setVoiceStatus] = useState<ClioVoiceStatus>("idle");
   const [voiceError, setVoiceError] = useState<string | null>(null);
   const voiceConfig = readClioVoiceClientConfig();
+  const telegramConfig = readTelegramHandoffConfig();
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const recorderRef = useRef<MediaRecorder | null>(null);
@@ -121,6 +125,7 @@ export function ChatWidget({ inline, selectedVideo = null, quickAsks = QUICK_ASK
     messages.some((m) => m.from === "user") ||
     pendingText !== null ||
     pendingVoiceConsent ||
+    pendingTelegramConsent ||
     voiceStatus !== "idle";
 
   useEffect(() => {
@@ -193,7 +198,18 @@ export function ChatWidget({ inline, selectedVideo = null, quickAsks = QUICK_ASK
   };
 
   const onConsentAccept = () => {
-    acceptConsent();
+    acceptConsent(
+      pendingTelegramConsent
+        ? "web-chat-telegram-handoff"
+        : pendingVoiceConsent
+          ? "web-chat-voice"
+          : "web-chat-message",
+    );
+    if (pendingTelegramConsent) {
+      setPendingTelegramConsent(false);
+      openTelegramHandoff();
+      return;
+    }
     if (pendingVoiceConsent) {
       setPendingVoiceConsent(false);
       void startVoiceCapture();
@@ -202,6 +218,32 @@ export function ChatWidget({ inline, selectedVideo = null, quickAsks = QUICK_ASK
     const text = pendingText;
     setPendingText(null);
     if (text) void deliver(text);
+  };
+
+  const openTelegramHandoff = () => {
+    if (!telegramConfig.enabled) return;
+    persistSessionId(getSessionId());
+    persistChatId(getTempChatId());
+    setMessages((prev) => [
+      ...prev,
+      {
+        from: "bot",
+        kind: "telegram_handoff",
+        text:
+          "Открою Telegram. Номер телефона или Telegram-контакт передаётся только если вы сами подтвердите это внутри Telegram.",
+      },
+    ]);
+    window.open(telegramConfig.url, "_blank", "noopener,noreferrer");
+  };
+
+  const requestTelegramHandoff = () => {
+    if (!telegramConfig.enabled) return;
+    if (mode === "spotlight") setMode("full");
+    if (!hasConsent()) {
+      setPendingTelegramConsent(true);
+      return;
+    }
+    openTelegramHandoff();
   };
 
   const transcribeVoice = async (audio: Blob) => {
@@ -368,7 +410,7 @@ export function ChatWidget({ inline, selectedVideo = null, quickAsks = QUICK_ASK
             <span className="chat-spotlight-placeholder">
               <CyclingLine items={LAUNCHER_PROMPTS} interval={3800} />
             </span>
-            <span className="chat-spotlight-meta">{CLIO_NAME} · {CLIO_REPLY_TIME}</span>
+        <span className="chat-spotlight-meta">{CLIO_NAME} · {CLIO_REPLY_TIME}</span>
           </span>
         </motion.button>
       </div>
@@ -390,7 +432,7 @@ export function ChatWidget({ inline, selectedVideo = null, quickAsks = QUICK_ASK
           </span>
           <div className="chat-header-text">
             <strong>{CLIO_NAME}</strong>
-            <span>ассистентка по брифу · {CLIO_REPLY_TIME}</span>
+            <span>{CLIO_SUBTITLE} · {CLIO_REPLY_TIME}</span>
           </div>
           {!inline && (
             <button type="button" onClick={() => setMode("spotlight")} aria-label="Свернуть чат">
@@ -430,9 +472,27 @@ export function ChatWidget({ inline, selectedVideo = null, quickAsks = QUICK_ASK
           <div ref={bottomRef} />
         </div>
 
+        {!messages.some((m) => m.from === "user") && (
+          <section className="chat-intro-card" aria-label="Что умеет Clio">
+            <p>
+              Clio помогает выбрать продукт, уточнить смету и сроки, собрать короткий бриф
+              и подготовить разговор с продюсером.
+            </p>
+            <ul>
+              <li>подобрать формат</li>
+              <li>разобрать бюджет</li>
+              <li>собрать бриф</li>
+              <li>передать команде</li>
+            </ul>
+            {!voiceConfig.voiceEnabled && (
+              <small>Голосовой ввод включим после HTTPS и SpeechKit-конфигурации.</small>
+            )}
+          </section>
+        )}
+
         {/* One tap = a sent message. Gone as soon as the conversation is real,
             so they never sit under an ongoing exchange. */}
-        {!messages.some((m) => m.from === "user") && !pendingText && !pendingVoiceConsent && (
+        {!messages.some((m) => m.from === "user") && !pendingText && !pendingVoiceConsent && !pendingTelegramConsent && (
           <div className="chat-asks">
             {[...quickAsks, ...CLIO_VOICE_STARTERS]
               .filter((ask, index, arr) => arr.indexOf(ask) === index)
@@ -451,8 +511,25 @@ export function ChatWidget({ inline, selectedVideo = null, quickAsks = QUICK_ASK
           </div>
         )}
 
+        <div className="chat-telegram-handoff" data-enabled={telegramConfig.enabled ? "true" : "false"}>
+          <button
+            type="button"
+            className="chat-telegram-button"
+            onClick={requestTelegramHandoff}
+            disabled={!telegramConfig.enabled}
+            aria-disabled={!telegramConfig.enabled}
+          >
+            Продолжить в Telegram
+          </button>
+          <p>
+            {telegramConfig.enabled
+              ? "Откроется подтверждённый бот. Контакт попросим отдельно в Telegram, только через ваше явное действие."
+              : telegramHandoffDisabledCopy(telegramConfig)}
+          </p>
+        </div>
+
         <AnimatePresence>
-          {(pendingText || pendingVoiceConsent) && (
+          {(pendingText || pendingVoiceConsent || pendingTelegramConsent) && (
             <motion.div
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: "auto" }}
@@ -463,6 +540,7 @@ export function ChatWidget({ inline, selectedVideo = null, quickAsks = QUICK_ASK
                 onDecline={() => {
                   setPendingText(null);
                   setPendingVoiceConsent(false);
+                  setPendingTelegramConsent(false);
                 }}
               />
             </motion.div>
