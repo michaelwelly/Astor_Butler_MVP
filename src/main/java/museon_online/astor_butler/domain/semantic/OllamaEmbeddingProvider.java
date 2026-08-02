@@ -1,6 +1,8 @@
 package museon_online.astor_butler.domain.semantic;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -17,6 +19,7 @@ import java.util.Map;
 public class OllamaEmbeddingProvider implements EmbeddingProvider {
 
     private final RestClient restClient;
+    private final ObjectMapper objectMapper = new ObjectMapper();
     private final String model;
 
     public OllamaEmbeddingProvider(
@@ -37,17 +40,28 @@ public class OllamaEmbeddingProvider implements EmbeddingProvider {
     @Override
     public List<Double> embed(String text) {
         String input = text == null ? "" : text;
-        JsonNode response = restClient.post()
+        String response = restClient.post()
                 .uri("/api/embed")
                 .body(Map.of("model", model, "input", input))
                 .retrieve()
-                .body(JsonNode.class);
+                .body(String.class);
 
-        List<Double> embedding = readEmbedResponse(response);
+        List<Double> embedding = readEmbedResponse(parse(response));
         if (embedding.isEmpty()) {
             log.warn("Ollama embedding response was empty for model={}", model);
         }
         return embedding;
+    }
+
+    private JsonNode parse(String response) {
+        if (response == null || response.isBlank()) {
+            return null;
+        }
+        try {
+            return objectMapper.readTree(response);
+        } catch (JsonProcessingException e) {
+            throw new IllegalStateException("Cannot parse Ollama embedding response", e);
+        }
     }
 
     private List<Double> readEmbedResponse(JsonNode response) {
