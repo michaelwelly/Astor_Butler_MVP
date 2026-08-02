@@ -383,11 +383,11 @@ Routing policy:
 - `timeout/fallback`: if a provider times out, the scenario receives a typed failure and uses state-specific deterministic fallback or recovery.
 - `shadow/learner`: a second local model may evaluate prompts or collect comparison data, but never blocks the guest flow. In local MVP terms this is the `QUALITY` profile.
 
-The Java code depends on `ModelGateway`/capability contracts, not on concrete providers from FSM or message services. Current default text provider is `SpringAiOllamaModelGateway`, which wraps Spring AI `OllamaChatModel` and keeps raw `OllamaClient` as a local fallback. The same boundary now owns embeddings through `ModelGateway.generateEmbedding(...)`: AERIS runtime uses `ASTOR_SEMANTIC_EMBEDDINGS_PROVIDER=model-gateway` with local Ollama `nomic-embed-text`, while direct `spring-ai` and `ollama` embedding providers remain diagnostic/legacy options. Vision now has the same boundary through `ModelGateway.analyzeImage(...)`; the first local adapter calls Ollama `/api/chat` with image payloads and defaults to `LLM_OLLAMA_VISION_MODEL=qwen2.5vl:3b`. `OllamaModelGateway` remains available via `ASTOR_MODEL_PROVIDER=ollama-raw`. STT command service and Natasha adapter are implementation details behind the same boundary.
+The Java code depends on `ModelGateway`/capability contracts, not on concrete providers from FSM or message services. Production AERIS uses `YandexModelGateway` for text generation and embeddings through Yandex AI Studio APIs. `ModelGateway.generateEmbedding(...)` writes vectors into PostgreSQL `pgvector`: `text-search-doc/latest` indexes chunks and `text-search-query/latest` embeds retrieval queries. Local Ollama/Spring AI adapters remain dev/diagnostic options only; they are not the production RAG path. Vision keeps the same boundary through `ModelGateway.analyzeImage(...)` and should use a managed provider when production credentials and safety checks are approved. STT command service and Natasha adapter are implementation details behind the same boundary.
 
 Future provider adapters must keep the same boundary:
 
-- OpenAI-compatible text/vision/embedding providers can replace local Ollama when quality or latency matters more than local CPU cost.
+- API text/vision/embedding providers can replace each other behind `ModelGateway`, but RAG vectors still persist and search in PostgreSQL `pgvector`.
 - YandexGPT/Alisa integration is a provider adapter, not a direct dependency of FSM scenarios.
 - MAX, Meta Instagram and WhatsApp are transport adapters. They normalize inbound events into the same `MessageGatewayService` contract and must not fork business logic away from Telegram/Web.
 - Telephony/SIP providers are transport adapters. STT/TTS live behind Model Gateway capability contracts; call control lives behind telephony adapter/domain ports.
@@ -721,7 +721,7 @@ First use cases:
 - FSM/spec-aware semantic routing;
 - future "why did the bot route this request here?" diagnostics.
 
-Dedicated vector databases such as Qdrant, Weaviate, Milvus or Pinecone remain future options. The migration path is straightforward because scenario code must depend on a `SemanticMemoryRepository` port, not on raw SQL.
+External vector databases such as Qdrant, Weaviate, Milvus or Pinecone are not part of the AERIS production plan. Scenario code depends on `SemanticMemoryRepository`, but the approved production store is the current PostgreSQL with `pgvector`, not a separate vector service.
 
 ### MongoDB
 

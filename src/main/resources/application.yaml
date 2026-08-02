@@ -72,7 +72,8 @@ astor:
       default-model: ${ASTOR_SEMANTIC_EMBEDDING_MODEL:text-embedding-3-small}
     embeddings:
       provider: ${ASTOR_SEMANTIC_EMBEDDINGS_PROVIDER:none}
-      model: ${ASTOR_SEMANTIC_EMBEDDING_MODEL:nomic-embed-text}
+      model: ${ASTOR_SEMANTIC_EMBEDDING_MODEL:text-search-doc/latest}
+      query-model: ${ASTOR_SEMANTIC_QUERY_EMBEDDING_MODEL:text-search-query/latest}
       ollama-base-url: ${ASTOR_SEMANTIC_OLLAMA_BASE_URL:${LLM_OLLAMA_BASE_URL:http://localhost:11434}}
     intent-examples:
       ingest-golden-corpus-on-startup: ${ASTOR_INTENT_EXAMPLES_INGEST_ON_STARTUP:false}
@@ -120,8 +121,8 @@ astor:
     telegram:
       public-channel:
         enabled: ${ASTOR_AERIS_CHANNEL_INGEST_ENABLED:true}
-        scheduled-enabled: ${ASTOR_AERIS_CHANNEL_INGEST_SCHEDULED_ENABLED:false}
-        fixed-delay-ms: ${ASTOR_AERIS_CHANNEL_INGEST_FIXED_DELAY_MS:1800000}
+        scheduled-enabled: ${ASTOR_AERIS_CHANNEL_INGEST_SCHEDULED_ENABLED:true}
+        fixed-delay-ms: ${ASTOR_AERIS_CHANNEL_INGEST_FIXED_DELAY_MS:3600000}
         timeout-seconds: ${ASTOR_AERIS_CHANNEL_INGEST_TIMEOUT_SECONDS:8}
         asset-mirroring-enabled: ${ASTOR_AERIS_CHANNEL_ASSET_MIRRORING_ENABLED:true}
         asset-timeout-seconds: ${ASTOR_AERIS_CHANNEL_ASSET_TIMEOUT_SECONDS:12}

@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -99,14 +100,39 @@ public class YandexModelGateway implements ModelGateway {
 
     @Override
     public ModelEmbeddingResponse generateEmbedding(ModelEmbeddingRequest request) {
+        String modelUri = embeddingModelUri(request.model(), request.purpose());
+        long startedAt = System.nanoTime();
+
+        ResponseEntity<Map> response = restTemplate.exchange(
+                baseUrl + "/foundationModels/v1/textEmbedding",
+                HttpMethod.POST,
+                new HttpEntity<>(Map.of(
+                        "modelUri", modelUri,
+                        "text", request.text() == null ? "" : request.text()
+                ), headers()),
+                Map.class
+        );
+
+        Duration latency = Duration.ofNanos(System.nanoTime() - startedAt);
+        Map<?, ?> body = response.getBody() == null ? Map.of() : response.getBody();
+        List<Double> embedding = readEmbedding(resultBody(body));
+        log.debug(
+                "ModelGateway embedding provider=yandex-ai model={} scenario={} state={} purpose={} dimension={} latencyMs={}",
+                modelUri,
+                request.scenario(),
+                request.state(),
+                request.purpose(),
+                embedding.size(),
+                latency.toMillis()
+        );
         return new ModelEmbeddingResponse(
-                List.of(),
+                embedding,
                 "yandex-ai",
-                request.model() == null ? "" : request.model(),
+                modelUri,
                 ModelCapability.EMBEDDING,
-                Duration.ZERO,
-                true,
-                Map.of("reason", "Yandex embedding provider is not wired through ModelGateway yet")
+                latency,
+                embedding.isEmpty(),
+                Map.of("dimension", embedding.size())
         );
     }
 
@@ -166,6 +192,22 @@ public class YandexModelGateway implements ModelGateway {
         return "gpt://" + folderId + "/" + model;
     }
 
+    private String embeddingModelUri(String model, String purpose) {
+        String selected = blankToNull(model);
+        if (selected == null) {
+            selected = purpose != null && purpose.toLowerCase(java.util.Locale.ROOT).contains("query")
+                    ? "text-search-query/latest"
+                    : "text-search-doc/latest";
+        }
+        if (selected.startsWith("emb://")) {
+            return selected;
+        }
+        if (folderId == null) {
+            throw new IllegalStateException("Yandex folder ID is required for embedding model alias: set YANDEX_FOLDER_ID");
+        }
+        return "emb://" + folderId + "/" + selected.replaceFirst("^/+", "");
+    }
+
     private boolean expectsJson(ModelTextRequest request) {
         Object metadataFlag = request.metadata().get("jsonObject");
         if (metadataFlag instanceof Boolean flag) {
@@ -190,6 +232,22 @@ public class YandexModelGateway implements ModelGateway {
         }
         Object text = messageMap.get("text");
         return text == null ? "" : text.toString();
+    }
+
+    private List<Double> readEmbedding(Map<?, ?> body) {
+        Object value = body.get("embedding");
+        if (!(value instanceof List<?> list)) {
+            return List.of();
+        }
+        List<Double> embedding = new ArrayList<>(list.size());
+        for (Object item : list) {
+            if (item instanceof Number number) {
+                embedding.add(number.doubleValue());
+            } else if (item != null) {
+                embedding.add(Double.parseDouble(item.toString()));
+            }
+        }
+        return embedding;
     }
 
     private Map<?, ?> resultBody(Map<?, ?> body) {

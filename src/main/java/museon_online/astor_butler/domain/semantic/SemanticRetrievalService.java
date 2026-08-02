@@ -24,7 +24,7 @@ public class SemanticRetrievalService {
             if (provider == null) {
                 return List.of();
             }
-            List<Double> embedding = provider.embed(query);
+            List<Double> embedding = provider.embedQuery(query);
             if (embedding.isEmpty()) {
                 return List.of();
             }

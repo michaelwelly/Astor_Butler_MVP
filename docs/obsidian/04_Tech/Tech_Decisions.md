@@ -488,6 +488,20 @@ FSM управляет состоянием диалога, разрешенны
 - Duckling вынесен в отдельный spike, не в runtime: `docs/research/NLU_TOOLS_SPIKE.md` и `scripts/spike_russian_nlu_tools.py`. Natasha остается runtime-сервисом в compose profile `nlu`.
 - Добавлен AERIS content read API:
   - `GET /api/content/aeris/menu-assets`;
+
+## AERIS API-first RAG Runtime 2026-08-02
+
+- Пользователь уточнил production direction: локальные LLM/embedding модели не нужны в AERIS runtime; text generation и embeddings идут через API provider.
+- `YandexModelGateway.generateEmbedding(...)` теперь вызывает Yandex AI Studio `POST /foundationModels/v1/textEmbedding`.
+- Для индексации документов используется `text-search-doc/latest`, для retrieval-запросов `text-search-query/latest`; оба строят `emb://<folder>/...` model URI из `YANDEX_FOLDER_ID`.
+- Vector store остается строго текущий PostgreSQL + `pgvector`; внешние vector DB не используются.
+- Production compose defaults: `ASTOR_MODEL_PROVIDER=yandex`, `ASTOR_SEMANTIC_EMBEDDINGS_PROVIDER=model-gateway`, `ASTOR_SEMANTIC_EMBEDDING_MODEL=text-search-doc/latest`, `ASTOR_SEMANTIC_QUERY_EMBEDDING_MODEL=text-search-query/latest`.
+- Локальные Ollama/Spring AI adapters остаются только dev/diagnostic fallback, не production path.
+- Добавлена сущность Astor как цифровой дворецкий AERIS и DB registry источников: официальный сайт, Yandex Maps, 2GIS, Instagram reference, Telegram public channel.
+- Автоматически включен только текущий реализованный source: Telegram public channel ingest `https://t.me/s/aeris_gastrobar` с часовым interval. Остальные источники disabled до adapter/legal review.
+- Future review/social blocks разделены:
+  - Review Distribution: публикация одного подтвержденного отзыва в подключенные соцсети гостя только после consent + preview + final confirmation.
+  - Guest Media Insights: анализ пользовательских Instagram/media материалов только opt-in и только в practical service preference categories; скрытый психологический портрет и sensitive inferences запрещены.
   - `GET /api/content/aeris/quiet-guide?prompt=...`.
 - `menu-assets` возвращает 4 активных PDF меню из PostgreSQL `media_assets` / `AerisMediaCatalog` с MinIO public URL и `ragSource`.
 - `quiet-guide` возвращает интерьер-видео, approved concept copy и активные посты AERIS channel ingest с mirrored assets, если они есть в `venue_content_posts/assets`.

@@ -19,6 +19,9 @@ public class ModelGatewayEmbeddingProvider implements EmbeddingProvider {
     @Value("${astor.semantic-memory.embeddings.model:nomic-embed-text}")
     private String model;
 
+    @Value("${astor.semantic-memory.embeddings.query-model:}")
+    private String queryModel;
+
     @Override
     public String model() {
         return model == null || model.isBlank() ? "nomic-embed-text" : model;
@@ -31,7 +34,22 @@ public class ModelGatewayEmbeddingProvider implements EmbeddingProvider {
                 model(),
                 "SemanticMemory",
                 null,
-                "embedding"
+                "embedding-document"
         )).embedding();
+    }
+
+    @Override
+    public List<Double> embedQuery(String text) {
+        return modelGateway.generateEmbedding(ModelEmbeddingRequest.of(
+                text,
+                queryModel(),
+                "SemanticMemory",
+                null,
+                "embedding-query"
+        )).embedding();
+    }
+
+    private String queryModel() {
+        return queryModel == null || queryModel.isBlank() ? model() : queryModel.trim();
     }
 }

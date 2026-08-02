@@ -6,6 +6,7 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.client.MockRestServiceServer;
 
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -138,6 +139,90 @@ class YandexModelGatewayTest {
                 "completionTokens", "12",
                 "totalTokens", "102"
         ));
+        server.verify();
+    }
+
+    @Test
+    void generateEmbeddingUsesYandexTextEmbeddingContractAndParsesVector() {
+        AtomicReference<MockRestServiceServer> serverRef = new AtomicReference<>();
+        YandexModelGateway gateway = new YandexModelGateway(
+                new RestTemplateBuilder(restTemplate ->
+                        serverRef.set(MockRestServiceServer.bindTo(restTemplate).build())),
+                "https://llm.test",
+                "folder-123",
+                "api-key-123",
+                "",
+                "yandexgpt-5-lite",
+                "yandexgpt-5.1",
+                8000,
+                128,
+                0.0
+        );
+        MockRestServiceServer server = serverRef.get();
+
+        server.expect(once(), requestTo("https://llm.test/foundationModels/v1/textEmbedding"))
+                .andExpect(method(HttpMethod.POST))
+                .andExpect(header("Authorization", "Api-Key api-key-123"))
+                .andExpect(jsonPath("$.modelUri").value("emb://folder-123/text-search-doc/latest"))
+                .andExpect(jsonPath("$.text").value("AERIS - гастробар"))
+                .andRespond(withSuccess("""
+                        {
+                          "embedding": [0.11, -0.22, 0.33],
+                          "numTokens": "7"
+                        }
+                        """, MediaType.APPLICATION_JSON));
+
+        ModelEmbeddingResponse response = gateway.generateEmbedding(ModelEmbeddingRequest.of(
+                "AERIS - гастробар",
+                "text-search-doc/latest",
+                "SemanticMemory",
+                null,
+                "embedding-document"
+        ));
+
+        assertThat(response.embedding()).containsExactlyElementsOf(List.of(0.11, -0.22, 0.33));
+        assertThat(response.provider()).isEqualTo("yandex-ai");
+        assertThat(response.model()).isEqualTo("emb://folder-123/text-search-doc/latest");
+        assertThat(response.fallback()).isFalse();
+        assertThat(response.metadata().get("dimension")).isEqualTo(3);
+        server.verify();
+    }
+
+    @Test
+    void generateEmbeddingUsesQueryModelWhenModelAliasIsBlankAndPurposeIsQuery() {
+        AtomicReference<MockRestServiceServer> serverRef = new AtomicReference<>();
+        YandexModelGateway gateway = new YandexModelGateway(
+                new RestTemplateBuilder(restTemplate ->
+                        serverRef.set(MockRestServiceServer.bindTo(restTemplate).build())),
+                "https://llm.test",
+                "folder-123",
+                "api-key-123",
+                "",
+                "yandexgpt-5-lite",
+                "yandexgpt-5.1",
+                8000,
+                128,
+                0.0
+        );
+        MockRestServiceServer server = serverRef.get();
+
+        server.expect(once(), requestTo("https://llm.test/foundationModels/v1/textEmbedding"))
+                .andExpect(method(HttpMethod.POST))
+                .andExpect(jsonPath("$.modelUri").value("emb://folder-123/text-search-query/latest"))
+                .andRespond(withSuccess("""
+                        {"result": {"embedding": ["0.1", "0.2"]}}
+                        """, MediaType.APPLICATION_JSON));
+
+        ModelEmbeddingResponse response = gateway.generateEmbedding(ModelEmbeddingRequest.of(
+                "винная карта",
+                "",
+                "SemanticMemory",
+                null,
+                "embedding-query"
+        ));
+
+        assertThat(response.embedding()).containsExactly(0.1, 0.2);
+        assertThat(response.model()).isEqualTo("emb://folder-123/text-search-query/latest");
         server.verify();
     }
 }

@@ -151,15 +151,15 @@ flowchart TD
 
 ## Model Gateway / органы восприятия
 
-`Model Gateway` - целевой сменный AI-provider слой. Он нужен, чтобы сценарии не зависели напрямую от Ollama, Qwen, OpenAI, STT-команды или VLM-контейнера. Текущий text-generation provider: Spring AI `OllamaChatModel` внутри `SpringAiOllamaModelGateway`; raw Ollama оставлен как fallback. Embeddings идут через `ModelGateway.generateEmbedding(...)`, а vision через `ModelGateway.analyzeImage(...)`.
+`Model Gateway` - целевой сменный AI-provider слой. Он нужен, чтобы сценарии не зависели напрямую от YandexGPT, Ollama, OpenAI, STT-команды или VLM-контейнера. Production AERIS идет через Yandex API для text generation и embeddings; локальные Ollama/Qwen adapters оставлены только как dev/diagnostic режимы. Embeddings идут через `ModelGateway.generateEmbedding(...)`, а vision через `ModelGateway.analyzeImage(...)`.
 
 | Capability | Локальный MVP | Production fallback | Роль в системе |
 | --- | --- | --- | --- |
-| Язык / LLM | Qwen/Ollama text model: `FRONTLINE=qwen2.5:1.5b`, `QUALITY=qwen2.5:3b` | OpenAI или совместимый API | Живые ответы, summary, entity extraction, помощь в неоднозначных intent. |
-| Глаза / VLM | `qwen2.5vl:3b` через Ollama `/api/chat` images; позже OCR/OpenCV для deterministic parts | OpenAI vision или managed VLM | План зала, фото гостя, отметки на изображении, documents understanding. |
+| Язык / LLM | YandexGPT через API | dev/diagnostic Ollama или другой совместимый API | Живые ответы, summary, entity extraction, помощь в неоднозначных intent. |
+| Глаза / VLM | Managed vision/OCR adapter later | dev/diagnostic Ollama vision | План зала, фото гостя, отметки на изображении, documents understanding. |
 | Уши / STT | faster-whisper | managed STT | Telegram voice/audio -> transcript. |
 | Голос / TTS | выключено в MVP | future TTS provider | Accessibility/voice replies later. |
-| Embeddings | pgvector + approved corpus | cloud embeddings при необходимости | Похожие фразы, RAG по меню, инструкции, сценарные подсказки. |
+| Embeddings | Yandex AI Studio embeddings API + PostgreSQL pgvector | dev/diagnostic local embeddings only | Похожие фразы, RAG по меню, инструкции, сценарные подсказки. |
 
 Правило: Model Gateway возвращает только `candidates`, `slots`, `confidence`, `summary` или `text`. FSM и domain services решают, можно ли двигать state, создавать order, hold, payment, bid или cancellation.
 
@@ -327,9 +327,9 @@ flowchart LR
 - optional startup ingest: `ASTOR_INTENT_EXAMPLES_INGEST_ON_STARTUP=true`;
 - embeddings provider: `ASTOR_SEMANTIC_EMBEDDINGS_PROVIDER=none|model-gateway|spring-ai|ollama`;
 - default AERIS runtime provider: `model-gateway`, so embeddings go through the same `ModelGateway` boundary as text generation;
-- `ModelGatewayEmbeddingProvider` calls `ModelGateway.generateEmbedding(...)`; the active Spring AI implementation uses local Ollama `nomic-embed-text` and raw Ollama only as fallback;
+- production AERIS embeddings use Yandex AI Studio `textEmbedding`: `text-search-doc/latest` for indexing chunks and `text-search-query/latest` for retrieval queries;
 - VLM capability: `ModelGateway.analyzeImage(...)` accepts image base64 + prompt and defaults to `LLM_OLLAMA_VISION_MODEL=qwen2.5vl:3b`; it returns candidates/text for FSM review, not direct orders;
-- legacy diagnostics remain available: `SpringAiEmbeddingProvider` with a direct Spring AI `EmbeddingModel` bean (`spring-ai`) and `OllamaEmbeddingProvider` with direct `/api/embed` (`ollama`);
+- legacy diagnostics remain available: `SpringAiEmbeddingProvider` with a direct Spring AI `EmbeddingModel` bean (`spring-ai`) and `OllamaEmbeddingProvider` with direct `/api/embed` (`ollama`), but they are not the production path;
 - Runtime NLU: state-aware rules + `NatashaRussianNluAdapter` for Russian morphology/noisy STT. `DucklingRussianNluAdapter` remains an archived experimental adapter behind `ASTOR_NLU_DUCKLING_ENABLED=false`, not part of Docker Compose runtime or the default AERIS booking path.
 
 Контракт слоя:

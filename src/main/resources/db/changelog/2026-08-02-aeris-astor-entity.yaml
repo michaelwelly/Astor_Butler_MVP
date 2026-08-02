@@ -1,0 +1,9 @@
+databaseChangeLog:
+  - changeSet:
+      id: 2026-08-02-aeris-astor-entity
+      author: codex
+      changes:
+        - sqlFile:
+            path: db/changelog/2026-08-02-aeris-astor-entity.sql
+            relativeToChangelogFile: false
+            splitStatements: false

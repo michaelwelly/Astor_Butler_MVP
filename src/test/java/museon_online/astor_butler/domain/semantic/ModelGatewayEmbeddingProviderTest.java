@@ -19,7 +19,7 @@ import static org.mockito.Mockito.when;
 class ModelGatewayEmbeddingProviderTest {
 
     @Test
-    void delegatesEmbeddingGenerationToModelGateway() {
+    void delegatesDocumentEmbeddingGenerationToModelGateway() {
         ModelGateway modelGateway = mock(ModelGateway.class);
         when(modelGateway.generateEmbedding(any(ModelEmbeddingRequest.class)))
                 .thenReturn(ModelEmbeddingResponse.embedding(
@@ -40,6 +40,30 @@ class ModelGatewayEmbeddingProviderTest {
         assertThat(request.getValue().text()).isEqualTo("стол на завтра на двоих");
         assertThat(request.getValue().model()).isEqualTo("nomic-embed-text");
         assertThat(request.getValue().scenario()).isEqualTo("SemanticMemory");
-        assertThat(request.getValue().purpose()).isEqualTo("embedding");
+        assertThat(request.getValue().purpose()).isEqualTo("embedding-document");
+    }
+
+    @Test
+    void delegatesQueryEmbeddingGenerationWithSeparateQueryModel() {
+        ModelGateway modelGateway = mock(ModelGateway.class);
+        when(modelGateway.generateEmbedding(any(ModelEmbeddingRequest.class)))
+                .thenReturn(ModelEmbeddingResponse.embedding(
+                        List.of(0.7, 0.8),
+                        "test-provider",
+                        "emb://folder/text-search-query/latest",
+                        Duration.ofMillis(9)
+                ));
+
+        ModelGatewayEmbeddingProvider provider = new ModelGatewayEmbeddingProvider(modelGateway);
+        ReflectionTestUtils.setField(provider, "model", "text-search-doc/latest");
+        ReflectionTestUtils.setField(provider, "queryModel", "text-search-query/latest");
+
+        List<Double> embedding = provider.embedQuery("что есть по вину");
+
+        assertThat(embedding).containsExactly(0.7, 0.8);
+        ArgumentCaptor<ModelEmbeddingRequest> request = ArgumentCaptor.forClass(ModelEmbeddingRequest.class);
+        verify(modelGateway).generateEmbedding(request.capture());
+        assertThat(request.getValue().model()).isEqualTo("text-search-query/latest");
+        assertThat(request.getValue().purpose()).isEqualTo("embedding-query");
     }
 }

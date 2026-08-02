@@ -432,3 +432,19 @@ Saby: локальный repo/docs/Obsidian и non-secret runtime config не с
 - scoped API smoke `покажи винную карту` вернул deterministic `MENU_ASSETS_DELIVERED` с `AERIS_MENU_WINE`, без LLM fan-out.
 
 Runbook: `docs/operations/TELEGRAM_WIREGUARD_EGRESS_RUNBOOK.md`.
+
+## Дополнение 2026-08-02. API-first RAG / Astor entity / source registry
+
+- Production RAG переводится с локального Ollama embeddings path на API-first provider через `YandexModelGateway`.
+- Embeddings генерируются Yandex AI Studio `textEmbedding`: `text-search-doc/latest` для документов и `text-search-query/latest` для retrieval-запросов.
+- Vector store остается PostgreSQL `pgvector` на VM; внешняя vector DB не используется.
+- В БД добавляются:
+  - `venue_profiles` для публичного профиля AERIS;
+  - `astor_assistant_profiles` для сущности Astor как цифрового дворецкого AERIS;
+  - `venue_monitored_sources` для официального сайта, Yandex Maps, 2GIS, Instagram reference и текущего Telegram public channel ingest;
+  - disabled boundaries для Review Distribution и consented guest media insights.
+- Автоматически включен только уже реализованный `AERIS_TELEGRAM_PUBLIC_CHANNEL` ingest с часовым interval. Остальные источники ждут adapter/legal review.
+- Instagram/media анализ гостя допустим только opt-in и как practical service preference insights, не как скрытый психологический портрет или sensitive inference.
+- Добавлены smoke scripts:
+  - `scripts/probe_yandex_reply.mjs`;
+  - `scripts/smoke_system_logging.mjs`.
