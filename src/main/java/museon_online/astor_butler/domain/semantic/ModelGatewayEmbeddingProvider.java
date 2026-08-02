@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
+import java.time.Duration;
 import java.util.List;
 
 @Component
@@ -22,6 +23,9 @@ public class ModelGatewayEmbeddingProvider implements EmbeddingProvider {
     @Value("${astor.semantic-memory.embeddings.query-model:}")
     private String queryModel;
 
+    @Value("${astor.semantic-memory.embeddings.throttle-ms:0}")
+    private long throttleMs;
+
     @Override
     public String model() {
         return model == null || model.isBlank() ? "nomic-embed-text" : model;
@@ -29,6 +33,7 @@ public class ModelGatewayEmbeddingProvider implements EmbeddingProvider {
 
     @Override
     public List<Double> embed(String text) {
+        throttleIfConfigured();
         return modelGateway.generateEmbedding(ModelEmbeddingRequest.of(
                 text,
                 model(),
@@ -40,6 +45,7 @@ public class ModelGatewayEmbeddingProvider implements EmbeddingProvider {
 
     @Override
     public List<Double> embedQuery(String text) {
+        throttleIfConfigured();
         return modelGateway.generateEmbedding(ModelEmbeddingRequest.of(
                 text,
                 queryModel(),
@@ -51,5 +57,17 @@ public class ModelGatewayEmbeddingProvider implements EmbeddingProvider {
 
     private String queryModel() {
         return queryModel == null || queryModel.isBlank() ? model() : queryModel.trim();
+    }
+
+    private void throttleIfConfigured() {
+        if (throttleMs <= 0) {
+            return;
+        }
+        try {
+            Thread.sleep(Duration.ofMillis(throttleMs));
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new IllegalStateException("Embedding throttle interrupted", e);
+        }
     }
 }

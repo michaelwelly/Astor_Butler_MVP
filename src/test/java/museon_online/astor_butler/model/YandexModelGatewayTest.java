@@ -6,6 +6,10 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.client.MockRestServiceServer;
 
+import com.sun.net.httpserver.HttpServer;
+import java.io.IOException;
+import java.net.InetSocketAddress;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
@@ -34,7 +38,9 @@ class YandexModelGatewayTest {
                 "yandexgpt-5.1",
                 8000,
                 128,
-                0.0
+                0.0,
+                1,
+                250
         );
         MockRestServiceServer server = serverRef.get();
 
@@ -95,7 +101,9 @@ class YandexModelGatewayTest {
                 "yandexgpt-5.1",
                 8000,
                 128,
-                0.0
+                0.0,
+                1,
+                250
         );
         MockRestServiceServer server = serverRef.get();
 
@@ -143,12 +151,19 @@ class YandexModelGatewayTest {
     }
 
     @Test
-    void generateEmbeddingUsesYandexTextEmbeddingContractAndParsesVector() {
-        AtomicReference<MockRestServiceServer> serverRef = new AtomicReference<>();
+    void generateEmbeddingUsesYandexTextEmbeddingContractAndParsesVector() throws IOException {
+        AtomicReference<String> requestBody = new AtomicReference<>();
+        AtomicReference<String> authorization = new AtomicReference<>();
+        HttpServer server = embeddingServer(requestBody, authorization, """
+                {
+                  "embedding": [0.11, -0.22, 0.33],
+                  "numTokens": "7"
+                }
+                """);
+        server.start();
         YandexModelGateway gateway = new YandexModelGateway(
-                new RestTemplateBuilder(restTemplate ->
-                        serverRef.set(MockRestServiceServer.bindTo(restTemplate).build())),
-                "https://llm.test",
+                new RestTemplateBuilder(),
+                "http://127.0.0.1:" + server.getAddress().getPort(),
                 "folder-123",
                 "api-key-123",
                 "",
@@ -156,45 +171,43 @@ class YandexModelGatewayTest {
                 "yandexgpt-5.1",
                 8000,
                 128,
-                0.0
+                0.0,
+                1,
+                250
         );
-        MockRestServiceServer server = serverRef.get();
+        try {
+            ModelEmbeddingResponse response = gateway.generateEmbedding(ModelEmbeddingRequest.of(
+                    "AERIS - гастробар",
+                    "text-search-doc/latest",
+                    "SemanticMemory",
+                    null,
+                    "embedding-document"
+            ));
 
-        server.expect(once(), requestTo("https://llm.test/foundationModels/v1/textEmbedding"))
-                .andExpect(method(HttpMethod.POST))
-                .andExpect(header("Authorization", "Api-Key api-key-123"))
-                .andExpect(jsonPath("$.modelUri").value("emb://folder-123/text-search-doc/latest"))
-                .andExpect(jsonPath("$.text").value("AERIS - гастробар"))
-                .andRespond(withSuccess("""
-                        {
-                          "embedding": [0.11, -0.22, 0.33],
-                          "numTokens": "7"
-                        }
-                        """, MediaType.APPLICATION_JSON));
-
-        ModelEmbeddingResponse response = gateway.generateEmbedding(ModelEmbeddingRequest.of(
-                "AERIS - гастробар",
-                "text-search-doc/latest",
-                "SemanticMemory",
-                null,
-                "embedding-document"
-        ));
-
-        assertThat(response.embedding()).containsExactlyElementsOf(List.of(0.11, -0.22, 0.33));
-        assertThat(response.provider()).isEqualTo("yandex-ai");
-        assertThat(response.model()).isEqualTo("emb://folder-123/text-search-doc/latest");
-        assertThat(response.fallback()).isFalse();
-        assertThat(response.metadata().get("dimension")).isEqualTo(3);
-        server.verify();
+            assertThat(authorization.get()).isEqualTo("Api-Key api-key-123");
+            assertThat(requestBody.get()).contains("\"modelUri\":\"emb://folder-123/text-search-doc/latest\"");
+            assertThat(requestBody.get()).contains("\"text\":\"AERIS - гастробар\"");
+            assertThat(response.embedding()).containsExactlyElementsOf(List.of(0.11, -0.22, 0.33));
+            assertThat(response.provider()).isEqualTo("yandex-ai");
+            assertThat(response.model()).isEqualTo("emb://folder-123/text-search-doc/latest");
+            assertThat(response.fallback()).isFalse();
+            assertThat(response.metadata().get("dimension")).isEqualTo(3);
+        } finally {
+            server.stop(0);
+        }
     }
 
     @Test
-    void generateEmbeddingUsesQueryModelWhenModelAliasIsBlankAndPurposeIsQuery() {
-        AtomicReference<MockRestServiceServer> serverRef = new AtomicReference<>();
+    void generateEmbeddingUsesQueryModelWhenModelAliasIsBlankAndPurposeIsQuery() throws IOException {
+        AtomicReference<String> requestBody = new AtomicReference<>();
+        AtomicReference<String> authorization = new AtomicReference<>();
+        HttpServer server = embeddingServer(requestBody, authorization, """
+                {"result": {"embedding": ["0.1", "0.2"]}}
+                """);
+        server.start();
         YandexModelGateway gateway = new YandexModelGateway(
-                new RestTemplateBuilder(restTemplate ->
-                        serverRef.set(MockRestServiceServer.bindTo(restTemplate).build())),
-                "https://llm.test",
+                new RestTemplateBuilder(),
+                "http://127.0.0.1:" + server.getAddress().getPort(),
                 "folder-123",
                 "api-key-123",
                 "",
@@ -202,27 +215,44 @@ class YandexModelGatewayTest {
                 "yandexgpt-5.1",
                 8000,
                 128,
-                0.0
+                0.0,
+                1,
+                250
         );
-        MockRestServiceServer server = serverRef.get();
 
-        server.expect(once(), requestTo("https://llm.test/foundationModels/v1/textEmbedding"))
-                .andExpect(method(HttpMethod.POST))
-                .andExpect(jsonPath("$.modelUri").value("emb://folder-123/text-search-query/latest"))
-                .andRespond(withSuccess("""
-                        {"result": {"embedding": ["0.1", "0.2"]}}
-                        """, MediaType.APPLICATION_JSON));
+        try {
+            ModelEmbeddingResponse response = gateway.generateEmbedding(ModelEmbeddingRequest.of(
+                    "винная карта",
+                    "",
+                    "SemanticMemory",
+                    null,
+                    "embedding-query"
+            ));
 
-        ModelEmbeddingResponse response = gateway.generateEmbedding(ModelEmbeddingRequest.of(
-                "винная карта",
-                "",
-                "SemanticMemory",
-                null,
-                "embedding-query"
-        ));
+            assertThat(authorization.get()).isEqualTo("Api-Key api-key-123");
+            assertThat(requestBody.get()).contains("\"modelUri\":\"emb://folder-123/text-search-query/latest\"");
+            assertThat(response.embedding()).containsExactly(0.1, 0.2);
+            assertThat(response.model()).isEqualTo("emb://folder-123/text-search-query/latest");
+        } finally {
+            server.stop(0);
+        }
+    }
 
-        assertThat(response.embedding()).containsExactly(0.1, 0.2);
-        assertThat(response.model()).isEqualTo("emb://folder-123/text-search-query/latest");
-        server.verify();
+    private HttpServer embeddingServer(
+            AtomicReference<String> requestBody,
+            AtomicReference<String> authorization,
+            String responseBody
+    ) throws IOException {
+        HttpServer server = HttpServer.create(new InetSocketAddress("127.0.0.1", 0), 0);
+        server.createContext("/foundationModels/v1/textEmbedding", exchange -> {
+            authorization.set(exchange.getRequestHeaders().getFirst("Authorization"));
+            requestBody.set(new String(exchange.getRequestBody().readAllBytes(), StandardCharsets.UTF_8));
+            byte[] response = responseBody.getBytes(StandardCharsets.UTF_8);
+            exchange.getResponseHeaders().set("Content-Type", "application/json,application/grpc");
+            exchange.sendResponseHeaders(200, response.length);
+            exchange.getResponseBody().write(response);
+            exchange.close();
+        });
+        return server;
     }
 }

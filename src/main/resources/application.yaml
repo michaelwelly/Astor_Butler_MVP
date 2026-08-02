@@ -74,6 +74,7 @@ astor:
       provider: ${ASTOR_SEMANTIC_EMBEDDINGS_PROVIDER:none}
       model: ${ASTOR_SEMANTIC_EMBEDDING_MODEL:text-search-doc/latest}
       query-model: ${ASTOR_SEMANTIC_QUERY_EMBEDDING_MODEL:text-search-query/latest}
+      throttle-ms: ${ASTOR_SEMANTIC_EMBEDDINGS_THROTTLE_MS:0}
       ollama-base-url: ${ASTOR_SEMANTIC_OLLAMA_BASE_URL:${LLM_OLLAMA_BASE_URL:http://localhost:11434}}
     intent-examples:
       ingest-golden-corpus-on-startup: ${ASTOR_INTENT_EXAMPLES_INGEST_ON_STARTUP:false}
@@ -251,6 +252,8 @@ yandex:
     timeout-ms: ${YANDEX_TIMEOUT_MS:8000}
     max-tokens: ${YANDEX_MAX_TOKENS:256}
     temperature: ${YANDEX_TEMPERATURE:0.1}
+    embedding-max-attempts: ${YANDEX_EMBEDDING_MAX_ATTEMPTS:6}
+    embedding-retry-delay-ms: ${YANDEX_EMBEDDING_RETRY_DELAY_MS:5000}
 
 server:
   port: ${SERVER_PORT:8088}

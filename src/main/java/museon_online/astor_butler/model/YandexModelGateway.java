@@ -42,6 +42,8 @@ public class YandexModelGateway implements ModelGateway {
     private final String qualityModel;
     private final int maxTokens;
     private final double temperature;
+    private final int embeddingMaxAttempts;
+    private final Duration embeddingRetryDelay;
 
     public YandexModelGateway(
             RestTemplateBuilder restTemplateBuilder,
@@ -53,7 +55,9 @@ public class YandexModelGateway implements ModelGateway {
             @Value("${yandex.ai.quality-model:yandexgpt-5.1}") String qualityModel,
             @Value("${yandex.ai.timeout-ms:8000}") int timeoutMs,
             @Value("${yandex.ai.max-tokens:256}") int maxTokens,
-            @Value("${yandex.ai.temperature:0.1}") double temperature
+            @Value("${yandex.ai.temperature:0.1}") double temperature,
+            @Value("${yandex.ai.embedding-max-attempts:6}") int embeddingMaxAttempts,
+            @Value("${yandex.ai.embedding-retry-delay-ms:5000}") long embeddingRetryDelayMs
     ) {
         this.requestTimeout = Duration.ofMillis(Math.max(1, timeoutMs));
         this.restTemplate = restTemplateBuilder
@@ -71,6 +75,8 @@ public class YandexModelGateway implements ModelGateway {
         this.qualityModel = blankToNull(qualityModel) == null ? "yandexgpt-5.1" : qualityModel.trim();
         this.maxTokens = Math.max(1, maxTokens);
         this.temperature = Math.max(0.0, Math.min(1.0, temperature));
+        this.embeddingMaxAttempts = Math.max(1, embeddingMaxAttempts);
+        this.embeddingRetryDelay = Duration.ofMillis(Math.max(250, embeddingRetryDelayMs));
     }
 
     @Override
@@ -265,27 +271,72 @@ public class YandexModelGateway implements ModelGateway {
     }
 
     private String executeEmbeddingRequest(Map<String, String> body) {
-        try {
-            HttpRequest request = HttpRequest.newBuilder(URI.create(baseUrl + "/foundationModels/v1/textEmbedding"))
-                    .timeout(requestTimeout)
-                    .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
-                    .header(HttpHeaders.AUTHORIZATION, authorizationHeaderValue())
-                    .POST(HttpRequest.BodyPublishers.ofString(objectMapper.writeValueAsString(body), StandardCharsets.UTF_8))
-                    .build();
-            HttpResponse<String> response = httpClient.send(
-                    request,
-                    HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8)
-            );
-            if (response.statusCode() >= 400) {
+        for (int attempt = 1; attempt <= embeddingMaxAttempts; attempt++) {
+            try {
+                HttpRequest request = HttpRequest.newBuilder(URI.create(baseUrl + "/foundationModels/v1/textEmbedding"))
+                        .timeout(requestTimeout)
+                        .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+                        .header(HttpHeaders.AUTHORIZATION, authorizationHeaderValue())
+                        .POST(HttpRequest.BodyPublishers.ofString(objectMapper.writeValueAsString(body), StandardCharsets.UTF_8))
+                        .build();
+                HttpResponse<String> response = httpClient.send(
+                        request,
+                        HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8)
+                );
+                if (response.statusCode() < 400) {
+                    return response.body();
+                }
+                if (isRetryable(response.statusCode()) && attempt < embeddingMaxAttempts) {
+                    sleepBeforeRetry(response, attempt);
+                    continue;
+                }
                 throw new IllegalStateException("Yandex AI embedding request failed with status=" + response.statusCode());
+            } catch (IOException e) {
+                if (attempt < embeddingMaxAttempts) {
+                    sleepBeforeRetry(null, attempt);
+                    continue;
+                }
+                throw new IllegalStateException("Yandex AI embedding request failed", e);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                throw new IllegalStateException("Yandex AI embedding request was interrupted", e);
             }
-            return response.body();
-        } catch (IOException e) {
-            throw new IllegalStateException("Yandex AI embedding request failed", e);
+        }
+        throw new IllegalStateException("Yandex AI embedding request failed after retries");
+    }
+
+    private boolean isRetryable(int statusCode) {
+        return statusCode == 429 || statusCode >= 500;
+    }
+
+    private void sleepBeforeRetry(HttpResponse<?> response, int attempt) {
+        Duration delay = retryAfter(response);
+        if (delay == null) {
+            long multiplier = 1L << Math.min(4, Math.max(0, attempt - 1));
+            delay = embeddingRetryDelay.multipliedBy(multiplier);
+        }
+        try {
+            Thread.sleep(delay);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
-            throw new IllegalStateException("Yandex AI embedding request was interrupted", e);
+            throw new IllegalStateException("Yandex AI embedding retry interrupted", e);
         }
+    }
+
+    private Duration retryAfter(HttpResponse<?> response) {
+        if (response == null) {
+            return null;
+        }
+        return response.headers()
+                .firstValue("Retry-After")
+                .flatMap(value -> {
+                    try {
+                        return java.util.Optional.of(Duration.ofSeconds(Math.max(1, Long.parseLong(value.trim()))));
+                    } catch (NumberFormatException e) {
+                        return java.util.Optional.empty();
+                    }
+                })
+                .orElse(null);
     }
 
     private Map<?, ?> parseJsonObject(String rawBody) {
