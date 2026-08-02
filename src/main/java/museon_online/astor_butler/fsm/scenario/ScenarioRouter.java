@@ -50,6 +50,11 @@ public class ScenarioRouter {
             return firstTouchScenario.handle(incoming, currentState, text);
         }
 
+        OutgoingMessage keyboardShortcut = tryKeyboardShortcutRoute(incoming, currentState, text);
+        if (keyboardShortcut != null) {
+            return keyboardShortcut;
+        }
+
         UnderstoodInput understood = inputUnderstandingService.understand(text, currentState, understandingContext(incoming));
         captureUnderstandingMissIfNeeded(incoming, currentState, understood);
         String routeText = understood.routeText();
@@ -74,6 +79,26 @@ public class ScenarioRouter {
             }
         }
         return null;
+    }
+
+    private OutgoingMessage tryKeyboardShortcutRoute(IncomingMessage incoming, BotState currentState, String text) {
+        BotState state = currentState == null ? BotState.UNKNOWN : currentState.canonical();
+        if (state != BotState.READY_FOR_DIALOG && state != BotState.AI_FALLBACK) {
+            return null;
+        }
+        String normalized = normalize(text);
+        FsmScenario scenario = switch (normalized) {
+            case "меню кухни", "бар", "коктейли", "винная карта" -> menuAssetsScenario;
+            case "видео-тур" -> quietGuideScenario;
+            case "бронь", "бронь стола" -> tableBookingScenario;
+            case "связаться с командой", "помощь команды" -> managerHelpScenario;
+            case "главное меню" -> mainMenuScenario;
+            default -> null;
+        };
+        if (scenario == null || !scenario.supports(incoming, state, text)) {
+            return null;
+        }
+        return withExecutablePendingContent(incoming, scenario.handle(incoming, state, text));
     }
 
     private Map<String, Object> understandingContext(IncomingMessage incoming) {

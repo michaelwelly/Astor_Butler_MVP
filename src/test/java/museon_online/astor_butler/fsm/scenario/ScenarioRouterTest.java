@@ -174,6 +174,35 @@ class ScenarioRouterTest {
         verify(menuAssetsScenario, never()).handle(any(), any(), anyString(), eq(understood));
     }
 
+    @Test
+    void routesExactKeyboardLabelsBeforeLlmUnderstanding() {
+        IncomingMessage incoming = telegram("Бар");
+        OutgoingMessage menuResponse = OutgoingMessage.of(
+                incoming,
+                "Отправляю барную карту.",
+                BotState.READY_FOR_DIALOG.name(),
+                false,
+                false,
+                true,
+                false,
+                AdminAlert.none(),
+                List.of("MENU_ASSETS", "MENU_ASSETS_DELIVERED")
+        );
+
+        when(firstTouchScenario.supports(incoming, BotState.READY_FOR_DIALOG, incoming.text()))
+                .thenReturn(false);
+        when(menuAssetsScenario.supports(incoming, BotState.READY_FOR_DIALOG, incoming.text()))
+                .thenReturn(true);
+        when(menuAssetsScenario.handle(incoming, BotState.READY_FOR_DIALOG, incoming.text()))
+                .thenReturn(menuResponse);
+
+        OutgoingMessage outgoing = router.route(incoming, BotState.READY_FOR_DIALOG, incoming.text());
+
+        assertThat(outgoing.actions()).containsExactly("MENU_ASSETS", "MENU_ASSETS_DELIVERED");
+        verify(inputUnderstandingService, never()).understand(anyString(), any(), any());
+        verify(tableBookingScenario, never()).handle(any(), any(), anyString(), any());
+    }
+
     private IncomingMessage telegram(String text) {
         return IncomingMessage.telegram(
                 1773317437L,
