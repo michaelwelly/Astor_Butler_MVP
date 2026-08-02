@@ -379,10 +379,11 @@ TELEGRAM_BOT_ENABLED=true
 - [x] Сделать probe Yandex completion.
 - [x] Включить LLM understanding на AERIS runtime.
 - [x] Добавить/проверить Telegram proxy support.
-- [ ] Получить German proxy credentials.
-- [ ] Включить `TELEGRAM_BOT_ENABLED=true` после proxy smoke.
+- [x] Подключить scoped WireGuard/tinyproxy path вместо German proxy, без изменения host default route.
+- [x] Включить `TELEGRAM_BOT_ENABLED=true` после proxy smoke.
+- [x] Включить Telegram polling для AERIS runtime.
+- [x] Загрузить подтвержденные AERIS menu/bar/cocktail/wine/floor-plan/interior assets в MinIO через existing ingest path.
 - [ ] Подключить SABY/SBIS external reservation port.
-- [ ] Включить Telegram polling.
 - [ ] Прогнать реальную бронь стола.
 - [ ] Спроектировать и реализовать SABY adapter.
 

@@ -409,6 +409,16 @@ Runbook: `docs/operations/CALLIOPE_TO_AERIS_YANDEX_AI_ROLLOUT.md`.
 - Telegram TLS через proxy работает;
 - direct host Telegram 443 still timeout, то есть workaround scoped;
 - token-safe `getMe` через proxy вернул `ok=true` для `astor_butler_bot`;
-- Telegram polling оставлен выключенным, чтобы не обработать старые pending updates без отдельного решения.
+- после отдельного smoke пользователь подтвердил живой ответ бота на стартовый сценарий;
+- Telegram polling включен для AERIS runtime через isolated HTTP proxy `10.233.200.2:8888`;
+- `TELEGRAM_GET_UPDATES_TIMEOUT_SECONDS=20`, чтобы long polling не конфликтовал с proxy idle behavior;
+- runtime audit 2026-08-02: Yandex text understanding включен, scenario reply LLM выключен, STT/voice выключен, Saby runtime credentials/env не настроены.
+
+Дополнительный production media smoke 2026-08-02:
+
+- найден подтвержденный локальный архив `/Users/michaelwelly/Desktop/AERIS FILES`;
+- через существующий ingest path загружены в MinIO `astor-media` кухня, бар, Elements/коктейли, винная карта, план зала и `INTERIOR.mp4`;
+- `media_assets` содержит активные asset codes `AERIS_MENU_KITCHEN`, `AERIS_MENU_BAR`, `AERIS_MENU_ELEMENTS`, `AERIS_MENU_WINE`, `AERIS_FLOOR_PLAN`, `AERIS_INTERIOR_TOUR`;
+- scoped API smoke `покажи винную карту` вернул deterministic `MENU_ASSETS_DELIVERED` с `AERIS_MENU_WINE`, без LLM fan-out.
 
 Runbook: `docs/operations/TELEGRAM_WIREGUARD_EGRESS_RUNBOOK.md`.

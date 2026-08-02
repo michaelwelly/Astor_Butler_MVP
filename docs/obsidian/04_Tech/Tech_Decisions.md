@@ -599,6 +599,19 @@ FSM управляет состоянием диалога, разрешенны
 - C3AG web source batch 2026-08-01: price labels use dedicated high-contrast theme tokens, Clio's first chat message points to the C3AG personal-data policy, the standalone Yandex ID mock panel is removed from the contact section, and the frontend now serves `/docs/policy.html`. Production deployment is pending VM SSH access.
 - Clio Telegram handoff 2026-08-02: the website may show a `Продолжить в Telegram` CTA, but the active deep-link is feature-gated by `C3_FRONTEND_CLIO_TELEGRAM_HANDOFF_ENABLED=true` plus a validated public `C3_FRONTEND_CLIO_TELEGRAM_BOT_USERNAME`. Until the bot username, Telegram API egress and `/start c3ag_*` session-link flow are verified, production must keep the CTA disabled with explanatory copy and preserve the normal web-chat fallback. Telegram phone/contact must be requested only through Telegram's explicit contact button, never inferred from browser data.
 
+## AERIS Telegram Scoped Proxy Live Enablement 2026-08-02
+
+- The user-provided WireGuard config is full-tunnel, so it is installed only inside the `astor-tg-wg` network namespace on the production VM.
+- `astor-telegram-wg-proxy.service` owns the namespace, WireGuard interface and `tinyproxy`; the proxy listens on `10.233.200.2:8888`.
+- Host default routing remains on Yandex VPC (`default via 10.129.0.1 dev eth0`), so public website, SSH, database and general VM traffic do not use the VPN.
+- Direct host TCP/TLS to `api.telegram.org:443` still times out; Telegram TLS through the scoped proxy succeeds.
+- AERIS runtime uses `TELEGRAM_PROXY_TYPE=HTTP`, `TELEGRAM_PROXY_HOST=10.233.200.2`, `TELEGRAM_PROXY_PORT=8888`, `TELEGRAM_BOT_ENABLED=true`, `AERIS_ASTOR_BUTLER_BOT_ENABLED=true`.
+- `TELEGRAM_GET_UPDATES_TIMEOUT_SECONDS=20` is required for this proxy path; the earlier 50 second long-poll timeout produced repeated `NoHttpResponseException` from the HTTP proxy/client idle behavior.
+- Token-safe `getMe` returned `ok=true` for `astor_butler_bot`, the bot registered successfully, and the user confirmed the live `/start` scenario response.
+- Production audit: `ASTOR_MODEL_PROVIDER=yandex` and `ASTOR_UNDERSTANDING_LLM_ENABLED=true` are enabled; `ASTOR_SCENARIO_REPLY_LLM_ENABLED=false` and `ASTOR_STT_ENABLED=false` remain off to avoid uncontrolled paid fan-out.
+- Saby remains a future external reservation provider. No production Saby env/credentials or implemented Java HTTP adapter were found; do not call or claim live Saby integration before the API contract, auth model, sandbox/prod credentials, organization id and restaurant id are provided.
+- AERIS runtime content assets are now present in MinIO bucket `astor-media` for menu kitchen/bar/Elements/wine, floor plan and `INTERIOR.mp4`; `media_assets` has matching active rows. A scoped internal smoke for `покажи винную карту` returned `MENU_ASSETS_DELIVERED` with `AERIS_MENU_WINE` and no LLM text-generation log.
+
 ## Связанные продуктовые заметки
 
 - `/Users/michaelwelly/Obsidian/Astor_Butler_Knowledge/02_Product/Event_Booking_Process.md`
