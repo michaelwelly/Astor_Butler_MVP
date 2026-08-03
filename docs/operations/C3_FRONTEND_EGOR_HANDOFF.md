@@ -12,6 +12,12 @@ Temporary VM preview:
 http://51.250.31.97:3001
 ```
 
+Restricted production frontend deploy access is documented separately:
+
+```text
+docs/operations/C3AG_EGOR_RESTRICTED_FRONTEND_DEPLOY.md
+```
+
 Current state:
 
 - frontend is running on the Yandex VM as Docker container `c3_agency_frontend`;

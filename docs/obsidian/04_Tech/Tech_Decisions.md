@@ -626,6 +626,16 @@ FSM управляет состоянием диалога, разрешенны
 - Saby remains a future external reservation provider. No production Saby env/credentials or implemented Java HTTP adapter were found; do not call or claim live Saby integration before the API contract, auth model, sandbox/prod credentials, organization id and restaurant id are provided.
 - AERIS runtime content assets are now present in MinIO bucket `astor-media` for menu kitchen/bar/Elements/wine, floor plan and `INTERIOR.mp4`; `media_assets` has matching active rows. A scoped internal smoke for `покажи винную карту` returned `MENU_ASSETS_DELIVERED` with `AERIS_MENU_WINE` and no LLM text-generation log.
 
+## C3AG Egor Restricted Frontend Deploy 2026-08-03
+
+- Для Егора создан отдельный VM-пользователь `egor-c3deploy` только под C3AG frontend deploy.
+- SSH key ограничен forced command `/usr/local/bin/c3ag-frontend-deploy-gate`; произвольный shell/pty/port-forwarding/agent-forwarding запрещены.
+- `sudoers` разрешает пользователю только root-owned wrapper `/usr/local/sbin/c3ag-frontend-deploy *`; сам wrapper принимает только `help`, `version`, `status`, `deploy main`, `rollback latest`.
+- Deploy policy: wrapper клонирует чистый GitHub `main` во временную директорию, синхронизирует только `frontend/` и compose-файлы, пересобирает только `c3-agency-frontend`, делает local healthcheck `127.0.0.1:3001` и пишет nonsecret log в `/var/log/c3ag-frontend-deploy.log`.
+- Запрещённые зоны остаются недоступны: `/opt/astor-butler/.env.production`, Docker socket/group, backend/bot/DB/Redis/MinIO/VPN/Telegram secrets.
+- Проверено: `status` работает, frontend healthy, произвольная команда и чтение `.env.production` отклоняются, прямой `docker ps` запрещен, GitHub `main` читается с VM.
+- Runbook: `docs/operations/C3AG_EGOR_RESTRICTED_FRONTEND_DEPLOY.md`.
+
 ## Связанные продуктовые заметки
 
 - `/Users/michaelwelly/Obsidian/Astor_Butler_Knowledge/02_Product/Event_Booking_Process.md`
