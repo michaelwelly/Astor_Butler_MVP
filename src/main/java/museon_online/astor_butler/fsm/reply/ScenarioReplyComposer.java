@@ -13,6 +13,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.time.Duration;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
@@ -163,6 +164,12 @@ public class ScenarioReplyComposer {
         if (auditRepository == null || draft == null) {
             return;
         }
+        Map<String, Object> metadata = new LinkedHashMap<>();
+        metadata.put("ragContextSize", draft.ragContext().size());
+        metadata.put("composerEnabled", enabled);
+        if (response != null && response.metadata() != null && !response.metadata().isEmpty()) {
+            metadata.put("modelResponse", response.metadata());
+        }
         auditRepository.capture(new ModelInteractionAuditRecord(
                 draft.venueCode(),
                 draft.channel(),
@@ -185,10 +192,7 @@ public class ScenarioReplyComposer {
                 error == null ? "" : error.getClass().getSimpleName(),
                 error == null ? "" : error.getMessage(),
                 response == null ? Duration.ZERO : response.latency(),
-                Map.of(
-                        "ragContextSize", draft.ragContext().size(),
-                        "composerEnabled", enabled
-                )
+                metadata
         ));
     }
 
