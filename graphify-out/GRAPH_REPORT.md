@@ -1,16 +1,16 @@
-# Graph Report - Astor_Butler_MVP  (2026-08-02)
+# Graph Report - Astor_Butler_MVP  (2026-08-05)
 
 ## Corpus Check
-- 697 files · ~1,006,696 words
+- 708 files · ~1,016,929 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 6617 nodes · 14629 edges · 543 communities (499 shown, 44 thin omitted)
-- Extraction: 87% EXTRACTED · 13% INFERRED · 0% AMBIGUOUS · INFERRED: 1944 edges (avg confidence: 0.8)
+- 6794 nodes · 14887 edges · 547 communities (501 shown, 46 thin omitted)
+- Extraction: 87% EXTRACTED · 13% INFERRED · 0% AMBIGUOUS · INFERRED: 1948 edges (avg confidence: 0.8)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `ab18c649`
+- Built from commit: `5c26d38c`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -407,6 +407,10 @@
 - [[_COMMUNITY_Community 540|Community 540]]
 - [[_COMMUNITY_Community 541|Community 541]]
 - [[_COMMUNITY_Community 542|Community 542]]
+- [[_COMMUNITY_Community 543|Community 543]]
+- [[_COMMUNITY_Community 544|Community 544]]
+- [[_COMMUNITY_Community 545|Community 545]]
+- [[_COMMUNITY_Community 546|Community 546]]
 
 ## God Nodes (most connected - your core abstractions)
 1. `of()` - 288 edges
@@ -417,7 +421,7 @@
 6. `withMetadata()` - 56 edges
 7. `HttpStatus` - 45 edges
 8. `Next Chat Handoff` - 45 edges
-9. `Tech Decisions` - 38 edges
+9. `Tech Decisions` - 40 edges
 10. `TableBookingDraftMerger` - 35 edges
 
 ## Surprising Connections (you probably didn't know these)
@@ -435,23 +439,23 @@
 ## Import Cycles
 - 3-file cycle: `frontend/lib/catalog-clips.ts -> frontend/lib/portfolio.ts -> frontend/lib/video-db.ts -> frontend/lib/catalog-clips.ts`
 
-## Communities (543 total, 44 thin omitted)
+## Communities (547 total, 46 thin omitted)
 
 ### Community 0 - "Community 0"
-Cohesion: 0.12
-Nodes (21): handled(), notHandled(), TelegramRouter, CallbackAnswer, CallbackQuery, Message, AbsSender, AdminAlert (+13 more)
+Cohesion: 0.14
+Nodes (18): handled(), notHandled(), TelegramRouter, CallbackAnswer, CallbackQuery, AbsSender, AdminAlert, BotApiMethod (+10 more)
 
 ### Community 1 - "Community 1"
-Cohesion: 0.06
-Nodes (45): TableBookingRuntimeServiceTest, TableReservationRepository, TableReservationService, TableReservationServiceTest, Long, String, TableBookingRuntimeView, Instant (+37 more)
+Cohesion: 0.17
+Nodes (14): TableReservationRepository, Instant, Integer, List, Long, Optional, ResultSet, RowMapper (+6 more)
 
 ### Community 2 - "Community 2"
 Cohesion: 0.04
 Nodes (45): Next Chat Handoff, Update 2026-06-06 - Load Test Handoff, Update 2026-06-06 - Table Booking Date Flow Fix, Update 2026-06-06 - Weekend Container Stand, Update 2026-06-08 - Container STT Enabled, Update 2026-06-08 - Preview, STT Diagnostics, Quiet Guide Video, Update 2026-06-08 - Runtime Media Catalog And Start Preview, Update 2026-06-08 - Status, FSM reread, Natalia reset helper (+37 more)
 
 ### Community 3 - "Community 3"
-Cohesion: 0.12
-Nodes (19): IntentExampleRepository, ScenarioRouter, ScenarioRouterTest, BotState, FsmScenario, IncomingMessage, InputIntent, List (+11 more)
+Cohesion: 0.19
+Nodes (11): ScenarioRouter, BotState, FsmScenario, IncomingMessage, InputIntent, List, Map, Object (+3 more)
 
 ### Community 4 - "Community 4"
 Cohesion: 0.11
@@ -462,8 +466,8 @@ Cohesion: 0.20
 Nodes (10): FeedbackScenario, AdminAlert, BotState, GuestFeedback, GuestFeedbackCommand, IncomingMessage, Object, OutgoingMessage (+2 more)
 
 ### Community 6 - "Community 6"
-Cohesion: 0.06
-Nodes (42): DonationController, from(), toCommand(), DonationControllerTest, DonationRepository, DonationService, DonationInitiativeResponse, DonationOrderCreateRequest (+34 more)
+Cohesion: 0.11
+Nodes (21): DonationRepository, DonationService, DonationInitiative, DonationOrder, DonationOrderCommand, DonationOrderStatus, Instant, List (+13 more)
 
 ### Community 7 - "Community 7"
 Cohesion: 0.11
@@ -474,12 +478,12 @@ Cohesion: 0.05
 Nodes (38): 10. РФ, блокировки и провайдеры, 11. Туннели, деплой и безопасность, 12.1. Дешевые системы бронирования и ресторанные CRM, 12.2. Конструкторы чат-ботов, 12.3. AI-host / restaurant AI platforms, 12. Конкуренты и рынок, 13.1. Что входит во внедрение, 13.2. Что покрывает поддержка 10 000 руб/мес (+30 more)
 
 ### Community 9 - "Community 9"
-Cohesion: 0.20
-Nodes (12): ModelInteractionAuditRepository, ScenarioReplyComposer, Autowired, List, ModelGateway, ModelTextResponse, ObjectProvider, RuntimeException (+4 more)
+Cohesion: 0.05
+Nodes (41): 1. Accessibility (CRITICAL), 2. Touch & Interaction (CRITICAL), 3. Performance (HIGH), 4. Layout & Responsive (HIGH), 5. Typography & Color (MEDIUM), 6. Animation (MEDIUM), 7. Style Selection (MEDIUM), 8. Charts & Data (LOW) (+33 more)
 
 ### Community 10 - "Community 10"
-Cohesion: 0.21
-Nodes (9): BotState, InputIntent, Integer, LlmUnderstandingResult, Map, RussianNluSlot, SlotValue, String (+1 more)
+Cohesion: 0.19
+Nodes (11): canonical(), waitsForConsentAndContact(), BotState, Integer, LlmUnderstandingResult, Map, Object, RussianNluSlot (+3 more)
 
 ### Community 11 - "Community 11"
 Cohesion: 0.20
@@ -494,8 +498,8 @@ Cohesion: 0.04
 Nodes (44): AI Adapter, API boundary packages, API Gateway / Load Balancer, Astor Butler Architecture, Backend, Capability Extensions, Capability packages, CI/CD And Quality Gates (+36 more)
 
 ### Community 14 - "Community 14"
-Cohesion: 0.10
-Nodes (19): EventType, ChangeCancelScenario, AdminAlert, BotState, DayOfWeek, EventBookingOrder, IncomingMessage, Integer (+11 more)
+Cohesion: 0.09
+Nodes (26): EventType, withMetadata(), withRemoveKeyboard(), ChangeCancelScenario, AdminAlert, BotState, DayOfWeek, EventBookingOrder (+18 more)
 
 ### Community 15 - "Community 15"
 Cohesion: 0.20
@@ -518,12 +522,12 @@ Cohesion: 0.25
 Nodes (6): FsmScenario, BotState, IncomingMessage, OutgoingMessage, String, UnderstoodInput
 
 ### Community 20 - "Community 20"
-Cohesion: 0.09
-Nodes (24): FeedbackRepository, FeedbackService, FeedbackPriority, FeedbackSentiment, FeedbackType, GuestFeedback, GuestFeedbackCommand, Instant (+16 more)
+Cohesion: 0.18
+Nodes (13): FeedbackRepository, FeedbackPriority, FeedbackSentiment, FeedbackType, GuestFeedback, GuestFeedbackCommand, Instant, List (+5 more)
 
 ### Community 21 - "Community 21"
-Cohesion: 0.19
-Nodes (8): TableBookingScenarioTest, BeforeEach, Draft, IncomingMessage, Long, String, TableReservationOrder, Test
+Cohesion: 0.18
+Nodes (9): TableBookingScenarioTest, Draft, BeforeEach, Draft, IncomingMessage, Long, String, TableReservationOrder (+1 more)
 
 ### Community 22 - "Community 22"
 Cohesion: 0.08
@@ -534,12 +538,12 @@ Cohesion: 0.07
 Nodes (28): askButler(), onButlerAsk(), getByDirection(), getForFolders(), BuyingModel, fixedProducts, Product, productBySlug (+20 more)
 
 ### Community 24 - "Community 24"
-Cohesion: 0.20
-Nodes (9): ManagerHelpScenario, AdminAlert, BotState, IncomingMessage, Long, Object, OutgoingMessage, Override (+1 more)
+Cohesion: 0.08
+Nodes (21): FsmScenario, ImpactMeterScenario, MainMenuScenario, ManagerHelpScenario, BotState, IncomingMessage, OutgoingMessage, Override (+13 more)
 
 ### Community 25 - "Community 25"
-Cohesion: 0.11
-Nodes (21): MerchRepository, MerchService, Instant, List, Long, MerchItem, MerchOrder, MerchOrderCommand (+13 more)
+Cohesion: 0.06
+Nodes (42): from(), MerchController, toCommand(), MerchControllerTest, MerchRepository, MerchService, MerchItemResponse, MerchOrderCreateRequest (+34 more)
 
 ### Community 26 - "Community 26"
 Cohesion: 0.37
@@ -554,8 +558,8 @@ Cohesion: 0.20
 Nodes (12): Instant, List, Long, Optional, ResultSet, RowMapper, StaffProfile, String (+4 more)
 
 ### Community 29 - "Community 29"
-Cohesion: 0.14
-Nodes (18): AdminAlert(), none(), MessageGatewayServiceTest, of(), withMetadata(), withRemoveKeyboard(), String, AdminAlert (+10 more)
+Cohesion: 0.21
+Nodes (10): AdminAlert(), none(), MessageGatewayServiceTest, of(), String, AdminAlert, IncomingMessage, IncomingMessage (+2 more)
 
 ### Community 30 - "Community 30"
 Cohesion: 0.22
@@ -599,11 +603,11 @@ Nodes (11): Decision, Duration, Long, Map, Object, String, Test, allow() (+3 mor
 
 ### Community 40 - "Community 40"
 Cohesion: 0.05
-Nodes (41): AERIS API-first RAG Runtime 2026-08-02, AERIS Channel Content Ingest 2026-06-14, AERIS Telegram Scoped Proxy Live Enablement 2026-08-02, AERIS VM Runtime Smoke 2026-07-30, C3AG Eight-Product Catalog 2026-08-01, C3AG Hybrid Product Design And Clio 2026-08-01, C3AG.ru Frontend Media Boundary 2026-07-31, DB-First FSM Vertical Slices 2026-06-15 (+33 more)
+Nodes (43): AERIS API-first RAG Runtime 2026-08-02, AERIS Channel Content Ingest 2026-06-14, AERIS Telegram Scoped Proxy Live Enablement 2026-08-02, AERIS VM Runtime Smoke 2026-07-30, C3AG Egor Restricted Frontend Deploy 2026-08-03, C3AG Eight-Product Catalog 2026-08-01, C3AG Hybrid Product Design And Clio 2026-08-01, C3AG.ru Frontend Media Boundary 2026-07-31 (+35 more)
 
 ### Community 41 - "Community 41"
-Cohesion: 0.10
-Nodes (18): FsmScenario, EventBookingScenario, ImpactMeterScenario, AdminAlert, BotState, EventBookingCommand, EventBookingOrder, IncomingMessage (+10 more)
+Cohesion: 0.16
+Nodes (11): EventBookingScenario, AdminAlert, BotState, EventBookingCommand, EventBookingOrder, IncomingMessage, Integer, Object (+3 more)
 
 ### Community 42 - "Community 42"
 Cohesion: 0.37
@@ -622,12 +626,12 @@ Cohesion: 0.15
 Nodes (14): FsmControllerTest, empty(), FsmRuntimeStateService, MessageFacts, ProfileFacts, BotState, Instant, Long (+6 more)
 
 ### Community 46 - "Community 46"
-Cohesion: 0.15
-Nodes (8): InboundEvent, IdempotencyGuard, Long, String, Update, DomainEvent, Override, InboundEvent
+Cohesion: 0.11
+Nodes (11): InboundEvent, DomainEventPublisher, LoggingEventPublisher, IdempotencyGuard, Long, String, Update, DomainEvent (+3 more)
 
 ### Community 47 - "Community 47"
-Cohesion: 0.22
-Nodes (10): KafkaAdminEventFormatter, OutboxEventRepository, ConsumerRecord, Map, Object, String, Map, Object (+2 more)
+Cohesion: 0.36
+Nodes (5): KafkaAdminEventFormatter, ConsumerRecord, Map, Object, String
 
 ### Community 48 - "Community 48"
 Cohesion: 0.07
@@ -642,8 +646,8 @@ Cohesion: 0.24
 Nodes (9): ApiException, List, Long, StaffProfile, String, TipOrder, TipOrderCommand, Transactional (+1 more)
 
 ### Community 51 - "Community 51"
-Cohesion: 0.17
-Nodes (11): SafePlayScenario, AdminAlert, BotState, IncomingMessage, Map, Object, OutgoingMessage, Override (+3 more)
+Cohesion: 0.07
+Nodes (30): AlisaClientException, ModelInteractionAuditRepository, ScenarioReplyComposer, ScenarioReplyComposerTest, RuntimeException, SafePlayScenario, String, Autowired (+22 more)
 
 ### Community 52 - "Community 52"
 Cohesion: 0.12
@@ -662,12 +666,12 @@ Cohesion: 0.20
 Nodes (9): Data Prep, k6 Deterministic FSM Baseline, k6 Weekend Guest Matrix, Load Findings, Next Fixes, Open Risks, Stand, Verified (+1 more)
 
 ### Community 56 - "Community 56"
-Cohesion: 0.05
-Nodes (45): ConciergeRequestRepository, OpsProjectRepository, OpsProjectServiceTest, PreparedStatement, ConciergeRequest, ConciergeRequestCommand, ConciergeRequestStatus, Instant (+37 more)
+Cohesion: 0.11
+Nodes (22): OpsProjectRepository, Instant, Integer, List, Long, OpsArtifact, OpsArtifactCommand, OpsCall (+14 more)
 
 ### Community 57 - "Community 57"
-Cohesion: 0.26
-Nodes (8): UserEventProducer, BotState, IncomingMessage, Map, Object, OutgoingMessage, PostConstruct, String
+Cohesion: 0.17
+Nodes (13): OutboxEventRepository, UserEventProducer, Map, Object, PGobject, String, BotState, IncomingMessage (+5 more)
 
 ### Community 58 - "Community 58"
 Cohesion: 0.13
@@ -690,8 +694,8 @@ Cohesion: 0.15
 Nodes (13): 02 System Architecture (EN), Architecture Principle, Domain Services, FSM Runtime, High-Level Architecture, Kafka, LLM Gateway, Message Gateway (+5 more)
 
 ### Community 63 - "Community 63"
-Cohesion: 0.22
-Nodes (9): C3flexVideoCatalogService, PosterView, SourceView, Boolean, Integer, List, String, VideoCatalogView (+1 more)
+Cohesion: 0.15
+Nodes (13): YandexAiStudioAgentModelGateway, HttpHeaders, Map, ModelEmbeddingRequest, ModelEmbeddingResponse, ModelTextRequest, ModelTextResponse, ModelVisionRequest (+5 more)
 
 ### Community 64 - "Community 64"
 Cohesion: 0.28
@@ -710,12 +714,12 @@ Cohesion: 0.39
 Nodes (4): BalanceButton, InlineKeyboardMarkup, Override, String
 
 ### Community 68 - "Community 68"
-Cohesion: 0.33
-Nodes (5): CancelButton, InlineKeyboardButton, InlineKeyboardMarkup, Override, String
+Cohesion: 0.39
+Nodes (4): CancelButton, InlineKeyboardMarkup, Override, String
 
 ### Community 69 - "Community 69"
-Cohesion: 0.39
-Nodes (4): CharityButton, InlineKeyboardMarkup, Override, String
+Cohesion: 0.33
+Nodes (5): CharityButton, InlineKeyboardButton, InlineKeyboardMarkup, Override, String
 
 ### Community 70 - "Community 70"
 Cohesion: 0.39
@@ -766,8 +770,8 @@ Cohesion: 0.17
 Nodes (11): Backend Alignment, C3FLEX.com Frontend Technical Brief, Content And Media, Frontend Scope, Goal, Lead Form, Local Environment Contract, Product Positioning (+3 more)
 
 ### Community 82 - "Community 82"
-Cohesion: 0.26
-Nodes (7): HiddenHeartScenarioTest, BeforeEach, DonationOrder, DonationOrderStatus, IncomingMessage, String, Test
+Cohesion: 0.06
+Nodes (32): Any, BaseModel, analyze(), AnalyzeRequest, AnalyzeResponse, party_size_from_text(), _pipeline(), rule_slots() (+24 more)
 
 ### Community 83 - "Community 83"
 Cohesion: 0.25
@@ -810,8 +814,8 @@ Cohesion: 0.22
 Nodes (15): FsmController, FsmEventRequest, FsmEventResponse, FsmStateRequest, FsmStateResponse, DeleteMapping, GetMapping, Long (+7 more)
 
 ### Community 93 - "Community 93"
-Cohesion: 0.20
-Nodes (9): QuietGuideScenario, BotState, IncomingMessage, List, Map, Object, OutgoingMessage, SemanticSearchResult (+1 more)
+Cohesion: 0.10
+Nodes (18): VenueContentQueryService, QuietGuideScenario, QuietGuideScenarioTest, List, String, VenueContentPost, BotState, IncomingMessage (+10 more)
 
 ### Community 94 - "Community 94"
 Cohesion: 0.29
@@ -846,8 +850,8 @@ Cohesion: 0.47
 Nodes (3): FSMHandler, BotState, CommandContext
 
 ### Community 102 - "Community 102"
-Cohesion: 0.13
-Nodes (13): Contact, CommandContext, FSMHandler, ContactHandler, InboundEvent, String, Update, BotState (+5 more)
+Cohesion: 0.20
+Nodes (8): CommandContext, Message, InboundEvent, String, Update, Map, Object, String
 
 ### Community 104 - "Community 104"
 Cohesion: 0.18
@@ -858,8 +862,8 @@ Cohesion: 0.33
 Nodes (5): Backend Connection, C3AG.ru Frontend, Clio Chat Persona, Lightweight Preview, Local Run
 
 ### Community 107 - "Community 107"
-Cohesion: 0.22
-Nodes (16): GuestPreferenceCreateRequest, GuestPreferenceResponse, GuestPreferenceService, from(), GuestPreferenceController, toCommand(), DeleteMapping, GetMapping (+8 more)
+Cohesion: 0.06
+Nodes (41): GuestPreferenceCategory, GuestPreferenceCreateRequest, GuestPreferenceResponse, GuestPreferenceService, from(), GuestPreferenceController, toCommand(), GuestPreferenceControllerTest (+33 more)
 
 ### Community 108 - "Community 108"
 Cohesion: 0.18
@@ -871,7 +875,7 @@ Nodes (11): Backend для promo-контура, C3FLEX.com portfolio taxonomy, 
 
 ### Community 196 - "Community 196"
 Cohesion: 0.05
-Nodes (41): AlisaConfig, HttpHeaders, HttpResponse, OllamaClientTest, YandexModelGateway, RestTemplate, RussianNluAdapter, Bean (+33 more)
+Nodes (41): AlisaConfig, HttpResponse, OllamaClientTest, YandexModelGateway, RestTemplate, RussianNluAdapter, Bean, RestTemplateBuilder (+33 more)
 
 ### Community 197 - "Community 197"
 Cohesion: 0.19
@@ -882,12 +886,12 @@ Cohesion: 0.23
 Nodes (5): Object, InlineKeyboardMarkup, ReplyKeyboardMarkup, String, BotResponse
 
 ### Community 199 - "Community 199"
-Cohesion: 0.27
-Nodes (8): TableReservationPendingIntentService, FSMStorage, List, Long, MediaAsset, String, TableReservationOrder, TelegramBot
+Cohesion: 0.30
+Nodes (7): TableReservationPendingIntentService, List, Long, MediaAsset, String, TableReservationOrder, TelegramBot
 
 ### Community 200 - "Community 200"
 Cohesion: 0.06
-Nodes (51): TelegramLoginVerifier, TelegramLoginVerifierTest, from(), OpsProjectController, toCommand(), OpsProjectControllerTest, OpsArtifactCreateRequest, OpsArtifactResponse (+43 more)
+Nodes (50): TelegramLoginVerifier, TelegramLoginVerifierTest, from(), OpsProjectController, toCommand(), OpsProjectControllerTest, OpsArtifactCreateRequest, OpsArtifactResponse (+42 more)
 
 ### Community 201 - "Community 201"
 Cohesion: 0.24
@@ -930,8 +934,8 @@ Cohesion: 0.20
 Nodes (11): fromStorageValue(), BotStateTest, BotState, String, BotState, List, Long, Override (+3 more)
 
 ### Community 211 - "Community 211"
-Cohesion: 0.21
-Nodes (10): MessageGatewayService, AdminAlert, BotState, Exception, IncomingMessage, Long, ModelTextResponse, Object (+2 more)
+Cohesion: 0.20
+Nodes (11): MessageGatewayService, ModelInteractionAuditRecord, AdminAlert, BotState, Exception, IncomingMessage, Long, ModelTextResponse (+3 more)
 
 ### Community 212 - "Community 212"
 Cohesion: 0.23
@@ -954,8 +958,8 @@ Cohesion: 0.26
 Nodes (8): FSMRouter, FSMResult, Autowired, CommandContext, FSMHandler, FSMStorage, InboundEvent, List
 
 ### Community 217 - "Community 217"
-Cohesion: 0.42
-Nodes (4): MerchControllerTest, MerchOrder, MerchOrderStatus, Test
+Cohesion: 0.18
+Nodes (13): TableReservationService, ApiException, Instant, Integer, List, Long, String, TableAvailability (+5 more)
 
 ### Community 218 - "Community 218"
 Cohesion: 0.83
@@ -970,12 +974,12 @@ Cohesion: 0.27
 Nodes (12): ApiErrorResponse, GlobalApiExceptionHandler, ExceptionHandler, MethodArgumentNotValidException, ApiException, ErrorCode, Exception, HttpServletRequest (+4 more)
 
 ### Community 221 - "Community 221"
-Cohesion: 0.19
-Nodes (14): ConsentController, ConsentExportResponse, ConsentGrantRequest, ConsentListResponse, ConsentResponse, PolicyResponse, DeleteMapping, GetMapping (+6 more)
+Cohesion: 0.09
+Nodes (25): DesignSystemGenerator, _detect_page_type(), format_ascii_box(), format_markdown(), format_master_md(), format_page_override_md(), generate_design_system(), _generate_intelligent_overrides() (+17 more)
 
 ### Community 222 - "Community 222"
-Cohesion: 0.22
-Nodes (9): GreetingHandler, BotState, CommandContext, Override, BotApiMethod, Long, ReplyKeyboard, String (+1 more)
+Cohesion: 0.42
+Nodes (5): BotApiMethod, Long, ReplyKeyboard, String, TelegramSender
 
 ### Community 223 - "Community 223"
 Cohesion: 0.20
@@ -994,8 +998,8 @@ Cohesion: 0.14
 Nodes (15): autoChecklist(), completeness(), FileKind, isKind(), ParsedFile, parseFilename(), POSTER_EXT, REQUIRED_RES (+7 more)
 
 ### Community 229 - "Community 229"
-Cohesion: 0.10
-Nodes (40): BookingController, created(), from(), stub(), toCommand(), withStatus(), BookingCreateRequest, BookingResponse (+32 more)
+Cohesion: 0.18
+Nodes (18): BookingController, BookingSearchResponse, EventBookingCreateRequest, EventBookingResponse, ManagerNoteRequest, ManagerNoteResponse, GetMapping, Integer (+10 more)
 
 ### Community 230 - "Community 230"
 Cohesion: 0.32
@@ -1015,7 +1019,7 @@ Nodes (17): DashboardResponse, from(), ManagerController, ManagerTaskRequest, Ma
 
 ### Community 242 - "Community 242"
 Cohesion: 0.06
-Nodes (37): EmbeddingProvider, OpsGroupMessageIntakeServiceTest, OpsProjectMemoryService, Section, SemanticMarkdownChunkLoader, SemanticMemoryRepository, SemanticRetrievalService, IncomingMessage (+29 more)
+Nodes (34): VenueContentAssetStorageServiceTest, EmbeddingProvider, OpsProjectMemoryService, OllamaEmbeddingProvider, SemanticMemoryRepository, SemanticRetrievalService, IncomingMessage, List (+26 more)
 
 ### Community 243 - "Community 243"
 Cohesion: 0.15
@@ -1026,8 +1030,8 @@ Cohesion: 0.11
 Nodes (18): EditorTask, editorTasks(), MOCK_CHATS, MockChat, MockMessage, STATUS_CYCLE, STATUS_LABEL, StudioUser (+10 more)
 
 ### Community 245 - "Community 245"
-Cohesion: 0.06
-Nodes (39): ConciergeRequestController, from(), toCommand(), ConciergeRequestService, ConciergeRequestCreateRequest, ConciergeRequestResponse, ConciergeRequestService, ConciergeRequestType (+31 more)
+Cohesion: 0.05
+Nodes (43): ConciergeRequestController, from(), toCommand(), ConciergeRequestControllerTest, ConciergeRequestService, ConciergeRequestCreateRequest, ConciergeRequestResponse, ConciergeRequestService (+35 more)
 
 ### Community 250 - "Community 250"
 Cohesion: 0.20
@@ -1038,8 +1042,8 @@ Cohesion: 0.20
 Nodes (9): Astor Butler: черновик ТЗ и материалов для диплома, Capability-модули MVP, Git hygiene перед push/PR, UML / доменная схема для диплома, Диаграмма последовательности API, Назначение системы, Нефункциональные требования, Стек для раздела "Технологии" (+1 more)
 
 ### Community 276 - "Community 276"
-Cohesion: 0.25
-Nodes (8): GuestPreferenceService, ApiException, GuestPreference, GuestPreferenceCommand, List, Long, String, Transactional
+Cohesion: 0.22
+Nodes (9): TableReservationServiceTest, Instant, Long, String, TableReservationCommand, TableReservationOrder, TableReservationStatus, Test (+1 more)
 
 ### Community 277 - "Community 277"
 Cohesion: 0.10
@@ -1054,8 +1058,8 @@ Cohesion: 0.25
 Nodes (14): FeedbackController, from(), toCommand(), FeedbackCreateRequest, FeedbackResponse, GetMapping, GuestFeedback, GuestFeedbackCommand (+6 more)
 
 ### Community 284 - "Community 284"
-Cohesion: 0.20
-Nodes (9): PublicTelegramHtmlSource, VenueContentPost, Instant, List, NormalizedVenueContentPost, Override, String, VenueContentAsset (+1 more)
+Cohesion: 0.16
+Nodes (11): PublicTelegramHtmlSource, PublicTelegramHtmlSourceTest, VenueContentPost, Instant, List, NormalizedVenueContentPost, Override, String (+3 more)
 
 ### Community 285 - "Community 285"
 Cohesion: 0.22
@@ -1067,11 +1071,11 @@ Nodes (4): AerisContentReadServiceTest, MediaAsset, String, Test
 
 ### Community 287 - "Community 287"
 Cohesion: 0.16
-Nodes (9): Long, User, Long, Optional, User, UserProfileService, UserRepository, UserMapper (+1 more)
+Nodes (10): Contact, Long, User, Long, Optional, User, UserProfileService, UserRepository (+2 more)
 
 ### Community 288 - "Community 288"
-Cohesion: 0.14
-Nodes (16): InternalStatusResponse, from(), ObservabilityController, PrePersist, PreUpdate, shortContent(), SemanticSearchHit, SemanticSearchResponse (+8 more)
+Cohesion: 0.20
+Nodes (13): InternalStatusResponse, from(), ObservabilityController, shortContent(), SemanticSearchHit, SemanticSearchResponse, GetMapping, List (+5 more)
 
 ### Community 289 - "Community 289"
 Cohesion: 0.22
@@ -1079,7 +1083,7 @@ Nodes (8): Confluence Spaces, Current Status, GitHub Linkage, Goal, Jira Structu
 
 ### Community 296 - "Community 296"
 Cohesion: 0.22
-Nodes (17): from(), MerchController, toCommand(), MerchItemResponse, MerchOrderCreateRequest, MerchOrderResponse, GetMapping, Integer (+9 more)
+Nodes (17): DonationController, from(), toCommand(), DonationInitiativeResponse, DonationOrderCreateRequest, DonationOrderResponse, DonationInitiative, DonationOrder (+9 more)
 
 ### Community 297 - "Community 297"
 Cohesion: 0.25
@@ -1094,8 +1098,8 @@ Cohesion: 0.22
 Nodes (9): 05 Каталог событий (RU), Admin Events, AI Events, Analytics Events, Booking Events, FSM Events, Guest Events, Media Events (+1 more)
 
 ### Community 301 - "Community 301"
-Cohesion: 0.29
-Nodes (6): PreferenceScenarioTest, BeforeEach, GuestPreference, IncomingMessage, String, Test
+Cohesion: 0.19
+Nodes (11): FeedbackService, ApiException, FeedbackPriority, FeedbackSentiment, FeedbackType, GuestFeedback, GuestFeedbackCommand, List (+3 more)
 
 ### Community 302 - "Community 302"
 Cohesion: 0.25
@@ -1118,8 +1122,8 @@ Cohesion: 0.25
 Nodes (8): Core Scenarios, FirstTouchScenario, MainMenuScenario, ManagerHelpScenario, MenuAssetsScenario, QuietGuideScenario, RecoveryScenario, TableBookingScenario
 
 ### Community 308 - "Community 308"
-Cohesion: 0.20
-Nodes (9): OpsTelegramCommandServiceTest, OpsTaskPriority, IncomingMessage, OpsArtifact, OpsCall, OpsProject, OpsTask, String (+1 more)
+Cohesion: 0.19
+Nodes (10): OpsTelegramCommandServiceTest, OpsArtifactStatus, OpsTaskPriority, IncomingMessage, OpsArtifact, OpsCall, OpsProject, OpsTask (+2 more)
 
 ### Community 310 - "Community 310"
 Cohesion: 0.29
@@ -1154,8 +1158,8 @@ Cohesion: 0.35
 Nodes (7): Long, Map, Object, PGobject, String, WebSessionResolution, WebSessionRepository
 
 ### Community 320 - "Community 320"
-Cohesion: 0.17
-Nodes (11): SpringAiOllamaModelGateway, OllamaChatOptions, OllamaClient, Double, List, ModelEmbeddingRequest, ModelEmbeddingResponse, ModelVisionRequest (+3 more)
+Cohesion: 0.15
+Nodes (13): SpringAiOllamaModelGateway, OllamaChatOptions, OllamaClient, Double, List, ModelEmbeddingRequest, ModelEmbeddingResponse, ModelTextRequest (+5 more)
 
 ### Community 321 - "Community 321"
 Cohesion: 0.27
@@ -1182,8 +1186,8 @@ Cohesion: 0.29
 Nodes (7): Архитектура и проектная память, Внешние материалы для ТЗ и system design, Где лежат найденные материалы, Кодовые базы Astor Butler, Материалы HoReCa/меню/КП, Основная дипломная работа, Презентации и короткие материалы
 
 ### Community 328 - "Community 328"
-Cohesion: 0.24
-Nodes (10): Draft(), TableBookingDraftStorage, Draft, Instant, Integer, LocalDate, LocalTime, Long (+2 more)
+Cohesion: 0.27
+Nodes (9): Draft(), TableBookingDraftStorage, Instant, Integer, LocalDate, LocalTime, Long, Optional (+1 more)
 
 ### Community 329 - "Community 329"
 Cohesion: 0.21
@@ -1242,8 +1246,8 @@ Cohesion: 0.70
 Nodes (4): call_duckling(), main(), read_corpus(), run_natasha()
 
 ### Community 343 - "Community 343"
-Cohesion: 0.21
-Nodes (12): IntentExampleRepository, Double, IntentExampleMatch, IntentExampleSeed, List, Long, Map, Optional (+4 more)
+Cohesion: 0.07
+Nodes (35): ConsentController, ConsentExportResponse, ConsentGrantRequest, ConsentListResponse, ConsentResponse, C3flexVideoCatalogService, PolicyResponse, PosterView (+27 more)
 
 ### Community 344 - "Community 344"
 Cohesion: 0.29
@@ -1274,8 +1278,8 @@ Cohesion: 0.11
 Nodes (22): OpsProjectService, ApiException, Integer, List, Long, Map, Object, OpsArtifact (+14 more)
 
 ### Community 356 - "Community 356"
-Cohesion: 0.43
-Nodes (4): MenuHandler, BotState, CommandContext, Override
+Cohesion: 0.12
+Nodes (14): FSMHandler, FSMStorage, ContactHandler, GreetingHandler, MenuHandler, BotState, CommandContext, Override (+6 more)
 
 ### Community 357 - "Community 357"
 Cohesion: 0.39
@@ -1302,8 +1306,8 @@ Cohesion: 0.15
 Nodes (12): 1. Contract-aligned video catalog, 2. Preview cards, 3. Adaptive player, 4. Chat widget + Web Chat payload, 5. Login placeholders, 6. Consent UI, C3AG.ru / Astor Butler — Frontend Production Plan, Docker / VM Runtime (+4 more)
 
 ### Community 364 - "Community 364"
-Cohesion: 0.18
-Nodes (13): AuthController, Authentication, CommandResponse, accepted(), CurrentPrincipalResponse, LoginFlowResponse, LoginRequest, GetMapping (+5 more)
+Cohesion: 0.13
+Nodes (16): AuthController, Authentication, CommandResponse, accepted(), CurrentPrincipalResponse, LoginFlowResponse, LoginRequest, PrePersist (+8 more)
 
 ### Community 365 - "Community 365"
 Cohesion: 0.22
@@ -1374,8 +1378,8 @@ Cohesion: 0.16
 Nodes (12): SwaggerConfig, C3flexContentController, Boolean, GetMapping, Integer, Operation, String, VideoCatalogView (+4 more)
 
 ### Community 384 - "Community 384"
-Cohesion: 0.26
-Nodes (7): canonical(), waitsForConsentAndContact(), MainMenuScenario, BotState, IncomingMessage, OutgoingMessage, String
+Cohesion: 0.21
+Nodes (11): ConciergeRequestRepository, ConciergeRequest, ConciergeRequestCommand, ConciergeRequestStatus, Instant, List, Long, Optional (+3 more)
 
 ### Community 385 - "Community 385"
 Cohesion: 0.15
@@ -1402,8 +1406,8 @@ Cohesion: 0.15
 Nodes (12): 10. Открытые юридические переменные, 1. Принцип минимизации, 2. Категории данных, 3. Согласие гостя, 4. Коммерческие предложения и маркетинг, 5. Передача данных оператору, 6. Передача данных в Saby, 7. Передача данных в AI/STT/TTS (+4 more)
 
 ### Community 394 - "Community 394"
-Cohesion: 0.22
-Nodes (8): AstorButlerApplication, IntentExampleCorpusLoader, String, IntentExampleSeed, JsonNode, List, Resource, String
+Cohesion: 0.33
+Nodes (6): IntentExampleCorpusLoader, IntentExampleSeed, JsonNode, List, Resource, String
 
 ### Community 395 - "Community 395"
 Cohesion: 0.48
@@ -1414,12 +1418,12 @@ Cohesion: 0.33
 Nodes (5): FSM Index, Specs, Нужно прописать, Первый крупный сценарий, Цель
 
 ### Community 397 - "Community 397"
-Cohesion: 0.35
-Nodes (6): OllamaEmbeddingProvider, Double, JsonNode, List, Override, String
+Cohesion: 0.15
+Nodes (15): BM25, detect_domain(), _load_csv(), Lowercase, split, remove punctuation, filter short words, Build BM25 index from documents, Score all documents against query, Load CSV and return list of dicts, Core search function using BM25 (+7 more)
 
 ### Community 399 - "Community 399"
-Cohesion: 0.25
-Nodes (9): blankToDefault(), String, Long, Map, Object, OutgoingMessage, String, WebSessionResolution (+1 more)
+Cohesion: 0.33
+Nodes (7): Long, Map, Object, OutgoingMessage, String, WebSessionResolution, WebSessionMessageService
 
 ### Community 400 - "Community 400"
 Cohesion: 0.38
@@ -1446,8 +1450,8 @@ Cohesion: 0.20
 Nodes (9): Astor Butler: инструкция от деда, Главный принцип, Для кого продукт, Как продаем, Призыв к действию, Хук, Что Astor Butler может делать сейчас, Что будет дальше (+1 more)
 
 ### Community 408 - "Community 408"
-Cohesion: 0.14
-Nodes (16): ModelInteractionAuditRecord, BotState, InputIntent, JsonNode, List, LlmUnderstandingResult, Long, Map (+8 more)
+Cohesion: 0.15
+Nodes (15): BotState, InputIntent, JsonNode, List, LlmUnderstandingResult, Long, Map, ModelTextRequest (+7 more)
 
 ### Community 409 - "Community 409"
 Cohesion: 0.22
@@ -1506,8 +1510,8 @@ Cohesion: 0.48
 Nodes (3): LlmScenarioPromptCatalog, Resource, String
 
 ### Community 430 - "Community 430"
-Cohesion: 0.21
-Nodes (9): LlmUnderstandingService, Autowired, EmbeddingProvider, IntentExampleMatch, List, Matcher, ObjectProvider, Optional (+1 more)
+Cohesion: 0.17
+Nodes (10): LlmUnderstandingService, Autowired, EmbeddingProvider, InputIntent, IntentExampleMatch, List, Matcher, ObjectProvider (+2 more)
 
 ### Community 431 - "Community 431"
 Cohesion: 0.50
@@ -1582,8 +1586,8 @@ Cohesion: 0.29
 Nodes (7): EmbeddingModel, SpringAiEmbeddingProvider, Double, List, Object, Override, String
 
 ### Community 454 - "Community 454"
-Cohesion: 0.25
-Nodes (4): Object, UnderstoodInput, Test, GuestInputUnderstandingServiceTest
+Cohesion: 0.27
+Nodes (3): UnderstoodInput, Test, GuestInputUnderstandingServiceTest
 
 ### Community 455 - "Community 455"
 Cohesion: 0.17
@@ -1594,8 +1598,8 @@ Cohesion: 0.38
 Nodes (3): InlineKeyboardMarkup, String, BotButton
 
 ### Community 457 - "Community 457"
-Cohesion: 0.29
-Nodes (6): FeedbackScenarioTest, BeforeEach, GuestFeedback, IncomingMessage, String, Test
+Cohesion: 0.15
+Nodes (9): IntentExampleRepository, ScenarioRouterTest, String, BeforeEach, IncomingMessage, String, Test, BeforeEach (+1 more)
 
 ### Community 458 - "Community 458"
 Cohesion: 0.45
@@ -1610,12 +1614,12 @@ Cohesion: 0.50
 Nodes (4): vision(), Duration, ModelVisionResponse, String
 
 ### Community 461 - "Community 461"
-Cohesion: 0.27
-Nodes (5): AnalyticsKafkaConsumer, ConsumerRecord, PostConstruct, PreDestroy, String
+Cohesion: 0.18
+Nodes (8): AnalyticsKafkaConsumer, AnalyticsProcessedEventRepository, Properties, ConsumerRecord, PostConstruct, PreDestroy, String, String
 
 ### Community 462 - "Community 462"
-Cohesion: 0.19
-Nodes (10): BookingControllerTest, ApiException, HttpStatus, ErrorCode, Map, Object, String, TableReservationOrder (+2 more)
+Cohesion: 0.40
+Nodes (4): BookingControllerTest, TableReservationOrder, Test, VenueTable
 
 ### Community 463 - "Community 463"
 Cohesion: 0.52
@@ -1634,16 +1638,16 @@ Cohesion: 0.29
 Nodes (6): AERIS User Mode Runtime Config, Checks, Deploy, German Proxy Mode, Production Smoke 2026-07-30, VM Runtime
 
 ### Community 467 - "Community 467"
-Cohesion: 0.28
-Nodes (6): PreferenceScenario, BotState, IncomingMessage, OutgoingMessage, Override, String
+Cohesion: 0.20
+Nodes (9): TableBookingRuntimeServiceTest, Long, String, TableBookingRuntimeView, MediaAsset, String, TableReservationOrder, Test (+1 more)
 
 ### Community 468 - "Community 468"
 Cohesion: 0.50
 Nodes (3): empty(), PageResponse, T
 
 ### Community 469 - "Community 469"
-Cohesion: 0.08
-Nodes (23): EventBookingService, VenueContentQueryService, EventBookingScenarioTest, QuietGuideScenarioTest, ApiException, EventBookingCommand, EventBookingOrder, List (+15 more)
+Cohesion: 0.28
+Nodes (8): EventBookingService, ApiException, EventBookingCommand, EventBookingOrder, List, Long, String, Transactional
 
 ### Community 471 - "Community 471"
 Cohesion: 0.52
@@ -1654,8 +1658,8 @@ Cohesion: 0.50
 Nodes (3): RussianNluResult, String, empty()
 
 ### Community 474 - "Community 474"
-Cohesion: 0.22
-Nodes (6): OpsTelegramCommandService, ParsedArtifact, ParsedCall, ParsedProject, ParsedTask, String
+Cohesion: 0.16
+Nodes (12): OpsTelegramCommandService, ParsedArtifact, ParsedCall, ParsedProject, ParsedTask, BotState, IncomingMessage, OpsArtifactType (+4 more)
 
 ### Community 475 - "Community 475"
 Cohesion: 0.60
@@ -1682,16 +1686,16 @@ Cohesion: 0.26
 Nodes (8): TelegramStarPaymentService, ApiException, List, Long, String, TelegramStarPayment, TelegramStarPaymentCommand, Transactional
 
 ### Community 499 - "Community 499"
-Cohesion: 0.38
-Nodes (4): ScenarioReplyComposerTest, ScenarioReplyDraft, String, Test
+Cohesion: 0.27
+Nodes (6): OpsGroupMessageIntakeServiceTest, BeforeEach, IncomingMessage, OpsProject, String, Test
 
 ### Community 502 - "Community 502"
 Cohesion: 0.18
 Nodes (10): C3 Agency Frontend Handoff For Egor, Current Preview, Definition Of Done For Egor's First Pass, Guardrails, Known Follow-Ups, Local Commands, Repository Area, Runtime Notes (+2 more)
 
 ### Community 503 - "Community 503"
-Cohesion: 0.50
-Nodes (4): VenueContentAssetStorageService, NormalizedVenueContentPost, String, VenueContentAsset
+Cohesion: 0.21
+Nodes (8): VenueContentAssetStorageService, VenueContentIngestService, Scheduled, NormalizedVenueContentPost, String, VenueContentAsset, String, VenueContentIngestSummary
 
 ### Community 504 - "Community 504"
 Cohesion: 0.20
@@ -1718,8 +1722,8 @@ Cohesion: 0.33
 Nodes (5): Fields, How a video goes live on the site, Product feed mapping, Publishing to Object Storage, Video database — `videos.json`
 
 ### Community 510 - "Community 510"
-Cohesion: 0.36
-Nodes (8): Any, BaseModel, analyze(), AnalyzeRequest, AnalyzeResponse, party_size_from_text(), _pipeline(), rule_slots()
+Cohesion: 0.21
+Nodes (13): from(), toCommand(), DeleteMapping, EventBookingCommand, EventBookingOrder, Instant, LocalDate, TableAvailability (+5 more)
 
 ### Community 511 - "Community 511"
 Cohesion: 0.33
@@ -1742,28 +1746,28 @@ Cohesion: 0.29
 Nodes (5): cjsModule, compiled, sandbox, source, sourcePath
 
 ### Community 516 - "Community 516"
-Cohesion: 0.26
-Nodes (7): ArtAuctionScenarioTest, ArtAuctionBid, ArtAuctionBidStatus, BeforeEach, IncomingMessage, String, Test
+Cohesion: 0.27
+Nodes (8): PreparedStatement, Duration, Map, Object, ObjectMapper, PreDestroy, String, ScyllaFsmTimelineWriter
 
 ### Community 517 - "Community 517"
 Cohesion: 0.22
 Nodes (8): Astor / AERIS Semantic Seed, Astor как дворецкий AERIS, RAG и загруженные документы, Анализ медиа гостя только по согласию, Документы и медиа, доступные Astor, Мониторинг актуальной информации, Профиль ресторана AERIS, Публикация отзывов в соцсети гостя
 
 ### Community 518 - "Community 518"
-Cohesion: 0.39
-Nodes (5): GuestPreferenceCategory, GuestPreferenceControllerTest, GuestPreference, GuestPreferenceStatus, Test
+Cohesion: 0.34
+Nodes (7): Section, SemanticMarkdownChunkLoader, List, Resource, SemanticChunkSeed, String, StringBuilder
 
 ### Community 519 - "Community 519"
-Cohesion: 0.36
-Nodes (4): VenueContentIngestService, Scheduled, String, VenueContentIngestSummary
+Cohesion: 0.29
+Nodes (9): created(), stub(), withStatus(), BookingCreateRequest, BookingResponse, ChangeBookingStatusRequest, PatchMapping, PutMapping (+1 more)
 
 ### Community 521 - "Community 521"
-Cohesion: 0.36
-Nodes (5): AdminClient, KafkaTopicInitializer, Properties, PostConstruct, String
+Cohesion: 0.43
+Nodes (4): AdminClient, KafkaTopicInitializer, PostConstruct, String
 
 ### Community 522 - "Community 522"
-Cohesion: 0.29
-Nodes (6): AERIS Telegram Connectors Status, Controlled Yandex LLM smoke, Production runtime, Saby status, Telegram guest keyboard, Voice status
+Cohesion: 0.25
+Nodes (7): AERIS Telegram Connectors Status, AI Studio Agent adapter, Controlled Yandex LLM smoke, Production runtime, Saby status, Telegram guest keyboard, Voice status
 
 ### Community 523 - "Community 523"
 Cohesion: 0.47
@@ -1771,15 +1775,19 @@ Nodes (5): available(), unavailable(), String, TableAvailability, VenueTable
 
 ### Community 524 - "Community 524"
 Cohesion: 0.29
-Nodes (6): BotState, IncomingMessage, OpsArtifactType, OpsProjectVertical, Optional, OutgoingMessage
+Nodes (6): EventBookingScenarioTest, BeforeEach, EventBookingOrder, IncomingMessage, String, Test
+
+### Community 525 - "Community 525"
+Cohesion: 0.17
+Nodes (11): C3AG: ограниченный frontend-deploy для Егора, Health verification, Production Target, Rollback, Rollback доступа, SSH-доступ Егора, Запрещённые зоны, Политика branch/ref (+3 more)
 
 ### Community 526 - "Community 526"
 Cohesion: 0.50
 Nodes (4): disabled(), ExternalReservationStatus, List, String
 
 ### Community 528 - "Community 528"
-Cohesion: 0.38
-Nodes (4): VenueContentAssetStorageServiceTest, NormalizedVenueContentPost, Test, VenueContentAsset
+Cohesion: 0.36
+Nodes (6): ApiException, HttpStatus, ErrorCode, Map, Object, String
 
 ### Community 529 - "Community 529"
 Cohesion: 0.43
@@ -1798,56 +1806,60 @@ Cohesion: 0.22
 Nodes (8): args, baseUrl, controller, maxTokens, startedAt, temperature, timeout, timeoutMs
 
 ### Community 533 - "Community 533"
-Cohesion: 0.29
-Nodes (6): AERIS Yandex RAG And Logging Smoke, Backend logging smoke, Boundaries, Purpose, RAG runtime checks, YandexGPT reply probe
+Cohesion: 0.25
+Nodes (7): AERIS Yandex RAG And Logging Smoke, AI Studio Agent probe, Backend logging smoke, Boundaries, Purpose, RAG runtime checks, YandexGPT reply probe
 
 ### Community 534 - "Community 534"
-Cohesion: 0.40
-Nodes (4): ConciergeRequestControllerTest, ConciergeRequest, ConciergeRequestStatus, Test
+Cohesion: 0.38
+Nodes (4): DonationControllerTest, DonationOrder, DonationOrderStatus, Test
 
 ### Community 535 - "Community 535"
-Cohesion: 0.38
-Nodes (4): IntentExampleBootstrapTest, IntentExampleSeed, String, Test
+Cohesion: 0.36
+Nodes (4): OpsProjectServiceTest, OpsProject, OpsProjectStatus, Test
 
 ### Community 536 - "Community 536"
 Cohesion: 0.40
 Nodes (3): VenueContentSource, List, NormalizedVenueContentPost
 
 ### Community 537 - "Community 537"
-Cohesion: 0.27
-Nodes (6): AtomicReference, HttpServer, YandexModelGatewayTest, String, String, Test
+Cohesion: 0.20
+Nodes (8): AtomicReference, HttpServer, YandexAiStudioAgentModelGatewayTest, YandexModelGatewayTest, String, Test, String, Test
 
 ### Community 538 - "Community 538"
-Cohesion: 0.33
-Nodes (3): DomainEventPublisher, LoggingEventPublisher, DomainEvent
-
-### Community 539 - "Community 539"
-Cohesion: 0.40
-Nodes (3): AlisaClientException, RuntimeException, String
+Cohesion: 0.22
+Nodes (8): args, baseUrl, controller, maxOutputTokens, startedAt, temperature, timeout, timeoutMs
 
 ### Community 540 - "Community 540"
 Cohesion: 0.50
 Nodes (3): Mapping, User, UserMapper
 
+### Community 541 - "Community 541"
+Cohesion: 0.50
+Nodes (3): orgId, projectId, projectName
+
+### Community 543 - "Community 543"
+Cohesion: 0.50
+Nodes (3): orgId, projectId, projectName
+
 ## Knowledge Gaps
-- **1686 isolated node(s):** `Params`, `LegacyMessage`, `WebChatBody`, `SpeakResponse`, `TranscribeResponse` (+1681 more)
+- **1753 isolated node(s):** `allow`, `projectId`, `orgId`, `projectName`, `Params` (+1748 more)
   These have ≤1 connection - possible missing edges or undocumented components.
-- **44 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **46 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `of()` connect `Community 29` to `Community 0`, `Community 1`, `Community 513`, `Community 3`, `Community 4`, `Community 5`, `Community 6`, `Community 518`, `Community 512`, `Community 521`, `Community 10`, `Community 11`, `Community 14`, `Community 15`, `Community 16`, `Community 528`, `Community 530`, `Community 18`, `Community 20`, `Community 21`, `Community 534`, `Community 24`, `Community 25`, `Community 31`, `Community 36`, `Community 41`, `Community 45`, `Community 47`, `Community 50`, `Community 51`, `Community 56`, `Community 63`, `Community 64`, `Community 67`, `Community 68`, `Community 69`, `Community 70`, `Community 71`, `Community 72`, `Community 73`, `Community 74`, `Community 75`, `Community 76`, `Community 77`, `Community 78`, `Community 92`, `Community 93`, `Community 95`, `Community 97`, `Community 98`, `Community 102`, `Community 196`, `Community 197`, `Community 199`, `Community 200`, `Community 207`, `Community 208`, `Community 209`, `Community 210`, `Community 211`, `Community 214`, `Community 217`, `Community 220`, `Community 221`, `Community 222`, `Community 223`, `Community 225`, `Community 229`, `Community 230`, `Community 233`, `Community 245`, `Community 276`, `Community 284`, `Community 286`, `Community 288`, `Community 297`, `Community 314`, `Community 318`, `Community 322`, `Community 328`, `Community 329`, `Community 337`, `Community 343`, `Community 360`, `Community 364`, `Community 382`, `Community 384`, `Community 386`, `Community 397`, `Community 399`, `Community 400`, `Community 409`, `Community 422`, `Community 424`, `Community 427`, `Community 430`, `Community 444`, `Community 451`, `Community 453`, `Community 454`, `Community 458`, `Community 461`, `Community 462`, `Community 467`, `Community 468`, `Community 469`, `Community 472`, `Community 498`, `Community 501`, `Community 508`?**
-  _High betweenness centrality (0.169) - this node is a cross-community bridge._
-- **Why does `HttpStatus` connect `Community 462` to `Community 1`, `Community 388`, `Community 6`, `Community 518`, `Community 530`, `Community 20`, `Community 276`, `Community 534`, `Community 25`, `Community 283`, `Community 30`, `Community 31`, `Community 36`, `Community 296`, `Community 424`, `Community 45`, `Community 50`, `Community 53`, `Community 444`, `Community 447`, `Community 450`, `Community 196`, `Community 200`, `Community 201`, `Community 333`, `Community 469`, `Community 217`, `Community 220`, `Community 221`, `Community 223`, `Community 355`, `Community 229`, `Community 233`, `Community 107`, `Community 498`, `Community 245`?**
-  _High betweenness centrality (0.021) - this node is a cross-community bridge._
-- **Why does `none()` connect `Community 29` to `Community 384`, `Community 3`, `Community 4`, `Community 5`, `Community 7`, `Community 11`, `Community 524`, `Community 14`, `Community 18`, `Community 24`, `Community 409`, `Community 297`, `Community 41`, `Community 51`, `Community 314`, `Community 205`, `Community 211`, `Community 467`, `Community 93`, `Community 225`, `Community 98`, `Community 245`, `Community 382`?**
-  _High betweenness centrality (0.009) - this node is a cross-community bridge._
+- **Why does `of()` connect `Community 29` to `Community 0`, `Community 513`, `Community 512`, `Community 3`, `Community 4`, `Community 5`, `Community 6`, `Community 516`, `Community 521`, `Community 10`, `Community 11`, `Community 14`, `Community 15`, `Community 16`, `Community 528`, `Community 530`, `Community 18`, `Community 21`, `Community 534`, `Community 24`, `Community 25`, `Community 31`, `Community 36`, `Community 41`, `Community 45`, `Community 50`, `Community 51`, `Community 57`, `Community 64`, `Community 67`, `Community 68`, `Community 69`, `Community 70`, `Community 71`, `Community 72`, `Community 73`, `Community 74`, `Community 75`, `Community 76`, `Community 77`, `Community 78`, `Community 92`, `Community 93`, `Community 95`, `Community 97`, `Community 98`, `Community 102`, `Community 107`, `Community 196`, `Community 197`, `Community 199`, `Community 200`, `Community 207`, `Community 208`, `Community 209`, `Community 210`, `Community 211`, `Community 214`, `Community 217`, `Community 220`, `Community 223`, `Community 225`, `Community 229`, `Community 230`, `Community 233`, `Community 242`, `Community 245`, `Community 276`, `Community 284`, `Community 286`, `Community 288`, `Community 297`, `Community 301`, `Community 314`, `Community 318`, `Community 322`, `Community 328`, `Community 329`, `Community 337`, `Community 343`, `Community 356`, `Community 360`, `Community 364`, `Community 382`, `Community 386`, `Community 399`, `Community 400`, `Community 409`, `Community 422`, `Community 424`, `Community 427`, `Community 430`, `Community 444`, `Community 451`, `Community 453`, `Community 454`, `Community 458`, `Community 461`, `Community 462`, `Community 467`, `Community 468`, `Community 469`, `Community 472`, `Community 498`, `Community 501`, `Community 508`?**
+  _High betweenness centrality (0.136) - this node is a cross-community bridge._
+- **Why does `HttpStatus` connect `Community 528` to `Community 388`, `Community 6`, `Community 530`, `Community 534`, `Community 25`, `Community 283`, `Community 30`, `Community 31`, `Community 36`, `Community 296`, `Community 424`, `Community 301`, `Community 45`, `Community 50`, `Community 53`, `Community 444`, `Community 447`, `Community 450`, `Community 196`, `Community 200`, `Community 201`, `Community 333`, `Community 462`, `Community 469`, `Community 343`, `Community 217`, `Community 220`, `Community 223`, `Community 355`, `Community 233`, `Community 107`, `Community 498`, `Community 245`, `Community 510`?**
+  _High betweenness centrality (0.019) - this node is a cross-community bridge._
+- **Why does `none()` connect `Community 29` to `Community 3`, `Community 4`, `Community 5`, `Community 7`, `Community 11`, `Community 14`, `Community 18`, `Community 24`, `Community 409`, `Community 297`, `Community 41`, `Community 51`, `Community 314`, `Community 457`, `Community 205`, `Community 211`, `Community 474`, `Community 93`, `Community 225`, `Community 98`, `Community 107`, `Community 245`, `Community 382`?**
+  _High betweenness centrality (0.010) - this node is a cross-community bridge._
 - **Are the 281 inferred relationships involving `of()` (e.g. with `.documentMetadata()` and `.sendDocumentIfPresent()`) actually correct?**
   _`of()` has 281 INFERRED edges - model-reasoned connections that need verification._
 - **Are the 70 inferred relationships involving `none()` (e.g. with `.formatsJsonUserMessageEventForHumans()` and `.formatsJsonVoiceTranscriptForAdminChat()`) actually correct?**
   _`none()` has 70 INFERRED edges - model-reasoned connections that need verification._
 - **Are the 63 inferred relationships involving `canonical()` (e.g. with `.parseState()` and `.seedStates()`) actually correct?**
   _`canonical()` has 63 INFERRED edges - model-reasoned connections that need verification._
-- **What connects `Params`, `LegacyMessage`, `WebChatBody` to the rest of the system?**
-  _1686 weakly-connected nodes found - possible documentation gaps or missing edges._
+- **What connects `allow`, `BM25 ranking algorithm for text search`, `Lowercase, split, remove punctuation, filter short words` to the rest of the system?**
+  _1779 weakly-connected nodes found - possible documentation gaps or missing edges._

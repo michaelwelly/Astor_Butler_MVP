@@ -148,6 +148,14 @@
 - Current Yandex provider scope is text generation only. `generateEmbedding` and `analyzeImage` return safe empty fallback responses until dedicated Yandex embeddings/vision adapters are wired.
 - Probe script for first live measurement: `scripts/probe_yandex_understanding.mjs`.
 
+## Yandex AI Studio Agent Adapter 2026-08-05
+
+- Added separate `ModelGateway` provider: `ASTOR_MODEL_PROVIDER=yandex-agent`.
+- Free-form text generation goes through Yandex AI Studio Responses API at `YANDEX_RESPONSES_BASE_URL`, with saved agent/prompt ID `YANDEX_AGENT_ID=fvt18kmmnas336paia3g`.
+- The ID `fvt18kmmnas336paia3g` is not a model URI. It is passed as `prompt.id`; the model remains `YANDEX_AGENT_MODEL` / `YANDEX_MODEL`.
+- JSON-oriented understanding requests remain on direct Foundation Models completion with `jsonObject=true`, even when provider is `yandex-agent`. This keeps FSM routing deterministic while allowing agent persona for normal replies.
+- Probe script: `scripts/probe_yandex_agent.mjs`.
+
 ## Архитектурный принцип
 
 FSM управляет состоянием диалога, разрешенными переходами и структурой сбора данных. Telegram не содержит бизнес-логики и работает как транспорт.

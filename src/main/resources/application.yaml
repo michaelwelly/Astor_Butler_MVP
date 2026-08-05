@@ -243,7 +243,10 @@ llm:
 yandex:
   ai:
     base-url: ${YANDEX_AI_BASE_URL:https://llm.api.cloud.yandex.net}
+    responses-base-url: ${YANDEX_RESPONSES_BASE_URL:https://ai.api.cloud.yandex.net/v1}
     agent-endpoint: ${YANDEX_AGENT_ENDPOINT:https://ai.api.cloud.yandex.net/v1/agents/fvt51f9cslgi648vvg35:execute}
+    agent-id: ${YANDEX_AGENT_ID:fvt18kmmnas336paia3g}
+    agent-model: ${YANDEX_AGENT_MODEL:${YANDEX_MODEL:yandexgpt-5-lite}}
     folder-id: ${YANDEX_FOLDER_ID:}
     api-key: ${YANDEX_API_KEY:}
     iam-token: ${YANDEX_IAM_TOKEN:}

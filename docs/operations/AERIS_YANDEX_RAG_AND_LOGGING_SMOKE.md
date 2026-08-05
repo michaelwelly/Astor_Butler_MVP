@@ -20,6 +20,25 @@ Expected:
 - `modelUri=gpt://...`;
 - `usage` present when returned by Yandex.
 
+## AI Studio Agent probe
+
+Use this when `ASTOR_MODEL_PROVIDER=yandex-agent` or before switching a runtime to the agent adapter.
+
+```bash
+node scripts/probe_yandex_agent.mjs \
+  --agent-id=fvt18kmmnas336paia3g \
+  --prompt="Ты Astor Butler. Ответь гостю AERIS коротко и по делу."
+```
+
+Expected:
+
+- `ok=true`;
+- `responseStatus=completed` or a controlled `incomplete` with `incompleteDetails.reason=max_output_tokens`;
+- non-empty `text`;
+- `usage` present when returned by Yandex Responses API.
+
+Important: `fvt18kmmnas336paia3g` is a saved AI Studio prompt/agent ID for the Responses API `prompt.id` field, not a `model` URI.
+
 ## Backend logging smoke
 
 Run against a live backend with DB access available through either `DATABASE_URL` or `PSQL_COMMAND`.

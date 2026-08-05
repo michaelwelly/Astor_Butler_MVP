@@ -8,12 +8,15 @@
 
 Отдельный AI Studio Agent нужен позже, если мы переносим в Yandex managed agent runtime инструменты, thread/state, RAG/search index или отдельные агентские сценарии. Сейчас это хуже для управляемости: FSM должна оставаться single source of truth, а YandexGPT работает как слой понимания, черновиков и безопасного обогащения.
 
+Update 2026-08-05: добавлен отдельный Java adapter `YandexAiStudioAgentModelGateway`. Он включается через `ASTOR_MODEL_PROVIDER=yandex-agent` и использует Yandex AI Studio Responses API с `prompt.id=fvt18kmmnas336paia3g`. Чтобы не ломать FSM, JSON-oriented understanding calls (`intent-slots-json`) внутри этого adapter продолжают идти через прямой Foundation Models completion с `jsonObject=true`.
+
 ## Model Routing
 
 | Назначение | Runtime profile | Модель | Режим |
 | --- | --- | --- | --- |
 | Frontline understanding | `ModelProfile.FRONTLINE` | `gpt://b1gug0tmrgmsq5pfsvhs/yandexgpt-5-lite/latest` | дешевые intent/slot JSON вызовы |
 | Quality / complex | `ModelProfile.QUALITY` | `gpt://b1gug0tmrgmsq5pfsvhs/yandexgpt-5.1/latest` | сложные не-FSM вопросы, recovery, manager summaries |
+| AI Studio Agent replies | `ASTOR_MODEL_PROVIDER=yandex-agent` | `prompt.id=fvt18kmmnas336paia3g` + `YANDEX_AGENT_MODEL` | agent/persona слой для обычного текста; JSON understanding остается direct completion |
 | Speech realtime | отдельный future adapter | `gpt://b1gug0tmrgmsq5pfsvhs/speech-realtime-260528/latest` | не подключен текущим Java gateway, нужен отдельный speech path |
 
 Стартовая политика:
@@ -33,6 +36,9 @@ YANDEX_FOLDER_ID=b1gug0tmrgmsq5pfsvhs
 YANDEX_API_KEY=<runtime-secret>
 YANDEX_MODEL=gpt://b1gug0tmrgmsq5pfsvhs/yandexgpt-5-lite/latest
 YANDEX_QUALITY_MODEL=gpt://b1gug0tmrgmsq5pfsvhs/yandexgpt-5.1/latest
+YANDEX_RESPONSES_BASE_URL=https://ai.api.cloud.yandex.net/v1
+YANDEX_AGENT_ID=fvt18kmmnas336paia3g
+YANDEX_AGENT_MODEL=gpt://b1gug0tmrgmsq5pfsvhs/yandexgpt-5-lite/latest
 YANDEX_MAX_TOKENS=256
 YANDEX_TEMPERATURE=0.1
 
@@ -43,6 +49,16 @@ ASTOR_UNDERSTANDING_LLM_TIMEOUT_MS=6500
 # Keep false until external Telegram proxy is ready.
 TELEGRAM_BOT_ENABLED=false
 ```
+
+Agent adapter switch:
+
+```bash
+ASTOR_MODEL_PROVIDER=yandex-agent
+YANDEX_AGENT_ID=fvt18kmmnas336paia3g
+YANDEX_RESPONSES_BASE_URL=https://ai.api.cloud.yandex.net/v1
+```
+
+Safety rule: enable this only after `scripts/probe_yandex_agent.mjs` is green and a REST `/api/messages` contact + booking smoke confirms `model_interaction_audit` still stores JSON-understanding usage.
 
 Для Smart Solution runtime использовать те же модели, но включать Q&A отдельно:
 

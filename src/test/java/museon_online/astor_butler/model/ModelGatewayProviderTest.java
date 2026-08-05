@@ -16,7 +16,12 @@ class ModelGatewayProviderTest {
                 return client;
             })
             .withBean(RestTemplateBuilder.class, RestTemplateBuilder::new)
-            .withUserConfiguration(SpringAiOllamaModelGateway.class, OllamaModelGateway.class, YandexModelGateway.class)
+            .withUserConfiguration(
+                    SpringAiOllamaModelGateway.class,
+                    OllamaModelGateway.class,
+                    YandexModelGateway.class,
+                    YandexAiStudioAgentModelGateway.class
+            )
             .withPropertyValues(
                     "llm.ollama.base-url=http://localhost:11434",
                     "llm.ollama.model=qwen2.5:1.5b",
@@ -52,6 +57,16 @@ class ModelGatewayProviderTest {
                 .run(context -> {
                     assertThat(context).hasSingleBean(ModelGateway.class);
                     assertThat(context.getBean(ModelGateway.class)).isInstanceOf(YandexModelGateway.class);
+                });
+    }
+
+    @Test
+    void yandexAgentProviderCanBeSelectedExplicitly() {
+        contextRunner
+                .withPropertyValues("astor.model.provider=yandex-agent")
+                .run(context -> {
+                    assertThat(context).hasSingleBean(ModelGateway.class);
+                    assertThat(context.getBean(ModelGateway.class)).isInstanceOf(YandexAiStudioAgentModelGateway.class);
                 });
     }
 }
