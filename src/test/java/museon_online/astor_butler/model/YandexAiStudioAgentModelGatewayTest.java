@@ -147,4 +147,52 @@ class YandexAiStudioAgentModelGatewayTest {
         assertThat(response.metadata()).containsEntry("routedVia", "foundationModels-json");
         server.verify();
     }
+
+    @Test
+    void generateEmbeddingUsesYandexTextEmbeddingApiSoRagStillWorks() {
+        AtomicReference<MockRestServiceServer> serverRef = new AtomicReference<>();
+        YandexAiStudioAgentModelGateway gateway = new YandexAiStudioAgentModelGateway(
+                new RestTemplateBuilder(restTemplate ->
+                        serverRef.set(MockRestServiceServer.bindTo(restTemplate).build())),
+                "https://llm.test",
+                "https://ai.test/v1",
+                "folder-123",
+                "api-key-123",
+                "",
+                "yandexgpt-5-lite",
+                "yandexgpt-5.1",
+                "fvt18kmmnas336paia3g",
+                "yandexgpt/rc",
+                8000,
+                128,
+                0.1
+        );
+        MockRestServiceServer server = serverRef.get();
+
+        server.expect(once(), requestTo("https://llm.test/foundationModels/v1/textEmbedding"))
+                .andExpect(method(HttpMethod.POST))
+                .andExpect(header("Authorization", "Api-Key api-key-123"))
+                .andExpect(jsonPath("$.modelUri").value("emb://folder-123/text-search-query/latest"))
+                .andExpect(jsonPath("$.text").value("что есть по вину"))
+                .andRespond(withSuccess("""
+                        {
+                          "embedding": [0.1, 0.2, 0.3]
+                        }
+                        """, MediaType.APPLICATION_JSON));
+
+        ModelEmbeddingResponse response = gateway.generateEmbedding(ModelEmbeddingRequest.of(
+                "что есть по вину",
+                "text-search-query/latest",
+                "SemanticMemory",
+                null,
+                "embedding-query"
+        ));
+
+        assertThat(response.embedding()).containsExactly(0.1, 0.2, 0.3);
+        assertThat(response.provider()).isEqualTo("yandex-ai");
+        assertThat(response.model()).isEqualTo("emb://folder-123/text-search-query/latest");
+        assertThat(response.fallback()).isFalse();
+        assertThat(response.metadata()).containsEntry("routedVia", "foundationModels-textEmbedding");
+        server.verify();
+    }
 }

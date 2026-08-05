@@ -79,14 +79,38 @@ public class YandexAiStudioAgentModelGateway implements ModelGateway {
 
     @Override
     public ModelEmbeddingResponse generateEmbedding(ModelEmbeddingRequest request) {
+        String modelUri = embeddingModelUri(request.model(), request.purpose());
+        long startedAt = System.nanoTime();
+        ResponseEntity<Map> response = restTemplate.exchange(
+                completionBaseUrl + "/foundationModels/v1/textEmbedding",
+                HttpMethod.POST,
+                new HttpEntity<>(embeddingRequestBody(request, modelUri), completionHeaders()),
+                Map.class
+        );
+
+        Duration latency = Duration.ofNanos(System.nanoTime() - startedAt);
+        Map<?, ?> body = response.getBody() == null ? Map.of() : response.getBody();
+        List<Double> embedding = readEmbedding(resultBody(body));
+        log.debug(
+                "ModelGateway embedding provider=yandex-ai-studio-agent/yandex-ai model={} scenario={} state={} purpose={} dimension={} latencyMs={}",
+                modelUri,
+                request.scenario(),
+                request.state(),
+                request.purpose(),
+                embedding.size(),
+                latency.toMillis()
+        );
         return new ModelEmbeddingResponse(
-                List.of(),
-                "yandex-ai-studio-agent",
-                request.model() == null ? "" : request.model(),
+                embedding,
+                "yandex-ai",
+                modelUri,
                 ModelCapability.EMBEDDING,
-                Duration.ZERO,
-                true,
-                Map.of("reason", "AI Studio agent adapter is text-only; use ASTOR_MODEL_PROVIDER=yandex for Yandex embeddings")
+                latency,
+                embedding.isEmpty(),
+                Map.of(
+                        "dimension", embedding.size(),
+                        "routedVia", "foundationModels-textEmbedding"
+                )
         );
     }
 
@@ -217,6 +241,13 @@ public class YandexAiStudioAgentModelGateway implements ModelGateway {
         return body;
     }
 
+    private Map<String, String> embeddingRequestBody(ModelEmbeddingRequest request, String modelUri) {
+        return Map.of(
+                "modelUri", modelUri,
+                "text", request.text() == null ? "" : request.text()
+        );
+    }
+
     private HttpHeaders responsesHeaders() {
         HttpHeaders headers = completionHeaders();
         if (folderId != null) {
@@ -250,6 +281,22 @@ public class YandexAiStudioAgentModelGateway implements ModelGateway {
             throw new IllegalStateException("Yandex folder ID is required for model alias: set YANDEX_FOLDER_ID");
         }
         return "gpt://" + folderId + "/" + model.replaceFirst("^/+", "");
+    }
+
+    private String embeddingModelUri(String model, String purpose) {
+        String selected = blankToNull(model);
+        if (selected == null) {
+            selected = purpose != null && purpose.toLowerCase(java.util.Locale.ROOT).contains("query")
+                    ? "text-search-query/latest"
+                    : "text-search-doc/latest";
+        }
+        if (selected.startsWith("emb://")) {
+            return selected;
+        }
+        if (folderId == null) {
+            throw new IllegalStateException("Yandex folder ID is required for embedding model alias: set YANDEX_FOLDER_ID");
+        }
+        return "emb://" + folderId + "/" + selected.replaceFirst("^/+", "");
     }
 
     private boolean expectsJson(ModelTextRequest request) {
@@ -306,6 +353,22 @@ public class YandexAiStudioAgentModelGateway implements ModelGateway {
             return "";
         }
         return stringValue(messageMap.get("text"));
+    }
+
+    private List<Double> readEmbedding(Map<?, ?> body) {
+        Object value = body.get("embedding");
+        if (!(value instanceof List<?> list)) {
+            return List.of();
+        }
+        List<Double> embedding = new ArrayList<>(list.size());
+        for (Object item : list) {
+            if (item instanceof Number number) {
+                embedding.add(number.doubleValue());
+            } else if (item != null) {
+                embedding.add(Double.parseDouble(item.toString()));
+            }
+        }
+        return embedding;
     }
 
     private Map<?, ?> resultBody(Map<?, ?> body) {

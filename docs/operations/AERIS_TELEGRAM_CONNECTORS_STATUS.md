@@ -37,6 +37,7 @@ Update 2026-08-05:
 - Added provider `ASTOR_MODEL_PROVIDER=yandex-agent`.
 - Free-form text calls use Yandex Responses API with `YANDEX_AGENT_ID=fvt18kmmnas336paia3g`.
 - JSON understanding calls continue to use direct Foundation Models completion with `jsonObject=true`, so booking/menu/payment FSM routing remains stable.
+- RAG query/document embeddings continue to use Yandex Foundation Models `textEmbedding` from the same adapter, so semantic search is not disabled by the agent switch.
 - Probe command: `node scripts/probe_yandex_agent.mjs --agent-id=fvt18kmmnas336paia3g`.
 - `fvt18kmmnas336paia3g` must be sent as Responses API `prompt.id`; using it as `model` returns `invalid_value`.
 

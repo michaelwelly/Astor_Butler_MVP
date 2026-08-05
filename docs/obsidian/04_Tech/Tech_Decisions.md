@@ -154,6 +154,7 @@
 - Free-form text generation goes through Yandex AI Studio Responses API at `YANDEX_RESPONSES_BASE_URL`, with saved agent/prompt ID `YANDEX_AGENT_ID=fvt18kmmnas336paia3g`.
 - The ID `fvt18kmmnas336paia3g` is not a model URI. It is passed as `prompt.id`; the model remains `YANDEX_AGENT_MODEL` / `YANDEX_MODEL`.
 - JSON-oriented understanding requests remain on direct Foundation Models completion with `jsonObject=true`, even when provider is `yandex-agent`. This keeps FSM routing deterministic while allowing agent persona for normal replies.
+- RAG embeddings are also routed through direct Foundation Models `textEmbedding` inside the adapter, because AI Studio Agent is only the persona/reply layer and must not break semantic retrieval.
 - Probe script: `scripts/probe_yandex_agent.mjs`.
 
 ## Архитектурный принцип
