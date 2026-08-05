@@ -14,6 +14,7 @@ import org.telegram.telegrambots.meta.bots.AbsSender;
 
 import java.io.InputStream;
 import java.net.URI;
+import java.net.URLConnection;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.LinkedHashMap;
@@ -44,6 +45,9 @@ public class TelegramVoiceTranscriptionService {
 
     @Value("${telegram.bot.token:}")
     private String botToken;
+
+    @Value("${telegram.voice.download-timeout-ms:15000}")
+    private int downloadTimeoutMs;
 
     public IncomingMessage enrich(IncomingMessage incoming, AbsSender sender) {
         if (!downloadEnabled || incoming == null || sender == null || incoming.payload() == null) {
@@ -155,7 +159,11 @@ public class TelegramVoiceTranscriptionService {
             throw new IllegalStateException("Telegram bot token is empty");
         }
 
-        try (InputStream inputStream = URI.create(telegramFile.getFileUrl(botToken)).toURL().openStream()) {
+        URLConnection connection = URI.create(telegramFile.getFileUrl(botToken)).toURL().openConnection();
+        int timeout = Math.max(1000, downloadTimeoutMs);
+        connection.setConnectTimeout(timeout);
+        connection.setReadTimeout(timeout);
+        try (InputStream inputStream = connection.getInputStream()) {
             Files.copy(inputStream, target, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
         }
         return target;

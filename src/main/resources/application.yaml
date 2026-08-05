@@ -194,6 +194,8 @@ telegram:
     preview-avatar-path: ${TELEGRAM_UI_PREVIEW_AVATAR_PATH:classpath:telegram/aeris-butler-preview.png}
   voice:
     download-enabled: ${TELEGRAM_VOICE_DOWNLOAD_ENABLED:true}
+    enrichment-timeout-ms: ${TELEGRAM_VOICE_ENRICHMENT_TIMEOUT_MS:20000}
+    download-timeout-ms: ${TELEGRAM_VOICE_DOWNLOAD_TIMEOUT_MS:15000}
     max-duration-seconds: ${TELEGRAM_VOICE_MAX_DURATION_SECONDS:60}
     max-file-size-bytes: ${TELEGRAM_VOICE_MAX_FILE_SIZE_BYTES:10485760}
   admin:

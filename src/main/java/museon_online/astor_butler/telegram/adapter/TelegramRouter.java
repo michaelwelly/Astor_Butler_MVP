@@ -56,7 +56,7 @@ public class TelegramRouter {
     private final IdempotencyGuard idempotencyGuard;
     private final MessageGatewayService messageGatewayService;
     private final TelegramChatViewService chatViewService;
-    private final TelegramVoiceTranscriptionService voiceTranscriptionService;
+    private final TelegramVoiceEnrichmentGuard voiceEnrichmentGuard;
     private final HostessReservationApprovalService hostessReservationApprovalService;
     private final TelegramMediaSender telegramMediaSender;
 
@@ -88,7 +88,7 @@ public class TelegramRouter {
                 log.debug("📭 [TG] Update ignored: cannot map to IncomingMessage");
                 return;
             }
-            incoming = voiceTranscriptionService.enrich(incoming, sender);
+            incoming = voiceEnrichmentGuard.enrich(incoming, sender);
 
             log.info("📨 [TG] Incoming message from {}: {}", incoming.chatId(), incoming.text());
             if (hostessReservationApprovalService.handle(incoming)) {
